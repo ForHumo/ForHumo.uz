@@ -162,7 +162,7 @@ export function NxExplore() {
                         className="w-full flex items-center gap-3 h-10 rounded-xl px-3.5 text-left"
                         style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                         <Search className="w-4 h-4" style={{ color: "rgb(var(--nx-accent-rgb) / 0.55)" }} />
-                        <span className="text-sm" style={{ color: "rgba(140,160,210,0.7)" }}>Odamlar, video, musiqa, #hashtag...</span>
+                        <span className="text-sm" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>Odamlar, video, musiqa, #hashtag...</span>
                     </button>
 
                     {/* Filter tabs */}
@@ -247,7 +247,7 @@ export function NxExplore() {
                                                         <span className="text-xs font-bold text-[var(--nx-text)] truncate">{p.author?.name || p.author?.username || "Foydalanuvchi"}</span>
                                                         {p.author?.verified && <NxVerifiedBadge category={p.author?.verifiedCategory} size={12} />}
                                                     </div>
-                                                    {p.text && <p className="text-[12px] mt-0.5 line-clamp-2" style={{ color: "rgba(200,215,245,0.85)" }}>{p.text}</p>}
+                                                    {p.text && <p className="text-[12px] mt-0.5 line-clamp-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>{p.text}</p>}
                                                     <div className="flex items-center gap-3 mt-1.5 text-[10px]" style={{ color: "var(--nx-text-3)" }}>
                                                         <span className="flex items-center gap-1"><Heart className="w-3 h-3" style={{ color: "#EF4444" }} />{p.likes}</span>
                                                         <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />{p.comments}</span>
@@ -335,7 +335,7 @@ export function NxExplore() {
                                                             {u.username && (
                                                                 isF ? (
                                                                     <span className="px-3 py-1.5 rounded-xl text-[11px] font-black flex items-center gap-1 flex-shrink-0"
-                                                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", color: "rgba(160,180,240,0.9)" }}>
+                                                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", color: "rgb(var(--nx-text-2-rgb)/0.9)" }}>
                                                                         <UserCheck className="w-3 h-3" /> Kuzatilmoqda
                                                                     </span>
                                                                 ) : (

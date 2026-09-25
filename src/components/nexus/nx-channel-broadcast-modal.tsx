@@ -83,7 +83,7 @@ export function NxChannelBroadcastModal({
                                 <Check className="w-7 h-7" style={{ color: "var(--nx-accent)" }} />
                             </div>
                             <p className="text-sm font-black text-[var(--nx-text)]">E&apos;lon yuborildi</p>
-                            <p className="text-xs mt-1" style={{ color: "rgba(160,176,224,0.7)" }}>
+                            <p className="text-xs mt-1" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                 Barcha a&apos;zolar push xabar oldi
                             </p>
                         </div>
@@ -100,7 +100,7 @@ export function NxChannelBroadcastModal({
 
                             <div>
                                 <label className="text-[11px] font-black uppercase tracking-widest mb-1.5 block"
-                                    style={{ color: "rgba(160,176,224,0.7)" }}>
+                                    style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     E&apos;lon matni
                                 </label>
                                 <textarea
@@ -112,7 +112,7 @@ export function NxChannelBroadcastModal({
                                     style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "white" }}
                                 />
                                 <div className="mt-1 flex items-center justify-between text-[10px]"
-                                    style={{ color: "rgba(140,160,210,0.7)" }}>
+                                    style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     <span>{text.length}/2000</span>
                                     {status && <span>Bugun qolgan: <b style={{ color: remaining > 0 ? "var(--nx-accent)" : "#EF4444" }}>{remaining}/3</b></span>}
                                 </div>
@@ -124,7 +124,7 @@ export function NxChannelBroadcastModal({
                                     <p className="text-[var(--nx-text)]">
                                         <b>{status.memberCount}</b> a&apos;zoga push yuboriladi
                                     </p>
-                                    <p className="mt-1" style={{ color: "rgba(160,176,224,0.7)" }}>
+                                    <p className="mt-1" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                         Kanal: <b style={{ color: "var(--nx-accent)" }}>{channelName}</b>
                                     </p>
                                 </div>

@@ -93,14 +93,14 @@ export function JoinChannelClient({ code }: { code: string }) {
                             </p>
                             <h1 className="text-lg font-black text-[var(--nx-text)] mb-1">{ch.name}</h1>
                             {ch.handle && (
-                                <p className="text-xs" style={{ color: "rgba(140,160,210,0.75)" }}>@{ch.handle}</p>
+                                <p className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>@{ch.handle}</p>
                             )}
-                            <p className="text-[11px] mt-2" style={{ color: "rgba(140,160,210,0.75)" }}>
+                            <p className="text-[11px] mt-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                 {ch.memberCount.toLocaleString()} a&apos;zo
                             </p>
                             {ch.description && (
                                 <p className="text-sm mt-3 text-center leading-relaxed"
-                                    style={{ color: "rgba(220,230,255,0.85)" }}>
+                                    style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>
                                     {ch.description}
                                 </p>
                             )}
@@ -113,7 +113,7 @@ export function JoinChannelClient({ code }: { code: string }) {
                             {status !== "authenticated" ? "Kirish va qo'shilish" : "Qo'shilish"}
                             <ArrowRight className="w-4 h-4" />
                         </button>
-                        <p className="text-[10px] mt-3 text-center" style={{ color: "rgba(140,160,210,0.55)" }}>
+                        <p className="text-[10px] mt-3 text-center" style={{ color: "rgb(var(--nx-text-2-rgb)/0.55)" }}>
                             Qo&apos;shilish orqali sizni jamoat qoidalari va Nexus shartlariga rioya qilishga rozi bo&apos;lasiz
                         </p>
                     </>

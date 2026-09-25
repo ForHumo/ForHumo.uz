@@ -274,7 +274,7 @@ function MapModal({ value, onChange, onClose }: {
                                     <div className="min-w-0">
                                         <p className="text-xs font-bold text-[var(--nx-text)] truncate">{r.name}</p>
                                         {(r.city || r.country) && (
-                                            <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.70)" }}>
+                                            <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.70)" }}>
                                                 {[r.city, r.country].filter(Boolean).join(", ")}
                                             </p>
                                         )}
@@ -305,7 +305,7 @@ function MapModal({ value, onChange, onClose }: {
                                 <p className="text-xs font-bold text-[var(--nx-text)] truncate">
                                     {reverseBusy ? "Nom aniqlanmoqda..." : (pending.name || `${pending.lat.toFixed(5)}, ${pending.lng.toFixed(5)}`)}
                                 </p>
-                                <p className="text-[9px] font-mono" style={{ color: "rgba(140,160,210,0.70)" }}>
+                                <p className="text-[9px] font-mono" style={{ color: "rgb(var(--nx-text-2-rgb)/0.70)" }}>
                                     {pending.lat.toFixed(5)}, {pending.lng.toFixed(5)}
                                 </p>
                             </div>

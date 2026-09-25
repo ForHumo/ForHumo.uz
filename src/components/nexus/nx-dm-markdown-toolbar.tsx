@@ -53,7 +53,7 @@ function Btn({ onClick, title, icon }: { onClick: () => void; title: string; ico
     return (
         <button type="button" onClick={onClick} title={title}
             className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/[0.10]"
-            style={{ color: "rgba(200,214,247,0.9)" }}>
+            style={{ color: "rgb(var(--nx-text-2-rgb)/0.9)" }}>
             {icon}
         </button>
     );

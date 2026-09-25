@@ -132,7 +132,7 @@ export function NxPlaylist() {
                             {selected ? selected.name : "Playlistlar"}
                         </h3>
                         {selected && (
-                            <p className="text-[10px]" style={{ color: "rgba(100,120,170,0.75)" }}>
+                            <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-3-rgb)/0.75)" }}>
                                 {selected.tracks.length} ta trek · {totalDuration(selected.tracks)}
                             </p>
                         )}
@@ -179,7 +179,7 @@ export function NxPlaylist() {
                                 </button>
                                 <button onClick={() => { setCreating(false); setNewName(""); }}
                                     className="px-3 py-2 rounded-xl text-xs font-black"
-                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgba(140,160,210,0.80)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgb(var(--nx-text-2-rgb)/0.80)" }}>
                                     <X className="w-4 h-4" />
                                 </button>
                             </div>
@@ -235,7 +235,7 @@ export function NxPlaylist() {
                                     </p>
                                     <button onClick={() => setAddingTo(addingTo ? null : selected.id)}
                                         className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold"
-                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgba(140,160,210,0.85)" }}>
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                                         <Plus className="w-3 h-3" />
                                         {addingTo ? "Yopish" : "Qo'shish"}
                                     </button>

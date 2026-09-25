@@ -171,7 +171,7 @@ export function LiveView() {
             <div className="mx-4 mt-4 mb-3 p-5 rounded-2xl relative overflow-hidden" style={{ background: "var(--nx-surface)", border: "1px solid rgba(239,68,68,0.22)" }}>
                 <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(239,68,68,0.25) 0%, transparent 70%)" }} />
                 <h2 className="text-2xl md:text-3xl font-black text-[var(--nx-text)] mb-1 relative">Jonli <span style={{ background: "linear-gradient(135deg,#EF4444,#F97316)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Efirlar</span></h2>
-                <p className="text-xs mb-3 relative" style={{ color: "rgba(140,160,210,0.75)" }}>Real vaqtda — chat va ko&apos;ruvchilar jonli</p>
+                <p className="text-xs mb-3 relative" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>Real vaqtda — chat va ko&apos;ruvchilar jonli</p>
 
                 {/* Qidiruv */}
                 <div className="relative mb-3">
@@ -353,7 +353,7 @@ function Empty({ text }: { text: string }) {
     return (
         <div className="mx-4 px-4 py-8 rounded-2xl flex flex-col items-center gap-2 text-center" style={{ background: "rgba(239,68,68,0.05)", border: "1px dashed rgba(239,68,68,0.20)" }}>
             <Radio className="w-6 h-6" style={{ color: "rgba(239,68,68,0.40)" }} />
-            <p className="text-xs" style={{ color: "rgba(150,150,180,0.75)" }}>{text}</p>
+            <p className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>{text}</p>
         </div>
     );
 }

@@ -782,7 +782,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                     </span>
                                     <span className="text-[10px] flex-shrink-0" style={{ color: "var(--nx-text-2)" }}>{timeShort(c.lastMessageAt)}</span>
                                 </div>
-                                <p className="text-xs truncate" style={{ color: c.unread ? "rgba(200,215,245,0.95)" : "rgba(100,120,170,0.75)", fontWeight: c.unread ? 700 : 400 }}>
+                                <p className="text-xs truncate" style={{ color: c.unread ? "rgb(var(--nx-text-2-rgb)/0.95)" : "rgb(var(--nx-text-3-rgb)/0.75)", fontWeight: c.unread ? 700 : 400 }}>
                                     {c.lastMine ? "Siz: " : ""}{c.lastMessageText || "..."}
                                 </p>
                             </div>
@@ -874,7 +874,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                     <a href={`/nexus/u/${selected.other.username}`} target="_blank" rel="noopener noreferrer"
                                         className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05]"
                                         onClick={() => setHeaderMoreOpen(false)}>
-                                        <BadgeCheck className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Profilni ochish
+                                        <BadgeCheck className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} /> Profilni ochish
                                     </a>
                                 )}
                             </div>
@@ -944,7 +944,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                                 </div>
                                                 {typeof m.durationMs === "number" && m.durationMs > 0 && (
                                                     <p className="text-[10px] mt-1 text-center tabular-nums"
-                                                        style={{ color: m.mine ? "rgba(255,255,255,0.75)" : "rgba(140,160,210,0.75)" }}>
+                                                        style={{ color: m.mine ? "rgba(255,255,255,0.75)" : "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                                         {fmtDuration(m.durationMs)}
                                                     </p>
                                                 )}
@@ -967,10 +967,10 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                                         <div className="flex items-start gap-2 mb-1">
                                                             <BarChart2 className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: m.mine ? "rgba(255,255,255,0.90)" : "var(--nx-accent)" }} />
                                                             <div className="flex-1 min-w-0">
-                                                                <p className="text-xs font-black" style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
+                                                                <p className="text-xs font-black" style={{ color: m.mine ? "#fff" : "rgb(var(--nx-text-rgb)/0.95)" }}>
                                                                     {m.pollQuestion}
                                                                 </p>
-                                                                <p className="text-[10px] mt-0.5" style={{ color: m.mine ? "rgba(255,255,255,0.70)" : "rgba(140,160,210,0.75)" }}>
+                                                                <p className="text-[10px] mt-0.5" style={{ color: m.mine ? "rgba(255,255,255,0.70)" : "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                                                     {m.pollMulti ? "Bir necha variant" : "Bitta variant"} · {total} ovoz
                                                                     {expired && " · Yakunlangan"}
                                                                 </p>
@@ -998,10 +998,10 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                                                     <div className="relative flex items-center gap-2 px-3 py-2">
                                                                         {showResults && (
                                                                             <span className="text-[10px] font-black tabular-nums w-9 flex-shrink-0"
-                                                                                style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>{pct}%</span>
+                                                                                style={{ color: m.mine ? "#fff" : "rgb(var(--nx-text-rgb)/0.95)" }}>{pct}%</span>
                                                                         )}
                                                                         <span className="text-xs flex-1"
-                                                                            style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)", fontWeight: isMyVote ? 700 : 500 }}>
+                                                                            style={{ color: m.mine ? "#fff" : "rgb(var(--nx-text-rgb)/0.95)", fontWeight: isMyVote ? 700 : 500 }}>
                                                                             {opt}
                                                                         </span>
                                                                         {isMyVote && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: m.mine ? "#fff" : "var(--nx-accent)" }} strokeWidth={3} />}
@@ -1010,7 +1010,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                                             );
                                                         })}
                                                         {!showResults && (
-                                                            <p className="text-[10px] italic mt-1" style={{ color: m.mine ? "rgba(255,255,255,0.65)" : "rgba(140,160,210,0.70)" }}>
+                                                            <p className="text-[10px] italic mt-1" style={{ color: m.mine ? "rgba(255,255,255,0.65)" : "rgb(var(--nx-text-2-rgb)/0.70)" }}>
                                                                 Natijalarni ko'rish uchun ovoz bering
                                                             </p>
                                                         )}
@@ -1035,10 +1035,10 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                                                 ? <span className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse" style={{ background: "#EF4444" }} />
                                                                 : <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: m.mine ? "rgba(255,255,255,0.9)" : "var(--nx-accent)" }} />}
                                                             <div className="min-w-0 flex-1">
-                                                                <p className="text-[11px] font-bold" style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
+                                                                <p className="text-[11px] font-bold" style={{ color: m.mine ? "#fff" : "rgb(var(--nx-text-rgb)/0.95)" }}>
                                                                     {isLive ? "Jonli joylashuv" : "Joylashuv"}
                                                                 </p>
-                                                                <p className="text-[10px]" style={{ color: m.mine ? "rgba(255,255,255,0.70)" : "rgba(140,160,210,0.75)" }}>
+                                                                <p className="text-[10px]" style={{ color: m.mine ? "rgba(255,255,255,0.70)" : "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                                                     {isLive
                                                                         ? `${new Date(m.locExpiresAt!).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })} gacha`
                                                                         : `${lat.toFixed(5)}, ${lng.toFixed(5)}`}
@@ -1048,12 +1048,12 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                                         <div className="flex gap-1 px-3 pb-3">
                                                             <a href={yandexUrl} target="_blank" rel="noopener noreferrer"
                                                                 className="flex-1 text-center text-[10px] font-bold px-2 py-1.5 rounded-lg"
-                                                                style={{ background: m.mine ? "rgba(255,255,255,0.15)" : "rgb(var(--nx-accent-rgb) / 0.20)", color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
+                                                                style={{ background: m.mine ? "rgba(255,255,255,0.15)" : "rgb(var(--nx-accent-rgb) / 0.20)", color: m.mine ? "#fff" : "rgb(var(--nx-text-rgb)/0.95)" }}>
                                                                 Yandex
                                                             </a>
                                                             <a href={googleUrl} target="_blank" rel="noopener noreferrer"
                                                                 className="flex-1 text-center text-[10px] font-bold px-2 py-1.5 rounded-lg"
-                                                                style={{ background: m.mine ? "rgba(255,255,255,0.15)" : "rgb(var(--nx-accent-rgb) / 0.20)", color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
+                                                                style={{ background: m.mine ? "rgba(255,255,255,0.15)" : "rgb(var(--nx-accent-rgb) / 0.20)", color: m.mine ? "#fff" : "rgb(var(--nx-text-rgb)/0.95)" }}>
                                                                 Google
                                                             </a>
                                                             {m.mine && isLive && (
@@ -1082,15 +1082,15 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                                     </div>
                                                     <div className="min-w-0 flex-1">
                                                         <p className="text-[10px] font-medium uppercase tracking-wider"
-                                                            style={{ color: m.mine ? "rgba(255,255,255,0.65)" : "rgba(140,160,210,0.75)" }}>
+                                                            style={{ color: m.mine ? "rgba(255,255,255,0.65)" : "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                                             {m.mine ? "Yuborildi" : "Qabul qilindi"} • For Pay
                                                         </p>
-                                                        <p className="text-base font-black" style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
+                                                        <p className="text-base font-black" style={{ color: m.mine ? "#fff" : "rgb(var(--nx-text-rgb)/0.95)" }}>
                                                             {formatMoney(m.transferAmount, m.transferCurrency as "UZS" | "USD")}
                                                         </p>
                                                         {m.transferNote && (
                                                             <p className="text-[11px] mt-0.5 truncate"
-                                                                style={{ color: m.mine ? "rgba(255,255,255,0.75)" : "rgba(140,160,210,0.85)" }}>
+                                                                style={{ color: m.mine ? "rgba(255,255,255,0.75)" : "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                                                                 {m.transferNote}
                                                             </p>
                                                         )}
@@ -1106,19 +1106,19 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                                     <FileIcon className="w-5 h-5" style={{ color: m.mine ? "#fff" : "var(--nx-accent)" }} />
                                                 </div>
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="text-xs font-bold truncate" style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>{m.mediaName || "Fayl"}</p>
-                                                    <p className="text-[10px]" style={{ color: m.mine ? "rgba(255,255,255,0.70)" : "rgba(140,160,210,0.75)" }}>
+                                                    <p className="text-xs font-bold truncate" style={{ color: m.mine ? "#fff" : "rgb(var(--nx-text-rgb)/0.95)" }}>{m.mediaName || "Fayl"}</p>
+                                                    <p className="text-[10px]" style={{ color: m.mine ? "rgba(255,255,255,0.70)" : "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                                         {typeof m.mediaSize === "number" ? fmtSize(m.mediaSize) : ""}
                                                     </p>
                                                 </div>
-                                                {m.mediaUrl && <Download className="w-4 h-4 flex-shrink-0" style={{ color: m.mine ? "rgba(255,255,255,0.75)" : "rgba(140,160,210,0.75)" }} />}
+                                                {m.mediaUrl && <Download className="w-4 h-4 flex-shrink-0" style={{ color: m.mine ? "rgba(255,255,255,0.75)" : "rgb(var(--nx-text-2-rgb)/0.75)" }} />}
                                             </a>
                                         )}
                                         {/* Yuklanish holati (temp) */}
                                         {isTemp && !m.mediaUrl && (
                                             <div className="px-3.5 py-3 flex items-center gap-2" style={{ minWidth: 220 }}>
                                                 <Loader2 className="w-4 h-4 animate-spin" style={{ color: m.mine ? "#fff" : "var(--nx-accent)" }} />
-                                                <span className="text-[11px]" style={{ color: m.mine ? "rgba(255,255,255,0.85)" : "rgba(220,230,255,0.85)" }}>
+                                                <span className="text-[11px]" style={{ color: m.mine ? "rgba(255,255,255,0.85)" : "rgb(var(--nx-text-rgb)/0.85)" }}>
                                                     Yuklanmoqda... {uploadPct > 0 ? `${uploadPct}%` : ""}
                                                 </span>
                                             </div>
@@ -1130,7 +1130,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                     <div className="px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words"
                                         style={m.mine
                                             ? { background: "linear-gradient(135deg,var(--nx-accent),#1a6fcc)", color: "#fff", borderBottomRightRadius: "4px" }
-                                            : { background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", color: "rgba(220,230,255,0.92)", borderBottomLeftRadius: "4px" }}>
+                                            : { background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", color: "rgb(var(--nx-text-rgb)/0.92)", borderBottomLeftRadius: "4px" }}>
                                         <NxMarkdown text={m.text} />
                                         {m.editedAt && <span className="ml-1.5 text-[10px] opacity-50 italic">(tahrirlangan)</span>}
                                     </div>
@@ -1150,12 +1150,12 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                             <button onClick={() => copyText(m.text)}
                                                 title="Nusxa olish"
                                                 className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/[0.08] active:scale-90">
-                                                <Copy className="w-3 h-3" style={{ color: "rgba(140,160,210,0.65)" }} />
+                                                <Copy className="w-3 h-3" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }} />
                                             </button>
                                             <button onClick={() => speakText(m.text)}
                                                 title="Eshittirish"
                                                 className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/[0.08] active:scale-90">
-                                                <Volume2 className="w-3 h-3" style={{ color: "rgba(140,160,210,0.65)" }} />
+                                                <Volume2 className="w-3 h-3" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }} />
                                             </button>
                                         </>
                                     )}
@@ -1165,7 +1165,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                     {m.mine && (
                                         isRead
                                             ? <CheckCheck className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} strokeWidth={2.5} />
-                                            : <Check className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.65)" }} strokeWidth={2.5} />
+                                            : <Check className="w-3.5 h-3.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }} strokeWidth={2.5} />
                                     )}
                                 </div>
                             </div>
@@ -1234,33 +1234,33 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                             onClick={() => { setAttachOpen(false); fileInputRef.current?.click(); }}
                                             className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]">
                                             <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
-                                                <Paperclip className="w-4 h-4" style={{ color: "rgba(200,215,245,0.90)" }} />
+                                                <Paperclip className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.90)" }} />
                                             </span>
-                                            <span className="text-[10px] font-bold" style={{ color: "rgba(220,230,255,0.85)" }}>Fayl</span>
+                                            <span className="text-[10px] font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>Fayl</span>
                                         </button>
                                         <button type="button"
                                             onClick={() => { setAttachOpen(false); setCircleOpen(true); }}
                                             className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]">
                                             <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
-                                                <Camera className="w-4 h-4" style={{ color: "rgba(200,215,245,0.90)" }} />
+                                                <Camera className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.90)" }} />
                                             </span>
-                                            <span className="text-[10px] font-bold" style={{ color: "rgba(220,230,255,0.85)" }}>Video-doira</span>
+                                            <span className="text-[10px] font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>Video-doira</span>
                                         </button>
                                         <button type="button"
                                             onClick={() => { setAttachOpen(false); setLocSheetOpen(true); }}
                                             className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]">
                                             <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
-                                                <MapPin className="w-4 h-4" style={{ color: "rgba(200,215,245,0.90)" }} />
+                                                <MapPin className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.90)" }} />
                                             </span>
-                                            <span className="text-[10px] font-bold" style={{ color: "rgba(220,230,255,0.85)" }}>Joylashuv</span>
+                                            <span className="text-[10px] font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>Joylashuv</span>
                                         </button>
                                         <button type="button"
                                             onClick={() => { setAttachOpen(false); setPollOpen(true); }}
                                             className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]">
                                             <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
-                                                <BarChart2 className="w-4 h-4" style={{ color: "rgba(200,215,245,0.90)" }} />
+                                                <BarChart2 className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.90)" }} />
                                             </span>
-                                            <span className="text-[10px] font-bold" style={{ color: "rgba(220,230,255,0.85)" }}>So&apos;rovnoma</span>
+                                            <span className="text-[10px] font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>So&apos;rovnoma</span>
                                         </button>
                                         <button type="button"
                                             onClick={() => {
@@ -1280,17 +1280,17 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                             onClick={() => { setAttachOpen(false); setGifPickerOpen(true); }}
                                             className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]">
                                             <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
-                                                <FileIcon className="w-4 h-4" style={{ color: "rgba(200,215,245,0.90)" }} />
+                                                <FileIcon className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.90)" }} />
                                             </span>
-                                            <span className="text-[10px] font-bold" style={{ color: "rgba(220,230,255,0.85)" }}>GIF</span>
+                                            <span className="text-[10px] font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>GIF</span>
                                         </button>
                                         <button type="button"
                                             onClick={() => { setAttachOpen(false); setStickerPickerOpen(true); }}
                                             className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]">
                                             <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
-                                                <Sticker className="w-4 h-4" style={{ color: "rgba(200,215,245,0.90)" }} />
+                                                <Sticker className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.90)" }} />
                                             </span>
-                                            <span className="text-[10px] font-bold" style={{ color: "rgba(220,230,255,0.85)" }}>Sticker</span>
+                                            <span className="text-[10px] font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>Sticker</span>
                                         </button>
                                     </div>
                                 </div>
@@ -1348,7 +1348,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                             <button onClick={() => setMdToolbarOpen(v => !v)} title="Formatlash"
                                 className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center"
                                 style={{ background: mdToolbarOpen ? "rgb(var(--nx-accent-rgb) / 0.20)" : "transparent" }}>
-                                <BoldIcon className="w-3.5 h-3.5" style={{ color: mdToolbarOpen ? "var(--nx-accent)" : "rgba(160,176,224,0.65)" }} />
+                                <BoldIcon className="w-3.5 h-3.5" style={{ color: mdToolbarOpen ? "var(--nx-accent)" : "rgb(var(--nx-text-2-rgb)/0.65)" }} />
                             </button>
                         </div>
                         {/* Matn bo'sh bo'lsa: dumaloq video + mic; aks holda jo'natish */}
@@ -1449,10 +1449,10 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                         style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                         {/* Xabar preview */}
                         <div className="px-4 py-3 border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
-                            <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>
+                            <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>
                                 {actionMsg.mine ? "Sizning xabaringiz" : "Xabar"}
                             </p>
-                            <p className="text-xs line-clamp-2" style={{ color: "rgba(220,230,255,0.90)" }}>
+                            <p className="text-xs line-clamp-2" style={{ color: "rgb(var(--nx-text-rgb)/0.90)" }}>
                                 {actionMsg.text || (actionMsg.mediaType ? `[${actionMsg.mediaType}]` : "(media)")}
                             </p>
                         </div>
@@ -1472,21 +1472,21 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                 <>
                                     <button onClick={() => { copyText(actionMsg.text); setActionMsg(null); }}
                                         className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/[0.05] text-left">
-                                        <Copy className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                        <span className="text-sm" style={{ color: "rgba(220,230,255,0.95)" }}>Nusxa olish</span>
+                                        <Copy className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
+                                        <span className="text-sm" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>Nusxa olish</span>
                                     </button>
                                     <button onClick={() => { speakText(actionMsg.text); setActionMsg(null); }}
                                         className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/[0.05] text-left">
-                                        <Volume2 className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                        <span className="text-sm" style={{ color: "rgba(220,230,255,0.95)" }}>Eshittirish</span>
+                                        <Volume2 className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
+                                        <span className="text-sm" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>Eshittirish</span>
                                     </button>
                                     <div className="flex items-center gap-2 px-3 py-2">
-                                        <Languages className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                        <span className="text-sm mr-2" style={{ color: "rgba(220,230,255,0.95)" }}>Tarjima:</span>
+                                        <Languages className="w-4 h-4 flex-shrink-0" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
+                                        <span className="text-sm mr-2" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>Tarjima:</span>
                                         {(["uz", "ru", "en"] as const).map(lg => (
                                             <button key={lg} onClick={() => actionTranslate(actionMsg, lg)}
                                                 className="text-[11px] font-black px-2 py-1 rounded"
-                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "rgba(220,230,255,0.95)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "rgb(var(--nx-text-rgb)/0.95)" }}>
                                                 {lg.toUpperCase()}
                                             </button>
                                         ))}
@@ -1497,9 +1497,9 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                 className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/[0.05] text-left">
                                 {actionMsg.bookmarked
                                     ? <BookmarkCheck className="w-4 h-4" style={{ color: "#F59E0B" }} />
-                                    : <Bookmark className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                    : <Bookmark className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                                 }
-                                <span className="text-sm" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                <span className="text-sm" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>
                                     {actionMsg.bookmarked ? "Saqlashdan olib tashlash" : "Saqlash"}
                                 </span>
                             </button>
@@ -1513,8 +1513,8 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                             <button onClick={() => setActionMsg(null)}
                                 className="w-full flex items-center justify-center gap-3 px-3 py-3 rounded-lg hover:bg-white/[0.05] text-left mt-1"
                                 style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
-                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                <span className="text-sm font-bold" style={{ color: "rgba(220,230,255,0.95)" }}>Bekor</span>
+                                <X className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
+                                <span className="text-sm font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>Bekor</span>
                             </button>
                         </div>
                     </div>
@@ -1537,14 +1537,14 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                             </div>
                             <div className="flex-1 min-w-0">
                                 <h3 className="text-sm font-black text-[var(--nx-text)]">Pul yuborish</h3>
-                                <p className="text-[11px] mt-0.5 truncate" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                <p className="text-[11px] mt-0.5 truncate" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                     For Pay orqali {selected?.other?.username ? `@${selected.other.username}` : "foydalanuvchiga"}
                                 </p>
                             </div>
                         </div>
                         <div className="p-5 space-y-3">
                             <div>
-                                <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                     Miqdor
                                 </label>
                                 <input
@@ -1558,7 +1558,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                 />
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                     Izoh (ixtiyoriy)
                                 </label>
                                 <input
@@ -1603,7 +1603,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                         style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
                         <div className="px-5 py-4" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             <h3 className="text-sm font-black text-[var(--nx-text)]">Joylashuv jo'natish</h3>
-                            <p className="text-[11px] mt-0.5" style={{ color: "rgba(140,160,210,0.75)" }}>Statik yoki jonli muddat bilan</p>
+                            <p className="text-[11px] mt-0.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>Statik yoki jonli muddat bilan</p>
                         </div>
                         <div className="p-3 space-y-1.5">
                             <button onClick={() => sendLocation(null)}
@@ -1612,7 +1612,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                 <MapPin className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                 <div className="flex-1">
                                     <p className="text-xs font-bold text-[var(--nx-text)]">Hozirgi joylashuv</p>
-                                    <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.75)" }}>Bir marta, keyin yangilanmaydi</p>
+                                    <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>Bir marta, keyin yangilanmaydi</p>
                                 </div>
                             </button>
                             {[
@@ -1626,7 +1626,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                     <Navigation className="w-4 h-4" style={{ color: "#EF4444" }} />
                                     <div className="flex-1">
                                         <p className="text-xs font-bold text-[var(--nx-text)]">Jonli — {x.label}</p>
-                                        <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.75)" }}>Har 15 sekundda avtomatik yangilanadi</p>
+                                        <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>Har 15 sekundda avtomatik yangilanadi</p>
                                     </div>
                                 </button>
                             ))}

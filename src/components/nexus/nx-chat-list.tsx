@@ -123,11 +123,11 @@ export function NxChatList({ filterUnread = false }: { filterUnread?: boolean } 
                                     <div className="flex items-center gap-1.5">
                                         <span className="text-sm font-bold text-[var(--nx-text)] truncate">{name}</span>
                                         {c.other?.verified && !isSelf && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
-                                        {c.pinned && <Pin className="w-3 h-3 flex-shrink-0" style={{ color: "rgba(140,160,210,0.7)" }} />}
-                                        {c.muted && <VolumeX className="w-3 h-3 flex-shrink-0" style={{ color: "rgba(140,160,210,0.7)" }} />}
-                                        <span className="ml-auto text-[10px] flex-shrink-0" style={{ color: "rgba(100,120,170,0.7)" }}>{timeAgo(c.lastMessageAt)}</span>
+                                        {c.pinned && <Pin className="w-3 h-3 flex-shrink-0" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }} />}
+                                        {c.muted && <VolumeX className="w-3 h-3 flex-shrink-0" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }} />}
+                                        <span className="ml-auto text-[10px] flex-shrink-0" style={{ color: "rgb(var(--nx-text-3-rgb)/0.7)" }}>{timeAgo(c.lastMessageAt)}</span>
                                     </div>
-                                    <p className="text-xs truncate mt-0.5" style={{ color: c.unread ? "rgba(200,215,245,0.95)" : "var(--nx-text-3)", fontWeight: c.unread ? 600 : 400 }}>
+                                    <p className="text-xs truncate mt-0.5" style={{ color: c.unread ? "rgb(var(--nx-text-2-rgb)/0.95)" : "var(--nx-text-3)", fontWeight: c.unread ? 600 : 400 }}>
                                         {draft ? (
                                             <><span style={{ color: "#F97316", fontWeight: 700 }}>Qoralama: </span>{draft.slice(0, 60)}</>
                                         ) : (
@@ -136,7 +136,7 @@ export function NxChatList({ filterUnread = false }: { filterUnread?: boolean } 
                                     </p>
                                 </div>
                                 {c.unread && (
-                                    <div className="min-w-[10px] h-2.5 rounded-full flex-shrink-0" style={{ background: c.muted ? "rgba(140,160,210,0.6)" : "var(--nx-accent)" }} />
+                                    <div className="min-w-[10px] h-2.5 rounded-full flex-shrink-0" style={{ background: c.muted ? "rgb(var(--nx-text-2-rgb)/0.6)" : "var(--nx-accent)" }} />
                                 )}
                             </button>
                         );

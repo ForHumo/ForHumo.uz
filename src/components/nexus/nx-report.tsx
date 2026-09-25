@@ -103,7 +103,7 @@ export function NxReport() {
                 }
                 <div className="flex-1">
                     <p className="text-sm font-black text-[var(--nx-text)]">Shikoyat</p>
-                    <p className="text-[10px]" style={{ color: "rgba(100,120,170,0.70)" }}>Buzilishni xabar qiling</p>
+                    <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-3-rgb)/0.70)" }}>Buzilishni xabar qiling</p>
                 </div>
                 <ShieldAlert className="w-5 h-5" style={{ color: "#EF4444" }} />
             </div>
@@ -115,7 +115,7 @@ export function NxReport() {
                         className="flex-1 py-2 text-[12px] font-black rounded-xl transition-all"
                         style={{
                             background: tab === t ? "rgb(var(--nx-accent-rgb) / 0.25)" : "transparent",
-                            color: tab === t ? "white" : "rgba(100,120,170,0.60)",
+                            color: tab === t ? "white" : "rgb(var(--nx-text-3-rgb)/0.60)",
                             border: `1px solid ${tab === t ? "rgb(var(--nx-accent-rgb) / 0.45)" : "transparent"}`,
                         }}>
                         {t === "send" ? "Shikoyat yuborish" : "Tarixim"}
@@ -133,7 +133,7 @@ export function NxReport() {
                         {step === "category" && (
                             <div className="flex flex-col gap-2">
                                 <p className="text-[10px] font-black uppercase tracking-widest mb-2"
-                                    style={{ color: "rgba(100,120,170,0.60)" }}>
+                                    style={{ color: "rgb(var(--nx-text-3-rgb)/0.60)" }}>
                                     Sabab tanlang
                                 </p>
                                 {CATEGORIES.map(c => (
@@ -143,9 +143,9 @@ export function NxReport() {
                                         style={{ background: "rgba(8,12,32,0.95)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                         <div className="flex-1">
                                             <p className="text-[12px] font-bold text-[var(--nx-text)]">{c.label}</p>
-                                            <p className="text-[10px]" style={{ color: "rgba(100,120,170,0.60)" }}>{c.description}</p>
+                                            <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-3-rgb)/0.60)" }}>{c.description}</p>
                                         </div>
-                                        <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(100,120,170,0.40)" }} />
+                                        <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "rgb(var(--nx-text-3-rgb)/0.40)" }} />
                                     </button>
                                 ))}
                             </div>
@@ -159,14 +159,14 @@ export function NxReport() {
                                     <p className="text-[11px] font-black text-[var(--nx-text)]">
                                         {CATEGORIES.find(c => c.id === selectedCat)?.label}
                                     </p>
-                                    <p className="text-[10px] mt-0.5" style={{ color: "rgba(140,160,210,0.70)" }}>
+                                    <p className="text-[10px] mt-0.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.70)" }}>
                                         {CATEGORIES.find(c => c.id === selectedCat)?.description}
                                     </p>
                                 </div>
 
                                 <div>
                                     <p className="text-[10px] font-black uppercase tracking-widest mb-2"
-                                        style={{ color: "rgba(100,120,170,0.60)" }}>
+                                        style={{ color: "rgb(var(--nx-text-3-rgb)/0.60)" }}>
                                         Qo'shimcha ma'lumot (ixtiyoriy)
                                     </p>
                                     <textarea
@@ -204,7 +204,7 @@ export function NxReport() {
                                     <Check className="w-8 h-8" style={{ color: "#10B981" }} />
                                 </div>
                                 <p className="text-base font-black text-[var(--nx-text)] mb-1">Shikoyat yuborildi</p>
-                                <p className="text-[11px] text-center mb-6" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                <p className="text-[11px] text-center mb-6" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                     Moderatorlar 24 soat ichida ko'rib chiqadi
                                 </p>
                                 <button onClick={() => { reset(); setTab("history"); }}
@@ -221,7 +221,7 @@ export function NxReport() {
                 {tab === "history" && (
                     <div className="flex flex-col gap-3">
                         {myReports.length === 0 && (
-                            <p className="text-center py-16 text-sm" style={{ color: "rgba(100,120,170,0.40)" }}>
+                            <p className="text-center py-16 text-sm" style={{ color: "rgb(var(--nx-text-3-rgb)/0.40)" }}>
                                 Hali shikoyatlar yo'q
                             </p>
                         )}
@@ -244,7 +244,7 @@ export function NxReport() {
                                             style={{ background: "rgba(239,68,68,0.12)", color: "rgba(239,68,68,0.80)" }}>
                                             {cat?.label}
                                         </span>
-                                        <span className="text-[9px] ml-auto" style={{ color: "rgba(100,120,170,0.50)" }}>
+                                        <span className="text-[9px] ml-auto" style={{ color: "rgb(var(--nx-text-3-rgb)/0.50)" }}>
                                             {r.sentAt}
                                         </span>
                                     </div>

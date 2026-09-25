@@ -271,13 +271,13 @@ export function NxNotifications() {
                             className="flex items-center justify-center w-8 h-8 rounded-lg"
                             style={pushState === "subscribed"
                                 ? { background: "rgb(var(--nx-accent-rgb) / 0.15)", color: "var(--nx-accent)" }
-                                : { background: "rgb(var(--nx-accent-rgb) / 0.12)", color: "rgba(140,160,210,0.85)" }}>
+                                : { background: "rgb(var(--nx-accent-rgb) / 0.12)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                             {pushBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : pushState === "subscribed" ? <BellRing className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
                         </button>
                     )}
                     {unreadCount > 0 && (
                         <button onClick={markAllRead} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold"
-                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", color: "rgba(140,160,210,0.85)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                             <CheckCheck className="w-3 h-3" /> O&apos;qi
                         </button>
                     )}
@@ -292,7 +292,7 @@ export function NxNotifications() {
                         className="w-8 h-8 flex items-center justify-center rounded-lg"
                         style={prefsOpen
                             ? { background: "rgb(var(--nx-accent-rgb) / 0.15)", color: "var(--nx-accent)" }
-                            : { background: "rgb(var(--nx-accent-rgb) / 0.12)", color: "rgba(140,160,210,0.85)" }}>
+                            : { background: "rgb(var(--nx-accent-rgb) / 0.12)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                         <Settings2 className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={close} className="w-8 h-8 flex items-center justify-center rounded-xl"
@@ -304,7 +304,7 @@ export function NxNotifications() {
                 {/* Prefs panel (Settings2 tugmasi bilan ochiladi) */}
                 {prefsOpen && (
                     <div className="px-5 py-3 flex-shrink-0 space-y-1.5 overflow-y-auto max-h-[60vh]" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", background: "rgb(var(--nx-accent-rgb) / 0.04)", scrollbarWidth: "none" }}>
-                        <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: "rgba(140,160,210,0.75)" }}>Push bildirishnomalar</p>
+                        <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>Push bildirishnomalar</p>
                         {NOTIF_TYPES.map(t => {
                             const enabled = prefs[t] !== false;
                             return (
@@ -322,7 +322,7 @@ export function NxNotifications() {
                         })}
 
                         {/* Ringtone selektori */}
-                        <p className="text-[10px] font-black uppercase tracking-wider mt-4 mb-2" style={{ color: "rgba(140,160,210,0.75)" }}>Chaqiruv ohangi</p>
+                        <p className="text-[10px] font-black uppercase tracking-wider mt-4 mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>Chaqiruv ohangi</p>
                         <p className="text-[10px] mb-2" style={{ color: "var(--nx-text-3)" }}>Tanlash uchun bosing — darrov namuna eshittiradi</p>
                         {(Object.keys(RINGTONE_LABELS) as RingtoneVariant[]).map(v => {
                             const active = ringtone === v;
@@ -351,7 +351,7 @@ export function NxNotifications() {
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold flex-shrink-0 transition-all duration-150"
                             style={filter === f.id
                                 ? { background: "var(--nx-accent)", color: "#fff" }
-                                : { background: "rgb(var(--nx-accent-rgb) / 0.08)", color: "rgba(140,160,210,0.80)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.16)" }}>
+                                : { background: "rgb(var(--nx-accent-rgb) / 0.08)", color: "rgb(var(--nx-text-2-rgb)/0.80)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.16)" }}>
                             <f.icon className="w-3 h-3" />{f.label}
                         </button>
                     ))}
@@ -369,7 +369,7 @@ export function NxNotifications() {
                             <p className="text-sm font-bold text-white/50 mb-1">
                                 {filter === "unread" ? "O'qilmagan bildirishnoma yo'q" : "Bildirishnoma yo'q"}
                             </p>
-                            <p className="text-xs" style={{ color: "rgba(100,120,170,0.60)" }}>
+                            <p className="text-xs" style={{ color: "rgb(var(--nx-text-3-rgb)/0.60)" }}>
                                 {filter === "unread" ? "Barchasini o'qib bo'ldingiz" : "Kimdir postingizni yoqtirsa yoki izoh yozsa shu yerda ko'rasiz"}
                             </p>
                         </div>
@@ -378,7 +378,7 @@ export function NxNotifications() {
                             {dayGroups.map(dg => (
                                 <div key={dg.label}>
                                     <p className="sticky top-0 z-10 px-4 py-1.5 text-[9px] font-black uppercase tracking-widest"
-                                        style={{ background: "rgba(8,12,32,0.95)", color: "rgba(140,160,210,0.60)", backdropFilter: "blur(8px)" }}>
+                                        style={{ background: "rgba(8,12,32,0.95)", color: "rgb(var(--nx-text-2-rgb)/0.60)", backdropFilter: "blur(8px)" }}>
                                         {dg.label}
                                     </p>
                                     {dg.items.map(n => {
@@ -399,7 +399,7 @@ export function NxNotifications() {
                                                             {n.actor?.name || n.actor?.username || "Kimdir"}
                                                             {n.actor?.verified && <NxVerifiedBadge category={(n.actor as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={12} />}
                                                         </span>{" "}
-                                                        <span style={{ color: "rgba(180,200,240,0.85)" }}>{TYPE_TEXT[n.type]}</span>
+                                                        <span style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>{TYPE_TEXT[n.type]}</span>
                                                         {n.type === "TIP" && n.amount ? <span className="font-black ml-1" style={{ color: "#F59E0B" }}>{formatMoney(n.amount, currency)}</span> : null}
                                                     </p>
                                                     {n.postText && <p className="text-[11px] mt-0.5 truncate" style={{ color: "var(--nx-text-3)" }}>&ldquo;{n.postText}&rdquo;</p>}

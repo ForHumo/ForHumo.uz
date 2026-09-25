@@ -58,7 +58,7 @@ export function NxShare() {
                 <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
                     <div className="min-w-0">
                         <h3 className="text-sm font-black text-[var(--nx-text)]">Ulashish</h3>
-                        {shareSheetTitle && <p className="text-[10px] mt-0.5 truncate max-w-[260px]" style={{ color: "rgba(100,120,170,0.75)" }}>{shareSheetTitle}</p>}
+                        {shareSheetTitle && <p className="text-[10px] mt-0.5 truncate max-w-[260px]" style={{ color: "rgb(var(--nx-text-3-rgb)/0.75)" }}>{shareSheetTitle}</p>}
                     </div>
                     <button onClick={closeShareSheet} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                         <X className="w-4 h-4 text-[var(--nx-text)]" />
@@ -75,7 +75,7 @@ export function NxShare() {
                                 <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: `${opt.color}20` }}>
                                     <Icon className="w-5 h-5" style={{ color: opt.color }} />
                                 </div>
-                                <span className="text-[10px] font-bold text-center leading-tight whitespace-pre-line" style={{ color: "rgba(140,160,210,0.80)" }}>
+                                <span className="text-[10px] font-bold text-center leading-tight whitespace-pre-line" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }}>
                                     {opt.id === "copy" && copied ? "Ko'chirildi!" : opt.label}
                                 </span>
                             </button>
@@ -87,7 +87,7 @@ export function NxShare() {
                 <div className="px-5 pb-6">
                     <div className="flex items-center gap-3 px-3 py-3 rounded-2xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                         <Link2 className="w-4 h-4 flex-shrink-0" style={{ color: "rgb(var(--nx-accent-rgb) / 0.60)" }} />
-                        <span className="flex-1 text-xs truncate" style={{ color: "rgba(140,160,210,0.70)" }}>{url}</span>
+                        <span className="flex-1 text-xs truncate" style={{ color: "rgb(var(--nx-text-2-rgb)/0.70)" }}>{url}</span>
                         <button onClick={copyLink}
                             className="flex-shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all duration-200"
                             style={copied

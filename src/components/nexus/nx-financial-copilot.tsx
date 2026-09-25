@@ -64,7 +64,7 @@ export function NxFinancialCopilot({
                         <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                             <Sparkles className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Financial Copilot
                         </h3>
-                        <p className="text-[10px] flex items-center gap-1 mt-0.5" style={{ color: "rgba(140,160,210,0.7)" }}>
+                        <p className="text-[10px] flex items-center gap-1 mt-0.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                             <ShieldCheck className="w-3 h-3" /> Faqat sizning ma&apos;lumotlaringiz o&apos;qiladi
                         </p>
                     </div>
@@ -78,7 +78,7 @@ export function NxFinancialCopilot({
                     {!priv && !error && (
                         <>
                             <div>
-                                <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     Sizning savolingiz (ixtiyoriy)
                                 </p>
                                 <textarea value={question} onChange={e => setQuestion(e.target.value)}
@@ -88,7 +88,7 @@ export function NxFinancialCopilot({
                                     style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
                             </div>
                             <div>
-                                <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     Chatdan qancha xabar o&apos;qilsin
                                 </p>
                                 <div className="flex gap-1.5">
@@ -97,7 +97,7 @@ export function NxFinancialCopilot({
                                             className="flex-1 py-2 rounded-xl text-xs font-bold"
                                             style={scanDepth === d
                                                 ? { background: "var(--nx-accent)", color: "white" }
-                                                : { background: "var(--nx-surface)", color: "rgba(200,215,245,0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
+                                                : { background: "var(--nx-surface)", color: "rgb(var(--nx-text-2-rgb)/0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                             {d}
                                         </button>
                                     ))}
@@ -109,7 +109,7 @@ export function NxFinancialCopilot({
                                 {busy ? <><Loader2 className="w-4 h-4 animate-spin" /> AI tahlil qilyapti...</>
                                     : <><Sparkles className="w-4 h-4" /> Tavsiya olish</>}
                             </button>
-                            <p className="text-[10px] text-center" style={{ color: "rgba(140,160,210,0.6)" }}>
+                            <p className="text-[10px] text-center" style={{ color: "rgb(var(--nx-text-2-rgb)/0.6)" }}>
                                 AI faqat sizning hamyoningiz + so&apos;nggi 60 kun kirim/chiqimni ko&apos;radi.
                                 Suhbatdoshingizning ma&apos;lumoti hech qachon o&apos;qilmaydi.
                             </p>
@@ -125,11 +125,11 @@ export function NxFinancialCopilot({
                             {/* Snapshot cards */}
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="p-3 rounded-2xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
-                                    <p className="text-[10px] uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.7)" }}>Balans</p>
+                                    <p className="text-[10px] uppercase tracking-wider" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>Balans</p>
                                     <p className="text-sm font-black text-[var(--nx-text)]">{formatMoney(snapshot.balance)}</p>
                                 </div>
                                 <div className="p-3 rounded-2xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
-                                    <p className="text-[10px] uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.7)" }}>Kunlik xavfsiz</p>
+                                    <p className="text-[10px] uppercase tracking-wider" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>Kunlik xavfsiz</p>
                                     <p className="text-sm font-black text-[var(--nx-text)]">{formatMoney(snapshot.dailyBudgetSafeToSpend)}</p>
                                 </div>
                             </div>
@@ -140,7 +140,7 @@ export function NxFinancialCopilot({
                                 <p className="text-[10px] uppercase tracking-widest mb-2 flex items-center gap-1" style={{ color: "var(--nx-accent)" }}>
                                     <TrendingUp className="w-3 h-3" /> Faqat siz uchun (sirli)
                                 </p>
-                                <p className="text-sm whitespace-pre-wrap" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                <p className="text-sm whitespace-pre-wrap" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>
                                     {priv}
                                 </p>
                             </div>
@@ -152,7 +152,7 @@ export function NxFinancialCopilot({
                                     <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "var(--nx-text-2)" }}>
                                         Chatga yuborish uchun (raqamlarsiz)
                                     </p>
-                                    <p className="text-sm mb-3" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                    <p className="text-sm mb-3" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>
                                         {pub}
                                     </p>
                                     <div className="flex gap-2">

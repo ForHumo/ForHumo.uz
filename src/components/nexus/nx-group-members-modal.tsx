@@ -173,7 +173,7 @@ export function NxGroupMembersModal({
                                             {m.name ?? m.username ?? "Foydalanuvchi"}
                                         </p>
                                         {m.isAnonymous && (
-                                            <EyeOff className="w-3 h-3 flex-shrink-0" style={{ color: "rgba(140,160,210,0.7)" }} />
+                                            <EyeOff className="w-3 h-3 flex-shrink-0" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }} />
                                         )}
                                         {m.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
                                         {m.role === "OWNER" && (
@@ -202,8 +202,8 @@ export function NxGroupMembersModal({
                                         className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"
                                         style={m.isAnonymous
                                             ? { background: "rgba(255,193,7,0.15)", border: "1px solid rgba(255,193,7,0.35)" }
-                                            : { background: "rgba(140,160,210,0.10)" }}>
-                                        <EyeOff className="w-4 h-4" style={{ color: m.isAnonymous ? "#FFC107" : "rgba(140,160,210,0.7)" }} />
+                                            : { background: "rgb(var(--nx-text-2-rgb)/0.10)" }}>
+                                        <EyeOff className="w-4 h-4" style={{ color: m.isAnonymous ? "#FFC107" : "rgb(var(--nx-text-2-rgb)/0.7)" }} />
                                     </button>
                                 )}
                                 {canManage && m.role !== "OWNER" && (
@@ -221,8 +221,8 @@ export function NxGroupMembersModal({
                                                 onClick={() => setRole(m.profileId, "MEMBER")}
                                                 title="Adminlikdan olish"
                                                 className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"
-                                                style={{ background: "rgba(140,160,210,0.1)", border: "1px solid rgba(140,160,210,0.3)" }}>
-                                                <Shield className="w-4 h-4" style={{ color: "rgba(140,160,210,0.9)" }} />
+                                                style={{ background: "rgb(var(--nx-text-2-rgb)/0.1)", border: "1px solid rgb(var(--nx-text-2-rgb)/0.3)" }}>
+                                                <Shield className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.9)" }} />
                                             </button>
                                         ))}
                                         <button disabled={busy === m.profileId}

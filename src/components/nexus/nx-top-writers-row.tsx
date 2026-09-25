@@ -95,7 +95,7 @@ export function NxTopWritersRow() {
                                 <span className="text-[11px] font-black text-[var(--nx-text)] truncate">{w.name || w.username}</span>
                                 {w.verified && <NxVerifiedBadge category={w.verifiedCategory} size={10} />}
                             </div>
-                            <div className="flex items-center justify-center gap-1.5 text-[9px] mt-0.5" style={{ color: "rgba(140,160,210,0.75)" }}>
+                            <div className="flex items-center justify-center gap-1.5 text-[9px] mt-0.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                 <span className="flex items-center gap-0.5"><Heart className="w-2.5 h-2.5" style={{ color: "#EF4444" }} />{fmtN(w.likes)}</span>
                                 <span className="flex items-center gap-0.5"><MessageCircle className="w-2.5 h-2.5" style={{ color: "var(--nx-accent)" }} />{fmtN(w.comments)}</span>
                             </div>

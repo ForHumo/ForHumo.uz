@@ -57,12 +57,12 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
                 style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", maxHeight: "85vh" }}>
                 {/* Header */}
                 <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
-                    <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>
+                    <p className="text-sm font-black" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>
                         Yangi {type === "CHANNEL" ? "kanal" : "guruh"}
                     </p>
                     <button onClick={onClose} disabled={busy}
                         className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
-                        <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                        <X className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                     </button>
                 </div>
 
@@ -74,9 +74,9 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
                             background: type === "CHANNEL" ? "rgb(var(--nx-accent-rgb) / 0.15)" : "rgb(var(--nx-accent-rgb) / 0.08)",
                             border: `1px solid ${type === "CHANNEL" ? "rgb(var(--nx-accent-rgb) / 0.50)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
                         }}>
-                        <Megaphone className="w-5 h-5" style={{ color: type === "CHANNEL" ? "var(--nx-accent)" : "rgba(160,176,224,0.85)" }} />
-                        <span className="text-xs font-black" style={{ color: type === "CHANNEL" ? "var(--nx-accent)" : "rgba(220,230,255,0.85)" }}>Kanal</span>
-                        <span className="text-[10px] opacity-70" style={{ color: "rgba(220,230,255,0.75)" }}>Faqat ega yozadi</span>
+                        <Megaphone className="w-5 h-5" style={{ color: type === "CHANNEL" ? "var(--nx-accent)" : "rgb(var(--nx-text-2-rgb)/0.85)" }} />
+                        <span className="text-xs font-black" style={{ color: type === "CHANNEL" ? "var(--nx-accent)" : "rgb(var(--nx-text-rgb)/0.85)" }}>Kanal</span>
+                        <span className="text-[10px] opacity-70" style={{ color: "rgb(var(--nx-text-rgb)/0.75)" }}>Faqat ega yozadi</span>
                     </button>
                     <button onClick={() => setType("GROUP")}
                         className="flex flex-col items-center gap-1.5 py-3 rounded-xl transition"
@@ -84,23 +84,23 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
                             background: type === "GROUP" ? "rgb(var(--nx-accent-rgb) / 0.15)" : "rgb(var(--nx-accent-rgb) / 0.08)",
                             border: `1px solid ${type === "GROUP" ? "rgb(var(--nx-accent-rgb) / 0.50)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
                         }}>
-                        <Users className="w-5 h-5" style={{ color: type === "GROUP" ? "var(--nx-accent)" : "rgba(160,176,224,0.85)" }} />
-                        <span className="text-xs font-black" style={{ color: type === "GROUP" ? "var(--nx-accent)" : "rgba(220,230,255,0.85)" }}>Guruh</span>
-                        <span className="text-[10px] opacity-70" style={{ color: "rgba(220,230,255,0.75)" }}>Barcha a&apos;zolar yozadi</span>
+                        <Users className="w-5 h-5" style={{ color: type === "GROUP" ? "var(--nx-accent)" : "rgb(var(--nx-text-2-rgb)/0.85)" }} />
+                        <span className="text-xs font-black" style={{ color: type === "GROUP" ? "var(--nx-accent)" : "rgb(var(--nx-text-rgb)/0.85)" }}>Guruh</span>
+                        <span className="text-[10px] opacity-70" style={{ color: "rgb(var(--nx-text-rgb)/0.75)" }}>Barcha a&apos;zolar yozadi</span>
                     </button>
                 </div>
 
                 {/* Forma */}
                 <div className="px-4 pb-3 space-y-2.5 overflow-y-auto">
                     <div>
-                        <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>Nom</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>Nom</label>
                         <input value={name} onChange={e => setName(e.target.value)}
                             maxLength={80} placeholder={type === "CHANNEL" ? "Mening kanalim" : "Do'stlar guruhi"}
                             className="w-full h-10 px-3 mt-1 rounded-lg bg-transparent text-[var(--nx-text)] text-sm focus:outline-none"
                             style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }} />
                     </div>
                     <div>
-                        <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>Handle (ixtiyoriy)</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>Handle (ixtiyoriy)</label>
                         <div className="flex items-center mt-1 rounded-lg" style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                             <span className="pl-3 pr-1 text-white/60 text-sm">@</span>
                             <input value={handle} onChange={e => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 30))}
@@ -109,7 +109,7 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
                         </div>
                     </div>
                     <div>
-                        <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>Tavsif</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>Tavsif</label>
                         <textarea value={description} onChange={e => setDescription(e.target.value.slice(0, 500))}
                             rows={2} placeholder="Bu erda nima haqida gaplashiladi..."
                             className="w-full px-3 py-2 mt-1 rounded-lg bg-transparent text-[var(--nx-text)] text-xs focus:outline-none resize-none"
@@ -122,10 +122,10 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
                                 background: !isPrivate ? "rgb(var(--nx-accent-rgb) / 0.12)" : "rgb(var(--nx-accent-rgb) / 0.06)",
                                 border: `1px solid ${!isPrivate ? "rgb(var(--nx-accent-rgb) / 0.40)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
                             }}>
-                            <Globe className="w-3.5 h-3.5" style={{ color: !isPrivate ? "var(--nx-accent)" : "rgba(160,176,224,0.75)" }} />
+                            <Globe className="w-3.5 h-3.5" style={{ color: !isPrivate ? "var(--nx-accent)" : "rgb(var(--nx-text-2-rgb)/0.75)" }} />
                             <div className="text-left">
-                                <p className="text-xs font-bold" style={{ color: "rgba(220,230,255,0.95)" }}>Ochiq</p>
-                                <p className="text-[9px] opacity-70" style={{ color: "rgba(220,230,255,0.75)" }}>Har kim topa oladi</p>
+                                <p className="text-xs font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>Ochiq</p>
+                                <p className="text-[9px] opacity-70" style={{ color: "rgb(var(--nx-text-rgb)/0.75)" }}>Har kim topa oladi</p>
                             </div>
                         </button>
                         <button onClick={() => setIsPrivate(true)}
@@ -134,10 +134,10 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
                                 background: isPrivate ? "rgb(var(--nx-accent-rgb) / 0.12)" : "rgb(var(--nx-accent-rgb) / 0.06)",
                                 border: `1px solid ${isPrivate ? "rgb(var(--nx-accent-rgb) / 0.40)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
                             }}>
-                            <Lock className="w-3.5 h-3.5" style={{ color: isPrivate ? "var(--nx-accent)" : "rgba(160,176,224,0.75)" }} />
+                            <Lock className="w-3.5 h-3.5" style={{ color: isPrivate ? "var(--nx-accent)" : "rgb(var(--nx-text-2-rgb)/0.75)" }} />
                             <div className="text-left">
-                                <p className="text-xs font-bold" style={{ color: "rgba(220,230,255,0.95)" }}>Xususiy</p>
-                                <p className="text-[9px] opacity-70" style={{ color: "rgba(220,230,255,0.75)" }}>Faqat taklif bilan</p>
+                                <p className="text-xs font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>Xususiy</p>
+                                <p className="text-[9px] opacity-70" style={{ color: "rgb(var(--nx-text-rgb)/0.75)" }}>Faqat taklif bilan</p>
                             </div>
                         </button>
                     </div>

@@ -114,7 +114,7 @@ export function NxCalls() {
                             style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", caretColor: "var(--nx-accent)" }} />
                         {query && (
                             <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-                                <X className="h-3.5 w-3.5" style={{ color: "rgba(160,180,220,0.70)" }} />
+                                <X className="h-3.5 w-3.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.70)" }} />
                             </button>
                         )}
                     </div>
@@ -180,12 +180,12 @@ export function NxCalls() {
                     {/* Guruh chaqiruv tarixi (tugagan) */}
                     {filter !== "missed" && filteredGroups.filter(g => g.status === "ENDED").length > 0 && (
                         <div className="mb-3">
-                            <p className="mb-1.5 px-1 text-[10px] font-black uppercase" style={{ color: "rgba(140,160,210,0.7)" }}>Tugagan guruhlar</p>
+                            <p className="mb-1.5 px-1 text-[10px] font-black uppercase" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>Tugagan guruhlar</p>
                             {filteredGroups.filter(g => g.status === "ENDED").slice(0, filter === "groups" ? 30 : 5).map(g => (
                                 <div key={g.id} className="mb-1 flex flex-col rounded-2xl">
                                     <div className="flex items-center gap-3 p-3">
                                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                                            <Users className="h-5 w-5" style={{ color: "rgba(140,160,210,0.8)" }} />
+                                            <Users className="h-5 w-5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.8)" }} />
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-1.5">
@@ -232,7 +232,7 @@ export function NxCalls() {
                         <div className="flex flex-col gap-3">
                             {dayGroups.map(dg => (
                                 <div key={dg.label} className="flex flex-col gap-1">
-                                    <p className="mb-1 px-1 text-[10px] font-black uppercase" style={{ color: "rgba(140,160,210,0.7)" }}>{dg.label}</p>
+                                    <p className="mb-1 px-1 text-[10px] font-black uppercase" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>{dg.label}</p>
                                     {dg.items.map(c => {
                                         const peerLabel = c.peer?.name || c.peer?.username || c.peer?.humoId || "Peer";
                                         const Icon = c.missed ? PhoneMissed : c.dir === "in" ? PhoneIncoming : PhoneOutgoing;

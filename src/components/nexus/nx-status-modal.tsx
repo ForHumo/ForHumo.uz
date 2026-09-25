@@ -90,10 +90,10 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
                 className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
                 style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", maxHeight: "85vh" }}>
                 <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
-                    <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Maxsus status</p>
+                    <p className="text-sm font-black" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>Maxsus status</p>
                     <button onClick={onClose} disabled={busy}
                         className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
-                        <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                        <X className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                     </button>
                 </div>
 
@@ -101,7 +101,7 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
                     <div className="flex gap-2">
                         <div className="w-14 h-11 flex items-center justify-center rounded-lg flex-shrink-0"
                             style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
-                            <SelectedIcon className="w-5 h-5" style={{ color: selected?.color ?? "rgba(160,176,224,0.85)" }} />
+                            <SelectedIcon className="w-5 h-5" style={{ color: selected?.color ?? "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                         </div>
                         <input value={text} onChange={e => setText(e.target.value.slice(0, 60))}
                             placeholder="Nima qilyapsiz..."
@@ -110,7 +110,7 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
                     </div>
 
                     <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "rgba(140,160,210,0.65)" }}>Qancha vaqt</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>Qancha vaqt</p>
                         <div className="flex flex-wrap gap-1.5">
                             {[
                                 { m: null, label: "Doimiy" },
@@ -125,7 +125,7 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
                                     style={{
                                         background: mins === o.m ? "rgb(var(--nx-accent-rgb) / 0.20)" : "rgb(var(--nx-accent-rgb) / 0.08)",
                                         border: `1px solid ${mins === o.m ? "rgb(var(--nx-accent-rgb) / 0.50)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
-                                        color: mins === o.m ? "var(--nx-accent)" : "rgba(220,230,255,0.85)",
+                                        color: mins === o.m ? "var(--nx-accent)" : "rgb(var(--nx-text-rgb)/0.85)",
                                     }}>
                                     {o.label}
                                 </button>
@@ -134,7 +134,7 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
                     </div>
 
                     <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "rgba(140,160,210,0.65)" }}>Tayyor variantlar</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>Tayyor variantlar</p>
                         <div className="grid grid-cols-2 gap-1.5">
                             {PRESETS.map(p => {
                                 const isActive = selectedKey === p.key;
@@ -150,7 +150,7 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
                                             border: `1px solid ${isActive ? "rgb(var(--nx-accent-rgb) / 0.40)" : "rgb(var(--nx-accent-rgb) / 0.15)"}`,
                                         }}>
                                         <Icon className="w-4 h-4 flex-shrink-0" style={{ color: p.color }} />
-                                        <span className="text-xs truncate" style={{ color: isActive ? "var(--nx-accent)" : "rgba(220,230,255,0.90)" }}>
+                                        <span className="text-xs truncate" style={{ color: isActive ? "var(--nx-accent)" : "rgb(var(--nx-text-rgb)/0.90)" }}>
                                             {p.text}
                                         </span>
                                     </button>

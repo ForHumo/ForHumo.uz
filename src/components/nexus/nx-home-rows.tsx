@@ -325,7 +325,7 @@ export function NxHomeRows() {
                                 : <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-[var(--nx-text)]"
                                     style={{ background: "var(--nx-accent)", border: "2px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>{c.name[0]?.toUpperCase() ?? "K"}</div>}
                             <p className="text-[11px] font-bold text-[var(--nx-text)] truncate w-full group-hover:text-[var(--nx-accent)] transition-colors">{c.name}</p>
-                            <p className="text-[9px] flex items-center gap-0.5" style={{ color: "rgba(140,160,210,0.75)" }}>
+                            <p className="text-[9px] flex items-center gap-0.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                 <Users className="w-2.5 h-2.5" />{fmtN(c.memberCount)}
                             </p>
                         </Link>
@@ -393,7 +393,7 @@ function VidCard({ v, onOpen, accent, badge }: { v: HVid; onOpen: () => void; ac
                 {v.durationSec > 0 && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
             </div>
             <p className="text-[11px] font-bold text-[var(--nx-text)] line-clamp-2 leading-snug">{v.title}</p>
-            <p className="text-[9px] flex items-center gap-1" style={{ color: "rgba(100,120,170,0.75)" }}>
+            <p className="text-[9px] flex items-center gap-1" style={{ color: "rgb(var(--nx-text-3-rgb)/0.75)" }}>
                 <span className="truncate">{v.author?.name || v.author?.username || ""}</span>
                 <span>·</span><Eye className="w-2.5 h-2.5" />{fmtN(v.views)}
             </p>

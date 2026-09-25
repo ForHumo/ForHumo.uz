@@ -232,7 +232,7 @@ export function NxGroupSettingsModal({
 
                             {/* Nom */}
                             <div>
-                                <label className="block text-[10px] uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                <label className="block text-[10px] uppercase tracking-widest mb-1.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     Nom
                                 </label>
                                 <input disabled={!canEdit} value={data.name}
@@ -243,7 +243,7 @@ export function NxGroupSettingsModal({
 
                             {/* Tavsif */}
                             <div>
-                                <label className="block text-[10px] uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                <label className="block text-[10px] uppercase tracking-widest mb-1.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     Tavsif
                                 </label>
                                 <textarea disabled={!canEdit} value={data.description ?? ""}
@@ -255,7 +255,7 @@ export function NxGroupSettingsModal({
 
                             {/* Qoidalar */}
                             <div>
-                                <label className="block text-[10px] uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                <label className="block text-[10px] uppercase tracking-widest mb-1.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     Qoidalar (a&apos;zolar ko&apos;radi)
                                 </label>
                                 <textarea disabled={!canEdit} value={data.rules ?? ""}
@@ -269,7 +269,7 @@ export function NxGroupSettingsModal({
                             {/* Slow mode */}
                             {data.type === "GROUP" && (
                                 <div>
-                                    <label className="block text-[10px] uppercase tracking-widest mb-1.5 flex items-center gap-1.5" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                    <label className="block text-[10px] uppercase tracking-widest mb-1.5 flex items-center gap-1.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                         <Clock className="w-3 h-3" /> Slow mode
                                     </label>
                                     <select disabled={!canEdit} value={data.slowModeSeconds}
@@ -285,7 +285,7 @@ export function NxGroupSettingsModal({
 
                             {/* Auto-delete */}
                             <div>
-                                <label className="block text-[10px] uppercase tracking-widest mb-1.5 flex items-center gap-1.5" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                <label className="block text-[10px] uppercase tracking-widest mb-1.5 flex items-center gap-1.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     <Trash2 className="w-3 h-3" /> Xabarlar auto-o&apos;chishi
                                 </label>
                                 <select disabled={!canEdit} value={data.autoDeleteAfterSeconds}
@@ -309,7 +309,7 @@ export function NxGroupSettingsModal({
                                             <ShieldOff className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                             Forward taqiqi
                                         </p>
-                                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                        <p className="text-[11px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                             A&apos;zolar xabarlarni boshqa suhbatga jo&apos;nata olmaydi
                                         </p>
                                     </div>
@@ -326,7 +326,7 @@ export function NxGroupSettingsModal({
                                             <Sparkles className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                             AI moderator
                                         </p>
-                                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                        <p className="text-[11px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                             Toksik/nafrat xabarlar avto-yashiriladi (Gemini AI)
                                         </p>
                                     </div>
@@ -343,7 +343,7 @@ export function NxGroupSettingsModal({
                                             <SignatureIcon className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                             Post imzosi
                                         </p>
-                                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                        <p className="text-[11px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                             Post ostida yozgan admin nomi ko&apos;rinadi. O&apos;chirilsa faqat kanal nomi.
                                         </p>
                                     </div>
@@ -374,7 +374,7 @@ export function NxGroupSettingsModal({
                                             <Sparkles className="w-3.5 h-3.5" style={{ color: "#F5B301" }} />
                                             Sponsored postlar
                                         </p>
-                                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                        <p className="text-[11px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                             Reklama slotlari — post yozayotganda &quot;Sponsored&quot; belgisi + URL qo&apos;shish mumkin
                                         </p>
                                     </div>
@@ -391,7 +391,7 @@ export function NxGroupSettingsModal({
                                             <Languages className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                             Avto-tarjima
                                         </p>
-                                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                        <p className="text-[11px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                             A&apos;zolar &quot;Tarjima&quot; tugmasi bilan istalgan xabarni o&apos;z tiliga aylantirishi mumkin
                                         </p>
                                     </div>
@@ -401,7 +401,7 @@ export function NxGroupSettingsModal({
                             {/* Default permissions — faqat guruh + owner */}
                             {data.type === "GROUP" && isOwner && (
                                 <div>
-                                    <label className="block text-[10px] uppercase tracking-widest mb-2" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                    <label className="block text-[10px] uppercase tracking-widest mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                         A&apos;zolar uchun ruxsatlar
                                     </label>
                                     <div className="space-y-1.5">
@@ -413,7 +413,7 @@ export function NxGroupSettingsModal({
                                                     style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                                     <input type="checkbox" checked={val}
                                                         onChange={e => setPerm(key, e.target.checked)} />
-                                                    <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(140,160,210,0.8)" }} />
+                                                    <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "rgb(var(--nx-text-2-rgb)/0.8)" }} />
                                                     <p className="text-sm text-[var(--nx-text)] flex-1">{label}</p>
                                                 </label>
                                             );
@@ -475,7 +475,7 @@ function DiscussionGroupPicker({
                 <MessageSquare className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                 Muhokama guruhi
             </p>
-            <p className="text-[11px] mb-2" style={{ color: "rgba(140,160,210,0.7)" }}>
+            <p className="text-[11px] mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                 Kanal xabarlariga izoh yozish uchun bog'langan guruh. A&apos;zolar &quot;Muhokamaga o&apos;tish&quot; tugmasi bilan boradi.
             </p>
             <select disabled={loading} value={value ?? ""}
@@ -488,7 +488,7 @@ function DiscussionGroupPicker({
                 ))}
             </select>
             {groups.length === 0 && !loading && (
-                <p className="text-[10px] mt-1.5" style={{ color: "rgba(140,160,210,0.6)" }}>
+                <p className="text-[10px] mt-1.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.6)" }}>
                     Bog&apos;lash uchun avval o&apos;zingizga tegishli GROUP tipida kanal yarating.
                 </p>
             )}
@@ -524,12 +524,12 @@ function AllowedReactionsEditor({
                 {active && (
                     <button type="button" onClick={() => onChange([])}
                         className="text-[10px] font-bold hover:underline"
-                        style={{ color: "rgba(160,176,224,0.85)" }}>
+                        style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                         Standart
                     </button>
                 )}
             </div>
-            <p className="text-[11px] mb-2" style={{ color: "rgba(140,160,210,0.7)" }}>
+            <p className="text-[11px] mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                 {active
                     ? `Tanlangan: ${value.length}. Kanal a'zolari faqat shu emojilarni qo'ya oladi.`
                     : "Standart — barcha emojilar ruxsat etilgan"}

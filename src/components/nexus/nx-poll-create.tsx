@@ -89,17 +89,17 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
                 <div className="p-5 space-y-4 overflow-y-auto" style={{ maxHeight: "calc(90vh - 130px)", scrollbarWidth: "none" }}>
                     {/* Savol */}
                     <div>
-                        <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: "rgba(140,160,210,0.75)" }}>Savol</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>Savol</label>
                         <input value={question} onChange={e => setQuestion(e.target.value.slice(0, 300))}
                             placeholder="Nima haqida so'rayapsiz?"
                             className="w-full px-3.5 py-3 rounded-xl text-sm text-[var(--nx-text)] outline-none"
                             style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
-                        <p className="text-[10px] mt-1 text-right" style={{ color: "rgba(140,160,210,0.60)" }}>{question.length}/300</p>
+                        <p className="text-[10px] mt-1 text-right" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>{question.length}/300</p>
                     </div>
 
                     {/* Variantlar */}
                     <div>
-                        <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: "rgba(140,160,210,0.75)" }}>
+                        <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                             Variantlar (2-10)
                         </label>
                         <div className="space-y-2">
@@ -121,7 +121,7 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
                             {options.length < 10 && (
                                 <button onClick={addOption}
                                     className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-bold transition"
-                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.30)", color: "rgba(140,160,210,0.85)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.30)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                                     <Plus className="w-3.5 h-3.5" /> Variant qo&apos;shish
                                 </button>
                             )}
@@ -134,7 +134,7 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
                         style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                         <div className="text-left">
                             <p className="text-xs font-bold text-[var(--nx-text)]">Bir necha variant tanlash</p>
-                            <p className="text-[10px] mt-0.5" style={{ color: "rgba(140,160,210,0.70)" }}>
+                            <p className="text-[10px] mt-0.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.70)" }}>
                                 Yoqilsa: foydalanuvchi bir necha variant tanlashi mumkin
                             </p>
                         </div>
@@ -147,7 +147,7 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
 
                     {/* Muddat */}
                     <div>
-                        <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: "rgba(140,160,210,0.75)" }}>Muddat</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>Muddat</label>
                         <div className="grid grid-cols-3 gap-1.5">
                             {DURATIONS.map(d => (
                                 <button key={d.key} onClick={() => setDuration(d.key)}

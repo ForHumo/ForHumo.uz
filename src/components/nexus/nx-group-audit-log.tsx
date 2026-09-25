@@ -82,7 +82,7 @@ export function NxGroupAuditLog({
                     ) : items.length === 0 ? (
                         <p className="py-8 text-center text-xs" style={{ color: "var(--nx-text-3)" }}>Hozircha voqea yo&apos;q</p>
                     ) : items.map(e => {
-                        const meta = ACTION_META[e.action] ?? { icon: Edit3, label: e.action, color: "rgba(140,160,210,0.8)" };
+                        const meta = ACTION_META[e.action] ?? { icon: Edit3, label: e.action, color: "rgb(var(--nx-text-2-rgb)/0.8)" };
                         return (
                             <div key={e.id} className="flex items-start gap-2 px-3 py-2 mb-1 rounded-xl"
                                 style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
@@ -99,7 +99,7 @@ export function NxGroupAuditLog({
                                             <>{" · "}<span className="font-bold">{e.target.name ?? e.target.username ?? "?"}</span></>
                                         )}
                                     </p>
-                                    {e.detail && <p className="text-[10px] mt-0.5 italic" style={{ color: "rgba(140,160,210,0.7)" }}>{e.detail}</p>}
+                                    {e.detail && <p className="text-[10px] mt-0.5 italic" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>{e.detail}</p>}
                                 </div>
                                 <span className="text-[10px] flex-shrink-0" style={{ color: "var(--nx-text-3)" }}>{timeAgo(e.createdAt)}</span>
                             </div>

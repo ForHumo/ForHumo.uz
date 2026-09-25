@@ -323,7 +323,7 @@ function NxGroupStoryCreate({
                                 style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                 <Upload className="w-8 h-8" style={{ color: "var(--nx-accent)" }} />
                                 <p className="text-sm font-bold text-[var(--nx-text)]">Rasm yoki video tanlang</p>
-                                <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>24 soatga jonli bo&apos;ladi</p>
+                                <p className="text-[11px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>24 soatga jonli bo&apos;ladi</p>
                             </div>
                         </label>
                     ) : (

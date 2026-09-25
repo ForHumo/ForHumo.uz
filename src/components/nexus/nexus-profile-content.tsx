@@ -102,7 +102,7 @@ export function NexusProfileContent({ username, counts }: { username: string; co
                             style={{ color: active ? "#fff" : "var(--nx-text-3)" }}>
                             <t.icon className="w-3.5 h-3.5" />
                             <span>{t.label}</span>
-                            {t.count > 0 && <span className="text-[10px] font-bold" style={{ color: active ? "var(--nx-accent)" : "rgba(100,120,170,0.6)" }}>{fmtN(t.count)}</span>}
+                            {t.count > 0 && <span className="text-[10px] font-bold" style={{ color: active ? "var(--nx-accent)" : "rgb(var(--nx-text-3-rgb)/0.6)" }}>{fmtN(t.count)}</span>}
                             {active && <span className="absolute bottom-0 left-1/4 right-1/4 h-[2px] rounded-full" style={{ background: "linear-gradient(90deg,var(--nx-accent),var(--nx-accent))" }} />}
                         </button>
                     );
@@ -148,7 +148,7 @@ export function NexusProfileContent({ username, counts }: { username: string; co
                                             <p className="text-sm font-bold text-white truncate">{t.title}</p>
                                             <p className="text-[11px] truncate" style={{ color: "var(--nx-text-3)" }}>{t.artist || t.uploader?.name || "Noma'lum"}</p>
                                         </div>
-                                        <span className="text-[10px] flex items-center gap-1 flex-shrink-0" style={{ color: "rgba(100,120,170,0.7)" }}><Play className="w-2.5 h-2.5" />{fmtN(t.plays)}</span>
+                                        <span className="text-[10px] flex items-center gap-1 flex-shrink-0" style={{ color: "rgb(var(--nx-text-3-rgb)/0.7)" }}><Play className="w-2.5 h-2.5" />{fmtN(t.plays)}</span>
                                     </button>
                                 ))}
                             </div>

@@ -108,7 +108,7 @@ export function NxBanModal({ ban, onClose }: Props) {
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-base font-black text-[var(--nx-text)]">Vaqtincha bloklandingiz</p>
-                        <p className="text-xs mt-0.5" style={{ color: "rgba(140,160,210,0.85)" }}>AI xavfsizlik tizimi topgan qoidabuzarlik</p>
+                        <p className="text-xs mt-0.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>AI xavfsizlik tizimi topgan qoidabuzarlik</p>
                     </div>
                     {!isForever && !isHard && (
                         <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
@@ -121,7 +121,7 @@ export function NxBanModal({ ban, onClose }: Props) {
                 <div className="p-6 space-y-4">
                     {/* Sabab */}
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.75)" }}>Sabab</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>Sabab</p>
                         <p className="text-sm font-bold text-[var(--nx-text)]">{reasonLabel}</p>
                         {isHard && (
                             <p className="text-[11px] mt-2 px-3 py-2 rounded-lg" style={{ color: "#EF4444", background: "rgba(239,68,68,0.10)" }}>
@@ -132,14 +132,14 @@ export function NxBanModal({ ban, onClose }: Props) {
 
                     {/* Muddat */}
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.75)" }}>Qolgan vaqt</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>Qolgan vaqt</p>
                         <div className="flex items-center gap-2.5 px-3.5 py-3 rounded-xl"
                             style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.20)" }}>
                             <Clock className="w-4 h-4" style={{ color: "#EF4444" }} />
                             <span className="text-base font-black text-[var(--nx-text)] tabular-nums flex-1">{remaining.text}</span>
                         </div>
                         {ban.expiresAt && (
-                            <p className="text-[10px] mt-1.5 px-1" style={{ color: "rgba(140,160,210,0.60)" }}>
+                            <p className="text-[10px] mt-1.5 px-1" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>
                                 Ozod bo'lish vaqti: {new Date(ban.expiresAt).toLocaleString("uz-UZ")}
                             </p>
                         )}
@@ -153,7 +153,7 @@ export function NxBanModal({ ban, onClose }: Props) {
                                 <CheckCircle2 className="w-7 h-7" style={{ color: "var(--nx-accent)" }} />
                             </div>
                             <p className="text-sm font-black text-[var(--nx-text)] text-center">Ariza yuborildi</p>
-                            <p className="text-xs text-center max-w-xs" style={{ color: "rgba(140,160,210,0.80)" }}>
+                            <p className="text-xs text-center max-w-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }}>
                                 Asoschi qisqa vaqt ichida ko'rib chiqadi. Adolatli bo'lsa blok bekor qilinadi.
                             </p>
                         </div>
@@ -163,8 +163,8 @@ export function NxBanModal({ ban, onClose }: Props) {
                         </div>
                     ) : showAppeal ? (
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.75)" }}>Ariza matni</p>
-                            <p className="text-[11px] mb-2" style={{ color: "rgba(140,160,210,0.70)" }}>
+                            <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>Ariza matni</p>
+                            <p className="text-[11px] mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.70)" }}>
                                 Nima uchun bu blok adolatsiz? Konkret tushuntirib bering (kamida 20 harf).
                             </p>
                             <textarea value={appealText} onChange={e => { setAppealText(e.target.value.slice(0, 2000)); setErr(null); }}
@@ -173,14 +173,14 @@ export function NxBanModal({ ban, onClose }: Props) {
                                 className="w-full px-3.5 py-3 rounded-xl text-sm text-[var(--nx-text)] outline-none resize-none"
                                 style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                             <div className="flex items-center justify-between mt-1 px-1">
-                                <span className="text-[10px]" style={{ color: err ? "#EF4444" : "rgba(140,160,210,0.60)" }}>
+                                <span className="text-[10px]" style={{ color: err ? "#EF4444" : "rgb(var(--nx-text-2-rgb)/0.60)" }}>
                                     {err || `${appealText.length}/2000`}
                                 </span>
                             </div>
                             <div className="flex gap-2 mt-3">
                                 <button onClick={() => setShowAppeal(false)} disabled={sending}
                                     className="flex-1 px-4 py-3 rounded-xl text-xs font-bold disabled:opacity-50"
-                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgba(200,215,245,0.85)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                                     Bekor
                                 </button>
                                 <button onClick={submitAppeal} disabled={sending || appealText.trim().length < 20}
@@ -198,7 +198,7 @@ export function NxBanModal({ ban, onClose }: Props) {
                                 style={{ background: "var(--nx-accent)" }}>
                                 Adolatsiz deb hisoblayman — ariza yuborish
                             </button>
-                            <p className="text-[10px] mt-2 text-center" style={{ color: "rgba(140,160,210,0.60)" }}>
+                            <p className="text-[10px] mt-2 text-center" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>
                                 Asoschi shaxsan ko'rib chiqadi
                             </p>
                         </div>
@@ -207,7 +207,7 @@ export function NxBanModal({ ban, onClose }: Props) {
 
                 {/* Footer eslatma */}
                 <div className="px-6 py-3 flex items-start gap-2" style={{ background: "rgb(var(--nx-accent-rgb) / 0.04)", borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
-                    <p className="text-[10px] leading-relaxed" style={{ color: "rgba(140,160,210,0.70)" }}>
+                    <p className="text-[10px] leading-relaxed" style={{ color: "rgb(var(--nx-text-2-rgb)/0.70)" }}>
                         For Humo hech kimning maxfiy suhbatini o'qimaydi. Faqat AI tekshiradi va qoidabuzarlikda blok qo'yadi.
                         Ma'lumot to'planmaydi, sotilmaydi.
                     </p>

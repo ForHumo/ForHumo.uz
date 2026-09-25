@@ -89,7 +89,7 @@ export function NxGroupTopicsModal({
                             background: currentTopicId === null ? "rgb(var(--nx-accent-rgb) / 0.10)" : "var(--nx-surface)",
                             border: `1px solid ${currentTopicId === null ? "rgb(var(--nx-accent-rgb) / 0.30)" : "rgb(var(--nx-accent-rgb) / 0.14)"}`,
                         }}>
-                        <MessageSquare className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(160,176,224,0.85)" }} />
+                        <MessageSquare className="w-4 h-4 flex-shrink-0" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                         <p className="flex-1 text-sm font-bold text-[var(--nx-text)]">Umumiy</p>
                     </button>
 
@@ -108,7 +108,7 @@ export function NxGroupTopicsModal({
                                 <span className="text-xl flex-shrink-0">{t.icon ?? "#"}</span>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-bold text-[var(--nx-text)] truncate">{t.name}</p>
-                                    <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                    <p className="text-[11px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                         {t.messageCount} xabar
                                     </p>
                                 </div>

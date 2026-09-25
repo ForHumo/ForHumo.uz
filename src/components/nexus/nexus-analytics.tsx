@@ -67,7 +67,7 @@ export function NexusAnalytics() {
                 <div className="px-4 py-4 pb-28 max-w-2xl mx-auto">
                     {/* Daromad — bosh karta */}
                     <div className="rounded-3xl p-5 mb-4" style={{ background: "linear-gradient(135deg, rgb(var(--nx-accent-rgb) / 0.18), rgb(var(--nx-accent-rgb) / 0.12))", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
-                        <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: "rgba(180,200,240,0.85)" }}><Wallet className="w-3.5 h-3.5" />Jami daromad (bir martalik)</p>
+                        <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}><Wallet className="w-3.5 h-3.5" />Jami daromad (bir martalik)</p>
                         <p className="text-3xl font-black mt-1" style={{ color: "#fff" }}>{formatMoney(data.earnings.total, data.currency)}</p>
                         {data.earnings.subMonthly > 0 && (
                             <p className="text-xs mt-1.5 flex items-center gap-1" style={{ color: "rgba(196,181,253,0.95)" }}>
@@ -111,7 +111,7 @@ export function NexusAnalytics() {
                                         </div>
                                         <div className="text-right flex-shrink-0">
                                             <p className="text-sm font-black" style={{ color: "#F59E0B" }}>{formatMoney(t.amount, data.currency)}</p>
-                                            <p className="text-[10px]" style={{ color: "rgba(100,120,170,0.7)" }}>{timeAgo(t.createdAt)}</p>
+                                            <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-3-rgb)/0.7)" }}>{timeAgo(t.createdAt)}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -122,7 +122,7 @@ export function NexusAnalytics() {
                     {/* Pul yechish — kelajak (test rejim) */}
                     <div className="mt-5 rounded-2xl px-4 py-3 flex items-center gap-2.5" style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.16)" }}>
                         <Coins className="w-4 h-4 flex-shrink-0" style={{ color: "var(--nx-text-3)" }} />
-                        <p className="text-[11px]" style={{ color: "rgba(150,170,210,0.8)" }}>
+                        <p className="text-[11px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.8)" }}>
                             Daromad <span className="font-bold text-[var(--nx-text)]">For Pay</span> hamyoningizda. Real pulga yechish keyingi bosqichda ulanadi.
                         </p>
                     </div>
@@ -135,7 +135,7 @@ export function NexusAnalytics() {
 function EarnCell({ icon: Icon, color, label, value, currency }: { icon: typeof Gift; color: string; label: string; value: number; currency: Currency }) {
     return (
         <div className="rounded-xl px-2.5 py-2" style={{ background: "rgba(5,8,24,0.45)" }}>
-            <p className="text-[10px] font-bold flex items-center gap-1" style={{ color: "rgba(150,170,210,0.8)" }}><Icon className="w-3 h-3" style={{ color }} />{label}</p>
+            <p className="text-[10px] font-bold flex items-center gap-1" style={{ color: "rgb(var(--nx-text-2-rgb)/0.8)" }}><Icon className="w-3 h-3" style={{ color }} />{label}</p>
             <p className="text-sm font-black text-[var(--nx-text)] mt-0.5">{formatMoney(value, currency)}</p>
         </div>
     );
@@ -146,7 +146,7 @@ function StatCard({ icon: Icon, color, label, value, sub }: { icon: typeof Users
         <div className="rounded-2xl px-4 py-3.5" style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.16)" }}>
             <div className="flex items-center gap-1.5 mb-1">
                 <Icon className="w-3.5 h-3.5" style={{ color }} />
-                <span className="text-[11px] font-bold" style={{ color: "rgba(150,170,210,0.85)" }}>{label}</span>
+                <span className="text-[11px] font-bold" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>{label}</span>
             </div>
             <p className="text-2xl font-black text-[var(--nx-text)] leading-none">{fmtN(value)}</p>
             {sub && <p className="text-[10px] mt-1" style={{ color: "var(--nx-text-3)" }}>{sub}</p>}

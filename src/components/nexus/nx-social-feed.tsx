@@ -300,7 +300,7 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
                         style={{ background: "rgba(8,14,32,0.90)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                         <RefreshCw className={`w-3.5 h-3.5 ${refreshing || pullOffset > 55 ? "animate-spin" : ""}`}
                             style={{ color: "var(--nx-accent)", transform: !refreshing && pullOffset <= 55 ? `rotate(${pullOffset * 4}deg)` : undefined }} />
-                        <span className="text-[10px] font-black" style={{ color: "rgba(200,215,245,0.90)" }}>
+                        <span className="text-[10px] font-black" style={{ color: "rgb(var(--nx-text-2-rgb)/0.90)" }}>
                             {refreshing ? "Yangilanmoqda..." : pullOffset > 55 ? "Qo'yib yuboring" : "Pastga torting"}
                         </span>
                     </div>
@@ -326,7 +326,7 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
                 {(["foryou", "following", "explore"] as const).map(t => (
                     <button key={t} onClick={() => setTab(t)}
                         className="flex-1 py-2.5 text-xs font-black transition-all duration-200"
-                        style={tab === t ? { background: "var(--nx-accent)", color: "#fff" } : { color: "rgba(140,160,210,0.75)" }}
+                        style={tab === t ? { background: "var(--nx-accent)", color: "#fff" } : { color: "rgb(var(--nx-text-2-rgb)/0.75)" }}
                     >
                         {t === "foryou" ? "Recommendation" : t === "following" ? "Following" : "Explore"}
                     </button>
@@ -366,7 +366,7 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
                     <div className="flex items-center gap-2">
                         <button onClick={() => fileRef.current?.click()} disabled={uploading} title="Rasm/video"
                             className="w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-150" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)" }}>
-                            {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "var(--nx-accent)" }} /> : <ImgIcon className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.60)" }} />}
+                            {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "var(--nx-accent)" }} /> : <ImgIcon className="w-3.5 h-3.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }} />}
                         </button>
                         <input ref={fileRef} type="file" accept="image/*,video/*" multiple onChange={e => pickFiles(e.target.files)} className="hidden" />
                         <button onClick={aiSuggest} disabled={aiBusy || sending} title="AI'dan mavzu"
@@ -378,7 +378,7 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
                         </button>
                         <button onClick={() => setCreatePostOpen(true)} disabled={sending} title="So'rovnoma, joylashuv, maxfiylik"
                             className="h-8 w-8 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95 disabled:opacity-50"
-                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", color: "rgba(160,180,230,0.85)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                             <Maximize2 className="w-3.5 h-3.5" />
                         </button>
                     </div>
@@ -557,7 +557,7 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote, 
                         <button onClick={toggleFollow}
                             className="px-3 py-1 rounded-xl text-[10px] font-black transition-all duration-150 active:scale-95"
                             style={following
-                                ? { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", color: "rgba(140,160,210,0.75)" }
+                                ? { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", color: "rgb(var(--nx-text-2-rgb)/0.75)" }
                                 : { background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "var(--nx-accent)" }}>
                             {following ? "Kuzatilmoqda" : "Kuzatish"}
                         </button>
@@ -571,7 +571,7 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote, 
                             p.isMine ? (
                                 <div className="absolute right-0 top-8 z-10 rounded-xl overflow-hidden whitespace-nowrap" style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                     <button onClick={() => { setMenuOpen(false); setEditText(shownText ?? ""); setEditing(true); }}
-                                        className="flex items-center gap-2 px-3 py-2 text-xs font-bold w-full" style={{ color: "rgba(180,195,235,0.95)" }}>
+                                        className="flex items-center gap-2 px-3 py-2 text-xs font-bold w-full" style={{ color: "rgb(var(--nx-text-2-rgb)/0.95)" }}>
                                         <Pencil className="w-3.5 h-3.5" /> Tahrirlash
                                     </button>
                                     <button onClick={() => { setMenuOpen(false); onDelete(); }}
@@ -621,7 +621,7 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote, 
                         className="w-full px-3 py-2.5 rounded-xl text-sm text-white outline-none resize-none"
                         style={{ background: "rgba(11,18,40,0.7)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", caretColor: "var(--nx-accent)" }} />
                     <div className="flex gap-2 mt-2 justify-end">
-                        <button onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", color: "rgba(160,180,230,0.85)" }}>Bekor</button>
+                        <button onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>Bekor</button>
                         <button onClick={saveEdit} disabled={editBusy} className="px-4 py-1.5 rounded-lg text-xs font-black text-white flex items-center gap-1.5" style={{ background: "var(--nx-accent)" }}>
                             {editBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}Saqlash
                         </button>
@@ -643,7 +643,7 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote, 
                             {expanded ? "Kamroq" : "Ko'proq"}
                         </button>
                     )}
-                    {edited && <span className="text-[10px] ml-1" style={{ color: "rgba(80,100,150,0.7)" }}>(tahrirlangan)</span>}
+                    {edited && <span className="text-[10px] ml-1" style={{ color: "rgb(var(--nx-text-3-rgb)/0.7)" }}>(tahrirlangan)</span>}
                     {p.hashtags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                             {p.hashtags.map(h => <Link key={h} href={`/nexus/tag/${h}`} className="text-xs font-bold hover:underline" style={{ color: "var(--nx-accent)" }}>#{h}</Link>)}
@@ -679,7 +679,7 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote, 
                                             <span className="truncate">{opt}</span>
                                             {isMyVote && <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
                                         </span>
-                                        {showResults && <span className="text-[11px] font-black flex-shrink-0" style={{ color: isMyVote ? "var(--nx-accent)" : "rgba(140,160,210,0.85)" }}>{pct}%</span>}
+                                        {showResults && <span className="text-[11px] font-black flex-shrink-0" style={{ color: isMyVote ? "var(--nx-accent)" : "rgb(var(--nx-text-2-rgb)/0.85)" }}>{pct}%</span>}
                                     </div>
                                 </button>
                             );
@@ -799,20 +799,20 @@ function CommentsSection({ postId, onAdded }: { postId: string; onAdded: () => v
                                 <div className="flex items-center gap-1.5">
                                     <span className="text-xs font-bold text-white">{c.author?.name ?? c.author?.username ?? "Foydalanuvchi"}</span>
                                     {c.author?.verified && <NxVerifiedBadge category={(c.author as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={12} />}
-                                    <span className="text-[9px]" style={{ color: "rgba(80,100,150,0.7)" }}>{timeAgo(c.createdAt)}</span>
+                                    <span className="text-[9px]" style={{ color: "rgb(var(--nx-text-3-rgb)/0.7)" }}>{timeAgo(c.createdAt)}</span>
                                     {!c.isMine && (
                                         <button onClick={() => reportComment(c.id)} disabled={reportedC.has(c.id)} title="Shikoyat"
                                             className="ml-auto flex items-center gap-0.5 text-[9px] active:scale-95"
-                                            style={{ color: reportedC.has(c.id) ? "rgba(80,100,150,0.6)" : "#F59E0B" }}>
+                                            style={{ color: reportedC.has(c.id) ? "rgb(var(--nx-text-3-rgb)/0.6)" : "#F59E0B" }}>
                                             <Flag className="w-2.5 h-2.5" />{reportedC.has(c.id) ? " Yuborildi" : ""}
                                         </button>
                                     )}
                                 </div>
-                                <NxText text={c.text} className="text-xs mt-0.5" style={{ color: "rgba(200,215,245,0.85)" }} />
+                                <NxText text={c.text} className="text-xs mt-0.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                             </div>
                         </div>
                     ))}
-                    {comments.length === 0 && <p className="text-xs text-center py-2" style={{ color: "rgba(80,100,150,0.7)" }}>Birinchi bo&apos;lib izoh qoldiring</p>}
+                    {comments.length === 0 && <p className="text-xs text-center py-2" style={{ color: "rgb(var(--nx-text-3-rgb)/0.7)" }}>Birinchi bo&apos;lib izoh qoldiring</p>}
 
                     {canComment ? (
                         <div className="flex gap-2 items-center pt-1">
@@ -827,7 +827,7 @@ function CommentsSection({ postId, onAdded }: { postId: string; onAdded: () => v
                             </button>
                         </div>
                     ) : (
-                        <p className="text-xs text-center py-1" style={{ color: "rgba(80,100,150,0.7)" }}>Izoh yozish uchun tizimga kiring</p>
+                        <p className="text-xs text-center py-1" style={{ color: "rgb(var(--nx-text-3-rgb)/0.7)" }}>Izoh yozish uchun tizimga kiring</p>
                     )}
                 </>
             )}
@@ -1012,7 +1012,7 @@ function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explo
             <div className="text-center py-16 px-4">
                 <div className="w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center"
                     style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
-                    <MessageCircle className="w-6 h-6" style={{ color: "rgba(140,160,210,0.75)" }} />
+                    <MessageCircle className="w-6 h-6" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }} />
                 </div>
                 <p className="text-sm font-black text-white/85 mb-1">Hali post yo&apos;q</p>
                 <p className="text-xs" style={{ color: "var(--nx-text-3)" }}>Bu foydalanuvchi hali post ulashmagan.</p>
@@ -1027,7 +1027,7 @@ function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explo
                     <UserPlus className="w-7 h-7" style={{ color: "var(--nx-accent)" }} />
                 </div>
                 <p className="text-base font-black text-white mb-2">Obunalar bo&apos;sh</p>
-                <p className="text-xs mb-4" style={{ color: "rgba(140,160,210,0.85)" }}>
+                <p className="text-xs mb-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                     Kuzatgan odamlaringizdan hali post yo&apos;q. Qiziqarli mualliflarni Kashfiyot tabidan toping.
                 </p>
                 <a href="#" onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent("nexus:open-explore")); }}
@@ -1046,7 +1046,7 @@ function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explo
                     <Compass className="w-7 h-7" style={{ color: "#8B5CF6" }} />
                 </div>
                 <p className="text-base font-black text-white mb-2">Trending hali bo&apos;sh</p>
-                <p className="text-xs" style={{ color: "rgba(140,160,210,0.85)" }}>
+                <p className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                     Bugun trending postlar hali to&apos;planmagan. Birinchi bo&apos;lib mavzu boshlang!
                 </p>
             </div>
@@ -1059,7 +1059,7 @@ function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explo
                 <Sparkles className="w-7 h-7" style={{ color: "var(--nx-accent)" }} />
             </div>
             <p className="text-base font-black text-white mb-2">Feed bo&apos;sh</p>
-            <p className="text-xs" style={{ color: "rgba(140,160,210,0.85)" }}>
+            <p className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                 Birinchi bo&apos;lib post ulashing yoki qiziqarli odamlarni kuzata boshlang.
             </p>
         </div>

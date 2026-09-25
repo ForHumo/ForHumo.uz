@@ -140,7 +140,7 @@ export function NxSaved() {
                                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition flex-shrink-0"
                                 style={tab === id
                                     ? { background: "var(--nx-accent)", color: "#fff" }
-                                    : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "rgba(140,160,210,0.85)" }}>
+                                    : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                                 <Icon className="w-3.5 h-3.5" />{label}
                             </button>
                         ))}
@@ -161,7 +161,7 @@ export function NxSaved() {
                             style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", caretColor: "var(--nx-accent)" }} />
                         {query && (
                             <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-                                <X className="w-3.5 h-3.5" style={{ color: "rgba(160,180,220,0.70)" }} />
+                                <X className="w-3.5 h-3.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.70)" }} />
                             </button>
                         )}
                     </div>
@@ -193,7 +193,7 @@ export function NxSaved() {
                                                         {p.author?.verified && <NxVerifiedBadge category={p.author?.verifiedCategory} size={11} />}
                                                         <span className="text-[9px] flex-shrink-0" style={{ color: "var(--nx-text-2)" }}>{timeAgo(p.createdAt)}</span>
                                                     </div>
-                                                    <p className="text-xs line-clamp-2 leading-relaxed" style={{ color: "rgba(190,205,240,0.85)" }}>{p.text || "(media post)"}</p>
+                                                    <p className="text-xs line-clamp-2 leading-relaxed" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>{p.text || "(media post)"}</p>
                                                 </div>
                                             </Link>
                                             <button onClick={() => unsavePost(p.id)} title="Saqlanganlardan olib tashlash"
@@ -233,7 +233,7 @@ export function NxSaved() {
                                                 {v.durationSec > 0 && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
                                             </div>
                                             <p className="text-[11px] font-bold text-[var(--nx-text)] line-clamp-2 leading-snug text-left">{v.title}</p>
-                                            <p className="text-[9px] mt-0.5 text-left" style={{ color: "rgba(100,120,170,0.75)" }}>{v.author?.name || v.author?.username || "Foydalanuvchi"}</p>
+                                            <p className="text-[9px] mt-0.5 text-left" style={{ color: "rgb(var(--nx-text-3-rgb)/0.75)" }}>{v.author?.name || v.author?.username || "Foydalanuvchi"}</p>
                                         </button>
                                         <button onClick={() => unsaveVideo(v.id)} title="Belgilashdan olib tashlash"
                                             className="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 md:hover:opacity-100 transition-opacity"
@@ -266,7 +266,7 @@ export function NxSaved() {
                                                 {v.duration && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)] flex items-center gap-0.5" style={{ background: "rgba(5,8,24,0.85)" }}><Clock className="w-2.5 h-2.5" />{v.duration}</span>}
                                             </div>
                                             <p className="text-[11px] font-bold text-[var(--nx-text)] line-clamp-2 leading-snug group-hover:text-[var(--nx-accent)] transition-colors">{v.title}</p>
-                                            <p className="text-[9px] mt-0.5" style={{ color: "rgba(100,120,170,0.75)" }}>{v.author}</p>
+                                            <p className="text-[9px] mt-0.5" style={{ color: "rgb(var(--nx-text-3-rgb)/0.75)" }}>{v.author}</p>
                                         </button>
                                     ))}
                                 </div>
@@ -298,7 +298,7 @@ function Empty({ icon: Icon, text }: { icon: React.ElementType; text: string }) 
             <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                 <Icon className="w-5 h-5" style={{ color: "rgb(var(--nx-accent-rgb) / 0.45)" }} />
             </div>
-            <p className="text-xs" style={{ color: "rgba(130,150,200,0.75)" }}>{text}</p>
+            <p className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>{text}</p>
         </div>
     );
 }

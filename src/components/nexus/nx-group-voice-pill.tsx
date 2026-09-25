@@ -67,12 +67,12 @@ export function NxGroupVoicePill({
                 <div className="flex-1 min-w-0">
                     <p className="text-xs font-black text-white flex items-center gap-1.5">
                         Voice chat faol
-                        <span className="text-[10px] font-normal" style={{ color: "rgba(220,230,255,0.7)" }}>
+                        <span className="text-[10px] font-normal" style={{ color: "rgb(var(--nx-text-rgb)/0.7)" }}>
                             · {active.participantCount} kishi
                         </span>
                     </p>
                     {active.title && (
-                        <p className="text-[10px] truncate" style={{ color: "rgba(140,160,210,0.85)" }}>{active.title}</p>
+                        <p className="text-[10px] truncate" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>{active.title}</p>
                     )}
                 </div>
                 <button onClick={() => {

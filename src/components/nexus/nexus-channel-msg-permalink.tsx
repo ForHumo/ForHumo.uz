@@ -50,7 +50,7 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
             style={{ background: "var(--nx-bg)" }}>
             <div className="max-w-2xl mx-auto px-4 py-8">
                 <Link href="/nexus" className="inline-flex items-center gap-2 mb-6 text-sm font-bold"
-                    style={{ color: "rgba(160,176,224,0.85)" }}>
+                    style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                     <ArrowLeft className="w-4 h-4" /> Nexus
                 </Link>
 
@@ -63,7 +63,7 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
                     <div className="p-6 rounded-2xl text-center"
                         style={{ background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.30)" }}>
                         <p className="text-sm font-bold" style={{ color: "#EF4444" }}>{error}</p>
-                        <Link href="/nexus" className="mt-3 inline-block text-xs underline" style={{ color: "rgba(160,176,224,0.85)" }}>
+                        <Link href="/nexus" className="mt-3 inline-block text-xs underline" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                             Nexus'ga qaytish
                         </Link>
                     </div>
@@ -93,11 +93,11 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
                                     <img src={data.message.sender.image} alt="" className="w-8 h-8 rounded-full object-cover" />
                                 )}
                                 <div>
-                                    <p className="text-xs font-black flex items-center gap-1" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                    <p className="text-xs font-black flex items-center gap-1" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>
                                         {data.message.sender?.name ?? data.message.sender?.username ?? "Foydalanuvchi"}
                                         {data.message.sender?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />}
                                     </p>
-                                    <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.65)" }}>
+                                    <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>
                                         {new Date(data.message.createdAt).toLocaleString("uz-UZ", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                                         {data.message.editedAt && <span className="ml-1 italic opacity-75">(tahrirlangan)</span>}
                                     </p>
@@ -106,7 +106,7 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
 
                             {data.message.text && (
                                 <div className="text-sm whitespace-pre-wrap p-4 rounded-xl"
-                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)", color: "rgba(220,230,255,0.95)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)", color: "rgb(var(--nx-text-rgb)/0.95)" }}>
                                     <NxMarkdown text={data.message.text} />
                                 </div>
                             )}
@@ -128,7 +128,7 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
                                     <p className="text-xs font-black text-[var(--nx-text)]">{data.message.pollQuestion}</p>
                                     <div className="mt-2 space-y-1">
                                         {(data.message.pollOptions ?? []).map((o, i) => (
-                                            <p key={i} className="text-xs" style={{ color: "rgba(220,230,255,0.85)" }}>• {o}</p>
+                                            <p key={i} className="text-xs" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>• {o}</p>
                                         ))}
                                     </div>
                                 </div>

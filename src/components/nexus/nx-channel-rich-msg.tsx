@@ -95,7 +95,7 @@ export function NxChannelRichMsg(props: Props) {
                     className="flex items-center gap-2 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/5">
                     <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                     <span className="flex-1">Xaritada ochish</span>
-                    <ExternalLink className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.7)" }} />
+                    <ExternalLink className="w-3.5 h-3.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }} />
                 </a>
             </div>
         );
@@ -119,7 +119,7 @@ export function NxChannelRichMsg(props: Props) {
                         </a>
                     )}
                     {contactUsername && (
-                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>@{contactUsername}</p>
+                        <p className="text-[11px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>@{contactUsername}</p>
                     )}
                 </div>
             </div>

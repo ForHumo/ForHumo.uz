@@ -115,7 +115,7 @@ export function NxTrendingBanner() {
                                     <span className="text-xs font-black text-[var(--nx-text)] truncate flex items-center gap-0.5">
                                         <Hash className="w-3 h-3" style={{ color: "#EF4444" }} />{t.tag}
                                     </span>
-                                    <span className="text-[9px]" style={{ color: "rgba(140,160,210,0.75)" }}>{t.count} post</span>
+                                    <span className="text-[9px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>{t.count} post</span>
                                 </div>
                             </Link>
                         ))}
@@ -139,7 +139,7 @@ export function NxTrendingBanner() {
                                     style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                     <button onClick={() => dismiss(s.username!)}
                                         className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black"
-                                        style={{ background: "rgba(8,14,32,0.7)", color: "rgba(140,160,210,0.60)" }}>×</button>
+                                        style={{ background: "rgba(8,14,32,0.7)", color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>×</button>
                                     <Link href={`/nexus/u/${s.username}`} className="block">
                                         <div className="w-12 h-12 mx-auto rounded-2xl overflow-hidden mb-2" style={{ border: "2px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                             <img src={avatarOf(s)} alt="" className="w-full h-full object-cover bg-white" />

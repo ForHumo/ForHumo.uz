@@ -68,7 +68,7 @@ export function NxSettings({ open, onClose }: Props) {
                     >
                         <div>
                             <h2 className="text-base font-black text-[var(--nx-text)]">Sozlamalar</h2>
-                            <p className="text-[11px] mt-0.5" style={{ color: "rgba(100,120,170,0.80)" }}>
+                            <p className="text-[11px] mt-0.5" style={{ color: "rgb(var(--nx-text-3-rgb)/0.80)" }}>
                                 Nexus tajribangizni moslang
                             </p>
                         </div>
@@ -80,7 +80,7 @@ export function NxSettings({ open, onClose }: Props) {
                                 border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                             }}
                         >
-                            <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                            <X className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                         </button>
                     </div>
 
@@ -113,13 +113,13 @@ export function NxSettings({ open, onClose }: Props) {
                                         <tab.icon
                                             className="w-4 h-4 flex-shrink-0"
                                             style={{
-                                                color: active ? "var(--nx-accent)" : "rgba(100,120,170,0.70)",
+                                                color: active ? "var(--nx-accent)" : "rgb(var(--nx-text-3-rgb)/0.70)",
                                             }}
                                         />
                                         <span
                                             className="text-[13px] font-semibold"
                                             style={{
-                                                color: active ? "rgba(220,230,255,0.95)" : "var(--nx-text-3)",
+                                                color: active ? "rgb(var(--nx-text-rgb)/0.95)" : "var(--nx-text-3)",
                                             }}
                                         >
                                             {tab.label}
@@ -192,7 +192,7 @@ function SettingsRow({
             <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-[var(--nx-text)]">{label}</p>
                 {description && (
-                    <p className="text-[10px] mt-0.5" style={{ color: "rgba(100,120,170,0.70)" }}>
+                    <p className="text-[10px] mt-0.5" style={{ color: "rgb(var(--nx-text-3-rgb)/0.70)" }}>
                         {description}
                     </p>
                 )}
@@ -397,11 +397,11 @@ function PrivacyPanel() {
                     <div className="flex items-center gap-3 mb-2">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                             style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                            <Bell className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                            <Bell className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-xs font-bold text-[var(--nx-text)]">Push ko'rinishi</p>
-                            <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.65)" }}>
+                            <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>
                                 Xabar kelganda telefonda nima ko'rinadi
                             </p>
                         </div>
@@ -418,7 +418,7 @@ function PrivacyPanel() {
                                     border: "1px solid rgb(var(--nx-accent-rgb) / 0.40)",
                                 } : {
                                     background: "rgb(var(--nx-accent-rgb) / 0.06)",
-                                    color: "rgba(140,160,210,0.85)",
+                                    color: "rgb(var(--nx-text-2-rgb)/0.85)",
                                     border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                                 }}>
                                 {PUSH_PREVIEW_LABELS[opt]}
@@ -454,11 +454,11 @@ function PrivacyRow({ icon: Icon, label, description, value, onChange, saving }:
             <div className="flex items-center gap-3 mb-2">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                    <Icon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                    <Icon className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-[var(--nx-text)]">{label}</p>
-                    <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.65)" }}>{description}</p>
+                    <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>{description}</p>
                 </div>
                 {saving && <Loader2 className="w-3.5 h-3.5 animate-spin text-white/40" />}
             </div>
@@ -472,7 +472,7 @@ function PrivacyRow({ icon: Icon, label, description, value, onChange, saving }:
                             border: "1px solid rgb(var(--nx-accent-rgb) / 0.40)",
                         } : {
                             background: "rgb(var(--nx-accent-rgb) / 0.06)",
-                            color: "rgba(140,160,210,0.85)",
+                            color: "rgb(var(--nx-text-2-rgb)/0.85)",
                             border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                         }}>
                         {PRIVACY_LABELS[opt]}

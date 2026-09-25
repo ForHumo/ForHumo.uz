@@ -89,9 +89,9 @@ export function NxGroupBansModal({
                                     <p className="text-[11px]" style={{ color: "var(--nx-text-3)" }}>@{b.profile.username}</p>
                                 )}
                                 {b.reason && (
-                                    <p className="text-[11px] italic mt-0.5" style={{ color: "rgba(200,215,245,0.8)" }}>{b.reason}</p>
+                                    <p className="text-[11px] italic mt-0.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.8)" }}>{b.reason}</p>
                                 )}
-                                <p className="text-[10px] mt-0.5" style={{ color: "rgba(140,160,210,0.6)" }}>
+                                <p className="text-[10px] mt-0.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.6)" }}>
                                     {timeAgo(b.createdAt)}
                                     {b.bannedBy && ` · ${b.bannedBy.name ?? b.bannedBy.username ?? ""}`}
                                 </p>

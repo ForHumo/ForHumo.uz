@@ -104,7 +104,7 @@ export function NxSubscriptions() {
                             className="flex-1 px-3 py-2 rounded-xl text-xs font-black transition active:scale-95"
                             style={tab === id
                                 ? { background: "var(--nx-accent)", color: "#fff" }
-                                : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "rgba(140,160,210,0.85)" }}>
+                                : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                             {label}{users.length > 0 && tab === id && <span className="ml-1 opacity-70">{users.length}</span>}
                         </button>
                     ))}
@@ -120,7 +120,7 @@ export function NxSubscriptions() {
                             style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", caretColor: "var(--nx-accent)" }} />
                         {query && (
                             <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-                                <X className="w-3.5 h-3.5" style={{ color: "rgba(160,180,220,0.70)" }} />
+                                <X className="w-3.5 h-3.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.70)" }} />
                             </button>
                         )}
                     </div>
@@ -139,7 +139,7 @@ export function NxSubscriptions() {
                                    : tab === "following" ? "Hali hech kimni kuzatmaysiz"
                                    : "Hozircha kuzatuvchi yo'q"}
                             </p>
-                            <p className="text-[11px]" style={{ color: "rgba(100,120,170,0.65)" }}>
+                            <p className="text-[11px]" style={{ color: "rgb(var(--nx-text-3-rgb)/0.65)" }}>
                                 {!q && tab === "following" && "Kashfiyotdan qiziqarli odamlarni toping"}
                                 {!q && tab === "followers" && "Post yozing, video ulashing — sizni topishadi"}
                             </p>
@@ -156,7 +156,7 @@ export function NxSubscriptions() {
                                                 {u.name || u.username || "Foydalanuvchi"}
                                                 {u.verified && <NxVerifiedBadge category={u.verifiedCategory} size={13} />}
                                             </p>
-                                            {u.username && <p className="text-[10px] truncate" style={{ color: "rgba(100,120,170,0.75)" }}>@{u.username}</p>}
+                                            {u.username && <p className="text-[10px] truncate" style={{ color: "rgb(var(--nx-text-3-rgb)/0.75)" }}>@{u.username}</p>}
                                         </div>
                                     </Link>
                                     {tab === "following" ? (

@@ -88,7 +88,7 @@ export function NxFolderModal({
                     </div>
                     <div className="flex-1">
                         <h3 className="text-sm font-black text-[var(--nx-text)]">Yangi papka</h3>
-                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.65)" }}>
+                        <p className="text-[11px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>
                             Chatlaringizni papkalarga bo&apos;ling
                         </p>
                     </div>

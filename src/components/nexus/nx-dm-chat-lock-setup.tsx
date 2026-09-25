@@ -100,7 +100,7 @@ export function NxDmChatLockSetup({
                         <>
                             {!status?.hasLock ? (
                                 <>
-                                    <p className="text-sm" style={{ color: "rgba(200,214,247,0.9)" }}>
+                                    <p className="text-sm" style={{ color: "rgb(var(--nx-text-2-rgb)/0.9)" }}>
                                         PIN sozlanmagan. PIN sozlab, ba&apos;zi chatlarni yashirin bo&apos;limga o&apos;tkazishingiz mumkin.
                                     </p>
                                     <button onClick={() => setMode("create")}
@@ -118,7 +118,7 @@ export function NxDmChatLockSetup({
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-black text-[var(--nx-text)]">PIN yoqilgan</p>
                                             {status.hintText && (
-                                                <p className="text-[11px] mt-0.5" style={{ color: "rgba(160,176,224,0.85)" }}>
+                                                <p className="text-[11px] mt-0.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                                                     Eslatma: {status.hintText}
                                                 </p>
                                             )}
@@ -146,7 +146,7 @@ export function NxDmChatLockSetup({
                             <PinField label="PIN'ni takrorlang" value={pin2} onChange={setPin2} />
                             <div>
                                 <label className="text-[10px] font-black uppercase tracking-widest mb-1 block"
-                                    style={{ color: "rgba(160,176,224,0.7)" }}>
+                                    style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     Eslatma (ixtiyoriy)
                                 </label>
                                 <input value={hint} onChange={e => setHint(e.target.value.slice(0, 80))}
@@ -225,7 +225,7 @@ function PinField({ label, value, onChange }: { label: string; value: string; on
     return (
         <div>
             <label className="text-[10px] font-black uppercase tracking-widest mb-1 block"
-                style={{ color: "rgba(160,176,224,0.7)" }}>
+                style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                 {label}
             </label>
             <input type="password" inputMode="numeric" pattern="[0-9]*"

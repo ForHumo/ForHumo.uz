@@ -37,7 +37,7 @@ export function NxMentionAutocomplete({
         <div className="absolute bottom-full left-2 mb-2 min-w-[240px] max-h-[280px] overflow-y-auto z-[400] rounded-2xl"
             style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)", boxShadow: "0 12px 32px rgba(0,0,0,0.4)", scrollbarWidth: "none" }}>
             <div className="px-3 py-2 text-[10px] uppercase tracking-widest flex items-center gap-1.5"
-                style={{ color: "rgba(140,160,210,0.7)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
+                style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                 <AtSign className="w-3 h-3" /> A&apos;zoni tanlang
             </div>
             {loading ? (

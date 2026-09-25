@@ -99,7 +99,7 @@ export function NxChannelScheduledModal({
                     ) : items.length === 0 ? (
                         <div className="text-center py-12">
                             <Calendar className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: "var(--nx-accent)" }} />
-                            <p className="text-sm" style={{ color: "rgba(160,176,224,0.7)" }}>
+                            <p className="text-sm" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                 Rejalashtirilgan post yo&apos;q
                             </p>
                             <p className="text-[11px] mt-1" style={{ color: "var(--nx-text-3)" }}>
@@ -117,7 +117,7 @@ export function NxChannelScheduledModal({
                                             <Calendar className="w-3 h-3" />
                                             {new Date(item.scheduledFor).toLocaleString("uz-UZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                                         </span>
-                                        <span className="text-[10px]" style={{ color: "rgba(160,176,224,0.7)" }}>
+                                        <span className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                             {timeUntil(item.scheduledFor)} qoldi
                                         </span>
                                     </div>

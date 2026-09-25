@@ -194,7 +194,7 @@ export function NxDmSettingsModal({
                         <>
                             <div>
                                 <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block"
-                                    style={{ color: "rgba(160,176,224,0.7)" }}>
+                                    style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     Maxfiy nom (nickname)
                                 </label>
                                 <input value={nickname}
@@ -203,22 +203,22 @@ export function NxDmSettingsModal({
                                     className="w-full h-11 rounded-xl px-3 text-sm focus:outline-none"
                                     style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "white" }}
                                 />
-                                <p className="text-[10px] mt-1" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                <p className="text-[10px] mt-1" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     Faqat sizga ko&apos;rinadi. Chat ro&apos;yxatida va header&apos;da real ism o&apos;rniga chiqadi.
                                 </p>
                             </div>
 
                             <div>
                                 <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block flex items-center gap-1"
-                                    style={{ color: "rgba(160,176,224,0.7)" }}>
+                                    style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     <Palette className="w-3 h-3" /> Chat rangi (tag)
                                 </label>
                                 <div className="grid grid-cols-4 gap-2">
                                     <button onClick={() => setColor(null)}
                                         className="h-10 rounded-lg text-[10px] font-black"
                                         style={color === null
-                                            ? { background: "rgba(160,176,224,0.20)", border: "2px solid white", color: "white" }
-                                            : { background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(160,176,224,0.85)" }}>
+                                            ? { background: "rgb(var(--nx-text-2-rgb)/0.20)", border: "2px solid white", color: "white" }
+                                            : { background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                                         Bekor
                                     </button>
                                     {COLOR_PRESETS.map(c => (
@@ -237,7 +237,7 @@ export function NxDmSettingsModal({
                             {/* Wallpaper (DM-10) */}
                             <div>
                                 <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block flex items-center gap-1"
-                                    style={{ color: "rgba(160,176,224,0.7)" }}>
+                                    style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     <ImageIcon className="w-3 h-3" /> Chat foni
                                 </label>
                                 <div className="grid grid-cols-4 gap-2">
@@ -285,7 +285,7 @@ export function NxDmSettingsModal({
                         <>
                             <div>
                                 <label className="text-[10px] font-black uppercase tracking-widest mb-2 block flex items-center gap-1"
-                                    style={{ color: "rgba(160,176,224,0.7)" }}>
+                                    style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     {muted ? <BellOff className="w-3 h-3" /> : <Bell className="w-3 h-3" />}
                                     Xabarnoma davomiyligi
                                 </label>
@@ -293,13 +293,13 @@ export function NxDmSettingsModal({
                                     {MUTE_OPTIONS.map(opt => (
                                         <button key={opt.seconds} onClick={() => saveMute(opt.seconds)}
                                             className="w-full h-10 rounded-xl text-sm font-bold text-left px-3 flex items-center justify-between"
-                                            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(220,230,250,0.92)" }}>
+                                            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgb(var(--nx-text-rgb)/0.92)" }}>
                                             {opt.label}
                                             {opt.seconds === 0 && !muted && <Check className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />}
                                         </button>
                                     ))}
                                 </div>
-                                <p className="text-[10px] mt-2" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                <p className="text-[10px] mt-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     Mute qilingan davrda push bildirishnoma kelmaydi. Badge kuchsizlantiriladi.
                                 </p>
                             </div>
@@ -310,7 +310,7 @@ export function NxDmSettingsModal({
                         <>
                             <div>
                                 <label className="text-[10px] font-black uppercase tracking-widest mb-2 block flex items-center gap-1"
-                                    style={{ color: "rgba(160,176,224,0.7)" }}>
+                                    style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     <Timer className="w-3 h-3" /> Avto-o&apos;chirish
                                 </label>
                                 <div className="grid grid-cols-2 gap-2">
@@ -319,13 +319,13 @@ export function NxDmSettingsModal({
                                             className="h-11 rounded-xl text-xs font-bold px-3 flex items-center justify-center gap-1.5"
                                             style={autoDelete === opt.seconds
                                                 ? { background: "rgb(var(--nx-accent-rgb) / 0.20)", border: "1px solid var(--nx-accent)", color: "white" }
-                                                : { background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(160,176,224,0.85)" }}>
+                                                : { background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                                             {autoDelete === opt.seconds && <Check className="w-3 h-3" />}
                                             {opt.label}
                                         </button>
                                     ))}
                                 </div>
-                                <p className="text-[10px] mt-2" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                <p className="text-[10px] mt-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     Yangi xabarlar shu vaqtdan keyin ikkalasi uchun ham o&apos;chiriladi.
                                 </p>
                             </div>
@@ -333,31 +333,31 @@ export function NxDmSettingsModal({
                             <div className="pt-4 space-y-2" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                 <button onClick={clearForMe}
                                     className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(220,230,250,0.92)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgb(var(--nx-text-rgb)/0.92)" }}>
                                     <span className="flex items-center gap-2">
-                                        <Trash2 className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <Trash2 className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                         Menda o&apos;chirish
                                     </span>
                                 </button>
                                 <button onClick={archive}
                                     className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(220,230,250,0.92)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgb(var(--nx-text-rgb)/0.92)" }}>
                                     <span className="flex items-center gap-2">
-                                        <Archive className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <Archive className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                         Arxivga o&apos;tkazish
                                     </span>
                                 </button>
                                 <button onClick={hide}
                                     className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(220,230,250,0.92)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgb(var(--nx-text-rgb)/0.92)" }}>
                                     <span className="flex items-center gap-2">
-                                        <EyeOff className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <EyeOff className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                         Yashirin chatlar
                                     </span>
                                 </button>
                                 <button onClick={() => setCallsOpen(true)}
                                     className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(220,230,250,0.92)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgb(var(--nx-text-rgb)/0.92)" }}>
                                     <span className="flex items-center gap-2">
                                         <Phone className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                         Chaqiruvlar tarixi
@@ -365,7 +365,7 @@ export function NxDmSettingsModal({
                                 </button>
                                 <button onClick={() => setE2eOpen(true)}
                                     className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(220,230,250,0.92)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgb(var(--nx-text-rgb)/0.92)" }}>
                                     <span className="flex items-center gap-2">
                                         <ShieldCheck className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                         E2E kalitni tekshirish
@@ -376,12 +376,12 @@ export function NxDmSettingsModal({
                             {/* Global sozlamalar (peer'ga bog'liq emas) */}
                             <div className="pt-4 space-y-2" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                 <p className="text-[10px] font-black uppercase tracking-widest px-1"
-                                    style={{ color: "rgba(160,176,224,0.7)" }}>
+                                    style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     Umumiy DM sozlamalari
                                 </p>
                                 <button onClick={() => setChatLockOpen(true)}
                                     className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(220,230,250,0.92)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgb(var(--nx-text-rgb)/0.92)" }}>
                                     <span className="flex items-center gap-2">
                                         <Lock className="w-4 h-4" style={{ color: "#F5B301" }} />
                                         Yopiq chatlar (PIN)
@@ -389,7 +389,7 @@ export function NxDmSettingsModal({
                                 </button>
                                 <button onClick={() => setBroadcastOpen(true)}
                                     className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(220,230,250,0.92)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgb(var(--nx-text-rgb)/0.92)" }}>
                                     <span className="flex items-center gap-2">
                                         <Users className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                         Broadcast ro&apos;yxatlar
@@ -397,7 +397,7 @@ export function NxDmSettingsModal({
                                 </button>
                                 <button onClick={() => setE2eSetupOpen(true)}
                                     className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(220,230,250,0.92)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgb(var(--nx-text-rgb)/0.92)" }}>
                                     <span className="flex items-center gap-2">
                                         <KeyRound className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                         E2E kalitlarim
@@ -425,7 +425,7 @@ function TabBtn({ active, onClick, icon, label }: { active: boolean; onClick: ()
             className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-lg text-[11px] font-black"
             style={active
                 ? { background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "white", border: "1px solid var(--nx-accent)" }
-                : { background: "var(--nx-surface)", color: "rgba(160,176,224,0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
+                : { background: "var(--nx-surface)", color: "rgb(var(--nx-text-2-rgb)/0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
             {icon} {label}
         </button>
     );

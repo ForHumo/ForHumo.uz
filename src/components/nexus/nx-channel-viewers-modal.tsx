@@ -66,13 +66,13 @@ export function NxChannelViewersModal({
                 ) : viewers.length === 0 ? (
                     <div className="text-center py-12">
                         <Eye className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: "var(--nx-accent)" }} />
-                        <p className="text-sm" style={{ color: "rgba(160,176,224,0.7)" }}>Hali hech kim ko&apos;rmagan</p>
+                        <p className="text-sm" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>Hali hech kim ko&apos;rmagan</p>
                     </div>
                 ) : (
                     <>
                         <div className="flex-1 overflow-y-auto p-3" style={{ scrollbarWidth: "none" }}>
                             <p className="text-[10px] uppercase tracking-widest px-3 mb-2"
-                                style={{ color: "rgba(160,176,224,0.7)" }}>
+                                style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                 So&apos;nggi {viewers.length} · Umumiy {total}
                             </p>
                             {viewers.map(v => (
@@ -85,7 +85,7 @@ export function NxChannelViewersModal({
                                         <p className="text-sm font-bold text-[var(--nx-text)] truncate">{v.name ?? v.username ?? "?"}</p>
                                         {v.username && <p className="text-[10px]" style={{ color: "var(--nx-text-3)" }}>@{v.username}</p>}
                                     </div>
-                                    <span className="text-[10px] flex-shrink-0" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                    <span className="text-[10px] flex-shrink-0" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                         {timeAgo(v.viewedAt)}
                                     </span>
                                 </div>

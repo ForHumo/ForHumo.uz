@@ -69,7 +69,7 @@ export function FeedView() {
                         } : {
                             background: "var(--nx-surface)",
                             border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)",
-                            color: "rgba(140,160,210,0.85)",
+                            color: "rgb(var(--nx-text-2-rgb)/0.85)",
                         }}>
                         {t.label}
                     </button>
@@ -184,7 +184,7 @@ function SocialViewMobile() {
                         } : {
                             background: "var(--nx-surface)",
                             border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)",
-                            color: "rgba(140,160,210,0.85)",
+                            color: "rgb(var(--nx-text-2-rgb)/0.85)",
                         }}
                     >
                         <Icon className="w-3.5 h-3.5" />{label}
@@ -204,7 +204,7 @@ function SocialViewMobile() {
                         } : {
                             background: "var(--nx-surface)",
                             border: `1px solid ${f.color ? colorHex(f.color) + "55" : "rgb(var(--nx-accent-rgb) / 0.22)"}`,
-                            color: f.color ? colorHex(f.color) : "rgba(140,160,210,0.85)",
+                            color: f.color ? colorHex(f.color) : "rgb(var(--nx-text-2-rgb)/0.85)",
                         }}
                     >
                         <Folder className="w-3.5 h-3.5" />
@@ -219,7 +219,7 @@ function SocialViewMobile() {
                     style={{
                         background: "var(--nx-surface)",
                         border: "1px dashed rgb(var(--nx-accent-rgb) / 0.35)",
-                        color: "rgba(140,160,210,0.85)",
+                        color: "rgb(var(--nx-text-2-rgb)/0.85)",
                     }}
                 >
                     <Plus className="w-4 h-4" />
@@ -247,12 +247,12 @@ function SocialViewMobile() {
 }
 
 function colorHex(color: string | null): string {
-    if (!color) return "rgba(140,160,210,0.85)";
+    if (!color) return "rgb(var(--nx-text-2-rgb)/0.85)";
     const map: Record<string, string> = {
         red: "#EF4444", orange: "#F97316", violet: "#8B5CF6",
         green: "#10B981", blue: "#3B82F6", cyan: "#06B6D4", pink: "#EC4899",
     };
-    return map[color] ?? "rgba(140,160,210,0.85)";
+    return map[color] ?? "rgb(var(--nx-text-2-rgb)/0.85)";
 }
 
 // Papka ichi — filtrga qarab tegishli ro'yxatni ko'rsatadi
@@ -271,7 +271,7 @@ function FolderView({ folder }: { folder: UserFolder | null }) {
                 <div className="mx-4 flex flex-col items-center justify-center py-10 px-6 text-center rounded-2xl"
                     style={{ background: "var(--nx-surface)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.25)" }}>
                     <p className="text-sm font-black text-[var(--nx-text)] mb-1">Papka bo&apos;sh</p>
-                    <p className="text-xs" style={{ color: "rgba(140,160,210,0.75)" }}>
+                    <p className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                         Papkaga chat turlarini qo&apos;shing (o&apos;chirish uchun ikki marta bosing)
                     </p>
                 </div>
@@ -347,7 +347,7 @@ function AgentsTab() {
                         className="px-3 py-1.5 rounded-lg text-xs font-bold transition"
                         style={scope === s
                             ? { background: "rgb(var(--nx-accent-rgb) / 0.18)", color: "#fff" }
-                            : { background: "var(--nx-surface)", color: "rgba(140,160,210,0.8)" }}>
+                            : { background: "var(--nx-surface)", color: "rgb(var(--nx-text-2-rgb)/0.8)" }}>
                         {s === "mine" ? "Mening" : "Kashfiyot"}
                     </button>
                 ))}
@@ -361,7 +361,7 @@ function AgentsTab() {
 
             {/* Search */}
             <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "rgba(140,160,210,0.6)" }} />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.6)" }} />
                 <input value={search} onChange={e => setSearch(e.target.value)}
                     placeholder="Bot qidirish..."
                     className="w-full h-10 rounded-xl pl-9 pr-3 text-sm focus:outline-none"
@@ -376,7 +376,7 @@ function AgentsTab() {
                         className="px-3 h-7 rounded-full text-[10px] font-black flex-shrink-0"
                         style={!moduleFilter
                             ? { background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "white", border: "1px solid var(--nx-accent)" }
-                            : { background: "var(--nx-surface)", color: "rgba(160,176,224,0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
+                            : { background: "var(--nx-surface)", color: "rgb(var(--nx-text-2-rgb)/0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                         Barchasi
                     </button>
                     {modules.map(m => (
@@ -384,7 +384,7 @@ function AgentsTab() {
                             className="px-3 h-7 rounded-full text-[10px] font-black flex-shrink-0"
                             style={moduleFilter === m
                                 ? { background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "white", border: "1px solid var(--nx-accent)" }
-                                : { background: "var(--nx-surface)", color: "rgba(160,176,224,0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
+                                : { background: "var(--nx-surface)", color: "rgb(var(--nx-text-2-rgb)/0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             {MODULE_LABELS[m] ?? m}
                         </button>
                     ))}
@@ -398,7 +398,7 @@ function AgentsTab() {
                 <div className="p-8 rounded-2xl text-center"
                     style={{ background: "var(--nx-surface)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <Bot className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "var(--nx-accent)" }} />
-                    <p className="text-sm" style={{ color: "rgba(160,176,224,0.75)" }}>
+                    <p className="text-sm" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                         {scope === "mine" ? "Sizda bot yo'q" : "Bot topilmadi"}
                     </p>
                     {scope === "mine" && (
@@ -461,7 +461,7 @@ function AgentCard({
                             <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} fill="var(--nx-accent)" stroke="var(--nx-bg)" />
                         )}
                     </div>
-                    <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.70)" }}>
+                    <p className="text-[11px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.70)" }}>
                         @{agent.username} · {MODULE_LABELS[agent.module] ?? agent.module}
                     </p>
                 </div>
@@ -608,9 +608,9 @@ export function ProfileView() {
                         {profile?.username && (
                             <p className="text-xs font-mono mb-1" style={{ color: "var(--nx-accent)" }}>@{profile.username}</p>
                         )}
-                        <p className="text-sm font-mono mb-2" style={{ color: "rgba(100,120,170,0.80)" }}>{sessionEmail}</p>
+                        <p className="text-sm font-mono mb-2" style={{ color: "rgb(var(--nx-text-3-rgb)/0.80)" }}>{sessionEmail}</p>
                         {profile?.bio && (
-                            <p className="text-xs mb-3 leading-relaxed" style={{ color: "rgba(140,160,210,0.80)" }}>
+                            <p className="text-xs mb-3 leading-relaxed" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }}>
                                 {profile.bio}
                             </p>
                         )}
@@ -691,7 +691,7 @@ export function ProfileView() {
                         onMouseLeave={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgb(var(--nx-accent-rgb) / 0.18)")}
                     >
                         <p className="text-2xl font-black text-[var(--nx-text)]">{value}</p>
-                        <p className="text-[10px] mt-0.5 font-bold" style={{ color: "rgba(100,120,170,0.75)" }}>{label}</p>
+                        <p className="text-[10px] mt-0.5 font-bold" style={{ color: "rgb(var(--nx-text-3-rgb)/0.75)" }}>{label}</p>
                     </button>
                 ))}
             </div>
@@ -820,7 +820,7 @@ export function ProfileView() {
                 <div className="space-y-2">
                     <Link href="/id"
                         className="flex items-center justify-between p-3 rounded-xl text-sm font-medium transition-colors duration-150"
-                        style={{ background: "rgba(5,8,24,0.50)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.12)", color: "rgba(140,160,210,0.85)" }}>
+                        style={{ background: "rgba(5,8,24,0.50)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.12)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                         <span>Humo ID sozlamalari</span>
                         <ExternalLink className="w-4 h-4" style={{ color: "rgb(var(--nx-accent-rgb) / 0.6)" }} />
                     </Link>
@@ -863,7 +863,7 @@ export function ProfileView() {
                                 className="w-8 h-8 flex items-center justify-center rounded-xl"
                                 style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}
                             >
-                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                <X className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                             </button>
                         </div>
 

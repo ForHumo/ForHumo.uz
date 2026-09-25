@@ -56,7 +56,7 @@ export function NxGroupSummarize({
                 </div>
 
                 <div className="p-5 flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
-                    <p className="text-[11px] uppercase tracking-widest mb-2" style={{ color: "rgba(140,160,210,0.7)" }}>
+                    <p className="text-[11px] uppercase tracking-widest mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                         Oxirgi nechta xabar
                     </p>
                     <div className="flex gap-1.5 mb-4">
@@ -65,7 +65,7 @@ export function NxGroupSummarize({
                                 className="flex-1 py-2 rounded-xl text-xs font-bold transition"
                                 style={count === c
                                     ? { background: "var(--nx-accent)", color: "white" }
-                                    : { background: "var(--nx-surface)", color: "rgba(200,215,245,0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
+                                    : { background: "var(--nx-surface)", color: "rgb(var(--nx-text-2-rgb)/0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                 {c}
                             </button>
                         ))}
@@ -90,7 +90,7 @@ export function NxGroupSummarize({
                                 <p className="text-[10px] uppercase tracking-widest mb-2 flex items-center gap-1" style={{ color: "var(--nx-accent)" }}>
                                     <Sparkles className="w-3 h-3" /> Xulosa · {msgCount} xabar
                                 </p>
-                                <p className="text-sm whitespace-pre-wrap" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                <p className="text-sm whitespace-pre-wrap" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>
                                     {summary}
                                 </p>
                             </div>

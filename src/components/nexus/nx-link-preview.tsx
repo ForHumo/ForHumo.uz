@@ -70,9 +70,9 @@ export function NxLinkPreview({ text, compact = false }: { text: string; compact
                 )}
                 <div className="flex-1 min-w-0">
                     {meta.title && <p className="text-xs font-bold text-[var(--nx-text)] truncate">{meta.title}</p>}
-                    <p className="text-[10px] truncate" style={{ color: "rgba(140,160,210,0.7)" }}>{host}</p>
+                    <p className="text-[10px] truncate" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>{host}</p>
                 </div>
-                <ExternalLink className="w-3 h-3 flex-shrink-0" style={{ color: "rgba(160,176,224,0.6)" }} />
+                <ExternalLink className="w-3 h-3 flex-shrink-0" style={{ color: "rgb(var(--nx-text-2-rgb)/0.6)" }} />
             </a>
         );
     }

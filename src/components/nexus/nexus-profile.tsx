@@ -185,7 +185,7 @@ export function NexusProfile({ username }: { username: string }) {
                                             <button onClick={toggleFollow} disabled={busy || blockedMe}
                                                 className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-black active:scale-95 transition disabled:opacity-60"
                                                 style={following
-                                                    ? { background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "rgba(140,160,210,0.9)" }
+                                                    ? { background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "rgb(var(--nx-text-2-rgb)/0.9)" }
                                                     : { background: "var(--nx-accent)", color: "#fff", boxShadow: "0 4px 18px rgb(var(--nx-accent-rgb) / 0.4)" }}>
                                                 {following ? <><UserCheck className="w-4 h-4" /> Kuzatilmoqda</> : <><UserPlus className="w-4 h-4" /> Kuzatish</>}
                                             </button>
@@ -305,7 +305,7 @@ export function NexusProfile({ username }: { username: string }) {
                             {data.isMe && !data.profile.verified && (
                                 <Link href="/nexus/verify"
                                     className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs font-bold active:scale-[0.99] transition"
-                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "rgba(150,170,210,0.9)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "rgb(var(--nx-text-2-rgb)/0.9)" }}>
                                     <BadgeCheck className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} /> Ko&apos;k belgi uchun ariza
                                 </Link>
                             )}

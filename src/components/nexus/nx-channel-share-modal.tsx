@@ -61,7 +61,7 @@ export function NxChannelShareModal({
                 <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 md:inset-x-0 md:mx-auto md:max-w-md z-[321] p-6 rounded-3xl"
                     style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                     <h3 className="text-base font-black text-[var(--nx-text)] mb-2">Ulash uchun @handle kerak</h3>
-                    <p className="text-sm mb-4" style={{ color: "rgba(160,176,224,0.85)" }}>
+                    <p className="text-sm mb-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                         Xususiy kanal handle&apos;siz. Sozlamalardan @handle qo&apos;shing.
                     </p>
                     <button onClick={onClose} className="w-full h-11 rounded-full font-black text-sm"
@@ -104,7 +104,7 @@ export function NxChannelShareModal({
 
                     <div>
                         <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block"
-                            style={{ color: "rgba(160,176,224,0.7)" }}>
+                            style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                             Ommaviy havola
                         </label>
                         <div className="flex items-center gap-1 rounded-xl overflow-hidden"

@@ -74,7 +74,7 @@ export function NxAgentShareModal({
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-black text-[var(--nx-text)] truncate">{name}</p>
-                            <p className="text-[11px]" style={{ color: "rgba(160,176,224,0.7)" }}>@{username}</p>
+                            <p className="text-[11px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>@{username}</p>
                         </div>
                     </div>
 
@@ -92,7 +92,7 @@ export function NxAgentShareModal({
 
                     <div>
                         <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block"
-                            style={{ color: "rgba(160,176,224,0.7)" }}>
+                            style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                             Bot havolasi
                         </label>
                         <div className="flex items-center gap-1 rounded-xl overflow-hidden"

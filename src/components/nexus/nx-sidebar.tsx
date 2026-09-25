@@ -65,7 +65,7 @@ export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) 
                     <button onClick={onClose}
                         className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150 active:scale-90"
                         style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
-                        <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                        <X className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                     </button>
                 </div>
 
@@ -84,7 +84,7 @@ export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) 
                             </div>
                             <div className="min-w-0 flex-1">
                                 <p className="text-sm font-bold text-[var(--nx-text)] truncate">{name}</p>
-                                <p className="text-[10px] truncate mt-0.5" style={{ color: "rgba(100,120,170,0.80)" }}>{email}</p>
+                                <p className="text-[10px] truncate mt-0.5" style={{ color: "rgb(var(--nx-text-3-rgb)/0.80)" }}>{email}</p>
                             </div>
                         </button>
                     </div>
@@ -158,7 +158,7 @@ function SidebarItem({ icon: Icon, label, onClick }: { icon: React.ElementType; 
     return (
         <button onClick={onClick}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-left transition-all duration-150 hover:bg-white/5 active:scale-[0.99]"
-            style={{ color: "rgba(190,205,240,0.88)" }}>
+            style={{ color: "rgb(var(--nx-text-2-rgb)/0.88)" }}>
             <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "rgb(var(--nx-accent-rgb) / 0.85)" }} />
             <span className="truncate">{label}</span>
         </button>
@@ -169,7 +169,7 @@ function SidebarLink({ icon: Icon, label, href, onClose }: { icon: React.Element
     return (
         <Link href={href} onClick={onClose}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-left transition-all duration-150 hover:bg-white/5 active:scale-[0.99]"
-            style={{ color: "rgba(190,205,240,0.88)" }}>
+            style={{ color: "rgb(var(--nx-text-2-rgb)/0.88)" }}>
             <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "rgb(var(--nx-accent-rgb) / 0.85)" }} />
             <span className="truncate">{label}</span>
         </Link>

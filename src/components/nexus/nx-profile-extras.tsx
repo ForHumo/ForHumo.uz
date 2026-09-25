@@ -96,10 +96,10 @@ export function NxProfileAchievements() {
                             <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                                 style={{ background: isEarned ? tier.bg : "rgb(var(--nx-accent-rgb) / 0.05)" }}>
                                 {isEarned ? <Icon className="w-4 h-4" style={{ color: tier.fg }} />
-                                          : <Lock className="w-3.5 h-3.5" style={{ color: "rgba(80,100,150,0.55)" }} />}
+                                          : <Lock className="w-3.5 h-3.5" style={{ color: "rgb(var(--nx-text-3-rgb)/0.55)" }} />}
                             </div>
                             <span className="text-[8px] font-black text-center leading-tight line-clamp-2"
-                                style={{ color: isEarned ? "#fff" : "rgba(140,160,210,0.65)" }}>{a.title}</span>
+                                style={{ color: isEarned ? "#fff" : "rgb(var(--nx-text-2-rgb)/0.65)" }}>{a.title}</span>
                         </div>
                     );
                 })}
@@ -164,7 +164,7 @@ export function NxProfileActivity() {
 
             {posts.length > 0 && (
                 <div className="mb-3">
-                    <p className="text-[9px] font-black uppercase tracking-widest mb-2" style={{ color: "rgba(140,160,210,0.60)" }}>Postlar</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>Postlar</p>
                     <div className="flex flex-col gap-1.5">
                         {posts.map(p => (
                             <Link key={p.id} href={`/nexus/p/${p.id}`}
@@ -175,7 +175,7 @@ export function NxProfileActivity() {
                                         <img src={p.media[0]} alt="" className="w-full h-full object-cover" />
                                     </div>
                                 )}
-                                <p className="text-xs text-white line-clamp-1 flex-1" style={{ color: "rgba(200,215,245,0.85)" }}>
+                                <p className="text-xs text-white line-clamp-1 flex-1" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                                     {p.text || "(media post)"}
                                 </p>
                                 <div className="flex items-center gap-2 flex-shrink-0 text-[10px]" style={{ color: "var(--nx-text-3)" }}>
@@ -190,7 +190,7 @@ export function NxProfileActivity() {
 
             {videos.length > 0 && (
                 <div className="mb-3">
-                    <p className="text-[9px] font-black uppercase tracking-widest mb-2" style={{ color: "rgba(140,160,210,0.60)" }}>Videolar</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>Videolar</p>
                     <div className="grid grid-cols-3 gap-2">
                         {videos.map(v => (
                             <Link key={v.id} href={`/nexus/v/${v.id}`} className="text-left group">
@@ -212,7 +212,7 @@ export function NxProfileActivity() {
 
             {tracks.length > 0 && (
                 <div>
-                    <p className="text-[9px] font-black uppercase tracking-widest mb-2" style={{ color: "rgba(140,160,210,0.60)" }}>Musiqa</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>Musiqa</p>
                     <div className="flex flex-col gap-1.5">
                         {tracks.map(t => (
                             <Link key={t.id} href={`/nexus/t/${t.id}`}
@@ -292,7 +292,7 @@ export function NxProfileQrModal({ username, open, onClose }: { username: string
                         </div>
                     )}
                     <p className="text-sm font-black text-white mb-1">@{username}</p>
-                    <p className="text-[11px] text-center mb-4" style={{ color: "rgba(140,160,210,0.75)" }}>
+                    <p className="text-[11px] text-center mb-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                         QR kodni skaner qiling yoki havolani ulashing
                     </p>
                     <button onClick={copyLink}

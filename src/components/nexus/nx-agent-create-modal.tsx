@@ -91,7 +91,7 @@ export function NxAgentCreateModal({
                                 style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                 <Bot className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--nx-accent)" }} />
                                 <p className="text-sm font-black text-[var(--nx-text)]">@{created.agent.username}</p>
-                                <p className="text-xs mt-0.5" style={{ color: "rgba(160,176,224,0.85)" }}>{created.agent.name}</p>
+                                <p className="text-xs mt-0.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>{created.agent.name}</p>
                             </div>
 
                             <div className="p-3 rounded-xl flex items-start gap-2"
@@ -105,7 +105,7 @@ export function NxAgentCreateModal({
 
                             <div>
                                 <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block"
-                                    style={{ color: "rgba(160,176,224,0.7)" }}>
+                                    style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     API kalit (webhook HMAC)
                                 </label>
                                 <div className="flex items-center gap-1 rounded-xl overflow-hidden"
@@ -133,12 +133,12 @@ export function NxAgentCreateModal({
                         <>
                             <div>
                                 <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block"
-                                    style={{ color: "rgba(160,176,224,0.7)" }}>
+                                    style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     Username <span style={{ color: "#EF4444" }}>*</span>
                                 </label>
                                 <div className="flex items-center rounded-xl overflow-hidden"
                                     style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
-                                    <span className="pl-3 pr-1 text-sm font-bold" style={{ color: "rgba(160,176,224,0.85)" }}>@</span>
+                                    <span className="pl-3 pr-1 text-sm font-bold" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>@</span>
                                     <input value={username}
                                         onChange={e => setUsername(e.target.value.slice(0, 32))}
                                         placeholder="mybot_agent"
@@ -146,14 +146,14 @@ export function NxAgentCreateModal({
                                         style={{ color: "white" }}
                                     />
                                 </div>
-                                <p className="text-[10px] mt-1" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                <p className="text-[10px] mt-1" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     `_agent` bilan tugashi shart. Misol: <b>quiz_agent</b>, <b>weather_agent</b>
                                 </p>
                             </div>
 
                             <div>
                                 <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block"
-                                    style={{ color: "rgba(160,176,224,0.7)" }}>
+                                    style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     Nomi <span style={{ color: "#EF4444" }}>*</span>
                                 </label>
                                 <input value={name}
@@ -166,7 +166,7 @@ export function NxAgentCreateModal({
 
                             <div>
                                 <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block"
-                                    style={{ color: "rgba(160,176,224,0.7)" }}>
+                                    style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                     Avatar URL (ixtiyoriy)
                                 </label>
                                 <input value={image}

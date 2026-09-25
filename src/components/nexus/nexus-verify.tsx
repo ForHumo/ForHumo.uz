@@ -106,10 +106,10 @@ export function NexusVerify() {
                                                     <p className="text-[11px] truncate" style={{ color: "var(--nx-accent)" }}>@{q.applicant?.username} · {q.category}</p>
                                                 </div>
                                             </div>
-                                            <p className="text-xs leading-relaxed mb-2" style={{ color: "rgba(200,215,245,0.85)" }}>{q.reason}</p>
+                                            <p className="text-xs leading-relaxed mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>{q.reason}</p>
                                             {q.links.length > 0 && (
                                                 <div className="flex flex-col gap-0.5 mb-2.5">
-                                                    {q.links.map((l, i) => <span key={i} className="text-[11px] truncate" style={{ color: "rgba(120,150,220,0.9)" }}>{l}</span>)}
+                                                    {q.links.map((l, i) => <span key={i} className="text-[11px] truncate" style={{ color: "rgb(var(--nx-text-2-rgb)/0.9)" }}>{l}</span>)}
                                                 </div>
                                             )}
                                             <div className="flex gap-2">
@@ -134,7 +134,7 @@ export function NexusVerify() {
                                 <BadgeCheck className="w-8 h-8" style={{ color: "var(--nx-accent)" }} />
                             </div>
                             <p className="text-lg font-black text-[var(--nx-text)]">Siz tasdiqlangansiz</p>
-                            <p className="text-sm mt-1" style={{ color: "rgba(180,200,240,0.8)" }}>Profilingizda ko&apos;k belgi ko&apos;rinadi</p>
+                            <p className="text-sm mt-1" style={{ color: "rgb(var(--nx-text-2-rgb)/0.8)" }}>Profilingizda ko&apos;k belgi ko&apos;rinadi</p>
                         </div>
                     ) : data.request?.status === "PENDING" ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -142,7 +142,7 @@ export function NexusVerify() {
                                 <Clock className="w-8 h-8" style={{ color: "#F59E0B" }} />
                             </div>
                             <p className="text-lg font-black text-[var(--nx-text)]">Ariza ko&apos;rib chiqilmoqda</p>
-                            <p className="text-sm mt-1" style={{ color: "rgba(180,200,240,0.8)" }}>Tez orada javob beramiz</p>
+                            <p className="text-sm mt-1" style={{ color: "rgb(var(--nx-text-2-rgb)/0.8)" }}>Tez orada javob beramiz</p>
                         </div>
                     ) : (
                         <div>
@@ -154,11 +154,11 @@ export function NexusVerify() {
                                 </p>
                             </div>
 
-                            <label className="text-[11px] font-bold block mb-1.5 px-1" style={{ color: "rgba(150,170,210,0.85)" }}>Haqiqiy ism / nom</label>
+                            <label className="text-[11px] font-bold block mb-1.5 px-1" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>Haqiqiy ism / nom</label>
                             <input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Masalan: Ali Valiyev"
                                 className="w-full px-3.5 py-3 rounded-xl text-sm text-[var(--nx-text)] outline-none mb-3" style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
 
-                            <label className="text-[11px] font-bold block mb-1.5 px-1" style={{ color: "rgba(150,170,210,0.85)" }}>Toifa</label>
+                            <label className="text-[11px] font-bold block mb-1.5 px-1" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>Toifa</label>
                             <p className="text-[10px] mb-2 px-1" style={{ color: "var(--nx-text-3)" }}>
                                 Ikoningiz ismingiz yonida ko'rinadi (masalan musiqachi uchun nota)
                             </p>
@@ -175,18 +175,18 @@ export function NexusVerify() {
                                             <Icon className="w-4 h-4 flex-shrink-0" style={{ color: c.color }} strokeWidth={2.5} />
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-[11px] font-bold text-[var(--nx-text)] truncate">{c.shortLabel}</p>
-                                                <p className="text-[9px] truncate" style={{ color: "rgba(140,160,210,0.70)" }}>{c.description}</p>
+                                                <p className="text-[9px] truncate" style={{ color: "rgb(var(--nx-text-2-rgb)/0.70)" }}>{c.description}</p>
                                             </div>
                                         </button>
                                     );
                                 })}
                             </div>
 
-                            <label className="text-[11px] font-bold block mb-1.5 px-1" style={{ color: "rgba(150,170,210,0.85)" }}>Nega tasdiqlanishingiz kerak?</label>
+                            <label className="text-[11px] font-bold block mb-1.5 px-1" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>Nega tasdiqlanishingiz kerak?</label>
                             <textarea value={reason} onChange={e => setReason(e.target.value.slice(0, 1000))} rows={4} placeholder="Faoliyatingiz, mashhurligingiz haqida qisqacha..."
                                 className="w-full px-3.5 py-3 rounded-xl text-sm text-[var(--nx-text)] outline-none resize-none mb-3" style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
 
-                            <label className="text-[11px] font-bold block mb-1.5 px-1" style={{ color: "rgba(150,170,210,0.85)" }}>Havolalar (ijtimoiy tarmoq, OAV)</label>
+                            <label className="text-[11px] font-bold block mb-1.5 px-1" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>Havolalar (ijtimoiy tarmoq, OAV)</label>
                             {links.map((l, i) => (
                                 <div key={i} className="flex gap-2 mb-2">
                                     <input value={l} onChange={e => setLinks(ls => ls.map((x, j) => j === i ? e.target.value : x))} placeholder="https://..."

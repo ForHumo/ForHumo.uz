@@ -16,8 +16,8 @@ const NX = {
     accent: "var(--nx-accent)",
     blueBg: "rgb(var(--nx-accent-rgb) / 0.10)",
     blueBgActive: "rgb(var(--nx-accent-rgb) / 0.20)",
-    text: "rgba(230,238,255,0.96)",
-    text2: "rgba(200,215,245,0.75)",
+    text: "rgb(var(--nx-text-rgb)/0.96)",
+    text2: "rgb(var(--nx-text-2-rgb)/0.75)",
     text3: "var(--nx-text-2)",
     gradient: "var(--nx-accent)",
 };

@@ -73,7 +73,7 @@ export function NxSubscribeSheet({
                             <Check className="w-8 h-8" style={{ color: "#8B5CF6" }} />
                         </div>
                         <p className="text-lg font-black text-[var(--nx-text)]">{alreadyActive ? "Obuna uzaytirildi!" : "Obuna bo'ldingiz!"}</p>
-                        <p className="text-sm mt-1" style={{ color: "rgba(180,200,240,0.8)" }}>{displayName}ning maxsus kontenti ochildi</p>
+                        <p className="text-sm mt-1" style={{ color: "rgb(var(--nx-text-2-rgb)/0.8)" }}>{displayName}ning maxsus kontenti ochildi</p>
                     </div>
                 ) : (
                     <>
@@ -104,7 +104,7 @@ export function NxSubscribeSheet({
                                     "Ijodkorni to'g'ridan-to'g'ri qo'llab-quvvatlash",
                                     "30 kunlik kirish (qo'lda uzaytiriladi)",
                                 ].map((b, i) => (
-                                    <div key={i} className="flex items-center gap-2.5 text-[13px]" style={{ color: "rgba(200,215,245,0.9)" }}>
+                                    <div key={i} className="flex items-center gap-2.5 text-[13px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.9)" }}>
                                         <Sparkles className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#8B5CF6" }} />{b}
                                     </div>
                                 ))}

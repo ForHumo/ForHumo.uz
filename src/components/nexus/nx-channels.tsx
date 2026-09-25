@@ -152,7 +152,7 @@ export function NxChannels({ type }: { type: ChType }) {
                     {(["mine", "discover"] as const).map(s => (
                         <button key={s} onClick={() => setScope(s)}
                             className="px-3 py-1.5 rounded-lg text-xs font-bold transition"
-                            style={scope === s ? { background: "rgb(var(--nx-accent-rgb) / 0.18)", color: "#fff" } : { background: "var(--nx-surface)", color: "rgba(140,160,210,0.8)" }}>
+                            style={scope === s ? { background: "rgb(var(--nx-accent-rgb) / 0.18)", color: "#fff" } : { background: "var(--nx-surface)", color: "rgb(var(--nx-text-2-rgb)/0.8)" }}>
                             {s === "mine" ? "Mening" : "Kashfiyot"}
                         </button>
                     ))}
@@ -1090,22 +1090,22 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                 <button onClick={() => { setMembersOpen(true); setChMoreOpen(false); }}
                                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left border-b"
                                     style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                                    <Users className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                    <Users className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                     <span className="flex-1">A&apos;zolar</span>
-                                    <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>{ch.memberCount}</span>
+                                    <span className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>{ch.memberCount}</span>
                                 </button>
                                 {/* Media/fayl/havolalar */}
                                 <button onClick={() => { setMediaOpen(true); setChMoreOpen(false); }}
                                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left border-b"
                                     style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                                    <ImageIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                    <ImageIcon className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                     <span className="flex-1">Ulashilgan kontent</span>
                                 </button>
                                 {/* Pinlangan xabarlar */}
                                 <button onClick={() => { setPinnedListOpen(true); setChMoreOpen(false); }}
                                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left border-b"
                                     style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                                    <PinIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                    <PinIcon className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                     <span className="flex-1">Pinlangan xabarlar</span>
                                 </button>
                                 {/* Kirish so'rovlari — OWNER/ADMIN, yopiq guruh */}
@@ -1113,7 +1113,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                     <button onClick={() => { setJoinRequestsOpen(true); setChMoreOpen(false); }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left border-b"
                                         style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                                        <UserPlusIcon className="w-4 h-4" style={{ color: pendingJoinCount > 0 ? "var(--nx-accent)" : "rgba(160,176,224,0.80)" }} />
+                                        <UserPlusIcon className="w-4 h-4" style={{ color: pendingJoinCount > 0 ? "var(--nx-accent)" : "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                         <span className="flex-1">Kirish so&apos;rovlari</span>
                                         {pendingJoinCount > 0 && (
                                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
@@ -1126,7 +1126,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                     <button onClick={() => { setTopicsOpen(true); setChMoreOpen(false); }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left border-b"
                                         style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                                        <HashIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <HashIcon className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                         <span className="flex-1">Mavzular</span>
                                     </button>
                                 )}
@@ -1135,7 +1135,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                     <button onClick={() => { setBotsOpen(true); setChMoreOpen(false); }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left border-b"
                                         style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                                        <BotIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <BotIcon className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                         <span className="flex-1">Botlar</span>
                                     </button>
                                 )}
@@ -1144,7 +1144,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                     <button onClick={() => { setBansOpen(true); setChMoreOpen(false); }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left border-b"
                                         style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                                        <ShieldOff className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <ShieldOff className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                         <span className="flex-1">Bloklanganlar</span>
                                     </button>
                                 )}
@@ -1155,7 +1155,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                         <RadioIcon className="w-4 h-4" style={{ color: "#F5B301" }} />
                                         <span className="flex-1">Muhim e&apos;lon</span>
-                                        <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>3/kun</span>
+                                        <span className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>3/kun</span>
                                     </button>
                                 )}
                                 {/* Scheduled draft box — OWNER/ADMIN */}
@@ -1163,7 +1163,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                     <button onClick={() => { setScheduledOpen(true); setChMoreOpen(false); }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left border-b"
                                         style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                                        <CalendarClockIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <CalendarClockIcon className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                         <span className="flex-1">Rejadagi postlar</span>
                                     </button>
                                 )}
@@ -1182,9 +1182,9 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                     <button onClick={() => { setShareModalOpen(true); setChMoreOpen(false); }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left border-b"
                                         style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                                        <QrCodeIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <QrCodeIcon className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                         <span className="flex-1">Kanal ulash</span>
-                                        <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>QR</span>
+                                        <span className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>QR</span>
                                     </button>
                                 )}
                                 {/* RSS feed — hamma uchun (agar handle va public bo'lsa) */}
@@ -1194,9 +1194,9 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         onClick={() => setChMoreOpen(false)}
                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left border-b"
                                         style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                                        <RadioIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <RadioIcon className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                         <span className="flex-1">RSS feed</span>
-                                        <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>XML</span>
+                                        <span className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>XML</span>
                                     </a>
                                 )}
                                 {/* Export — faqat OWNER */}
@@ -1205,9 +1205,9 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         onClick={() => setChMoreOpen(false)}
                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left border-b"
                                         style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                                        <DownloadIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <DownloadIcon className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                         <span className="flex-1">Xabarlarni eksport</span>
-                                        <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>JSON</span>
+                                        <span className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>JSON</span>
                                     </a>
                                 )}
                                 {/* Admin jurnali */}
@@ -1215,7 +1215,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                     <button onClick={() => { setAuditOpen(true); setChMoreOpen(false); }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left border-b"
                                         style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                                        <ScrollTextIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <ScrollTextIcon className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                         <span className="flex-1">Admin jurnali</span>
                                     </button>
                                 )}
@@ -1224,7 +1224,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                     <button onClick={() => { setSettingsOpen(true); setChMoreOpen(false); }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left border-b"
                                         style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                                        <SettingsIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <SettingsIcon className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                         <span className="flex-1">Sozlamalar</span>
                                     </button>
                                 )}
@@ -1232,8 +1232,8 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                 {(ch.isOwner || ch.role === "ADMIN") && ch.type === "GROUP" && (
                                     <div className="px-3 py-2.5 border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                         <div className="flex items-center gap-2 mb-2">
-                                            <Clock className="w-4 h-4" style={{ color: (ch.slowModeSeconds ?? 0) > 0 ? "var(--nx-accent)" : "rgba(160,176,224,0.80)" }} />
-                                            <span className="text-xs font-black flex-1" style={{ color: "rgba(230,238,255,0.90)" }}>
+                                            <Clock className="w-4 h-4" style={{ color: (ch.slowModeSeconds ?? 0) > 0 ? "var(--nx-accent)" : "rgb(var(--nx-text-2-rgb)/0.80)" }} />
+                                            <span className="text-xs font-black flex-1" style={{ color: "rgb(var(--nx-text-rgb)/0.90)" }}>
                                                 Slow mode {(ch.slowModeSeconds ?? 0) > 0 && (
                                                     <span className="text-[10px] font-bold ml-1" style={{ color: "var(--nx-accent)" }}>
                                                         · {formatSlowMode(ch.slowModeSeconds ?? 0)}
@@ -1259,7 +1259,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                         style={active ? {
                                                             background: "var(--nx-accent)", color: "white",
                                                         } : {
-                                                            background: "rgb(var(--nx-accent-rgb) / 0.08)", color: "rgba(200,215,245,0.80)",
+                                                            background: "rgb(var(--nx-accent-rgb) / 0.08)", color: "rgb(var(--nx-text-2-rgb)/0.80)",
                                                             border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                                                         }}>
                                                         {opt.label}
@@ -1301,7 +1301,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                     <span className="text-xs font-bold text-[var(--nx-text)] flex-1 truncate">{currentTopicName}</span>
                     <button onClick={() => { setCurrentTopicId(null); setCurrentTopicName(null); }}
                         className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/10">
-                        <X className="w-3 h-3" style={{ color: "rgba(140,160,210,0.85)" }} />
+                        <X className="w-3 h-3" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                     </button>
                 </div>
             )}
@@ -1404,14 +1404,14 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                 <div className="mx-2 mb-2 rounded-xl overflow-hidden"
                     style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                     <div className="px-3 py-2 flex items-center gap-2">
-                        <Search className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(140,160,210,0.60)" }} />
+                        <Search className="w-4 h-4 flex-shrink-0" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }} />
                         <input autoFocus value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                             placeholder="Kanalda qidirish (2+ belgi)..."
                             className="flex-1 h-8 bg-transparent text-[var(--nx-text)] text-sm focus:outline-none" />
                         {searchBusy && <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "var(--nx-accent)" }} />}
                         {searchQuery.trim().length >= 2 && !searchBusy && (
-                            <span className="text-[11px] font-bold" style={{ color: "rgba(140,160,210,0.85)" }}>{searchTotal} natija</span>
+                            <span className="text-[11px] font-bold" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>{searchTotal} natija</span>
                         )}
                     </div>
                     {searchResults && searchResults.length > 0 && (
@@ -1425,34 +1425,34 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                             ? <img src={r.sender.image} alt="" className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
                                             : <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }} />
                                         }
-                                        <span className="text-[10px] font-black truncate" style={{ color: "rgba(220,230,255,0.85)" }}>
+                                        <span className="text-[10px] font-black truncate" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>
                                             {r.sender?.name ?? r.sender?.username ?? "Foydalanuvchi"}
                                         </span>
-                                        <span className="ml-auto text-[10px] tabular-nums" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                        <span className="ml-auto text-[10px] tabular-nums" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>
                                             {new Date(r.createdAt).toLocaleDateString("uz-UZ", { day: "numeric", month: "short" })}
                                         </span>
                                     </div>
-                                    <p className="text-xs mt-0.5 line-clamp-2" style={{ color: "rgba(220,230,255,0.90)" }}>
+                                    <p className="text-xs mt-0.5 line-clamp-2" style={{ color: "rgb(var(--nx-text-rgb)/0.90)" }}>
                                         {r.text ?? (r.hasMedia ? "[media]" : "")}
                                     </p>
                                 </button>
                             ))}
                             {searchTotal > searchResults.length && (
-                                <p className="text-[10px] text-center py-2" style={{ color: "rgba(140,160,210,0.55)" }}>
+                                <p className="text-[10px] text-center py-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.55)" }}>
                                     +{searchTotal - searchResults.length} boshqa natija — aniqroq qidiruv yozing
                                 </p>
                             )}
                         </div>
                     )}
                     {searchResults && searchResults.length === 0 && searchQuery.trim().length >= 2 && !searchBusy && (
-                        <p className="px-3 py-2 text-xs text-center" style={{ color: "rgba(140,160,210,0.60)" }}>Hech narsa topilmadi</p>
+                        <p className="px-3 py-2 text-xs text-center" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>Hech narsa topilmadi</p>
                     )}
                 </div>
             )}
 
             {!ch.isMember ? (
                 <div className="flex flex-col items-center justify-center flex-1 px-6 text-center">
-                    {ch.description && <p className="text-sm mb-4 max-w-xs" style={{ color: "rgba(180,200,240,0.85)" }}>{ch.description}</p>}
+                    {ch.description && <p className="text-sm mb-4 max-w-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>{ch.description}</p>}
                     <button onClick={join} disabled={joinBusy} className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-black text-[var(--nx-text)] disabled:opacity-50" style={{ background: "var(--nx-accent)" }}>
                         {joinBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />} A&apos;zo bo&apos;lish
                     </button>
@@ -1479,14 +1479,14 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                     <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--nx-accent)" }}>
                                         Pinlangan xabar{pinned.length > 1 ? ` (${pinned.length})` : ""}
                                     </p>
-                                    <p className="text-xs truncate" style={{ color: "rgba(220,230,255,0.85)" }}>
+                                    <p className="text-xs truncate" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>
                                         {top.text || "(media)"}
                                     </p>
                                 </div>
                                 {canManage && (
                                     <PinOff onClick={(e) => { e.stopPropagation(); toggleChannelPin(top); }}
                                         className="w-3.5 h-3.5 flex-shrink-0 opacity-60 hover:opacity-100 cursor-pointer"
-                                        style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                                 )}
                             </button>
                         );
@@ -1518,15 +1518,15 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                             <p className="font-bold text-[11px] mb-0.5" style={{ color: "var(--nx-accent)" }}>
                                                 {m.replyTo.senderName ?? "Foydalanuvchi"}
                                             </p>
-                                            <p className="opacity-80 line-clamp-2" style={{ color: "rgba(220,230,255,0.85)" }}>
+                                            <p className="opacity-80 line-clamp-2" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>
                                                 {m.replyTo.text || "(media)"}
                                             </p>
                                         </button>
                                     )}
                                     {m.deletedForEveryone ? (
-                                        <p className="text-sm italic" style={{ color: "rgba(140,160,210,0.7)" }}>Bu xabar o&apos;chirilgan</p>
+                                        <p className="text-sm italic" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>Bu xabar o&apos;chirilgan</p>
                                     ) : m.viewOnce && !m.mine && m.viewOnceOpened ? (
-                                        <p className="text-sm italic flex items-center gap-1.5" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                        <p className="text-sm italic flex items-center gap-1.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                             <EyeOff className="w-3.5 h-3.5" /> Bir marta ko&apos;rilgan (yopiq)
                                         </p>
                                     ) : m.viewOnce && !m.mine && !m.viewOnceOpened ? (
@@ -1572,7 +1572,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                 />
                                             )}
                                             {m.text && editingId !== m.id && (
-                                                <div className="text-sm whitespace-pre-wrap" style={{ color: "rgba(210,220,245,0.95)" }}>
+                                                <div className="text-sm whitespace-pre-wrap" style={{ color: "rgb(var(--nx-text-2-rgb)/0.95)" }}>
                                                     <NxMarkdown text={m.text} />
                                                     <NxLinkPreview text={m.text} />
                                                     {m.editedAt && (
@@ -1628,7 +1628,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                     <BarChart2 className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-xs font-black text-[var(--nx-text)]">{m.pollQuestion}</p>
-                                                        <p className="text-[10px] mt-0.5" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                                        <p className="text-[10px] mt-0.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                                             {m.pollMulti ? "Bir necha variant" : "Bitta variant"} · {total} ovoz{expired && " · Yakunlangan"}
                                                         </p>
                                                     </div>
@@ -1694,7 +1694,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                             style={{
                                                 background: commentsFor === m.id ? "rgb(var(--nx-accent-rgb) / 0.20)" : "rgb(var(--nx-accent-rgb) / 0.10)",
                                                 border: `1px solid ${commentsFor === m.id ? "rgb(var(--nx-accent-rgb) / 0.40)" : "rgb(var(--nx-accent-rgb) / 0.25)"}`,
-                                                color: commentsFor === m.id ? "var(--nx-accent)" : "rgba(160,176,224,0.95)",
+                                                color: commentsFor === m.id ? "var(--nx-accent)" : "rgb(var(--nx-text-2-rgb)/0.95)",
                                             }}>
                                             <Reply className="w-3 h-3" />
                                             {(m.commentCount ?? 0) > 0
@@ -1711,7 +1711,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                     <Loader2 className="w-4 h-4 animate-spin text-white/40" />
                                                 </div>
                                             ) : comments.length === 0 ? (
-                                                <p className="text-[10px] text-center py-2" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                                <p className="text-[10px] text-center py-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>
                                                     Hali izoh yo&apos;q — birinchi bo&apos;lib yozing
                                                 </p>
                                             ) : (
@@ -1731,7 +1731,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                                 <span className="text-[10px] font-bold" style={{ color: "var(--nx-accent)" }}>
                                                                     {c.author?.name ?? c.author?.username ?? "Foydalanuvchi"}
                                                                 </span>
-                                                                <span className="text-[9px] ml-1.5" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                                                <span className="text-[9px] ml-1.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>
                                                                     {timeAgo(c.createdAt)}
                                                                 </span>
                                                                 <p className="text-xs mt-0.5 text-white/90 break-words">{c.text}</p>
@@ -1765,13 +1765,13 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         {/* Ko'rish soni (Telegram uslub) — 0'dan katta bo'lsa ko'rsatamiz */}
                                         {typeof m.viewCount === "number" && m.viewCount > 0 && (
                                             <span className="flex items-center gap-0.5 text-[9px] tabular-nums"
-                                                style={{ color: "rgba(100,120,170,0.75)" }}
+                                                style={{ color: "rgb(var(--nx-text-3-rgb)/0.75)" }}
                                                 title={`${m.viewCount} ta ko'rilgan`}>
                                                 <Eye className="w-2.5 h-2.5" />
                                                 {m.viewCount >= 1000 ? `${(m.viewCount / 1000).toFixed(1)}K` : m.viewCount}
                                             </span>
                                         )}
-                                        <p className="text-[9px]" style={{ color: "rgba(100,120,170,0.6)" }}>{timeAgo(m.createdAt)}</p>
+                                        <p className="text-[9px]" style={{ color: "rgb(var(--nx-text-3-rgb)/0.6)" }}>{timeAgo(m.createdAt)}</p>
                                     </div>
                                 </div>
                                 {/* Hover amallar (Telegram uslub) — faqat 3 ta: Reaksiya + Javob + 3-dot */}
@@ -1780,12 +1780,12 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         title="Reaksiya"
                                         className="w-7 h-7 rounded-md flex items-center justify-center"
                                         style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
-                                        <Smile className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        <Smile className="w-3 h-3" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                                     </button>
                                     <button onClick={() => setReplyTo(m)} title="Javob berish"
                                         className="w-7 h-7 rounded-md flex items-center justify-center"
                                         style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
-                                        <Reply className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        <Reply className="w-3 h-3" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                                     </button>
                                     <div className="relative" data-ch-msg-menu>
                                         <button onClick={() => setChMsgMenuFor(chMsgMenuFor === m.id ? null : m.id)} title="Ko'proq"
@@ -1794,46 +1794,46 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                 background: chMsgMenuFor === m.id ? "rgb(var(--nx-accent-rgb) / 0.18)" : "var(--nx-surface)",
                                                 border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)",
                                             }}>
-                                            <MoreVertical className="w-3 h-3" style={{ color: chMsgMenuFor === m.id ? "var(--nx-accent)" : "rgba(160,176,224,0.85)" }} />
+                                            <MoreVertical className="w-3 h-3" style={{ color: chMsgMenuFor === m.id ? "var(--nx-accent)" : "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                                         </button>
                                         {chMsgMenuFor === m.id && (
                                             <div className="absolute right-full mr-1 top-0 z-40 rounded-xl overflow-hidden min-w-[180px]"
                                                 style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
                                                 <button onClick={() => { setForwardMsg(m); setChMsgMenuFor(null); }}
                                                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left">
-                                                    <Forward className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> DM&apos;ga yuborish
+                                                    <Forward className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} /> DM&apos;ga yuborish
                                                 </button>
                                                 <button onClick={() => { toggleBookmark(m); setChMsgMenuFor(null); }}
                                                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left">
                                                     {m.bookmarked
                                                         ? <><BookmarkCheck className="w-4 h-4" style={{ color: "#F59E0B" }} /> Saqlashdan olish</>
-                                                        : <><Bookmark className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Saqlash</>
+                                                        : <><Bookmark className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} /> Saqlash</>
                                                     }
                                                 </button>
                                                 {m.text && (
                                                     <button onClick={() => { copyMsg(m.text!); setChMsgMenuFor(null); }}
                                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left">
-                                                        <Copy className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Nusxa olish
+                                                        <Copy className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} /> Nusxa olish
                                                     </button>
                                                 )}
                                                 {ch?.handle && (
                                                     <button onClick={() => { sharePostLink(m.id); setChMsgMenuFor(null); }}
                                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left">
-                                                        <Share2Icon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Havolani ulashish
+                                                        <Share2Icon className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} /> Havolani ulashish
                                                     </button>
                                                 )}
                                                 {/* Reaksiya berganlar — owner/admin */}
                                                 {(ch?.isOwner || ch?.role === "ADMIN") && m.reactions && m.reactions.length > 0 && (
                                                     <button onClick={() => { setReactorsFor(m.id); setChMsgMenuFor(null); }}
                                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left">
-                                                        <Smile className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Reaksiya berganlar
+                                                        <Smile className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} /> Reaksiya berganlar
                                                     </button>
                                                 )}
                                                 {/* Ko'ruvchilar — owner/admin */}
                                                 {(ch?.isOwner || ch?.role === "ADMIN") && (m.viewCount ?? 0) > 0 && (
                                                     <button onClick={() => { setViewersFor(m.id); setChMsgMenuFor(null); }}
                                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left">
-                                                        <Eye className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Ko&apos;ruvchilar
+                                                        <Eye className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} /> Ko&apos;ruvchilar
                                                     </button>
                                                 )}
                                                 {m.text && (
@@ -1842,7 +1842,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                         else { setTranslatePickerFor(m.id); setChMsgMenuFor(null); }
                                                     }}
                                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left">
-                                                        <Languages className="w-4 h-4" style={{ color: translated[m.id] ? "var(--nx-accent)" : "rgba(160,176,224,0.80)" }} />
+                                                        <Languages className="w-4 h-4" style={{ color: translated[m.id] ? "var(--nx-accent)" : "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                                         {translated[m.id] ? "Tarjimani yashirish" : "Tarjima qilish"}
                                                     </button>
                                                 )}
@@ -1851,7 +1851,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left">
                                                         {speakingId === m.id
                                                             ? <VolumeX className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
-                                                            : <Volume2 className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                                            : <Volume2 className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
                                                         }
                                                         {speakingId === m.id ? "TTS to'xtatish" : "Ovoz bilan o'qish"}
                                                     </button>
@@ -1859,7 +1859,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                 {m.mine && m.text && (
                                                     <button onClick={() => { editMsg(m); setChMsgMenuFor(null); }}
                                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left">
-                                                        <Edit3 className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Tahrirlash
+                                                        <Edit3 className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} /> Tahrirlash
                                                     </button>
                                                 )}
                                                 {canManage && (
@@ -1867,7 +1867,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left">
                                                         {m.pinnedAt
                                                             ? <><PinOff className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Pindan olish</>
-                                                            : <><Pin className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Pinlash</>
+                                                            : <><Pin className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} /> Pinlash</>
                                                         }
                                                     </button>
                                                 )}
@@ -1894,13 +1894,13 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                 {(["uz", "ru", "en"] as const).map(lg => (
                                                     <button key={lg} onClick={() => translateMsg(m.id, m.text!, lg)}
                                                         className="text-[10px] font-black px-2.5 py-1.5 rounded hover:bg-white/[0.08]"
-                                                        style={{ color: "rgba(220,230,255,0.95)" }}>
+                                                        style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>
                                                         {lg.toUpperCase()}
                                                     </button>
                                                 ))}
                                                 <button onClick={() => setTranslatePickerFor(null)}
                                                     className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/[0.08]">
-                                                    <X className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                    <X className="w-3 h-3" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                                                 </button>
                                             </div>
                                         )}
@@ -1944,13 +1944,13 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                 <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--nx-accent)" }}>
                                     Javob: {replyTo.author?.name ?? replyTo.author?.username ?? "Foydalanuvchi"}
                                 </p>
-                                <p className="text-xs truncate" style={{ color: "rgba(220,230,255,0.85)" }}>
+                                <p className="text-xs truncate" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>
                                     {replyTo.text || (replyTo.media?.length ? "[media]" : "(bo'sh)")}
                                 </p>
                             </div>
                             <button onClick={() => setReplyTo(null)}
                                 className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
-                                <X className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                <X className="w-3.5 h-3.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                             </button>
                         </div>
                     )}
@@ -2018,7 +2018,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                         <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <div className="flex items-center gap-2">
                                 <Shield className="w-4 h-4" style={{ color: modFlags.length > 0 ? "#EF4444" : "var(--nx-accent)" }} />
-                                <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Moderatsiya inboxi</p>
+                                <p className="text-sm font-black" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>Moderatsiya inboxi</p>
                                 {modFlags.length > 0 && (
                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                                         style={{ background: "rgba(239,68,68,0.15)", color: "#EF4444" }}>{modFlags.length}</span>
@@ -2026,12 +2026,12 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                             </div>
                             <button onClick={() => setModOpen(false)}
                                 className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
-                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                <X className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                             </button>
                         </div>
                         <div className="flex-1 overflow-y-auto">
                             {modFlags.length === 0 ? (
-                                <p className="text-xs text-center py-10" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                <p className="text-xs text-center py-10" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>
                                     Hozircha shikoyat yoki bayroqli xabar yo&apos;q
                                 </p>
                             ) : (
@@ -2042,7 +2042,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                 ? <img src={f.message.sender.image} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
                                                 : <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }} />
                                             }
-                                            <span className="text-[10px] font-black truncate" style={{ color: "rgba(220,230,255,0.85)" }}>
+                                            <span className="text-[10px] font-black truncate" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>
                                                 {f.message?.sender?.name ?? f.message?.sender?.username ?? "Foydalanuvchi"}
                                             </span>
                                             {f.reportCount > 0 && (
@@ -2058,11 +2058,11 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-xs mb-1 line-clamp-2" style={{ color: "rgba(220,230,255,0.90)" }}>
+                                        <p className="text-xs mb-1 line-clamp-2" style={{ color: "rgb(var(--nx-text-rgb)/0.90)" }}>
                                             {f.message?.text ?? "(o'chirilgan yoki media)"}
                                         </p>
                                         {(f.lastReason || f.aiReason) && (
-                                            <p className="text-[10px] italic mb-2" style={{ color: "rgba(140,160,210,0.70)" }}>
+                                            <p className="text-[10px] italic mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.70)" }}>
                                                 {f.lastReason ? `Sabab: ${f.lastReason}` : f.aiReason}
                                             </p>
                                         )}
@@ -2072,7 +2072,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                 jumpToChMsg(f.messageId);
                                             }}
                                                 className="text-[10px] font-bold px-2 py-1 rounded"
-                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", color: "rgba(220,230,255,0.95)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", color: "rgb(var(--nx-text-rgb)/0.95)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                                 Ko&apos;rish
                                             </button>
                                             <button onClick={async () => {
@@ -2093,7 +2093,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                 ))
                             )}
                         </div>
-                        <div className="p-3 border-t text-[10px] text-center" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(140,160,210,0.55)" }}>
+                        <div className="p-3 border-t text-[10px] text-center" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)", color: "rgb(var(--nx-text-2-rgb)/0.55)" }}>
                             Har 1 daqiqada avtomatik yangilanadi
                         </div>
                     </div>
@@ -2111,14 +2111,14 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                         <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <div className="flex items-center gap-2">
                                 <Forward className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
-                                <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Kimga yuborish</p>
+                                <p className="text-sm font-black" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>Kimga yuborish</p>
                             </div>
                             <button onClick={() => setForwardMsg(null)}
                                 className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
-                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                <X className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                             </button>
                         </div>
-                        <div className="p-3 border-b text-xs italic line-clamp-2" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)", color: "rgba(160,176,224,0.75)" }}>
+                        <div className="p-3 border-b text-xs italic line-clamp-2" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)", color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                             {forwardMsg.text || (forwardMsg.media?.length ? "[media]" : "(bo'sh)")}
                         </div>
                         {/* Tabs — DM / Guruh */}
@@ -2127,34 +2127,34 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                 className="flex-1 py-2 rounded-xl text-xs font-bold"
                                 style={forwardTab === "dm"
                                     ? { background: "rgb(var(--nx-accent-rgb) / 0.18)", color: "#fff" }
-                                    : { background: "var(--nx-surface)", color: "rgba(140,160,210,0.8)" }}>
+                                    : { background: "var(--nx-surface)", color: "rgb(var(--nx-text-2-rgb)/0.8)" }}>
                                 Shaxsiy suhbat
                             </button>
                             <button onClick={() => setForwardTab("channels")}
                                 className="flex-1 py-2 rounded-xl text-xs font-bold"
                                 style={forwardTab === "channels"
                                     ? { background: "rgb(var(--nx-accent-rgb) / 0.18)", color: "#fff" }
-                                    : { background: "var(--nx-surface)", color: "rgba(140,160,210,0.8)" }}>
+                                    : { background: "var(--nx-surface)", color: "rgb(var(--nx-text-2-rgb)/0.8)" }}>
                                 Guruh/kanal
                             </button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-2">
                             {forwardTab === "channels" ? (
                                 channelList.length === 0 ? (
-                                    <p className="text-xs text-center py-6" style={{ color: "rgba(140,160,210,0.60)" }}>Guruh/kanal topilmadi</p>
+                                    <p className="text-xs text-center py-6" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>Guruh/kanal topilmadi</p>
                                 ) : channelList.map(c => (
                                     <button key={c.id} onClick={() => forwardToChannel(c.id)}
                                         disabled={forwarding}
                                         className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/[0.04] transition disabled:opacity-40 text-left">
                                         <img src={c.avatarUrl ?? "/logos/forhumo.png"} alt="" className="w-9 h-9 rounded-xl object-cover flex-shrink-0" />
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-xs font-bold truncate" style={{ color: "rgba(220,230,255,0.95)" }}>{c.name}</p>
-                                            <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>{c.type === "GROUP" ? "Guruh" : "Kanal"}</p>
+                                            <p className="text-xs font-bold truncate" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>{c.name}</p>
+                                            <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>{c.type === "GROUP" ? "Guruh" : "Kanal"}</p>
                                         </div>
                                     </button>
                                 ))
                             ) : dmList.length === 0 ? (
-                                <p className="text-xs text-center py-6" style={{ color: "rgba(140,160,210,0.60)" }}>DM suhbat topilmadi</p>
+                                <p className="text-xs text-center py-6" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>DM suhbat topilmadi</p>
                             ) : (
                                 dmList.map(c => (
                                     <button key={c.conversationId} onClick={() => forwardToDm(c.conversationId)}
@@ -2165,11 +2165,11 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                             : <div className="w-9 h-9 rounded-full flex-shrink-0" style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }} />
                                         }
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-xs font-bold truncate" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                            <p className="text-xs font-bold truncate" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>
                                                 {c.other?.name ?? c.other?.username ?? "Foydalanuvchi"}
                                             </p>
                                             {c.other?.username && (
-                                                <p className="text-[10px] truncate" style={{ color: "rgba(140,160,210,0.65)" }}>@{c.other.username}</p>
+                                                <p className="text-[10px] truncate" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>@{c.other.username}</p>
                                             )}
                                         </div>
                                     </button>
@@ -2179,7 +2179,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                         {forwarding && (
                             <div className="p-3 border-t flex items-center justify-center gap-2" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                 <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--nx-accent)" }} />
-                                <span className="text-xs" style={{ color: "rgba(160,176,224,0.85)" }}>Yuborilmoqda...</span>
+                                <span className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>Yuborilmoqda...</span>
                             </div>
                         )}
                     </div>
@@ -2197,13 +2197,13 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                         <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <div className="flex items-center gap-2">
                                 <History className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
-                                <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                <p className="text-sm font-black" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>
                                     Tahrirlash tarixi
                                 </p>
                             </div>
                             <button onClick={() => setHistoryModalOpen(false)}
                                 className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
-                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                <X className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                             </button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-3 space-y-3">
@@ -2212,14 +2212,14 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                     <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--nx-accent)" }} />
                                 </div>
                             ) : historyItems.length === 0 ? (
-                                <p className="text-xs text-center py-6" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                <p className="text-xs text-center py-6" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>
                                     Oldingi versiyalar topilmadi
                                 </p>
                             ) : (
                                 historyItems.map((item, idx) => (
                                     <div key={item.id || idx} className="p-3 rounded-xl space-y-1.5"
                                         style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
-                                        <div className="flex items-center justify-between text-[10px]" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                        <div className="flex items-center justify-between text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                             <span className="flex items-center gap-1">
                                                 <Clock className="w-3 h-3" />
                                                 {new Date(item.editedAt).toLocaleString("uz-UZ", {
@@ -2232,7 +2232,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                             </span>
                                         </div>
                                         <div className="text-xs whitespace-pre-wrap break-words rounded-lg p-2"
-                                            style={{ background: "rgba(0,0,0,0.30)", color: "rgba(220,230,255,0.90)" }}>
+                                            style={{ background: "rgba(0,0,0,0.30)", color: "rgb(var(--nx-text-rgb)/0.90)" }}>
                                             {item.previousText || "(Bo'sh matn)"}
                                         </div>
                                     </div>

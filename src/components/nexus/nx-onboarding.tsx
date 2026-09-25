@@ -106,12 +106,12 @@ export function NxOnboarding() {
                     </div>
                     <div>
                         <p className="text-sm font-black text-[var(--nx-text)] leading-tight">Boshlash uchun {steps.length} qadam</p>
-                        <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.85)" }}>{doneCount}/{steps.length} bajarildi</p>
+                        <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>{doneCount}/{steps.length} bajarildi</p>
                     </div>
                 </div>
                 <button onClick={dismiss} className="w-7 h-7 rounded-lg flex items-center justify-center active:scale-90 transition"
                     style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
-                    <X className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.85)" }} />
+                    <X className="w-3.5 h-3.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                 </button>
             </div>
             <div className="p-2 space-y-1">
@@ -119,13 +119,13 @@ export function NxOnboarding() {
                     const inner = (
                         <>
                             <div className="w-5 h-5 flex-shrink-0">
-                                {s.done ? <CheckCircle2 className="w-5 h-5" style={{ color: "var(--nx-accent)" }} /> : <Circle className="w-5 h-5" style={{ color: "rgba(140,160,210,0.4)" }} />}
+                                {s.done ? <CheckCircle2 className="w-5 h-5" style={{ color: "var(--nx-accent)" }} /> : <Circle className="w-5 h-5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.4)" }} />}
                             </div>
-                            <s.icon className="w-4 h-4 flex-shrink-0" style={{ color: s.done ? "rgb(var(--nx-accent-rgb) / 0.6)" : "rgba(140,160,210,0.75)" }} />
-                            <span className="text-xs font-semibold flex-1 truncate" style={{ color: s.done ? "rgba(140,160,210,0.55)" : "rgba(230,235,250,0.95)", textDecoration: s.done ? "line-through" : "none" }}>
+                            <s.icon className="w-4 h-4 flex-shrink-0" style={{ color: s.done ? "rgb(var(--nx-accent-rgb) / 0.6)" : "rgb(var(--nx-text-2-rgb)/0.75)" }} />
+                            <span className="text-xs font-semibold flex-1 truncate" style={{ color: s.done ? "rgb(var(--nx-text-2-rgb)/0.55)" : "rgba(230,235,250,0.95)", textDecoration: s.done ? "line-through" : "none" }}>
                                 {s.label}
                             </span>
-                            {!s.done && <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "rgba(140,160,210,0.55)" }} />}
+                            {!s.done && <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "rgb(var(--nx-text-2-rgb)/0.55)" }} />}
                         </>
                     );
                     const cls = "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all active:scale-[0.98]";

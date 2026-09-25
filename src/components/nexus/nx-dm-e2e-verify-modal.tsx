@@ -78,7 +78,7 @@ export function NxDmE2eVerifyModal({
 
                 <div className="p-5 space-y-4">
                     <div className="p-3 rounded-xl text-[11px]"
-                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", color: "rgba(200,214,247,0.9)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", color: "rgb(var(--nx-text-2-rgb)/0.9)" }}>
                         Peer'ning shifrlash kaliti fingerprint'i quyida. Boshqa aloqa kanali (jonli, telefon) orqali
                         solishtirib, bir xil bo&apos;lsa &quot;Tasdiqlangan&quot; belgisini qo&apos;ying.
                     </div>
@@ -90,7 +90,7 @@ export function NxDmE2eVerifyModal({
                     ) : keys.length === 0 ? (
                         <div className="text-center py-8">
                             <KeyRound className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "var(--nx-accent)" }} />
-                            <p className="text-sm" style={{ color: "rgba(160,176,224,0.75)" }}>
+                            <p className="text-sm" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                 Peer'da hali E2E kaliti yo&apos;q
                             </p>
                         </div>
@@ -107,11 +107,11 @@ export function NxDmE2eVerifyModal({
                                         <div className="flex items-center gap-2 mb-2">
                                             <KeyRound className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                             <span className="text-[10px] font-black uppercase tracking-widest"
-                                                style={{ color: "rgba(160,176,224,0.8)" }}>
+                                                style={{ color: "rgb(var(--nx-text-2-rgb)/0.8)" }}>
                                                 {k.keyAlgorithm}
                                             </span>
                                             {k.deviceLabel && (
-                                                <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                                <span className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                                     · {k.deviceLabel}
                                                 </span>
                                             )}
@@ -124,10 +124,10 @@ export function NxDmE2eVerifyModal({
                                             )}
                                         </div>
                                         <p className="text-[11px] font-mono break-all mb-2"
-                                            style={{ color: "rgba(200,214,247,0.85)" }}>
+                                            style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                                             {formatFingerprint(k.fingerprint)}
                                         </p>
-                                        <p className="text-[10px] mb-2" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                        <p className="text-[10px] mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                             {new Date(k.createdAt).toLocaleString("uz-UZ")}
                                         </p>
                                         <button onClick={() => toggleVerify(k.id)}

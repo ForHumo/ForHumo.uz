@@ -184,7 +184,7 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
                         <Megaphone className="w-8 h-8" style={{ color: "#EF4444" }} />
                     </div>
                     <p className="text-lg font-bold text-[var(--nx-text)] mb-2">{error ?? "Kanal topilmadi"}</p>
-                    <p className="text-sm mb-6" style={{ color: "rgba(160,176,224,0.7)" }}>
+                    <p className="text-sm mb-6" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                         Havola noto'g'ri yoki kanal o'chirilgan bo'lishi mumkin.
                     </p>
                     <Link href="/nexus" className="inline-block px-6 py-2.5 rounded-full text-sm font-black"
@@ -211,7 +211,7 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
                 {/* Back link */}
                 <div className="px-4 pt-6 pb-2">
                     <Link href="/nexus" className="inline-flex items-center gap-2 text-sm font-bold"
-                        style={{ color: "rgba(160,176,224,0.85)" }}>
+                        style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                         <ArrowLeft className="w-4 h-4" /> Nexus
                     </Link>
                 </div>
@@ -248,7 +248,7 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-sm mt-0.5" style={{ color: "rgba(160,176,224,0.85)" }}>
+                                <p className="text-sm mt-0.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                                     @{channel.handle}
                                 </p>
                             </div>
@@ -256,13 +256,13 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
 
                         {/* Statistika */}
                         <div className="mt-4 flex items-center gap-4 text-sm">
-                            <span className="inline-flex items-center gap-1.5 font-bold" style={{ color: "rgba(200,214,247,0.9)" }}>
+                            <span className="inline-flex items-center gap-1.5 font-bold" style={{ color: "rgb(var(--nx-text-2-rgb)/0.9)" }}>
                                 {channel.type === "CHANNEL"
                                     ? <Megaphone className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                     : <Users className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />}
                                 {formatCount(channel.memberCount)} {channel.type === "CHANNEL" ? "obunachi" : "a'zo"}
                             </span>
-                            <span className="text-xs" style={{ color: "rgba(140,160,210,0.7)" }}>
+                            <span className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                 {new Date(channel.createdAt).toLocaleDateString("uz-UZ")} dan
                             </span>
                         </div>
@@ -270,7 +270,7 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
                         {/* Description */}
                         {channel.description && (
                             <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
-                                <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "rgba(220,230,250,0.92)" }}>
+                                <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "rgb(var(--nx-text-rgb)/0.92)" }}>
                                     {channel.description}
                                 </p>
                             </div>
@@ -279,7 +279,7 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
                         {/* Owner */}
                         {owner && (
                             <div className="mt-4 flex items-center gap-2 text-xs">
-                                <span style={{ color: "rgba(140,160,210,0.7)" }}>Ega:</span>
+                                <span style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>Ega:</span>
                                 <Link href={`/nexus/u/${owner.username}`} className="inline-flex items-center gap-1.5 font-bold hover:underline"
                                     style={{ color: "var(--nx-accent)" }}>
                                     <img src={owner.image || "/logos/forhumo.png"} alt="" className="w-5 h-5 rounded-full object-cover" />
@@ -327,14 +327,14 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
                 {/* Recent posts */}
                 <div className="mt-6 px-4">
                     <h2 className="text-xs font-black uppercase tracking-widest mb-3 px-1"
-                        style={{ color: "rgba(160,176,224,0.7)" }}>
+                        style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                         So'nggi xabarlar
                     </h2>
                     {recent.length === 0 ? (
                         <div className="p-8 rounded-2xl text-center"
                             style={{ background: "var(--nx-surface)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <Megaphone className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "var(--nx-accent)" }} />
-                            <p className="text-sm" style={{ color: "rgba(160,176,224,0.7)" }}>
+                            <p className="text-sm" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                 {channel.isPrivate ? "Yopiq kanal — postlar faqat a'zolarga ko'rinadi" : "Hali xabar yo'q"}
                             </p>
                         </div>
@@ -373,9 +373,9 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
                                                     {p.mediaCount > 1 && ` · ${p.mediaCount}`}
                                                 </p>
                                             ) : (
-                                                <p className="text-sm italic" style={{ color: "rgba(140,160,210,0.6)" }}>Bo'sh xabar</p>
+                                                <p className="text-sm italic" style={{ color: "rgb(var(--nx-text-2-rgb)/0.6)" }}>Bo'sh xabar</p>
                                             )}
-                                            <div className="mt-2 flex items-center gap-3 text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                            <div className="mt-2 flex items-center gap-3 text-[11px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                                 <span>{timeAgo(p.createdAt)}</span>
                                                 <span className="inline-flex items-center gap-1">
                                                     <Eye className="w-3 h-3" /> {formatCount(p.viewCount)}
@@ -407,7 +407,7 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
                             <Shield className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                             <h3 className="text-lg font-black text-[var(--nx-text)]">Kanal qoidalari</h3>
                         </div>
-                        <div className="text-sm whitespace-pre-wrap" style={{ color: "rgba(220,230,250,0.92)" }}>
+                        <div className="text-sm whitespace-pre-wrap" style={{ color: "rgb(var(--nx-text-rgb)/0.92)" }}>
                             <NxMarkdown text={channel.rules} />
                         </div>
                         <button onClick={() => setShowRules(false)}

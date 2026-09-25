@@ -169,7 +169,7 @@ export function NxDmE2eSetupModal({
                     <div className="p-3 rounded-xl flex items-start gap-2"
                         style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                         <Info className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--nx-accent)" }} />
-                        <p className="text-[11px] leading-snug" style={{ color: "rgba(220,230,250,0.92)" }}>
+                        <p className="text-[11px] leading-snug" style={{ color: "rgb(var(--nx-text-rgb)/0.92)" }}>
                             <b>End-to-End shifrlash</b> — xabarlar faqat sizda va boshqa peer qurilmasida ochiladi.
                             Server ham, hech kim ham matnini ko&apos;ra olmaydi. <b>Private kalit</b> shu brauzer'da qoladi.
                         </p>
@@ -199,7 +199,7 @@ export function NxDmE2eSetupModal({
 
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-widest mb-2"
-                            style={{ color: "rgba(160,176,224,0.7)" }}>
+                            style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                             Mening kalitlarim ({serverKeysWithStatus.length})
                         </p>
                         {loading ? (
@@ -210,7 +210,7 @@ export function NxDmE2eSetupModal({
                             <div className="p-6 rounded-xl text-center"
                                 style={{ background: "var(--nx-surface)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                 <KeyRound className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "var(--nx-accent)" }} />
-                                <p className="text-sm" style={{ color: "rgba(160,176,224,0.75)" }}>
+                                <p className="text-sm" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                     Kalit yo&apos;q. Yuqoridagi tugma bilan yarating.
                                 </p>
                             </div>
@@ -225,7 +225,7 @@ export function NxDmE2eSetupModal({
                                         <div className="flex items-center gap-2 mb-1.5">
                                             <KeyRound className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                             <span className="text-[10px] font-black uppercase tracking-widest"
-                                                style={{ color: "rgba(160,176,224,0.85)" }}>
+                                                style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                                                 {k.keyAlgorithm}
                                             </span>
                                             <div className="flex-1" />
@@ -244,15 +244,15 @@ export function NxDmE2eSetupModal({
                                             )}
                                         </div>
                                         {k.deviceLabel && (
-                                            <p className="text-[10px] mb-1" style={{ color: "rgba(160,176,224,0.85)" }}>
+                                            <p className="text-[10px] mb-1" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                                                 {k.deviceLabel}
                                             </p>
                                         )}
                                         <p className="text-[10px] font-mono break-all mb-2"
-                                            style={{ color: "rgba(200,214,247,0.85)" }}>
+                                            style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                                             {formatFingerprint(k.fingerprint)}
                                         </p>
-                                        <p className="text-[10px] mb-2" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                        <p className="text-[10px] mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                             {timeAgo(k.createdAt)}
                                         </p>
                                         <div className="flex gap-1.5">
@@ -278,7 +278,7 @@ export function NxDmE2eSetupModal({
 
                     <div className="pt-4" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                         <p className="text-[10px] font-black uppercase tracking-widest mb-2"
-                            style={{ color: "rgba(160,176,224,0.7)" }}>
+                            style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                             Xavfsizlik eslatmalari
                         </p>
                         <ul className="text-[11px] space-y-1.5" style={{ color: "var(--nx-text-2)" }}>

@@ -82,7 +82,7 @@ export function NxTipSheet({
                             <Check className="w-8 h-8" style={{ color: "#F59E0B" }} />
                         </div>
                         <p className="text-lg font-black text-[var(--nx-text)]">{formatMoney(effective, currency)} yuborildi!</p>
-                        <p className="text-sm mt-1 flex items-center gap-1.5" style={{ color: "rgba(180,200,240,0.8)" }}>
+                        <p className="text-sm mt-1 flex items-center gap-1.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.8)" }}>
                             <Heart className="w-3.5 h-3.5" style={{ color: "#EF4444" }} /> {displayName} qo&apos;llab-quvvatlandi
                         </p>
                     </div>

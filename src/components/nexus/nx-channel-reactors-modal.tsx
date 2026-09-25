@@ -62,7 +62,7 @@ export function NxChannelReactorsModal({
                 ) : groups.length === 0 ? (
                     <div className="text-center py-12">
                         <Smile className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: "var(--nx-accent)" }} />
-                        <p className="text-sm" style={{ color: "rgba(160,176,224,0.7)" }}>Hali reaksiya yo&apos;q</p>
+                        <p className="text-sm" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>Hali reaksiya yo&apos;q</p>
                     </div>
                 ) : (
                     <>
@@ -73,7 +73,7 @@ export function NxChannelReactorsModal({
                                         className="inline-flex items-center gap-1.5 px-3 h-9 rounded-full flex-shrink-0"
                                         style={activeEmoji === g.emoji
                                             ? { background: "rgb(var(--nx-accent-rgb) / 0.20)", border: "1px solid var(--nx-accent)", color: "white" }
-                                            : { background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(200,214,247,0.9)" }}>
+                                            : { background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgb(var(--nx-text-2-rgb)/0.9)" }}>
                                         <span className="text-lg leading-none">{g.emoji}</span>
                                         <span className="text-xs font-bold">{g.count}</span>
                                     </button>

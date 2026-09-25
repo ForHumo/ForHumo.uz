@@ -102,7 +102,7 @@ export function NxGroupBotsModal({
                                 className="w-10 h-10 rounded-full object-cover" />
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-bold text-[var(--nx-text)] truncate">{b.agent?.name ?? "?"}</p>
-                                {b.agent?.handle && <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>@{b.agent.handle}</p>}
+                                {b.agent?.handle && <p className="text-[11px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>@{b.agent.handle}</p>}
                             </div>
                             {canManage && (
                                 <>
@@ -111,8 +111,8 @@ export function NxGroupBotsModal({
                                         className="w-8 h-8 rounded-full flex items-center justify-center"
                                         style={b.autoListen
                                             ? { background: "rgb(var(--nx-accent-rgb) / 0.15)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)" }
-                                            : { background: "rgba(140,160,210,0.10)" }}>
-                                        <Radio className="w-3.5 h-3.5" style={{ color: b.autoListen ? "var(--nx-accent)" : "rgba(140,160,210,0.7)" }} />
+                                            : { background: "rgb(var(--nx-text-2-rgb)/0.10)" }}>
+                                        <Radio className="w-3.5 h-3.5" style={{ color: b.autoListen ? "var(--nx-accent)" : "rgb(var(--nx-text-2-rgb)/0.7)" }} />
                                     </button>
                                     <button onClick={() => remove(b.agentId)}
                                         className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -147,14 +147,14 @@ export function NxGroupBotsModal({
                                                 className="w-8 h-8 rounded-full object-cover" />
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-xs font-bold text-[var(--nx-text)] truncate">{a.name}</p>
-                                                {a.handle && <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>@{a.handle}</p>}
+                                                {a.handle && <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>@{a.handle}</p>}
                                             </div>
                                         </button>
                                     ))}
                                 </div>
                                 <button onClick={() => setAddOpen(false)}
                                     className="w-full py-1.5 rounded-lg text-xs"
-                                    style={{ color: "rgba(140,160,210,0.7)" }}>Yopish</button>
+                                    style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>Yopish</button>
                             </div>
                         )}
                     </div>

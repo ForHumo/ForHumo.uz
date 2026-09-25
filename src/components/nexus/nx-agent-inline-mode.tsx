@@ -64,7 +64,7 @@ export function NxAgentInlineMode({
                 scrollbarWidth: "none",
             }}>
             <div className="px-3 py-2 text-[10px] uppercase tracking-widest flex items-center justify-between"
-                style={{ color: "rgba(140,160,210,0.7)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
+                style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                 <div className="flex items-center gap-1.5">
                     <Sparkles className="w-3 h-3" /> Inline · @{bot}
                     {query && <span className="opacity-60">· {query.slice(0, 30)}</span>}
@@ -82,7 +82,7 @@ export function NxAgentInlineMode({
             ) : results.length === 0 ? (
                 <div className="p-4 text-center">
                     <Bot className="w-6 h-6 mx-auto mb-1 opacity-40" style={{ color: "var(--nx-accent)" }} />
-                    <p className="text-xs" style={{ color: "rgba(160,176,224,0.75)" }}>
+                    <p className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                         {query ? "Natija yo'q" : "So'rov yozing..."}
                     </p>
                 </div>

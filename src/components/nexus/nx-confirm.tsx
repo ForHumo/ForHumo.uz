@@ -59,7 +59,7 @@ export function NxConfirm({
                     <AlertTriangle className="w-7 h-7 text-[var(--nx-text)]" />
                 </div>
                 <h3 className="text-base font-black text-[var(--nx-text)] text-center mb-2">{title}</h3>
-                <p className="text-xs leading-relaxed text-center mb-6" style={{ color: "rgba(180,190,220,0.85)" }}>{message}</p>
+                <p className="text-xs leading-relaxed text-center mb-6" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>{message}</p>
                 <div className="flex gap-2">
                     <button onClick={onCancel} disabled={busy}
                         className="flex-1 h-11 rounded-xl text-sm font-black text-[var(--nx-text)] transition active:scale-95 disabled:opacity-50"

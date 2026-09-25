@@ -75,7 +75,7 @@ export function NexusFollowList({ username, type, onClose }: {
                                 <button onClick={() => toggleFollow(u)} disabled={busy === u.username}
                                     className="px-3 py-1.5 rounded-lg text-[11px] font-black flex-shrink-0 active:scale-95 transition"
                                     style={u.isFollowing
-                                        ? { background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", color: "rgba(140,160,210,0.85)" }
+                                        ? { background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }
                                         : { background: "var(--nx-accent)", color: "#fff" }}>
                                     {u.isFollowing ? "Kuzatilmoqda" : "Kuzatish"}
                                 </button>

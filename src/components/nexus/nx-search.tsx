@@ -166,7 +166,7 @@ export function NxSearch() {
                 {!u.isMe && u.username && (
                     isFollowingNow(u) ? (
                         <span className="px-3 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1 flex-shrink-0"
-                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", color: "rgba(140,160,210,0.85)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                             <UserCheck className="w-3 h-3" /> Kuzatilmoqda
                         </span>
                     ) : (
@@ -210,9 +210,9 @@ export function NxSearch() {
                         placeholder="Odamlar, video, audio, jonli, #hashtag..."
                         className="flex-1 bg-transparent text-[var(--nx-text)] text-base outline-none" style={{ caretColor: "var(--nx-accent)" }} />
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--nx-accent)" }} />
-                        : query && <button onClick={() => setQuery("")}><X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.60)" }} /></button>}
+                        : query && <button onClick={() => setQuery("")}><X className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }} /></button>}
                     <button onClick={close} className="px-3 py-1.5 rounded-lg text-xs font-bold"
-                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", color: "rgba(160,176,224,0.80)" }}>Bekor</button>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", color: "rgb(var(--nx-text-2-rgb)/0.80)" }}>Bekor</button>
                 </div>
 
                 {/* Filter tabs — faqat natija chiqganda */}
@@ -255,7 +255,7 @@ export function NxSearch() {
                                                 <button onClick={() => { removeHistory(h); setHistory(getHistory()); }}
                                                     className="opacity-40 hover:opacity-90 transition-opacity"
                                                     title="O'chirish">
-                                                    <X className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.75)" }} />
+                                                    <X className="w-3.5 h-3.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }} />
                                                 </button>
                                             </div>
                                         ))}
@@ -296,7 +296,7 @@ export function NxSearch() {
                         <div className="flex flex-col items-center justify-center py-14">
                             <Search className="w-10 h-10 mb-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.25)" }} />
                             <p className="text-sm font-bold text-white/40">Natija topilmadi</p>
-                            <p className="text-xs mt-1" style={{ color: "rgba(100,120,170,0.50)" }}>&ldquo;{query}&rdquo; bo&apos;yicha hech narsa yo&apos;q</p>
+                            <p className="text-xs mt-1" style={{ color: "rgb(var(--nx-text-3-rgb)/0.50)" }}>&ldquo;{query}&rdquo; bo&apos;yicha hech narsa yo&apos;q</p>
                         </div>
                     ) : (
                         /* ── Natijalar (filter bo'yicha) ── */
@@ -331,7 +331,7 @@ export function NxSearch() {
                                                     <span className="text-xs font-bold text-[var(--nx-text)] truncate">{p.author?.name || p.author?.username || "Foydalanuvchi"}</span>
                                                     {p.author?.verified && <NxVerifiedBadge category={p.author?.verifiedCategory} size={12} />}
                                                 </div>
-                                                <p className="text-[13px] leading-snug mt-0.5 line-clamp-2" style={{ color: "rgba(200,215,245,0.85)" }}>{p.text}</p>
+                                                <p className="text-[13px] leading-snug mt-0.5 line-clamp-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>{p.text}</p>
                                                 <div className="flex items-center gap-3 mt-1 text-[10px]" style={{ color: "var(--nx-text-3)" }}>
                                                     <span className="flex items-center gap-1"><Heart className="w-3 h-3" />{p.likes}</span>
                                                     <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" />{p.comments}</span>
@@ -373,7 +373,7 @@ export function NxSearch() {
                                                 <p className="text-sm font-bold text-[var(--nx-text)] truncate">{t.title}</p>
                                                 <p className="text-[11px] truncate" style={{ color: "var(--nx-text-3)" }}>{t.artist || t.author?.name || "Noma'lum"}</p>
                                             </div>
-                                            <span className="text-[10px] flex items-center gap-1 flex-shrink-0" style={{ color: "rgba(100,120,170,0.7)" }}><Play className="w-2.5 h-2.5" />{fmtN(t.plays)}</span>
+                                            <span className="text-[10px] flex items-center gap-1 flex-shrink-0" style={{ color: "rgb(var(--nx-text-3-rgb)/0.7)" }}><Play className="w-2.5 h-2.5" />{fmtN(t.plays)}</span>
                                         </button>
                                     ))}
                                 </Section>

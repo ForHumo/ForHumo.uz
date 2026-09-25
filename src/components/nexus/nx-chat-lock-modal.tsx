@@ -125,7 +125,7 @@ export function NxChatLockModal({
                 </div>
 
                 <div className="p-6 space-y-4">
-                    <p className="text-xs text-center" style={{ color: "rgba(140,160,210,0.85)" }}>{subtitle}</p>
+                    <p className="text-xs text-center" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>{subtitle}</p>
 
                     {/* Setup rejimida rejim tanlash (bir marta) */}
                     {mode === "setup" && step === 1 && (
@@ -135,7 +135,7 @@ export function NxChatLockModal({
                                 style={{
                                     background: kind === "pin" ? "rgb(var(--nx-accent-rgb) / 0.15)" : "rgb(var(--nx-accent-rgb) / 0.08)",
                                     border: `1px solid ${kind === "pin" ? "rgb(var(--nx-accent-rgb) / 0.50)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
-                                    color: kind === "pin" ? "var(--nx-accent)" : "rgba(220,230,255,0.85)",
+                                    color: kind === "pin" ? "var(--nx-accent)" : "rgb(var(--nx-text-rgb)/0.85)",
                                 }}>
                                 <Lock className="w-3.5 h-3.5" /> PIN
                             </button>
@@ -145,7 +145,7 @@ export function NxChatLockModal({
                                 style={{
                                     background: kind === "biometric" ? "rgb(var(--nx-accent-rgb) / 0.15)" : "rgb(var(--nx-accent-rgb) / 0.08)",
                                     border: `1px solid ${kind === "biometric" ? "rgb(var(--nx-accent-rgb) / 0.50)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
-                                    color: kind === "biometric" ? "var(--nx-accent)" : "rgba(220,230,255,0.85)",
+                                    color: kind === "biometric" ? "var(--nx-accent)" : "rgb(var(--nx-text-rgb)/0.85)",
                                 }}>
                                 <Fingerprint className="w-3.5 h-3.5" /> Biometrik
                             </button>
@@ -203,7 +203,7 @@ export function NxChatLockModal({
                                 style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                 <Fingerprint className="w-8 h-8" style={{ color: "var(--nx-accent)" }} />
                             </div>
-                            <p className="text-[11px] text-center" style={{ color: "rgba(140,160,210,0.75)" }}>
+                            <p className="text-[11px] text-center" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                 Qurilma biometric prompt'i ochiladi
                             </p>
                         </div>

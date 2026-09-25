@@ -143,20 +143,20 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                 <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <div className="flex items-center gap-2">
                         <Users className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
-                        <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>
+                        <p className="text-sm font-black" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>
                             Yangi guruh suhbati
                         </p>
                     </div>
                     <button onClick={onClose} disabled={busy}
                         className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
-                        <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                        <X className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                     </button>
                 </div>
 
                 {/* Sarlavha input */}
                 <div className="p-4 space-y-3 border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                     <div>
-                        <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>
+                        <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>
                             Guruh nomi
                         </label>
                         <input value={title} onChange={e => setTitle(e.target.value)}
@@ -167,7 +167,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                     {folders.length > 0 && (
                         <div>
                             <label className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"
-                                style={{ color: "rgba(140,160,210,0.65)" }}>
+                                style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>
                                 <FolderPlus className="w-3 h-3" /> Papka (ixtiyoriy)
                             </label>
                             <div className="mt-1 flex gap-1.5 overflow-x-auto scrollbar-hide">
@@ -179,7 +179,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                                         border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)",
                                     } : {
                                         background: "rgb(var(--nx-accent-rgb) / 0.06)",
-                                        color: "rgba(140,160,210,0.75)",
+                                        color: "rgb(var(--nx-text-2-rgb)/0.75)",
                                         border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                                     }}>
                                     Yo&apos;q
@@ -195,7 +195,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                                                 border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)",
                                             } : {
                                                 background: "rgb(var(--nx-accent-rgb) / 0.06)",
-                                                color: "rgba(140,160,210,0.85)",
+                                                color: "rgb(var(--nx-text-2-rgb)/0.85)",
                                                 border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                                             }}>
                                             {f.emoji && <span>{f.emoji}</span>}
@@ -211,7 +211,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                 {/* A'zolar tanlash ro'yxati */}
                 <div className="p-4 flex-1 overflow-y-auto space-y-2">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>
+                        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>
                             A&apos;zolarni tanlang
                         </span>
                         <span className="text-[10px] font-bold" style={{ color: "var(--nx-accent)" }}>
@@ -224,7 +224,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                             <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--nx-accent)" }} />
                         </div>
                     ) : contacts.length === 0 ? (
-                        <p className="text-xs text-center py-6" style={{ color: "rgba(140,160,210,0.60)" }}>
+                        <p className="text-xs text-center py-6" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>
                             Yozishgan kontaktlar topilmadi
                         </p>
                     ) : (
@@ -247,7 +247,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                                         ) : (
                                             <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
                                                 style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
-                                                <BotIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                <BotIcon className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                                             </div>
                                         )}
                                         <div className="min-w-0 flex-1">
@@ -255,7 +255,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                                                 {c.name || c.username || "Foydalanuvchi"}
                                             </p>
                                             {c.username && (
-                                                <p className="text-[10px] truncate" style={{ color: "rgba(140,160,210,0.65)" }}>
+                                                <p className="text-[10px] truncate" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>
                                                     @{c.username}
                                                 </p>
                                             )}

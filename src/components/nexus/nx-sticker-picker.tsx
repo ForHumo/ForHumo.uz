@@ -57,7 +57,7 @@ export function NxStickerPicker({
                             className="flex-shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold whitespace-nowrap"
                             style={tab === s.id
                                 ? { background: "rgb(var(--nx-accent-rgb) / 0.15)", color: "var(--nx-accent)" }
-                                : { background: "transparent", color: "rgba(140,160,210,0.8)" }}>
+                                : { background: "transparent", color: "rgb(var(--nx-text-2-rgb)/0.8)" }}>
                             {s.label}
                         </button>
                     ))}

@@ -229,7 +229,7 @@ export function NxCreatePost() {
                         <div className="relative">
                             <button onClick={() => setShowPrivacy(p => !p)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150"
-                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", color: "rgba(140,160,210,0.90)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", color: "rgb(var(--nx-text-2-rgb)/0.90)" }}>
                                 <PrivacyIcon className="w-3 h-3" />
                                 {privacyOpt.label}
                                 <ChevronDown className="w-3 h-3" />
@@ -267,7 +267,7 @@ export function NxCreatePost() {
                                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl flex-shrink-0 transition-all duration-200"
                                 style={isActive
                                     ? { background: `${pt.color}22`, border: `1px solid ${pt.color}55`, color: pt.color }
-                                    : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "rgba(140,160,210,0.80)" }}>
+                                    : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "rgb(var(--nx-text-2-rgb)/0.80)" }}>
                                 <Icon className="w-3.5 h-3.5" />
                                 <span className="text-xs font-bold">{pt.label}</span>
                             </button>
@@ -331,7 +331,7 @@ export function NxCreatePost() {
                                     ) : (
                                         <Film className="w-8 h-8" style={{ color: "rgba(239,68,68,0.50)" }} />
                                     )}
-                                    <p className="text-xs font-bold" style={{ color: "rgba(140,160,210,0.70)" }}>
+                                    <p className="text-xs font-bold" style={{ color: "rgb(var(--nx-text-2-rgb)/0.70)" }}>
                                         {uploading ? "Yuklanmoqda..." : postType === "photo" ? `Rasm tanlang (${media.length}/9)` : "Video tanlang"}
                                     </p>
                                     <input ref={fileRef} type="file"
@@ -370,7 +370,7 @@ export function NxCreatePost() {
                             {pollOptions.length < 4 && (
                                 <button onClick={addPollOption}
                                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-150"
-                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.30)", color: "rgba(140,160,210,0.80)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.30)", color: "rgb(var(--nx-text-2-rgb)/0.80)" }}>
                                     <Plus className="w-3.5 h-3.5" /> Variant qo&apos;shish
                                 </button>
                             )}
@@ -382,7 +382,7 @@ export function NxCreatePost() {
                                             className="px-2 py-1 rounded-lg text-[10px] font-bold transition-all duration-150"
                                             style={pollHours === d.hours
                                                 ? { background: "rgb(var(--nx-accent-rgb) / 0.30)", color: "var(--nx-accent)" }
-                                                : { background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgba(140,160,210,0.80)" }}>{d.label}</button>
+                                                : { background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgb(var(--nx-text-2-rgb)/0.80)" }}>{d.label}</button>
                                     ))}
                                 </div>
                             </div>
@@ -403,7 +403,7 @@ export function NxCreatePost() {
                                             className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold transition-all duration-150"
                                             style={active
                                                 ? { background: "rgb(var(--nx-accent-rgb) / 0.25)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.50)", color: "var(--nx-accent)" }
-                                                : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "rgba(140,160,210,0.80)" }}>
+                                                : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "rgb(var(--nx-text-2-rgb)/0.80)" }}>
                                             <Hash className="w-2.5 h-2.5" />
                                             {tag}
                                         </button>
@@ -470,7 +470,7 @@ export function NxCreatePost() {
                                 <input type="checkbox" checked={crossToChannel} onChange={e => setCrossToChannel(e.target.checked)} className="w-4 h-4" />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs font-black text-[var(--nx-text)]">Kanalga ham joylash</p>
-                                    <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                    <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                         Post o&apos;z kanalingizga xabar sifatida ham yuboriladi
                                     </p>
                                 </div>
@@ -491,7 +491,7 @@ export function NxCreatePost() {
                                                         style={{ background: "var(--nx-accent)" }}>{c.name[0]?.toUpperCase() ?? "K"}</div>}
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-[11px] font-bold text-[var(--nx-text)] truncate">{c.name}</p>
-                                                    <p className="text-[9px]" style={{ color: "rgba(140,160,210,0.65)" }}>
+                                                    <p className="text-[9px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>
                                                         {c.handle ? `@${c.handle} · ` : ""}{c.memberCount} a&apos;zo
                                                     </p>
                                                 </div>

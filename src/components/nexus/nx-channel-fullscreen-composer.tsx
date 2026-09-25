@@ -102,7 +102,7 @@ export function NxChannelFullscreenComposer({
                     <p className="text-sm font-black text-[var(--nx-text)] truncate">
                         {channelType === "CHANNEL" ? "Yangi e'lon" : "Yangi xabar"}
                     </p>
-                    <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>
+                    <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                         {channelName}
                     </p>
                 </div>
@@ -135,7 +135,7 @@ export function NxChannelFullscreenComposer({
                     <ToolbarBtn onClick={() => apply(el => insertPrefix(el, "- "))} title="Ro'yxat" icon={<List className="w-4 h-4" />} />
                     <ToolbarBtn onClick={() => apply(el => insertPrefix(el, "> "))} title="Iqtibos" icon={<Quote className="w-4 h-4" />} />
                     <div className="flex-1" />
-                    <span className="text-[10px] flex-shrink-0" style={{ color: "rgba(140,160,210,0.7)" }}>
+                    <span className="text-[10px] flex-shrink-0" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                         {text.length}/{maxLen}
                     </span>
                 </div>
@@ -152,7 +152,7 @@ export function NxChannelFullscreenComposer({
                                     <NxMarkdown text={text} />
                                 </div>
                             ) : (
-                                <p className="text-sm italic" style={{ color: "rgba(140,160,210,0.6)" }}>
+                                <p className="text-sm italic" style={{ color: "rgb(var(--nx-text-2-rgb)/0.6)" }}>
                                     Preview bo&apos;sh
                                 </p>
                             )}
@@ -214,7 +214,7 @@ function ToolbarBtn({ onClick, title, icon }: { onClick: () => void; title: stri
     return (
         <button type="button" onClick={onClick} title={title}
             className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-white/[0.05]"
-            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(200,214,247,0.9)" }}>
+            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgb(var(--nx-text-2-rgb)/0.9)" }}>
             {icon}
         </button>
     );

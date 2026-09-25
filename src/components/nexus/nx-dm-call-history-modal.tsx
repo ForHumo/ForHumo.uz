@@ -83,7 +83,7 @@ export function NxDmCallHistoryModal({
                     ) : items.length === 0 ? (
                         <div className="text-center py-12">
                             <PhoneOff className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: "var(--nx-accent)" }} />
-                            <p className="text-sm" style={{ color: "rgba(160,176,224,0.7)" }}>Chaqiruv tarixi yo&apos;q</p>
+                            <p className="text-sm" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>Chaqiruv tarixi yo&apos;q</p>
                         </div>
                     ) : (
                         <div className="space-y-1.5">
@@ -103,12 +103,12 @@ export function NxDmCallHistoryModal({
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-bold text-[var(--nx-text)] flex items-center gap-1.5">
-                                                {isVideo && <Video className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />}
+                                                {isVideo && <Video className="w-3 h-3" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />}
                                                 {c.missed
                                                     ? (c.outgoing ? "Javob berilmadi" : "O'tkazib yuborilgan")
                                                     : c.outgoing ? "Chiquvchi" : "Kiruvchi"}
                                             </p>
-                                            <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                            <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                                 {timeAgo(c.createdAt)}
                                                 {c.duration > 0 && ` · ${formatDuration(c.duration)}`}
                                             </p>

@@ -33,7 +33,7 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
             <HeaderIconBtn
                 onClick={onMenuOpen ?? (() => {})}
                 icon={Menu}
-                iconColor="rgba(160,176,224,0.80)"
+                iconColor="rgb(var(--nx-text-2-rgb)/0.80)"
             />
 
             {/* ── Asosiy sahifaga qaytish ───────────────────────────── */}
@@ -46,7 +46,7 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
                 }}
                 title="For Humo"
             >
-                <Home className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                <Home className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
             </Link>
 
             {/* ── Logo ──────────────────────────────────────────────── */}
@@ -102,7 +102,7 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
                 <HeaderIconBtn
                     onClick={() => setExploreOpen(true)}
                     icon={Compass}
-                    iconColor="rgba(160,176,224,0.80)"
+                    iconColor="rgb(var(--nx-text-2-rgb)/0.80)"
                     className="hidden sm:flex"
                 />
 
@@ -110,7 +110,7 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
                 <HeaderIconBtn
                     onClick={() => window.dispatchEvent(new Event("support:open"))}
                     icon={HeadsetIcon}
-                    iconColor="rgba(160,176,224,0.80)"
+                    iconColor="rgb(var(--nx-text-2-rgb)/0.80)"
                 />
 
                 {/* Xabarlar */}
@@ -179,7 +179,7 @@ function HeaderIconBtn({ onClick, icon: Icon, iconColor, badge, className = "" }
             <Icon
                 ref={iconRef as React.Ref<SVGSVGElement>}
                 className="w-4 h-4"
-                style={{ color: iconColor ?? "rgba(160,176,224,0.80)" }}
+                style={{ color: iconColor ?? "rgb(var(--nx-text-2-rgb)/0.80)" }}
             />
             {badge && (
                 <span
@@ -303,7 +303,7 @@ function BellButton({ onOpen }: { onOpen: () => void }) {
             <Bell
                 ref={bellRef as React.Ref<SVGSVGElement>}
                 className="w-4 h-4"
-                style={{ color: "rgba(160,176,224,0.80)" }}
+                style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }}
             />
             {unread > 0 && (
                 <span
@@ -366,7 +366,7 @@ function MessagesButton({ onOpen }: { onOpen: () => void }) {
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgb(var(--nx-accent-rgb) / 0.18)"; (e.currentTarget as HTMLElement).style.borderColor = "rgb(var(--nx-accent-rgb) / 0.40)"; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgb(var(--nx-accent-rgb) / 0.08)"; (e.currentTarget as HTMLElement).style.borderColor = "rgb(var(--nx-accent-rgb) / 0.18)"; }}
         >
-            <MessageCircle ref={iconRef as React.Ref<SVGSVGElement>} className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+            <MessageCircle ref={iconRef as React.Ref<SVGSVGElement>} className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.80)" }} />
             {unread > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-black text-[var(--nx-text)]"
                     style={{ background: "#10B981", boxShadow: "0 0 6px rgba(16,185,129,0.8)" }}>
@@ -420,7 +420,7 @@ function ProfileButton({ session }: { session: ReturnType<typeof useSession>["da
 
             {/* Name — faqat sm+ ekranlarda */}
             {name && (
-                <span className="hidden md:block text-xs font-semibold max-w-[90px] truncate" style={{ color: "rgba(200,210,240,0.90)" }}>
+                <span className="hidden md:block text-xs font-semibold max-w-[90px] truncate" style={{ color: "rgb(var(--nx-text-2-rgb)/0.90)" }}>
                     {name.split(" ")[0]}
                 </span>
             )}
