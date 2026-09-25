@@ -402,3 +402,5 @@ html:not(.dark) .es-bg textarea::placeholder { color: var(--es-faint) !important
   pointer-events: none;
   will-change: transform, opacity;
 }
+
+@keyframes aiLogoFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }

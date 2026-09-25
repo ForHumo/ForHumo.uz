@@ -10,9 +10,9 @@ import {
     Send, Loader2, Plus, MessageSquare, Sparkles, Trash2, LogIn,
     Archive, Menu, X as XIcon, User as UserIcon, Brain, ShieldCheck,
     Mic, MicOff, Paperclip, ImageIcon, Volume2, VolumeX, Share2, Check,
+    Code2, Globe, BookOpen, Mail,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
-import { moduleTheme } from "@/lib/module-theme";
 import { AiStarfield } from "@/components/ai/ai-starfield";
 
 interface ConvSummary {
@@ -41,7 +41,16 @@ interface SpeechRecognitionType {
     stop: () => void;
 }
 
-const T = moduleTheme("ai");
+// Humo AI — eski monoxrom qora tema (ChatGPT uslubi). Violet-fuchsia EMAS.
+// Eski ai-static palitrasi: bg #0d0d0d, matn #ebebeb, primary/CTA light #ECECEC + dark matn.
+const T = {
+    primary: "#ECECEC",
+    soft: "rgba(255,255,255,0.06)",
+    onPrimary: "#0d0d0d",
+    border: "rgba(255,255,255,0.09)",
+    gradient: "#ECECEC",
+    shadow: "0 8px 24px rgba(0,0,0,0.5)",
+};
 
 export function AiChatPage() {
     const { status } = useSession();
@@ -403,7 +412,7 @@ export function AiChatPage() {
         return (
             <div className="dark relative min-h-screen flex items-center justify-center px-4 text-[var(--foreground)]" style={{ background: "transparent" }}>
                 <AiStarfield />
-                <div className="relative z-10 max-w-sm w-full text-center rounded-3xl p-8 border" style={{ borderColor: T.border, background: "rgba(9,11,20,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                <div className="relative z-10 max-w-sm w-full text-center rounded-3xl p-8 border" style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                     <span className="w-14 h-14 rounded-2xl grid place-items-center mx-auto mb-4"
                         style={{ background: T.gradient, color: T.onPrimary }}>
                         <Brain className="w-7 h-7" />
@@ -436,7 +445,7 @@ export function AiChatPage() {
             {/* Sidebar — suhbatlar */}
             <aside className={`w-72 flex-shrink-0 border-r flex flex-col md:relative md:z-10
                 ${sidebarOpen ? "fixed inset-y-0 left-0 z-40" : "hidden md:flex"}`}
-                style={{ borderColor: T.border, background: "rgba(9,11,20,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                 <div className="p-3 border-b flex items-center gap-2" style={{ borderColor: T.border }}>
                     <button onClick={newChat}
                         className="flex-1 flex items-center gap-2 h-10 px-3 rounded-xl text-sm font-black"
@@ -520,7 +529,7 @@ export function AiChatPage() {
             {/* Main — chat */}
             <main className="relative z-10 flex-1 flex flex-col min-w-0">
                 <header className="h-14 border-b flex items-center gap-2 px-4 flex-shrink-0"
-                    style={{ borderColor: T.border, background: "rgba(9,11,20,0.6)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                    style={{ borderColor: T.border, background: "rgba(13,13,13,0.6)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                     <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2">
                         <Menu className="w-5 h-5" />
                     </button>
@@ -592,27 +601,29 @@ export function AiChatPage() {
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {!activeId && messages.length === 0 && (
                         <div className="h-full flex flex-col items-center justify-center text-center px-4">
-                            <span className="w-16 h-16 rounded-2xl grid place-items-center mb-4"
-                                style={{ background: T.gradient, color: T.onPrimary }}>
-                                <Sparkles className="w-8 h-8" />
-                            </span>
-                            <h2 className="text-xl font-black mb-2">Salom! Men — Humo AI</h2>
-                            <p className="text-sm text-muted-foreground max-w-md">
-                                For Humo modullari haqida yordam beraman. Sizni yaxshi tanish uchun
-                                suhbatlarimizni eslab qolaman (faqat siz uchun, shifrlangan).
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src="/logos/humo-ai-white.png" alt="Humo AI" className="w-[74px] h-[74px] mb-6 select-none"
+                                style={{ animation: "aiLogoFloat 4s ease-in-out infinite" }} draggable={false} />
+                            <p className="text-[13px] mb-2" style={{ color: "var(--muted-foreground)" }}>
+                                Humo AI&apos;ga xush kelibsiz
                             </p>
-                            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-md w-full">
+                            <h1 className="text-3xl sm:text-4xl font-light mb-8 tracking-tight"
+                                style={{ background: "linear-gradient(135deg,#ECECEC 20%,#8A8A8A 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                                Bugun nima qilamiz?
+                            </h1>
+                            <div className="grid grid-cols-2 gap-2 max-w-md w-full">
                                 {[
-                                    "Belisdan sarpo qutisini qanday ijaraga olaman?",
-                                    "For Pay hamyondan qanday to'lov qilish mumkin?",
-                                    "Nexus'da yangi post qanday yaratiladi?",
-                                    "Menga mos bir Belis komplekt taklif qiling",
-                                ].map(sample => (
-                                    <button key={sample}
-                                        onClick={() => setInput(sample)}
-                                        className="text-left p-2.5 rounded-xl border text-xs hover:bg-black/[0.02] dark:hover:bg-white/[0.03]"
-                                        style={{ borderColor: T.border }}>
-                                        {sample}
+                                    { icon: Code2, title: "Kod yoz", sub: "Tushuntirmalar bilan", p: "Menga kod yozib ber: " },
+                                    { icon: Globe, title: "Tarjima", sub: "O'zbek ↔ Ingliz", p: "Quyidagi matnni tarjima qil: " },
+                                    { icon: BookOpen, title: "Tushuntir", sub: "Sodda tilda", p: "Menga sodda tilda tushuntir: " },
+                                    { icon: Mail, title: "Xat yoz", sub: "Rasmiy uslubda", p: "Menga rasmiy xat yozib ber: " },
+                                ].map(c => (
+                                    <button key={c.title} onClick={() => setInput(c.p)}
+                                        className="text-left p-3.5 rounded-xl border flex flex-col gap-0.5 transition-transform duration-150 hover:-translate-y-0.5"
+                                        style={{ background: "rgba(26,26,26,0.55)", borderColor: T.border }}>
+                                        <c.icon className="w-[22px] h-[22px] mb-1.5" style={{ color: "var(--muted-foreground)" }} />
+                                        <span className="text-[12.5px] font-semibold text-[var(--foreground)]">{c.title}</span>
+                                        <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>{c.sub}</span>
                                     </button>
                                 ))}
                             </div>
@@ -630,7 +641,7 @@ export function AiChatPage() {
                             <div key={m.id} className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
                                 <div className="max-w-[75%] px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words"
                                     style={{
-                                        background: isUser ? T.gradient : "rgba(18,22,36,0.78)",
+                                        background: isUser ? T.gradient : "rgba(26,26,26,0.78)",
                                         color: isUser ? T.onPrimary : "var(--foreground)",
                                         border: isUser ? "none" : "1px solid rgba(255,255,255,0.06)",
                                         borderRadius: isUser ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
@@ -703,7 +714,7 @@ export function AiChatPage() {
                     </div>
                 )}
 
-                <form onSubmit={sendMessage} className="border-t p-3 flex gap-2 items-end" style={{ borderColor: T.border, background: "rgba(9,11,20,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                <form onSubmit={sendMessage} className="border-t p-3 flex gap-2 items-end" style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                     {/* Attachment button */}
                     <input ref={fileInputRef} type="file" accept="image/*,application/pdf" hidden
                         onChange={e => { const f = e.target.files?.[0]; if (f) uploadAttachment(f); e.target.value = ""; }} />
@@ -720,7 +731,7 @@ export function AiChatPage() {
                         onChange={e => setInput(e.target.value.slice(0, 4000))}
                         placeholder={recording ? "Tinglayapman..." : "Humo AI'ga xabar yozing..."}
                         className="flex-1 h-11 px-4 rounded-xl border text-sm focus:outline-none focus:ring-2"
-                        style={{ borderColor: recording ? T.primary : T.border, background: "rgba(18,22,36,0.6)", ["--tw-ring-color" as string]: T.primary + "50" }}
+                        style={{ borderColor: recording ? T.primary : T.border, background: "rgba(26,26,26,0.6)", ["--tw-ring-color" as string]: T.primary + "50" }}
                         disabled={sending}
                     />
 

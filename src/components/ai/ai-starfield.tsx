@@ -78,7 +78,7 @@ export function AiStarfield() {
         <div
             aria-hidden
             className="fixed inset-0 z-0 pointer-events-none"
-            style={{ background: "radial-gradient(ellipse at 50% -10%, #0B1022 0%, #05060B 55%, #030307 100%)" }}
+            style={{ background: "#0d0d0d" }}
         >
             <canvas ref={ref} className="absolute inset-0 h-full w-full" />
         </div>
