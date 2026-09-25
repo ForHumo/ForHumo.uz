@@ -167,7 +167,7 @@ export function NxVideoPlayer() {
                 {data?.locked ? (
                     <div className="relative w-full h-full flex items-center justify-center p-4">
                         {data.thumbUrl && <img src={data.thumbUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" style={{ filter: "blur(20px)" }} />}
-                        <div className="relative z-10 flex flex-col items-center gap-4 p-8 rounded-2xl text-center w-full" style={{ background: "rgba(8,12,32,0.92)", border: "1px solid rgba(43,62,232,0.30)", maxWidth: 380 }}>
+                        <div className="relative z-10 flex flex-col items-center gap-4 p-8 rounded-2xl text-center w-full" style={{ background: "rgba(8,12,32,0.92)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", maxWidth: 380 }}>
                             <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "var(--nx-accent)" }}>
                                 <Lock className="w-7 h-7 text-white" />
                             </div>
@@ -193,17 +193,17 @@ export function NxVideoPlayer() {
                             <div className="relative">
                                 <button onClick={() => setSpeedOpen(o => !o)}
                                     className="flex items-center gap-1 h-8 px-2.5 rounded-lg text-[11px] font-black text-white"
-                                    style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(8px)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                    style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(8px)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                     <Gauge className="w-3 h-3" />{speed === 1 ? "1x" : `${speed}x`}
                                 </button>
                                 {speedOpen && (
                                     <div className="absolute top-9 left-0 z-30 rounded-lg overflow-hidden"
-                                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(43,62,232,0.25)", boxShadow: "0 8px 24px rgba(0,0,0,0.6)" }}>
+                                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", boxShadow: "0 8px 24px rgba(0,0,0,0.6)" }}>
                                         {[0.5, 0.75, 1, 1.25, 1.5, 2].map(s => (
                                             <button key={s} onClick={() => { setSpeed(s); setSpeedOpen(false); }}
                                                 className="block w-full px-4 py-1.5 text-[11px] font-bold text-left whitespace-nowrap"
                                                 style={{ color: s === speed ? "var(--nx-accent)" : "#fff",
-                                                    background: s === speed ? "rgba(0,206,200,0.10)" : "transparent" }}>
+                                                    background: s === speed ? "rgb(var(--nx-accent-rgb) / 0.10)" : "transparent" }}>
                                                 {s}x{s === speed ? " ✓" : ""}
                                             </button>
                                         ))}
@@ -212,9 +212,9 @@ export function NxVideoPlayer() {
                             </div>
                             <button onClick={() => setAutoplay(a => !a)} title={autoplay ? "Avto-o'ynatish yoqilgan" : "Avto-o'ynatish o'chirilgan"}
                                 className="flex items-center gap-1 h-8 px-2.5 rounded-lg text-[11px] font-black text-white"
-                                style={{ background: autoplay ? "rgba(0,206,200,0.20)" : "rgba(5,8,24,0.75)",
+                                style={{ background: autoplay ? "rgb(var(--nx-accent-rgb) / 0.20)" : "rgba(5,8,24,0.75)",
                                     backdropFilter: "blur(8px)",
-                                    border: `1px solid ${autoplay ? "rgba(0,206,200,0.45)" : "rgba(43,62,232,0.30)"}` }}>
+                                    border: `1px solid ${autoplay ? "rgb(var(--nx-accent-rgb) / 0.45)" : "rgb(var(--nx-accent-rgb) / 0.30)"}` }}>
                                 <PlayCircle className="w-3 h-3" />Auto
                             </button>
                         </div>
@@ -229,8 +229,8 @@ export function NxVideoPlayer() {
             </div>
 
             {/* Info panel */}
-            <div className="md:w-96 flex flex-col overflow-y-auto flex-shrink-0" style={{ background: "rgba(8,12,32,0.98)", borderLeft: "1px solid rgba(43,62,232,0.18)", scrollbarWidth: "none", maxHeight: "100vh" }}>
-                <div className="px-4 pt-5 pb-4" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+            <div className="md:w-96 flex flex-col overflow-y-auto flex-shrink-0" style={{ background: "rgba(8,12,32,0.98)", borderLeft: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", scrollbarWidth: "none", maxHeight: "100vh" }}>
+                <div className="px-4 pt-5 pb-4" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.10)" }}>
                     <h3 className="text-base font-black text-white leading-snug mb-1">{title}</h3>
                     <p className="text-[11px] mb-3 flex items-center gap-2" style={{ color: "rgba(100,120,170,0.8)" }}>
                         <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{fmtViews(data?.views ?? 0)} ko&apos;rish</span>
@@ -241,7 +241,7 @@ export function NxVideoPlayer() {
                     {author && (
                         <div className="flex items-center gap-2.5 mb-3">
                             <Link href={author.username ? `/nexus/u/${author.username}` : "/nexus"} onClick={closeVideo} className="flex items-center gap-2.5 flex-1 min-w-0">
-                                <img src={avatarOf(author)} alt="" className="w-9 h-9 rounded-full object-cover bg-white" style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
+                                <img src={avatarOf(author)} alt="" className="w-9 h-9 rounded-full object-cover bg-white" style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }} />
                                 <div className="min-w-0 flex items-center gap-1">
                                     <span className="text-sm font-bold text-white truncate">{author.name || author.username || "Foydalanuvchi"}</span>
                                     {author.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
@@ -250,7 +250,7 @@ export function NxVideoPlayer() {
                             {!data?.isMine && (
                                 <button onClick={toggleSub} className="px-3.5 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1 flex-shrink-0"
                                     style={subscribed
-                                        ? { background: "rgba(43,62,232,0.15)", border: "1px solid rgba(43,62,232,0.35)", color: "rgba(160,180,240,0.9)" }
+                                        ? { background: "rgb(var(--nx-accent-rgb) / 0.15)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", color: "rgba(160,180,240,0.9)" }
                                         : { background: "var(--nx-accent)", color: "#fff" }}>
                                     {subscribed ? <><UserCheck className="w-3.5 h-3.5" /> Obunada</> : <><UserPlus className="w-3.5 h-3.5" /> Obuna</>}
                                 </button>
@@ -261,15 +261,15 @@ export function NxVideoPlayer() {
                     {/* Amallar */}
                     <div className="flex items-center gap-2">
                         <button onClick={toggleLike} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold"
-                            style={{ background: liked ? "rgba(43,62,232,0.20)" : "rgba(43,62,232,0.08)", border: `1px solid ${liked ? "rgba(43,62,232,0.40)" : "rgba(43,62,232,0.14)"}`, color: liked ? "var(--nx-accent)" : "rgba(160,176,224,0.85)" }}>
+                            style={{ background: liked ? "rgb(var(--nx-accent-rgb) / 0.20)" : "rgb(var(--nx-accent-rgb) / 0.08)", border: `1px solid ${liked ? "rgb(var(--nx-accent-rgb) / 0.40)" : "rgb(var(--nx-accent-rgb) / 0.14)"}`, color: liked ? "var(--nx-accent)" : "rgba(160,176,224,0.85)" }}>
                             <ThumbsUp className="w-3.5 h-3.5" style={{ fill: liked ? "var(--nx-accent)" : "none" }} /> {fmtViews(likeCount)}
                         </button>
                         <button onClick={() => setShowComments(s => !s)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold"
-                            style={{ background: showComments ? "rgba(43,62,232,0.20)" : "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(160,176,224,0.85)" }}>
+                            style={{ background: showComments ? "rgb(var(--nx-accent-rgb) / 0.20)" : "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(160,176,224,0.85)" }}>
                             <MessageSquare className="w-3.5 h-3.5" /> {fmtViews(data?.commentCount ?? 0)}
                         </button>
                         <button onClick={() => openShareSheet(title, data?.id ? `${typeof window !== "undefined" ? window.location.origin : "https://forhumo.uz"}/nexus/v/${data.id}` : undefined)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold"
-                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(160,176,224,0.85)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(160,176,224,0.85)" }}>
                             <Share2 className="w-3.5 h-3.5" /> Ulash
                         </button>
                         {data?.isMine && (
@@ -286,13 +286,13 @@ export function NxVideoPlayer() {
                                 <button key={key}
                                     onClick={() => openVideo({ id: part.id, title: part.title, image: part.thumbUrl || "", author: data?.author?.name || data?.author?.username || "", avatar: avatarOf(data?.author ?? null), views: fmtViews(part.views), duration: fmtDur(part.durationSec) })}
                                     className="flex-1 flex items-center gap-2 p-2 rounded-xl text-left min-w-0"
-                                    style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                                     {key === "prev" && <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
-                                    <div className="w-12 h-7 rounded overflow-hidden flex-shrink-0" style={{ background: "rgba(43,62,232,0.15)" }}>
+                                    <div className="w-12 h-7 rounded overflow-hidden flex-shrink-0" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                         {part.thumbUrl && <img src={part.thumbUrl} alt="" className="w-full h-full object-cover" />}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-[9px] font-black uppercase tracking-wide" style={{ color: "rgba(0,206,200,0.8)" }}>{label}</p>
+                                        <p className="text-[9px] font-black uppercase tracking-wide" style={{ color: "rgb(var(--nx-accent-rgb) / 0.8)" }}>{label}</p>
                                         <p className="text-[11px] font-bold text-white truncate">{part.title}</p>
                                     </div>
                                     {key === "next" && <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
@@ -306,11 +306,11 @@ export function NxVideoPlayer() {
 
                 {/* Izohlar */}
                 {showComments && (
-                    <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                    <div className="px-4 py-3" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.10)" }}>
                         <div className="flex gap-2 mb-3">
                             <input value={cInput} onChange={e => setCInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendComment()}
                                 placeholder="Izoh yozing..." className="flex-1 h-9 rounded-xl px-3 text-sm text-white outline-none"
-                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "var(--nx-accent)" }} />
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.16)", caretColor: "var(--nx-accent)" }} />
                             <button onClick={sendComment} disabled={cBusy || !cInput.trim()} className="w-9 h-9 flex items-center justify-center rounded-xl text-white disabled:opacity-40" style={{ background: "var(--nx-accent)" }}>
                                 {cBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                             </button>
@@ -336,11 +336,11 @@ export function NxVideoPlayer() {
                 {/* Tavsiya */}
                 {rec.length > 0 && (
                     <div className="px-4 py-3">
-                        <p className="text-[9px] font-black uppercase tracking-widest mb-3" style={{ color: "rgba(43,62,232,0.55)" }}>Keyingi videolar</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest mb-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.55)" }}>Keyingi videolar</p>
                         {rec.map(r => (
                             <button key={r.id} onClick={() => openVideo({ id: r.id, title: r.title, image: r.thumbUrl || "", author: r.author?.name || r.author?.username || "", avatar: avatarOf(r.author), views: fmtViews(r.views), duration: fmtDur(r.durationSec) })}
                                 className="w-full flex gap-2.5 mb-3 group text-left">
-                                <div className="relative w-24 aspect-video rounded-lg overflow-hidden flex-shrink-0" style={{ border: "1px solid rgba(43,62,232,0.15)", background: "rgba(43,62,232,0.08)" }}>
+                                <div className="relative w-24 aspect-video rounded-lg overflow-hidden flex-shrink-0" style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)", background: "rgb(var(--nx-accent-rgb) / 0.08)" }}>
                                     {r.thumbUrl ? <img src={r.thumbUrl} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Play className="w-4 h-4 text-white/30" /></div>}
                                     {r.durationSec > 0 && <span className="absolute bottom-1 right-1 px-1 rounded text-[8px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(r.durationSec)}</span>}
                                 </div>

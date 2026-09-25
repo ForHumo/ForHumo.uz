@@ -177,18 +177,18 @@ function NexusBackground() {
         <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden>
             <div className="absolute" style={{
                 top: "-15%", left: "-10%", width: "60%", height: "60%",
-                background: "radial-gradient(ellipse at center, rgba(43,62,232,0.22) 0%, rgba(43,62,232,0.08) 40%, transparent 70%)",
+                background: "radial-gradient(ellipse at center, rgb(var(--nx-accent-rgb) / 0.22) 0%, rgb(var(--nx-accent-rgb) / 0.08) 40%, transparent 70%)",
             }} />
             <div className="absolute" style={{
                 bottom: "-15%", right: "-10%", width: "60%", height: "60%",
-                background: "radial-gradient(ellipse at center, rgba(0,206,200,0.18) 0%, rgba(0,206,200,0.06) 40%, transparent 70%)",
+                background: "radial-gradient(ellipse at center, rgb(var(--nx-accent-rgb) / 0.18) 0%, rgb(var(--nx-accent-rgb) / 0.06) 40%, transparent 70%)",
             }} />
             <div className="absolute" style={{
                 top: "30%", left: "25%", width: "50%", height: "40%",
-                background: "radial-gradient(ellipse at center, rgba(43,62,232,0.06) 0%, transparent 70%)",
+                background: "radial-gradient(ellipse at center, rgb(var(--nx-accent-rgb) / 0.06) 0%, transparent 70%)",
             }} />
             <div className="absolute inset-0" style={{
-                backgroundImage: "radial-gradient(circle, rgba(43,62,232,0.12) 1px, transparent 1px)",
+                backgroundImage: "radial-gradient(circle, rgb(var(--nx-accent-rgb) / 0.12) 1px, transparent 1px)",
                 backgroundSize: "32px 32px",
                 maskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)",
                 WebkitMaskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)",

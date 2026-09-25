@@ -364,7 +364,7 @@ export function NxStoriesViewer() {
                         {/* Reply sent toast */}
                         {replySent && (
                             <div className="absolute top-24 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-full text-xs font-bold text-white pointer-events-none"
-                                style={{ background: "rgba(0,206,200,0.90)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.90)" }}>
                                 Javob yuborildi
                             </div>
                         )}

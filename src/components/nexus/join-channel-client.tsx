@@ -57,7 +57,7 @@ export function JoinChannelClient({ code }: { code: string }) {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6"
             style={{ background: "linear-gradient(180deg,var(--nx-bg) 0%,#0A1130 100%)" }}>
             <div className="w-full max-w-sm rounded-3xl p-6"
-                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                 {loading ? (
                     <div className="flex justify-center py-12">
                         <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--nx-accent)" }} />
@@ -68,7 +68,7 @@ export function JoinChannelClient({ code }: { code: string }) {
                         <p className="text-sm font-bold text-[var(--nx-text)]">{error}</p>
                         <button onClick={() => router.push("/nexus")}
                             className="mt-4 text-xs font-bold px-4 py-2 rounded-xl text-[var(--nx-text)]"
-                            style={{ background: "rgba(43,62,232,0.20)", border: "1px solid rgba(43,62,232,0.35)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)" }}>
                             Nexus'ga o'tish
                         </button>
                     </div>

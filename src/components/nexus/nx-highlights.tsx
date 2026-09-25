@@ -45,7 +45,7 @@ export function NxHighlights({ username, isMe }: Props) {
                         <button onClick={() => setCreateOpen(true)}
                             className="flex flex-col items-center gap-1.5 flex-shrink-0 min-w-[64px]">
                             <div className="w-14 h-14 rounded-full flex items-center justify-center"
-                                style={{ background: "rgba(43,62,232,0.10)", border: "2px dashed rgba(43,62,232,0.35)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "2px dashed rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                 <Plus className="w-5 h-5" style={{ color: "rgba(140,160,210,0.85)" }} />
                             </div>
                             <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.85)" }}>Yangi</span>

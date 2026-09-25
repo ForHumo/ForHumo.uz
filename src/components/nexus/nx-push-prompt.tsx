@@ -49,8 +49,8 @@ export function NxPushPrompt() {
     return (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-3 rounded-2xl max-w-sm w-[90%]"
             style={{
-                background: "linear-gradient(135deg,rgba(43,62,232,0.95),rgba(0,206,200,0.90))",
-                boxShadow: "0 8px 32px rgba(43,62,232,0.35)",
+                background: "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.95),rgb(var(--nx-accent-rgb) / 0.90))",
+                boxShadow: "0 8px 32px rgb(var(--nx-accent-rgb) / 0.35)",
                 backdropFilter: "blur(12px)",
             }}>
             <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center" style={{ background: "rgba(255,255,255,0.20)" }}>

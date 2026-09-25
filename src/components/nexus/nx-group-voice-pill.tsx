@@ -58,9 +58,9 @@ export function NxGroupVoicePill({
     if (active) {
         return (
             <div className="mx-2 mb-2 px-3 py-2 rounded-2xl flex items-center gap-2"
-                style={{ background: "linear-gradient(90deg,rgba(43,62,232,0.15),rgba(0,206,200,0.15))", border: "1px solid rgba(0,206,200,0.35)" }}>
+                style={{ background: "linear-gradient(90deg,rgb(var(--nx-accent-rgb) / 0.15),rgb(var(--nx-accent-rgb) / 0.15))", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)" }}>
                 <div className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: "rgba(0,206,200,0.25)" }}>
+                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.25)" }}>
                     <Radio className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                     <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-ping" style={{ background: "#FF3250" }} />
                 </div>
@@ -104,7 +104,7 @@ export function NxGroupVoicePill({
             <div className="mx-2 mb-2">
                 <button onClick={start} disabled={busy}
                     className="w-full py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:brightness-110 transition disabled:opacity-60"
-                    style={{ background: "rgba(43,62,232,0.10)", border: "1px dashed rgba(0,206,200,0.35)", color: "var(--nx-accent)" }}>
+                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.35)", color: "var(--nx-accent)" }}>
                     {busy ? <Loader2 className="w-4 h-4 animate-spin" />
                         : <><Mic className="w-3.5 h-3.5" /> Voice chat boshlash</>}
                 </button>

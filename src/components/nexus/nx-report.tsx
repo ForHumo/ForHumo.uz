@@ -88,16 +88,16 @@ export function NxReport() {
         <div className="fixed inset-0 z-[120] flex flex-col" style={{ background: "var(--nx-bg)" }}>
             {/* Header */}
             <div className="flex items-center gap-3 px-4 h-[56px] flex-shrink-0"
-                style={{ borderBottom: "1px solid rgba(43,62,232,0.18)" }}>
+                style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                 {step !== "category" && tab === "send"
                     ? <button onClick={() => step === "detail" ? setStep("category") : reset()}
                         className="w-9 h-9 flex items-center justify-center rounded-xl"
-                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                         <ChevronLeft className="w-5 h-5 text-[var(--nx-text)]" />
                     </button>
                     : <button onClick={() => { setReportOpen(false); reset(); }}
                         className="w-9 h-9 flex items-center justify-center rounded-xl"
-                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                         <X className="w-5 h-5 text-[var(--nx-text)]" />
                     </button>
                 }
@@ -114,9 +114,9 @@ export function NxReport() {
                     <button key={t} onClick={() => { setTab(t); reset(); }}
                         className="flex-1 py-2 text-[12px] font-black rounded-xl transition-all"
                         style={{
-                            background: tab === t ? "rgba(43,62,232,0.25)" : "transparent",
+                            background: tab === t ? "rgb(var(--nx-accent-rgb) / 0.25)" : "transparent",
                             color: tab === t ? "white" : "rgba(100,120,170,0.60)",
-                            border: `1px solid ${tab === t ? "rgba(43,62,232,0.45)" : "transparent"}`,
+                            border: `1px solid ${tab === t ? "rgb(var(--nx-accent-rgb) / 0.45)" : "transparent"}`,
                         }}>
                         {t === "send" ? "Shikoyat yuborish" : "Tarixim"}
                     </button>
@@ -140,7 +140,7 @@ export function NxReport() {
                                     <button key={c.id}
                                         onClick={() => { setSelectedCat(c.id); setStep("detail"); }}
                                         className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all active:scale-[0.98]"
-                                        style={{ background: "rgba(8,12,32,0.95)", border: "1px solid rgba(43,62,232,0.15)" }}>
+                                        style={{ background: "rgba(8,12,32,0.95)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                         <div className="flex-1">
                                             <p className="text-[12px] font-bold text-[var(--nx-text)]">{c.label}</p>
                                             <p className="text-[10px]" style={{ color: "rgba(100,120,170,0.60)" }}>{c.description}</p>
@@ -175,12 +175,12 @@ export function NxReport() {
                                         rows={5}
                                         placeholder="Muammoni batafsil tushuntiring..."
                                         className="w-full bg-transparent text-sm text-[var(--nx-text)] outline-none px-3 py-3 rounded-xl resize-none"
-                                        style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)" }}
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}
                                     />
                                 </div>
 
                                 <div className="p-3 rounded-2xl"
-                                    style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.15)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                     <p className="text-[10px] leading-relaxed" style={{ color: "var(--nx-text-3)" }}>
                                         Moderatorlarimiz 24 soat ichida ko'rib chiqadi. Anonim bo'ladi —
                                         shikoyatingiz kim ekanligingiz aytilmaydi.
@@ -209,7 +209,7 @@ export function NxReport() {
                                 </p>
                                 <button onClick={() => { reset(); setTab("history"); }}
                                     className="px-5 py-2.5 rounded-xl text-sm font-black text-[var(--nx-text)]"
-                                    style={{ background: "rgba(43,62,232,0.22)", border: "1px solid rgba(43,62,232,0.35)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.22)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                     Tarixni ko'rish
                                 </button>
                             </div>
@@ -230,7 +230,7 @@ export function NxReport() {
                             const cat = CATEGORIES.find(c => c.id === r.category);
                             return (
                                 <div key={r.id} className="p-4 rounded-2xl"
-                                    style={{ background: "rgba(8,12,32,0.95)", border: "1px solid rgba(43,62,232,0.15)" }}>
+                                    style={{ background: "rgba(8,12,32,0.95)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                     <div className="flex items-center gap-2 mb-2">
                                         <Flag className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#EF4444" }} />
                                         <span className="text-[11px] font-bold text-[var(--nx-text)] flex-1 truncate">{r.target}</span>

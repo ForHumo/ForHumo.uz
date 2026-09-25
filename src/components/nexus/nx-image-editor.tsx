@@ -103,10 +103,10 @@ export function NxImageEditor({ file, onCancel, onConfirm }: Props) {
     return (
         <div className="fixed inset-0 z-[230] flex flex-col" style={{ background: "rgba(3,5,15,0.94)", backdropFilter: "blur(6px)" }}>
             {/* Header */}
-            <div className="p-3 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+            <div className="p-3 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                 <button onClick={onCancel} disabled={saving}
                     className="w-9 h-9 rounded-lg flex items-center justify-center"
-                    style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                     <X className="w-4 h-4" style={{ color: "rgba(220,230,255,0.85)" }} />
                 </button>
                 <div className="flex-1">
@@ -115,7 +115,7 @@ export function NxImageEditor({ file, onCancel, onConfirm }: Props) {
                 </div>
                 <button onClick={handleConfirm} disabled={saving || !croppedArea}
                     className="px-4 py-2 rounded-lg text-xs font-black flex items-center gap-1.5 transition disabled:opacity-50"
-                    style={{ background: "var(--nx-accent)", color: "white", boxShadow: "0 4px 16px rgba(43,62,232,0.35)" }}>
+                    style={{ background: "var(--nx-accent)", color: "white", boxShadow: "0 4px 16px rgb(var(--nx-accent-rgb) / 0.35)" }}>
                     {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                     Yuborish
                 </button>
@@ -145,7 +145,7 @@ export function NxImageEditor({ file, onCancel, onConfirm }: Props) {
             </div>
 
             {/* Controls */}
-            <div className="p-3 flex flex-col gap-2 flex-shrink-0" style={{ borderTop: "1px solid rgba(43,62,232,0.20)", background: "rgba(11,18,40,0.85)" }}>
+            <div className="p-3 flex flex-col gap-2 flex-shrink-0" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", background: "rgba(11,18,40,0.85)" }}>
                 {/* Aspect ratio chip'lar */}
                 <div className="flex items-center gap-1.5 overflow-x-auto nx-scrollbar">
                     <CropIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "rgba(160,176,224,0.75)" }} />
@@ -157,8 +157,8 @@ export function NxImageEditor({ file, onCancel, onConfirm }: Props) {
                                 style={active ? {
                                     background: "var(--nx-accent)", color: "white",
                                 } : {
-                                    background: "rgba(43,62,232,0.10)", color: "rgba(200,215,245,0.85)",
-                                    border: "1px solid rgba(43,62,232,0.25)",
+                                    background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgba(200,215,245,0.85)",
+                                    border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)",
                                 }}>
                                 {a.label}
                             </button>
@@ -168,7 +168,7 @@ export function NxImageEditor({ file, onCancel, onConfirm }: Props) {
                     {/* Rotate */}
                     <button onClick={() => setRotation(r => (r + 90) % 360)} title="90° aylantirish"
                         className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition hover:brightness-125"
-                        style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                         <RotateCw className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                     </button>
                 </div>
@@ -180,7 +180,7 @@ export function NxImageEditor({ file, onCancel, onConfirm }: Props) {
                         onChange={(e) => setZoom(Number(e.target.value))}
                         className="flex-1 h-1 rounded-full appearance-none cursor-pointer"
                         style={{
-                            background: `linear-gradient(90deg, var(--nx-accent) 0%, var(--nx-accent) ${((zoom - 1) / 2) * 100}%, rgba(43,62,232,0.20) ${((zoom - 1) / 2) * 100}%)`,
+                            background: `linear-gradient(90deg, var(--nx-accent) 0%, var(--nx-accent) ${((zoom - 1) / 2) * 100}%, rgb(var(--nx-accent-rgb) / 0.20) ${((zoom - 1) / 2) * 100}%)`,
                         }} />
                     <span className="text-[10px] font-black tabular-nums w-10 text-right"
                         style={{ color: "rgba(220,230,255,0.85)" }}>{Math.round(zoom * 100)}%</span>

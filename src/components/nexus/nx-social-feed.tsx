@@ -297,7 +297,7 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
             {(pullOffset > 0 || refreshing) && (
                 <div className="absolute left-0 right-0 flex justify-center pointer-events-none" style={{ top: -50, height: 50 }}>
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
-                        style={{ background: "rgba(8,14,32,0.90)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                        style={{ background: "rgba(8,14,32,0.90)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                         <RefreshCw className={`w-3.5 h-3.5 ${refreshing || pullOffset > 55 ? "animate-spin" : ""}`}
                             style={{ color: "var(--nx-accent)", transform: !refreshing && pullOffset <= 55 ? `rotate(${pullOffset * 4}deg)` : undefined }} />
                         <span className="text-[10px] font-black" style={{ color: "rgba(200,215,245,0.90)" }}>
@@ -312,7 +312,7 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
                 <div className="sticky top-2 z-30 flex justify-center pointer-events-none">
                     <button onClick={refreshTop}
                         className="pointer-events-auto flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] font-black text-white nx-pop shadow-lg active:scale-95"
-                        style={{ background: "var(--nx-accent)", boxShadow: "0 6px 20px rgba(43,62,232,0.45)" }}>
+                        style={{ background: "var(--nx-accent)", boxShadow: "0 6px 20px rgb(var(--nx-accent-rgb) / 0.45)" }}>
                         <ArrowUp className="w-3.5 h-3.5" />
                         {newCount === 1 ? "1 yangi post" : `${newCount}+ yangi post`}
                     </button>
@@ -322,7 +322,7 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
             {/* ── Tab (faqat umumiy feed va tashqi controlled emas) ── */}
             {!profileMode && !hideTabBar && (
             <div className="sticky top-0 z-20 flex gap-0 mx-4 mt-4 mb-3 rounded-2xl overflow-hidden backdrop-blur-md"
-                style={{ background: "rgba(8,14,32,0.85)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                style={{ background: "rgba(8,14,32,0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                 {(["foryou", "following", "explore"] as const).map(t => (
                     <button key={t} onClick={() => setTab(t)}
                         className="flex-1 py-2.5 text-xs font-black transition-all duration-200"
@@ -337,7 +337,7 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
             {/* ── Post yaratish (faqat umumiy feed) ── */}
             {!profileMode && (
             <div className="mx-4 mb-4 p-4 rounded-2xl"
-                style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                 <div className="flex gap-3">
                     <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0" style={{ background: "var(--nx-accent)" }}>
                         <img src={session?.user?.image || "https://api.dicebear.com/9.x/avataaars/svg?seed=me"} alt="" className="w-full h-full object-cover" />
@@ -351,7 +351,7 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
                 {media.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-3 pl-12">
                         {media.map((url, i) => (
-                            <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(43,62,232,0.25)" }}>
+                            <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden" style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                 {isVid(url) ? <video src={url} className="w-full h-full object-cover" /> : <img src={url} alt="" className="w-full h-full object-cover" />}
                                 <button onClick={() => setMedia(prev => prev.filter((_, idx) => idx !== i))}
                                     className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 flex items-center justify-center">
@@ -365,20 +365,20 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
                 <div className="mt-3 flex items-center justify-between pl-12">
                     <div className="flex items-center gap-2">
                         <button onClick={() => fileRef.current?.click()} disabled={uploading} title="Rasm/video"
-                            className="w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-150" style={{ background: "rgba(43,62,232,0.08)" }}>
+                            className="w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-150" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)" }}>
                             {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "var(--nx-accent)" }} /> : <ImgIcon className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.60)" }} />}
                         </button>
                         <input ref={fileRef} type="file" accept="image/*,video/*" multiple onChange={e => pickFiles(e.target.files)} className="hidden" />
                         <button onClick={aiSuggest} disabled={aiBusy || sending} title="AI'dan mavzu"
                             className="h-8 px-2.5 flex items-center gap-1 rounded-xl text-[10px] font-black transition-all duration-150 active:scale-95 disabled:opacity-50"
-                            style={{ background: "linear-gradient(135deg,rgba(139,92,246,0.18),rgba(0,206,200,0.18))",
+                            style={{ background: "linear-gradient(135deg,rgba(139,92,246,0.18),rgb(var(--nx-accent-rgb) / 0.18))",
                                 border: "1px solid rgba(139,92,246,0.35)", color: "#C4B5FD" }}>
                             {aiBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                             {aiBusy ? "..." : "AI mavzu"}
                         </button>
                         <button onClick={() => setCreatePostOpen(true)} disabled={sending} title="So'rovnoma, joylashuv, maxfiylik"
                             className="h-8 w-8 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95 disabled:opacity-50"
-                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(160,180,230,0.85)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", color: "rgba(160,180,230,0.85)" }}>
                             <Maximize2 className="w-3.5 h-3.5" />
                         </button>
                     </div>
@@ -418,7 +418,7 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
                     ))}
                     {hasMore && (
                         <button onClick={loadMore} disabled={loadingMore}
-                            className="mx-auto mt-2 px-6 py-2.5 rounded-xl text-xs font-black text-white" style={{ background: "rgba(43,62,232,0.15)" }}>
+                            className="mx-auto mt-2 px-6 py-2.5 rounded-xl text-xs font-black text-white" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                             {loadingMore ? "..." : "Ko'proq"}
                         </button>
                     )}
@@ -557,25 +557,25 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote, 
                         <button onClick={toggleFollow}
                             className="px-3 py-1 rounded-xl text-[10px] font-black transition-all duration-150 active:scale-95"
                             style={following
-                                ? { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", color: "rgba(140,160,210,0.75)" }
-                                : { background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)", color: "var(--nx-accent)" }}>
+                                ? { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", color: "rgba(140,160,210,0.75)" }
+                                : { background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "var(--nx-accent)" }}>
                             {following ? "Kuzatilmoqda" : "Kuzatish"}
                         </button>
                     )}
                     <div className="relative">
                         <button onClick={() => setMenuOpen(!menuOpen)} className="w-7 h-7 flex items-center justify-center rounded-lg"
-                            style={{ background: menuOpen ? "rgba(43,62,232,0.12)" : "transparent" }}>
+                            style={{ background: menuOpen ? "rgb(var(--nx-accent-rgb) / 0.12)" : "transparent" }}>
                             <MoreHorizontal className="w-4 h-4" style={{ color: "var(--nx-text-3)" }} />
                         </button>
                         {menuOpen && (
                             p.isMine ? (
-                                <div className="absolute right-0 top-8 z-10 rounded-xl overflow-hidden whitespace-nowrap" style={{ background: "var(--nx-elevated)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                <div className="absolute right-0 top-8 z-10 rounded-xl overflow-hidden whitespace-nowrap" style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                     <button onClick={() => { setMenuOpen(false); setEditText(shownText ?? ""); setEditing(true); }}
                                         className="flex items-center gap-2 px-3 py-2 text-xs font-bold w-full" style={{ color: "rgba(180,195,235,0.95)" }}>
                                         <Pencil className="w-3.5 h-3.5" /> Tahrirlash
                                     </button>
                                     <button onClick={() => { setMenuOpen(false); onDelete(); }}
-                                        className="flex items-center gap-2 px-3 py-2 text-xs font-bold w-full" style={{ color: "#EF4444", borderTop: "1px solid rgba(43,62,232,0.15)" }}>
+                                        className="flex items-center gap-2 px-3 py-2 text-xs font-bold w-full" style={{ color: "#EF4444", borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                         <Trash2 className="w-3.5 h-3.5" /> O&apos;chirish
                                     </button>
                                 </div>
@@ -619,9 +619,9 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote, 
                 <div className="px-4 pb-3">
                     <textarea value={editText} onChange={e => setEditText(e.target.value)} rows={3} autoFocus
                         className="w-full px-3 py-2.5 rounded-xl text-sm text-white outline-none resize-none"
-                        style={{ background: "rgba(11,18,40,0.7)", border: "1px solid rgba(43,62,232,0.25)", caretColor: "var(--nx-accent)" }} />
+                        style={{ background: "rgba(11,18,40,0.7)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", caretColor: "var(--nx-accent)" }} />
                     <div className="flex gap-2 mt-2 justify-end">
-                        <button onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: "rgba(43,62,232,0.08)", color: "rgba(160,180,230,0.85)" }}>Bekor</button>
+                        <button onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", color: "rgba(160,180,230,0.85)" }}>Bekor</button>
                         <button onClick={saveEdit} disabled={editBusy} className="px-4 py-1.5 rounded-lg text-xs font-black text-white flex items-center gap-1.5" style={{ background: "var(--nx-accent)" }}>
                             {editBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}Saqlash
                         </button>
@@ -669,10 +669,10 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote, 
                             return (
                                 <button key={i} onClick={() => !expired && onVote(i)} disabled={expired}
                                     className="relative w-full px-3 py-2.5 rounded-xl text-left overflow-hidden transition active:scale-[0.99]"
-                                    style={{ background: "rgba(43,62,232,0.06)", border: `1px solid ${isMyVote ? "rgba(0,206,200,0.5)" : "rgba(43,62,232,0.20)"}` }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: `1px solid ${isMyVote ? "rgb(var(--nx-accent-rgb) / 0.5)" : "rgb(var(--nx-accent-rgb) / 0.20)"}` }}>
                                     {showResults && (
                                         <div className="absolute inset-y-0 left-0 transition-all duration-500"
-                                            style={{ width: `${pct}%`, background: isMyVote ? "rgba(0,206,200,0.18)" : "rgba(43,62,232,0.16)" }} />
+                                            style={{ width: `${pct}%`, background: isMyVote ? "rgb(var(--nx-accent-rgb) / 0.18)" : "rgb(var(--nx-accent-rgb) / 0.16)" }} />
                                     )}
                                     <div className="relative flex items-center justify-between gap-2">
                                         <span className="text-xs font-bold text-white flex items-center gap-1.5 min-w-0">
@@ -787,7 +787,7 @@ function CommentsSection({ postId, onAdded }: { postId: string; onAdded: () => v
     }
 
     return (
-        <div className="px-4 pb-4 pt-1 space-y-3" style={{ borderTop: "1px solid rgba(43,62,232,0.08)" }}>
+        <div className="px-4 pb-4 pt-1 space-y-3" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.08)" }}>
             {loading ? (
                 <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
             ) : (
@@ -795,7 +795,7 @@ function CommentsSection({ postId, onAdded }: { postId: string; onAdded: () => v
                     {comments.map(c => (
                         <div key={c.id} className="flex gap-2.5 pt-2">
                             <img src={avatarOf(c.author)} alt="" className="w-7 h-7 rounded-lg object-cover bg-white flex-shrink-0" />
-                            <div className="flex-1 min-w-0 rounded-xl px-3 py-2" style={{ background: "rgba(43,62,232,0.06)" }}>
+                            <div className="flex-1 min-w-0 rounded-xl px-3 py-2" style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)" }}>
                                 <div className="flex items-center gap-1.5">
                                     <span className="text-xs font-bold text-white">{c.author?.name ?? c.author?.username ?? "Foydalanuvchi"}</span>
                                     {c.author?.verified && <NxVerifiedBadge category={(c.author as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={12} />}
@@ -819,7 +819,7 @@ function CommentsSection({ postId, onAdded }: { postId: string; onAdded: () => v
                             <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()}
                                 placeholder="Izoh yozing..." maxLength={500}
                                 className="flex-1 bg-transparent text-xs text-white outline-none rounded-xl px-3 py-2"
-                                style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.18)" }} />
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }} />
                             <button onClick={submit} disabled={busy || !text.trim()}
                                 className="w-8 h-8 flex items-center justify-center rounded-xl text-white disabled:opacity-40"
                                 style={{ background: "var(--nx-accent)" }}>
@@ -960,7 +960,7 @@ function NxFeedVideo({ src, single }: { src: string; single: boolean }) {
                         width: hoverPlay ? 76 : 68,
                         height: hoverPlay ? 76 : 68,
                         background: "var(--nx-accent)",
-                        boxShadow: "0 12px 40px rgba(43,62,232,0.55)",
+                        boxShadow: "0 12px 40px rgb(var(--nx-accent-rgb) / 0.55)",
                     }}>
                     <Play className="w-8 h-8 text-white fill-white ml-1" />
                 </div>
@@ -980,24 +980,24 @@ function NxFeedVideo({ src, single }: { src: string; single: boolean }) {
 function PostSkeleton() {
     return (
         <div className="rounded-2xl overflow-hidden animate-pulse"
-            style={{ background: "rgba(8,14,32,0.60)", border: "1px solid rgba(43,62,232,0.12)" }}>
+            style={{ background: "rgba(8,14,32,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.12)" }}>
             <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-                <div className="w-10 h-10 rounded-2xl" style={{ background: "rgba(43,62,232,0.15)" }} />
+                <div className="w-10 h-10 rounded-2xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }} />
                 <div className="flex-1 space-y-1.5">
-                    <div className="h-2.5 rounded" style={{ background: "rgba(43,62,232,0.15)", width: "40%" }} />
-                    <div className="h-2 rounded" style={{ background: "rgba(43,62,232,0.10)", width: "25%" }} />
+                    <div className="h-2.5 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", width: "40%" }} />
+                    <div className="h-2 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", width: "25%" }} />
                 </div>
             </div>
             <div className="px-4 pb-3 space-y-2">
-                <div className="h-3 rounded" style={{ background: "rgba(43,62,232,0.12)" }} />
-                <div className="h-3 rounded" style={{ background: "rgba(43,62,232,0.12)", width: "80%" }} />
-                <div className="h-3 rounded" style={{ background: "rgba(43,62,232,0.12)", width: "60%" }} />
+                <div className="h-3 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }} />
+                <div className="h-3 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", width: "80%" }} />
+                <div className="h-3 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", width: "60%" }} />
             </div>
-            <div className="mx-4 mb-3 h-40 rounded-xl" style={{ background: "rgba(43,62,232,0.10)" }} />
+            <div className="mx-4 mb-3 h-40 rounded-xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }} />
             <div className="flex items-center gap-3 px-4 pb-3 pt-1">
-                <div className="h-7 w-14 rounded-lg" style={{ background: "rgba(43,62,232,0.10)" }} />
-                <div className="h-7 w-14 rounded-lg" style={{ background: "rgba(43,62,232,0.10)" }} />
-                <div className="h-7 w-14 rounded-lg" style={{ background: "rgba(43,62,232,0.10)" }} />
+                <div className="h-7 w-14 rounded-lg" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }} />
+                <div className="h-7 w-14 rounded-lg" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }} />
+                <div className="h-7 w-14 rounded-lg" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }} />
             </div>
         </div>
     );
@@ -1011,7 +1011,7 @@ function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explo
         return (
             <div className="text-center py-16 px-4">
                 <div className="w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center"
-                    style={{ background: "rgba(43,62,232,0.10)" }}>
+                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                     <MessageCircle className="w-6 h-6" style={{ color: "rgba(140,160,210,0.75)" }} />
                 </div>
                 <p className="text-sm font-black text-white/85 mb-1">Hali post yo&apos;q</p>
@@ -1023,7 +1023,7 @@ function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explo
         return (
             <div className="text-center py-14 px-6">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg,rgba(43,62,232,0.15),rgba(0,206,200,0.15))", border: "1px solid rgba(43,62,232,0.25)" }}>
+                    style={{ background: "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.15),rgb(var(--nx-accent-rgb) / 0.15))", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                     <UserPlus className="w-7 h-7" style={{ color: "var(--nx-accent)" }} />
                 </div>
                 <p className="text-base font-black text-white mb-2">Obunalar bo&apos;sh</p>
@@ -1042,7 +1042,7 @@ function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explo
         return (
             <div className="text-center py-14 px-6">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg,rgba(139,92,246,0.15),rgba(0,206,200,0.15))", border: "1px solid rgba(139,92,246,0.25)" }}>
+                    style={{ background: "linear-gradient(135deg,rgba(139,92,246,0.15),rgb(var(--nx-accent-rgb) / 0.15))", border: "1px solid rgba(139,92,246,0.25)" }}>
                     <Compass className="w-7 h-7" style={{ color: "#8B5CF6" }} />
                 </div>
                 <p className="text-base font-black text-white mb-2">Trending hali bo&apos;sh</p>
@@ -1055,7 +1055,7 @@ function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explo
     return (
         <div className="text-center py-14 px-6">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-                style={{ background: "linear-gradient(135deg,rgba(43,62,232,0.15),rgba(0,206,200,0.15))", border: "1px solid rgba(43,62,232,0.25)" }}>
+                style={{ background: "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.15),rgb(var(--nx-accent-rgb) / 0.15))", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                 <Sparkles className="w-7 h-7" style={{ color: "var(--nx-accent)" }} />
             </div>
             <p className="text-base font-black text-white mb-2">Feed bo&apos;sh</p>
@@ -1080,7 +1080,7 @@ function SaveBtn({ saved, onClick }: { saved: boolean; onClick: () => void }) {
         dot.className = "nx-ripple-dot";
         dot.style.left = `${e.clientX - rect.left}px`;
         dot.style.top = `${e.clientY - rect.top}px`;
-        dot.style.background = "rgba(0,206,200,0.35)";
+        dot.style.background = "rgb(var(--nx-accent-rgb) / 0.35)";
         btn.appendChild(dot);
         dot.addEventListener("animationend", () => dot.remove());
         onClick();

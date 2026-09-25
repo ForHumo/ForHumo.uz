@@ -19,7 +19,7 @@ const TIER_COLORS: Record<string, { fg: string; bg: string; border: string }> = 
     bronze:   { fg: "#B08D57", bg: "rgba(176,141,87,0.10)",  border: "rgba(176,141,87,0.30)" },
     silver:   { fg: "#C0C0C0", bg: "rgba(192,192,192,0.10)", border: "rgba(192,192,192,0.30)" },
     gold:     { fg: "#F5B301", bg: "rgba(245,179,1,0.10)",   border: "rgba(245,179,1,0.35)" },
-    platinum: { fg: "var(--nx-accent)", bg: "rgba(0,206,200,0.10)",   border: "rgba(0,206,200,0.35)" },
+    platinum: { fg: "var(--nx-accent)", bg: "rgb(var(--nx-accent-rgb) / 0.10)",   border: "rgb(var(--nx-accent-rgb) / 0.35)" },
 };
 
 interface Ach {
@@ -51,11 +51,11 @@ export function NxProfileAchievements() {
 
     if (loading) {
         return (
-            <div className="mx-4 mt-3 rounded-2xl p-5 animate-pulse" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}>
-                <div className="h-3.5 rounded w-32 mb-3" style={{ background: "rgba(43,62,232,0.15)" }} />
+            <div className="mx-4 mt-3 rounded-2xl p-5 animate-pulse" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
+                <div className="h-3.5 rounded w-32 mb-3" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }} />
                 <div className="grid grid-cols-4 gap-2">
                     {[0,1,2,3,4,5,6,7].map(i => (
-                        <div key={i} className="aspect-square rounded-xl" style={{ background: "rgba(43,62,232,0.10)" }} />
+                        <div key={i} className="aspect-square rounded-xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }} />
                     ))}
                 </div>
             </div>
@@ -70,7 +70,7 @@ export function NxProfileAchievements() {
     const shown = [...earned, ...unearned].slice(0, 12);
 
     return (
-        <div className="mx-4 mt-3 rounded-2xl p-5" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}>
+        <div className="mx-4 mt-3 rounded-2xl p-5" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
             <div className="flex items-center gap-2 mb-3">
                 <Trophy className="w-4 h-4" style={{ color: "#F5B301" }} />
                 <h3 className="text-sm font-black text-white flex-1">Yutuqlar</h3>
@@ -84,8 +84,8 @@ export function NxProfileAchievements() {
                     return (
                         <div key={a.code} className="relative group flex flex-col items-center gap-1 p-2 rounded-xl transition-all"
                             style={{
-                                background: isEarned ? tier.bg : "rgba(43,62,232,0.04)",
-                                border: `1px solid ${isEarned ? tier.border : "rgba(43,62,232,0.10)"}`,
+                                background: isEarned ? tier.bg : "rgb(var(--nx-accent-rgb) / 0.04)",
+                                border: `1px solid ${isEarned ? tier.border : "rgb(var(--nx-accent-rgb) / 0.10)"}`,
                                 opacity: isEarned ? 1 : 0.55,
                             }}
                             title={`${a.title}: ${a.description}`}>
@@ -94,7 +94,7 @@ export function NxProfileAchievements() {
                                     style={{ background: "linear-gradient(135deg,#F5B301,#F97316)" }}>YANGI</span>
                             )}
                             <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                                style={{ background: isEarned ? tier.bg : "rgba(43,62,232,0.05)" }}>
+                                style={{ background: isEarned ? tier.bg : "rgb(var(--nx-accent-rgb) / 0.05)" }}>
                                 {isEarned ? <Icon className="w-4 h-4" style={{ color: tier.fg }} />
                                           : <Lock className="w-3.5 h-3.5" style={{ color: "rgba(80,100,150,0.55)" }} />}
                             </div>
@@ -142,11 +142,11 @@ export function NxProfileActivity() {
 
     if (loading) {
         return (
-            <div className="mx-4 mt-3 rounded-2xl p-5 animate-pulse" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}>
-                <div className="h-3.5 rounded w-40 mb-3" style={{ background: "rgba(43,62,232,0.15)" }} />
+            <div className="mx-4 mt-3 rounded-2xl p-5 animate-pulse" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
+                <div className="h-3.5 rounded w-40 mb-3" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }} />
                 <div className="flex flex-col gap-2">
                     {[0,1,2].map(i => (
-                        <div key={i} className="h-14 rounded-xl" style={{ background: "rgba(43,62,232,0.08)" }} />
+                        <div key={i} className="h-14 rounded-xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)" }} />
                     ))}
                 </div>
             </div>
@@ -156,7 +156,7 @@ export function NxProfileActivity() {
     if (posts.length === 0 && videos.length === 0 && tracks.length === 0) return null;
 
     return (
-        <div className="mx-4 mt-3 rounded-2xl p-5" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}>
+        <div className="mx-4 mt-3 rounded-2xl p-5" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
             <h3 className="text-sm font-black text-white mb-3 flex items-center gap-2">
                 <Sparkles className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                 So&apos;nggi faoliyat
@@ -169,9 +169,9 @@ export function NxProfileActivity() {
                         {posts.map(p => (
                             <Link key={p.id} href={`/nexus/p/${p.id}`}
                                 className="flex items-center gap-3 p-2 rounded-xl active:scale-[0.99] transition"
-                                style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                 {p.media[0] && (
-                                    <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "rgba(43,62,232,0.10)" }}>
+                                    <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                         <img src={p.media[0]} alt="" className="w-full h-full object-cover" />
                                     </div>
                                 )}
@@ -269,13 +269,13 @@ export function NxProfileQrModal({ username, open, onClose }: { username: string
         <>
             <div className="fixed inset-0 z-[70]" style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(8px)" }} onClick={onClose} />
             <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[70] rounded-3xl overflow-hidden md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-[380px]"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(43,62,232,0.25)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)" }}
+                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)" }}
                 onClick={e => e.stopPropagation()}>
 
                 <div className="flex items-center justify-between px-5 pt-5 pb-3">
                     <h3 className="text-base font-black text-white">Profil ulashish</h3>
                     <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl"
-                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                         <X className="w-4 h-4 text-white" />
                     </button>
                 </div>

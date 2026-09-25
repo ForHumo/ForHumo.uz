@@ -62,11 +62,11 @@ export function NxLinkPreview({ text, compact = false }: { text: string; compact
         return (
             <a href={meta.url} target="_blank" rel="noopener noreferrer"
                 className="mt-2 flex items-center gap-2 p-2 rounded-lg hover:bg-white/[0.03]"
-                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.18)" }}
+                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}
                 onClick={e => e.stopPropagation()}>
                 {meta.image && (
                     <img src={meta.image} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0"
-                        style={{ background: "rgba(43,62,232,0.10)" }} />
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }} />
                 )}
                 <div className="flex-1 min-w-0">
                     {meta.title && <p className="text-xs font-bold text-[var(--nx-text)] truncate">{meta.title}</p>}
@@ -80,11 +80,11 @@ export function NxLinkPreview({ text, compact = false }: { text: string; compact
     return (
         <a href={meta.url} target="_blank" rel="noopener noreferrer"
             className="mt-2 block rounded-xl overflow-hidden hover:opacity-95 transition"
-            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.18)" }}
+            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}
             onClick={e => e.stopPropagation()}>
             {meta.image && (
                 <div className="relative w-full aspect-[1.91/1] overflow-hidden"
-                    style={{ background: "rgba(43,62,232,0.10)" }}>
+                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                     <img src={meta.image} alt="" className="w-full h-full object-cover" />
                 </div>
             )}

@@ -51,20 +51,20 @@ export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) 
                 style={{
                     background: "rgba(8,12,32,0.97)",
                     backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
-                    borderLeft: "1px solid rgba(43,62,232,0.22)",
-                    boxShadow: "-8px 0 48px rgba(43,62,232,0.12)",
+                    borderLeft: "1px solid rgb(var(--nx-accent-rgb) / 0.22)",
+                    boxShadow: "-8px 0 48px rgb(var(--nx-accent-rgb) / 0.12)",
                     transform: open ? "translateX(0)" : "translateX(-100%)",
                 }}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 h-[60px] flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                <div className="flex items-center justify-between px-5 h-[60px] flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <span className="text-base font-black tracking-tight"
                         style={{ background: "var(--nx-accent)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
                         Humo Nexus
                     </span>
                     <button onClick={onClose}
                         className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150 active:scale-90"
-                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                         <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
                     </button>
                 </div>
@@ -75,9 +75,9 @@ export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) 
                     <div className="px-4 pt-4 pb-3">
                         <button onClick={() => { onClose(); onNavigate?.("profile"); }}
                             className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all duration-150 active:scale-[0.99]"
-                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                             <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center text-base font-black text-[var(--nx-text)]"
-                                style={{ background: image ? "transparent" : "var(--nx-accent)", border: "2px solid rgba(43,62,232,0.35)" }}>
+                                style={{ background: image ? "transparent" : "var(--nx-accent)", border: "2px solid rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                 {image
                                     ? <img src={image} alt={name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                     : letter}
@@ -148,7 +148,7 @@ export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) 
 function SidebarSection({ title, children }: { title: string; children: React.ReactNode }) {
     return (
         <div className="px-4 pb-3">
-            <p className="px-2 pb-1.5 text-[9px] font-black uppercase tracking-widest" style={{ color: "rgba(43,62,232,0.60)" }}>{title}</p>
+            <p className="px-2 pb-1.5 text-[9px] font-black uppercase tracking-widest" style={{ color: "rgb(var(--nx-accent-rgb) / 0.60)" }}>{title}</p>
             <div className="flex flex-col gap-0.5">{children}</div>
         </div>
     );
@@ -159,7 +159,7 @@ function SidebarItem({ icon: Icon, label, onClick }: { icon: React.ElementType; 
         <button onClick={onClick}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-left transition-all duration-150 hover:bg-white/5 active:scale-[0.99]"
             style={{ color: "rgba(190,205,240,0.88)" }}>
-            <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(43,62,232,0.85)" }} />
+            <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "rgb(var(--nx-accent-rgb) / 0.85)" }} />
             <span className="truncate">{label}</span>
         </button>
     );
@@ -170,7 +170,7 @@ function SidebarLink({ icon: Icon, label, href, onClose }: { icon: React.Element
         <Link href={href} onClick={onClose}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-left transition-all duration-150 hover:bg-white/5 active:scale-[0.99]"
             style={{ color: "rgba(190,205,240,0.88)" }}>
-            <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(43,62,232,0.85)" }} />
+            <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "rgb(var(--nx-accent-rgb) / 0.85)" }} />
             <span className="truncate">{label}</span>
         </Link>
     );

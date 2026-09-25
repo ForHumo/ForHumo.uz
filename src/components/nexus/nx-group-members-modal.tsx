@@ -127,14 +127,14 @@ export function NxGroupMembersModal({
         <>
             <div className="fixed inset-0 z-[320] bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-x-0 bottom-0 z-[321] flex max-h-[85vh] flex-col overflow-hidden rounded-t-3xl md:inset-y-0 md:right-0 md:inset-x-auto md:max-h-full md:w-[420px] md:rounded-none md:rounded-l-3xl"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)" }}
+                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)" }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <h3 className="text-base font-black text-[var(--nx-text)]">A&apos;zolar · {members.length}</h3>
                     <button onClick={onClose}
                         className="flex h-8 w-8 items-center justify-center rounded-full"
-                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                         <X className="h-4 w-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -143,7 +143,7 @@ export function NxGroupMembersModal({
                     <input value={q} onChange={e => setQ(e.target.value)}
                         placeholder="A'zoni qidiring..."
                         className="w-full rounded-xl px-3 py-2 text-sm text-[var(--nx-text)] outline-none"
-                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
+                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-3 py-2" style={{ scrollbarWidth: "none" }}>
@@ -157,11 +157,11 @@ export function NxGroupMembersModal({
                         sorted.map(m => (
                             <div key={m.profileId}
                                 className="flex items-center gap-3 rounded-2xl px-3 py-2.5 mb-1"
-                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                 <div className="relative flex-shrink-0">
                                     <img src={m.image ?? "/logos/forhumo.png"} alt=""
                                         className="w-10 h-10 rounded-full object-cover"
-                                        style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
+                                        style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }} />
                                     {m.online && (
                                         <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full"
                                             style={{ background: "#22C55E", border: "2px solid rgba(8,12,32,0.99)" }} />
@@ -184,7 +184,7 @@ export function NxGroupMembersModal({
                                         )}
                                         {m.role === "ADMIN" && (
                                             <span className="text-[9px] font-black px-1.5 py-0.5 rounded"
-                                                style={{ background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", color: "var(--nx-accent)" }}>
                                                 <Shield className="w-3 h-3 inline mr-0.5" />ADMIN
                                             </span>
                                         )}
@@ -213,7 +213,7 @@ export function NxGroupMembersModal({
                                                 onClick={() => setRole(m.profileId, "ADMIN")}
                                                 title="Admin qilish"
                                                 className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"
-                                                style={{ background: "rgba(0,206,200,0.1)", border: "1px solid rgba(0,206,200,0.3)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.1)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)" }}>
                                                 <UserCheck className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                             </button>
                                         ) : (

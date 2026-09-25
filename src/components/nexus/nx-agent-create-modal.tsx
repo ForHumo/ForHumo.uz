@@ -71,15 +71,15 @@ export function NxAgentCreateModal({
         <>
             <div className="fixed inset-0 z-[320] bg-black/70 backdrop-blur-sm" onClick={close} />
             <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 md:inset-x-0 md:mx-auto md:max-w-md z-[321] rounded-3xl overflow-hidden max-h-[90vh] overflow-y-auto"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                 <div className="flex items-center justify-between px-5 py-4"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Bot className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         {created ? "Bot yaratildi" : "Yangi agent"}
                     </h3>
                     <button onClick={close} className="w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(43,62,232,0.12)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                         <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -88,7 +88,7 @@ export function NxAgentCreateModal({
                     {created ? (
                         <>
                             <div className="p-4 rounded-2xl text-center"
-                                style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                 <Bot className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--nx-accent)" }} />
                                 <p className="text-sm font-black text-[var(--nx-text)]">@{created.agent.username}</p>
                                 <p className="text-xs mt-0.5" style={{ color: "rgba(160,176,224,0.85)" }}>{created.agent.name}</p>
@@ -109,13 +109,13 @@ export function NxAgentCreateModal({
                                     API kalit (webhook HMAC)
                                 </label>
                                 <div className="flex items-center gap-1 rounded-xl overflow-hidden"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                     <div className="flex-1 min-w-0 px-3 py-2.5">
                                         <p className="text-[10px] text-[var(--nx-text)] font-mono truncate">{created.apiKey}</p>
                                     </div>
                                     <button onClick={() => copy(created.apiKey)}
                                         className="h-11 px-3 flex-shrink-0"
-                                        style={{ background: copied ? "rgba(0,206,200,0.20)" : "rgba(43,62,232,0.20)" }}>
+                                        style={{ background: copied ? "rgb(var(--nx-accent-rgb) / 0.20)" : "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                         {copied
                                             ? <Check className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                             : <Copy className="w-4 h-4" style={{ color: "white" }} />}
@@ -137,7 +137,7 @@ export function NxAgentCreateModal({
                                     Username <span style={{ color: "#EF4444" }}>*</span>
                                 </label>
                                 <div className="flex items-center rounded-xl overflow-hidden"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                     <span className="pl-3 pr-1 text-sm font-bold" style={{ color: "rgba(160,176,224,0.85)" }}>@</span>
                                     <input value={username}
                                         onChange={e => setUsername(e.target.value.slice(0, 32))}
@@ -160,7 +160,7 @@ export function NxAgentCreateModal({
                                     onChange={e => setName(e.target.value.slice(0, 50))}
                                     placeholder="Mening Botim"
                                     className="w-full h-11 rounded-xl px-3 text-sm focus:outline-none"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }}
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "white" }}
                                 />
                             </div>
 
@@ -173,7 +173,7 @@ export function NxAgentCreateModal({
                                     onChange={e => setImage(e.target.value.slice(0, 500))}
                                     placeholder="https://..."
                                     className="w-full h-11 rounded-xl px-3 text-sm focus:outline-none"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }}
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "white" }}
                                 />
                             </div>
 

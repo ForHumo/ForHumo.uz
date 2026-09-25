@@ -121,15 +121,15 @@ export function NxDmBroadcastModal({
         <>
             <div className="fixed inset-0 z-[320] bg-black/70 backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-x-0 bottom-0 z-[321] flex max-h-[85vh] flex-col overflow-hidden rounded-t-3xl md:inset-y-0 md:right-0 md:inset-x-auto md:max-h-full md:w-[440px] md:rounded-none md:rounded-l-3xl"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Users className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         {tab === "list" ? "Broadcast ro'yxatlar" : tab === "create" ? "Yangi ro'yxat" : activeList?.name}
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(43,62,232,0.12)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                         <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -158,7 +158,7 @@ export function NxDmBroadcastModal({
                                 <div className="space-y-1.5">
                                     {items.map(l => (
                                         <div key={l.id} className="p-3 rounded-xl flex items-center gap-3"
-                                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                             <button onClick={() => { setActiveList(l); setTab("send"); }}
                                                 className="flex-1 min-w-0 text-left">
                                                 <p className="text-sm font-black text-[var(--nx-text)] truncate">{l.name}</p>
@@ -190,13 +190,13 @@ export function NxDmBroadcastModal({
                             <input value={name} onChange={e => setName(e.target.value.slice(0, 80))}
                                 placeholder="Ro'yxat nomi (masalan: Do'stlar)"
                                 className="w-full h-11 rounded-xl px-3 text-sm focus:outline-none mb-3"
-                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }} />
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "white" }} />
                             <div className="relative mb-2">
                                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "rgba(140,160,210,0.6)" }} />
                                 <input value={contactSearch} onChange={e => setContactSearch(e.target.value)}
                                     placeholder="Kontakt qidirish..."
                                     className="w-full h-10 rounded-xl pl-9 pr-3 text-sm focus:outline-none"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.20)", color: "white" }} />
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", color: "white" }} />
                             </div>
                             <p className="text-[11px] mb-2" style={{ color: "rgba(160,176,224,0.7)" }}>
                                 Tanlangan: {selectedIds.size}
@@ -213,8 +213,8 @@ export function NxDmBroadcastModal({
                                             }}
                                             className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left"
                                             style={{
-                                                background: on ? "rgba(0,206,200,0.14)" : "var(--nx-surface)",
-                                                border: `1px solid ${on ? "var(--nx-accent)" : "rgba(43,62,232,0.14)"}`,
+                                                background: on ? "rgb(var(--nx-accent-rgb) / 0.14)" : "var(--nx-surface)",
+                                                border: `1px solid ${on ? "var(--nx-accent)" : "rgb(var(--nx-accent-rgb) / 0.14)"}`,
                                             }}>
                                             <img src={c.image ?? "/logos/forhumo.png"} alt=""
                                                 className="w-8 h-8 rounded-full object-cover" />
@@ -236,7 +236,7 @@ export function NxDmBroadcastModal({
                     {tab === "send" && activeList && (
                         <>
                             <div className="p-3 rounded-xl mb-3"
-                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                 <p className="text-sm font-black text-[var(--nx-text)]">{activeList.name}</p>
                                 <p className="text-[11px]" style={{ color: "rgba(160,176,224,0.7)" }}>
                                     {activeList.memberCount} a&apos;zoga alohida DM yuboriladi
@@ -246,17 +246,17 @@ export function NxDmBroadcastModal({
                                 placeholder="Xabar matni..."
                                 rows={5}
                                 className="w-full rounded-xl p-3 text-sm resize-none focus:outline-none"
-                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }} />
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "white" }} />
                         </>
                     )}
                 </div>
 
                 {tab === "create" && (
-                    <div className="p-3 flex-shrink-0" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                    <div className="p-3 flex-shrink-0" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                         <div className="flex gap-2">
                             <button onClick={() => setTab("list")}
                                 className="flex-1 h-11 rounded-xl font-bold text-sm"
-                                style={{ background: "rgba(43,62,232,0.20)", color: "white" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "white" }}>
                                 Bekor
                             </button>
                             <button onClick={createList} disabled={!name.trim() || selectedIds.size === 0}
@@ -269,7 +269,7 @@ export function NxDmBroadcastModal({
                 )}
 
                 {tab === "send" && (
-                    <div className="p-3 flex-shrink-0" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                    <div className="p-3 flex-shrink-0" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                         <button onClick={send} disabled={!text.trim() || sending}
                             className="w-full h-11 rounded-xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50"
                             style={{ background: "linear-gradient(135deg,#F5B301,#F97316)", color: "var(--nx-bg)" }}>

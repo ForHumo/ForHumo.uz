@@ -321,9 +321,9 @@ export function NxHomeRows() {
                     {channels.map(c => (
                         <Link key={c.id} href={`/nexus/c/${c.id}`} className="w-32 flex-shrink-0 flex flex-col items-center gap-1.5 text-center group">
                             {c.avatarUrl
-                                ? <img src={c.avatarUrl} alt={c.name} className="w-16 h-16 rounded-2xl object-cover" style={{ border: "2px solid rgba(43,62,232,0.30)" }} />
+                                ? <img src={c.avatarUrl} alt={c.name} className="w-16 h-16 rounded-2xl object-cover" style={{ border: "2px solid rgb(var(--nx-accent-rgb) / 0.30)" }} />
                                 : <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-[var(--nx-text)]"
-                                    style={{ background: "var(--nx-accent)", border: "2px solid rgba(43,62,232,0.30)" }}>{c.name[0]?.toUpperCase() ?? "K"}</div>}
+                                    style={{ background: "var(--nx-accent)", border: "2px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>{c.name[0]?.toUpperCase() ?? "K"}</div>}
                             <p className="text-[11px] font-bold text-[var(--nx-text)] truncate w-full group-hover:text-[var(--nx-accent)] transition-colors">{c.name}</p>
                             <p className="text-[9px] flex items-center gap-0.5" style={{ color: "rgba(140,160,210,0.75)" }}>
                                 <Users className="w-2.5 h-2.5" />{fmtN(c.memberCount)}

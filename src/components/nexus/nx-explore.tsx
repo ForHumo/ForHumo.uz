@@ -140,28 +140,28 @@ export function NxExplore() {
             <div className="fixed inset-x-0 bottom-0 z-[60] flex flex-col rounded-t-3xl overflow-hidden
                            md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2
                            md:w-[620px] md:max-h-[92vh] md:rounded-3xl"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(43,62,232,0.22)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)", maxHeight: "92vh" }}
+                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)", maxHeight: "92vh" }}
                 onClick={e => e.stopPropagation()}>
 
                 {/* Header */}
-                <div className="px-4 pt-4 pb-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                <div className="px-4 pt-4 pb-2 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <div className="flex items-center gap-3 mb-3">
                         <Flame className="w-5 h-5 flex-shrink-0" style={{ color: "#F97316" }} />
                         <h3 className="text-base font-black text-[var(--nx-text)] flex-1">Kashfiyot</h3>
                         <button onClick={refresh} disabled={refreshing || loading} title="Yangilash"
                             className="w-8 h-8 flex items-center justify-center rounded-xl active:scale-95"
-                            style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.25)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} style={{ color: "var(--nx-accent)" }} />
                         </button>
                         <button onClick={close} className="w-8 h-8 flex items-center justify-center rounded-xl"
-                            style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                             <X className="w-4 h-4 text-[var(--nx-text)]" />
                         </button>
                     </div>
                     <button onClick={() => { close(); setSearchOpen(true); }}
                         className="w-full flex items-center gap-3 h-10 rounded-xl px-3.5 text-left"
-                        style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.20)" }}>
-                        <Search className="w-4 h-4" style={{ color: "rgba(43,62,232,0.55)" }} />
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
+                        <Search className="w-4 h-4" style={{ color: "rgb(var(--nx-accent-rgb) / 0.55)" }} />
                         <span className="text-sm" style={{ color: "rgba(140,160,210,0.7)" }}>Odamlar, video, musiqa, #hashtag...</span>
                     </button>
 
@@ -172,7 +172,7 @@ export function NxExplore() {
                                 className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-black transition-all active:scale-95"
                                 style={tab === t.id
                                     ? { background: "var(--nx-accent)", color: "#fff" }
-                                    : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "var(--nx-text-2)" }}>
+                                    : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "var(--nx-text-2)" }}>
                                 {t.label}{tab === t.id && t.count > 0 ? ` (${t.count})` : ""}
                             </button>
                         ))}
@@ -218,7 +218,7 @@ export function NxExplore() {
                                         {tags.slice(0, tab === "tags" ? 20 : 6).map((t, i) => (
                                             <Link key={t.tag} href={`/nexus/tag/${t.tag}`} onClick={close}
                                                 className="flex items-center gap-2.5 p-2.5 rounded-xl active:scale-[0.98] transition"
-                                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                                 <span className="text-sm font-black" style={{ color: "var(--nx-text-2)", minWidth: "16px" }}>{i + 1}</span>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-1">
@@ -321,7 +321,7 @@ export function NxExplore() {
                                                     const isF = !!u.username && followed.has(u.username);
                                                     return (
                                                         <div key={i} className="flex items-center gap-3 p-3 rounded-xl"
-                                                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                                            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                                             <Link href={u.username ? `/nexus/u/${u.username}` : "/nexus"} onClick={close} className="flex items-center gap-3 flex-1 min-w-0">
                                                                 <img src={avatarOf(u)} alt="" className="w-10 h-10 rounded-xl object-cover bg-white flex-shrink-0" />
                                                                 <div className="flex-1 min-w-0">
@@ -335,7 +335,7 @@ export function NxExplore() {
                                                             {u.username && (
                                                                 isF ? (
                                                                     <span className="px-3 py-1.5 rounded-xl text-[11px] font-black flex items-center gap-1 flex-shrink-0"
-                                                                        style={{ background: "rgba(43,62,232,0.15)", border: "1px solid rgba(43,62,232,0.35)", color: "rgba(160,180,240,0.9)" }}>
+                                                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", color: "rgba(160,180,240,0.9)" }}>
                                                                         <UserCheck className="w-3 h-3" /> Kuzatilmoqda
                                                                     </span>
                                                                 ) : (
@@ -354,7 +354,7 @@ export function NxExplore() {
                                                 <div className="px-3 mt-2">
                                                     <button onClick={loadMoreUsers} disabled={loadingMore}
                                                         className="w-full py-2.5 rounded-xl text-xs font-black active:scale-[0.99] transition disabled:opacity-50"
-                                                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)", color: "var(--nx-text-2)" }}>
+                                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", color: "var(--nx-text-2)" }}>
                                                         {loadingMore ? "..." : "Ko'proq ko'rsatish"}
                                                     </button>
                                                 </div>
@@ -366,7 +366,7 @@ export function NxExplore() {
 
                             {tags.length === 0 && users.length === 0 && videos.length === 0 && tracks.length === 0 && lives.length === 0 && posts.length === 0 && (
                                 <div className="text-center py-16 px-6">
-                                    <Sparkles className="w-10 h-10 mx-auto mb-3" style={{ color: "rgba(43,62,232,0.25)" }} />
+                                    <Sparkles className="w-10 h-10 mx-auto mb-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.25)" }} />
                                     <p className="text-sm font-black text-white/60 mb-1">Kashfiyot hozircha bo&apos;sh</p>
                                     <p className="text-xs" style={{ color: "var(--nx-text-2)" }}>Birinchi bo&apos;lib kontent qo&apos;shing yoki keyinroq qayta tekshiring.</p>
                                 </div>

@@ -13,13 +13,13 @@ export function NxAdBanner() {
                 className="relative block h-32 sm:h-40 rounded-2xl overflow-hidden group active:scale-[0.99] transition-transform"
                 style={{
                     background: "linear-gradient(135deg, var(--nx-accent) 0%, #6D28D9 50%, #EC4899 100%)",
-                    boxShadow: "0 12px 40px rgba(43,62,232,0.35)",
+                    boxShadow: "0 12px 40px rgb(var(--nx-accent-rgb) / 0.35)",
                 }}>
                 {/* Dekorativ elementlar */}
                 <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full pointer-events-none"
                     style={{ background: "radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%)" }} />
                 <div className="absolute -bottom-4 -left-4 w-32 h-32 rounded-full pointer-events-none"
-                    style={{ background: "radial-gradient(circle, rgba(0,206,200,0.30) 0%, transparent 70%)" }} />
+                    style={{ background: "radial-gradient(circle, rgb(var(--nx-accent-rgb) / 0.30) 0%, transparent 70%)" }} />
 
                 <div className="relative h-full flex items-center gap-4 p-5">
                     <div className="flex-1 min-w-0">

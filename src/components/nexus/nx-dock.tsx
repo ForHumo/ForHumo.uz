@@ -64,12 +64,12 @@ export function NxDock({ active, onChange }: Props) {
                     background: "rgba(5,8,24,0.92)",
                     backdropFilter: "blur(28px)",
                     WebkitBackdropFilter: "blur(28px)",
-                    border: "1px solid rgba(43,62,232,0.30)",
+                    border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)",
                     borderRadius: "9999px",
                     boxShadow: [
                         "0 20px 60px rgba(0,0,0,0.75)",
-                        "0 0 0 1px rgba(43,62,232,0.10) inset",
-                        "0 4px 32px rgba(43,62,232,0.18)",
+                        "0 0 0 1px rgb(var(--nx-accent-rgb) / 0.10) inset",
+                        "0 4px 32px rgb(var(--nx-accent-rgb) / 0.18)",
                     ].join(","),
                 }}
             >
@@ -115,7 +115,7 @@ function CreateButton({ onClick }: { onClick: () => void }) {
             className="nx-ripple-wrap mx-1.5 w-11 h-11 rounded-full flex items-center justify-center"
             style={{
                 background: "var(--nx-accent)",
-                boxShadow: "0 0 24px rgba(43,62,232,0.55), 0 4px 16px rgba(0,0,0,0.45)",
+                boxShadow: "0 0 24px rgb(var(--nx-accent-rgb) / 0.55), 0 4px 16px rgba(0,0,0,0.45)",
             }}
         >
             <Plus className="w-5 h-5 text-[var(--nx-text)]" strokeWidth={2.5} />

@@ -113,12 +113,12 @@ function groupByDay<T extends { createdAt: string }>(items: T[]): { label: strin
 // Skeleton kartochka (yuklanish paytida)
 function NotifSkeleton() {
     return (
-        <div className="flex items-start gap-3 px-4 py-3.5 animate-pulse" style={{ borderBottom: "1px solid rgba(43,62,232,0.07)" }}>
-            <div className="w-10 h-10 rounded-2xl flex-shrink-0" style={{ background: "rgba(43,62,232,0.15)" }} />
+        <div className="flex items-start gap-3 px-4 py-3.5 animate-pulse" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.07)" }}>
+            <div className="w-10 h-10 rounded-2xl flex-shrink-0" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }} />
             <div className="flex-1 space-y-1.5">
-                <div className="h-2.5 rounded" style={{ background: "rgba(43,62,232,0.15)" }} />
-                <div className="h-2.5 rounded" style={{ background: "rgba(43,62,232,0.10)", width: "70%" }} />
-                <div className="h-2 rounded" style={{ background: "rgba(43,62,232,0.10)", width: "30%" }} />
+                <div className="h-2.5 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }} />
+                <div className="h-2.5 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", width: "70%" }} />
+                <div className="h-2 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", width: "30%" }} />
             </div>
         </div>
     );
@@ -256,28 +256,28 @@ export function NxNotifications() {
             <div className="fixed inset-x-0 bottom-0 z-[60] flex flex-col rounded-t-3xl overflow-hidden
                            md:inset-x-auto md:inset-y-auto md:top-16 md:right-4 md:bottom-auto
                            md:w-[380px] md:max-h-[calc(100vh-80px)] md:rounded-2xl"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(43,62,232,0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)", maxHeight: "85vh" }}
+                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)", maxHeight: "85vh" }}
                 onClick={e => e.stopPropagation()}>
 
                 {/* Header */}
-                <div className="flex items-center gap-3 px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                <div className="flex items-center gap-3 px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <Bell className="w-5 h-5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                     <div className="flex-1">
                         <h3 className="text-base font-black text-[var(--nx-text)]">Bildirishnomalar</h3>
-                        {unreadCount > 0 && <p className="text-[10px]" style={{ color: "rgba(0,206,200,0.80)" }}>{unreadCount} ta yangi</p>}
+                        {unreadCount > 0 && <p className="text-[10px]" style={{ color: "rgb(var(--nx-accent-rgb) / 0.80)" }}>{unreadCount} ta yangi</p>}
                     </div>
                     {pushState !== "unsupported" && pushState !== "denied" && (
                         <button onClick={togglePush} disabled={pushBusy} title={pushState === "subscribed" ? "Push yoqilgan" : "Push'ni yoqish"}
                             className="flex items-center justify-center w-8 h-8 rounded-lg"
                             style={pushState === "subscribed"
-                                ? { background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)" }
-                                : { background: "rgba(43,62,232,0.12)", color: "rgba(140,160,210,0.85)" }}>
+                                ? { background: "rgb(var(--nx-accent-rgb) / 0.15)", color: "var(--nx-accent)" }
+                                : { background: "rgb(var(--nx-accent-rgb) / 0.12)", color: "rgba(140,160,210,0.85)" }}>
                             {pushBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : pushState === "subscribed" ? <BellRing className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
                         </button>
                     )}
                     {unreadCount > 0 && (
                         <button onClick={markAllRead} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold"
-                            style={{ background: "rgba(43,62,232,0.12)", color: "rgba(140,160,210,0.85)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", color: "rgba(140,160,210,0.85)" }}>
                             <CheckCheck className="w-3 h-3" /> O&apos;qi
                         </button>
                     )}
@@ -291,26 +291,26 @@ export function NxNotifications() {
                     <button onClick={() => setPrefsOpen(o => !o)} title="Bildirishnoma sozlamalari"
                         className="w-8 h-8 flex items-center justify-center rounded-lg"
                         style={prefsOpen
-                            ? { background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)" }
-                            : { background: "rgba(43,62,232,0.12)", color: "rgba(140,160,210,0.85)" }}>
+                            ? { background: "rgb(var(--nx-accent-rgb) / 0.15)", color: "var(--nx-accent)" }
+                            : { background: "rgb(var(--nx-accent-rgb) / 0.12)", color: "rgba(140,160,210,0.85)" }}>
                         <Settings2 className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={close} className="w-8 h-8 flex items-center justify-center rounded-xl"
-                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                         <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
                 {/* Prefs panel (Settings2 tugmasi bilan ochiladi) */}
                 {prefsOpen && (
-                    <div className="px-5 py-3 flex-shrink-0 space-y-1.5 overflow-y-auto max-h-[60vh]" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)", background: "rgba(43,62,232,0.04)", scrollbarWidth: "none" }}>
+                    <div className="px-5 py-3 flex-shrink-0 space-y-1.5 overflow-y-auto max-h-[60vh]" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", background: "rgb(var(--nx-accent-rgb) / 0.04)", scrollbarWidth: "none" }}>
                         <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: "rgba(140,160,210,0.75)" }}>Push bildirishnomalar</p>
                         {NOTIF_TYPES.map(t => {
                             const enabled = prefs[t] !== false;
                             return (
                                 <button key={t} onClick={() => togglePref(t)}
                                     className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-left transition-all active:scale-[0.98]"
-                                    style={{ background: enabled ? "rgba(0,206,200,0.08)" : "rgba(43,62,232,0.05)" }}>
+                                    style={{ background: enabled ? "rgb(var(--nx-accent-rgb) / 0.08)" : "rgb(var(--nx-accent-rgb) / 0.05)" }}>
                                     <span className="text-[11px] font-bold text-[var(--nx-text)] flex-1 truncate">{NOTIF_LABELS[t]}</span>
                                     <div className="w-9 h-5 rounded-full relative flex-shrink-0 transition-colors"
                                         style={{ background: enabled ? "var(--nx-accent)" : "var(--nx-text-2)" }}>
@@ -329,7 +329,7 @@ export function NxNotifications() {
                             return (
                                 <button key={v} onClick={() => changeRingtone(v)}
                                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all active:scale-[0.98]"
-                                    style={{ background: active ? "rgba(0,206,200,0.12)" : "rgba(43,62,232,0.05)", border: active ? "1px solid rgba(0,206,200,0.30)" : "1px solid transparent" }}>
+                                    style={{ background: active ? "rgb(var(--nx-accent-rgb) / 0.12)" : "rgb(var(--nx-accent-rgb) / 0.05)", border: active ? "1px solid rgb(var(--nx-accent-rgb) / 0.30)" : "1px solid transparent" }}>
                                     <div className="w-5 h-5 flex-shrink-0 rounded-full flex items-center justify-center"
                                         style={{ background: active ? "var(--nx-accent)" : "var(--nx-text-2)" }}>
                                         {active && <Check className="w-3 h-3 text-[var(--nx-text)]" strokeWidth={3} />}
@@ -345,13 +345,13 @@ export function NxNotifications() {
                 )}
 
                 {/* Filtr */}
-                <div className="flex gap-2 px-4 py-2.5 overflow-x-auto flex-shrink-0" style={{ scrollbarWidth: "none", borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                <div className="flex gap-2 px-4 py-2.5 overflow-x-auto flex-shrink-0" style={{ scrollbarWidth: "none", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.10)" }}>
                     {FILTERS.map(f => (
                         <button key={f.id} onClick={() => setFilter(f.id)}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold flex-shrink-0 transition-all duration-150"
                             style={filter === f.id
                                 ? { background: "var(--nx-accent)", color: "#fff" }
-                                : { background: "rgba(43,62,232,0.08)", color: "rgba(140,160,210,0.80)", border: "1px solid rgba(43,62,232,0.16)" }}>
+                                : { background: "rgb(var(--nx-accent-rgb) / 0.08)", color: "rgba(140,160,210,0.80)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.16)" }}>
                             <f.icon className="w-3 h-3" />{f.label}
                         </button>
                     ))}
@@ -365,7 +365,7 @@ export function NxNotifications() {
                         </div>
                     ) : filtered.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                            <Bell className="w-12 h-12 mb-3" style={{ color: "rgba(43,62,232,0.25)" }} />
+                            <Bell className="w-12 h-12 mb-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.25)" }} />
                             <p className="text-sm font-bold text-white/50 mb-1">
                                 {filter === "unread" ? "O'qilmagan bildirishnoma yo'q" : "Bildirishnoma yo'q"}
                             </p>
@@ -386,7 +386,7 @@ export function NxNotifications() {
                                         const inner = (
                                             <>
                                                 <div className="relative flex-shrink-0">
-                                                    <div className="w-10 h-10 rounded-2xl overflow-hidden" style={{ border: "2px solid rgba(43,62,232,0.22)" }}>
+                                                    <div className="w-10 h-10 rounded-2xl overflow-hidden" style={{ border: "2px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                                                         <img src={avatarOf(n.actor)} alt="" className="w-full h-full object-cover bg-white" />
                                                     </div>
                                                     <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: TYPE_COLORS[n.type] }}>
@@ -409,7 +409,7 @@ export function NxNotifications() {
                                             </>
                                         );
                                         const cls = "group w-full flex items-start gap-3 px-4 py-3.5 text-left transition-all duration-150 relative";
-                                        const st = { background: n.read ? "transparent" : "rgba(43,62,232,0.06)", borderBottom: "1px solid rgba(43,62,232,0.07)" };
+                                        const st = { background: n.read ? "transparent" : "rgb(var(--nx-accent-rgb) / 0.06)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.07)" };
                                         const href = notifHref(n);
                                         return (
                                             <div key={n.id} className="relative">

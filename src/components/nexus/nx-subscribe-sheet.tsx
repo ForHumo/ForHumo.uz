@@ -85,7 +85,7 @@ export function NxSubscribeSheet({
                                 <h3 className="text-base font-black text-[var(--nx-text)] truncate">{alreadyActive ? "Obunani uzaytirish" : "Pullik obuna"}</h3>
                                 <p className="text-[11px] truncate" style={{ color: "var(--nx-text-3)" }}>{displayName}</p>
                             </div>
-                            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.10)" }}>
+                            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                 <X className="w-4 h-4 text-[var(--nx-text)]" />
                             </button>
                         </div>

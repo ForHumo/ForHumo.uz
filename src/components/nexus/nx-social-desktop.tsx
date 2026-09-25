@@ -2252,7 +2252,7 @@ export function NxSocialDesktop() {
                 const el = document.querySelector<HTMLElement>(`[data-msg-id="${pendingId}"]`);
                 el?.scrollIntoView({ behavior: "smooth", block: "center" });
                 el?.animate([
-                    { background: "rgba(0,206,200,0.25)" }, { background: "transparent" },
+                    { background: "rgb(var(--nx-accent-rgb) / 0.25)" }, { background: "transparent" },
                 ], { duration: 1600, iterations: 1 });
             });
             return;
@@ -2336,7 +2336,7 @@ export function NxSocialDesktop() {
         if (el) {
             el.scrollIntoView({ behavior: "smooth", block: "center" });
             el.animate([
-                { background: "rgba(0,206,200,0.20)" }, { background: "transparent" },
+                { background: "rgb(var(--nx-accent-rgb) / 0.20)" }, { background: "transparent" },
             ], { duration: 1400, iterations: 1 });
         } else {
             // Xabar joriy 100'da yo'q — thread'ni qayta yuklab, keyin izlab topamiz
@@ -2733,10 +2733,10 @@ export function NxSocialDesktop() {
         <div className="flex w-full h-full min-h-0 pb-[88px]" style={{ background: "var(--nx-bg)" }}>
             {/* ── COL 1: Chat list ─────────────────────────────────────── */}
             <div className="w-[380px] flex-shrink-0 flex flex-col border-r"
-                style={{ borderColor: "rgba(43,62,232,0.15)", background: "rgba(8,12,32,0.55)" }}>
+                style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "rgba(8,12,32,0.55)" }}>
                 {/* Tab bar (6 majburiy tab: All/Unread/DM/Groups/Channels/Agents) — 6-ustunli grid, swipe kerak emas */}
                 <div className="p-2 flex-shrink-0"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <div className="grid grid-cols-6 gap-1">
                     {(() => {
                         // Tab bo'yicha o'qilmagan hisoblash (muted chatlar sanamaydi)
@@ -2760,9 +2760,9 @@ export function NxSocialDesktop() {
                                     background: "var(--nx-accent)",
                                     color: "#fff",
                                 } : {
-                                    background: "rgba(43,62,232,0.06)",
+                                    background: "rgb(var(--nx-accent-rgb) / 0.06)",
                                     color: "rgba(140,160,210,0.80)",
-                                    border: "1px solid rgba(43,62,232,0.15)",
+                                    border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)",
                                 }}>
                                 <t.icon className="w-3.5 h-3.5" />
                                 <span className="leading-none">{t.label}</span>
@@ -2787,10 +2787,10 @@ export function NxSocialDesktop() {
                                 className="flex-shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold transition"
                                 style={selectedFolderId === null ? {
                                     background: "var(--nx-accent)", color: "#fff",
-                                    boxShadow: "0 2px 8px rgba(43,62,232,0.35)",
+                                    boxShadow: "0 2px 8px rgb(var(--nx-accent-rgb) / 0.35)",
                                 } : {
-                                    background: "rgba(43,62,232,0.10)", color: "rgba(200,215,245,0.75)",
-                                    border: "1px solid rgba(43,62,232,0.20)",
+                                    background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgba(200,215,245,0.75)",
+                                    border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                                 }}>
                                 Barchasi
                             </button>
@@ -2800,10 +2800,10 @@ export function NxSocialDesktop() {
                                     className="flex-shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition"
                                     style={selectedFolderId === f.id ? {
                                         background: "var(--nx-accent)", color: "#fff",
-                                        boxShadow: "0 2px 8px rgba(43,62,232,0.35)",
+                                        boxShadow: "0 2px 8px rgb(var(--nx-accent-rgb) / 0.35)",
                                     } : {
-                                        background: "rgba(43,62,232,0.10)", color: "rgba(200,215,245,0.75)",
-                                        border: "1px solid rgba(43,62,232,0.20)",
+                                        background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgba(200,215,245,0.75)",
+                                        border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                                     }}>
                                     {f.emoji && <span className="mr-1">{f.emoji}</span>}
                                     {f.name}
@@ -2812,7 +2812,7 @@ export function NxSocialDesktop() {
                             <button onClick={() => setFoldersModalOpen(true)}
                                 title="Papkalarni tahrirlash"
                                 className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition hover:brightness-125"
-                                style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                 <Plus className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />
                             </button>
                         </div>
@@ -2825,14 +2825,14 @@ export function NxSocialDesktop() {
                                 onClick={() => setDiscoverOpen(listTab === "groups" ? "GROUP" : "CHANNEL")}
                                 title={`${listTab === "groups" ? "Guruhlar" : "Kanallar"} kashfiyoti`}
                                 className="w-9 flex-shrink-0 flex items-center justify-center rounded-lg transition"
-                                style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                 <Search className="w-4 h-4" style={{ color: "rgba(200,215,245,0.85)" }} />
                             </button>
                             <button
                                 onClick={() => setCreateChannelOpen(listTab === "groups" ? "GROUP" : "CHANNEL")}
                                 title={`Yangi ${listTab === "groups" ? "guruh" : "kanal"}`}
                                 className="w-9 flex-shrink-0 flex items-center justify-center rounded-lg transition"
-                                style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                 <Plus className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                             </button>
                         </>
@@ -2843,14 +2843,14 @@ export function NxSocialDesktop() {
                                 onClick={() => setAgentDiscoverOpen(true)}
                                 title="Agentlar kashfiyoti"
                                 className="w-9 flex-shrink-0 flex items-center justify-center rounded-lg transition"
-                                style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                 <Search className="w-4 h-4" style={{ color: "rgba(200,215,245,0.85)" }} />
                             </button>
                             <button
                                 onClick={() => setAgentCreateOpen(true)}
                                 title="Yangi agent"
                                 className="w-9 flex-shrink-0 flex items-center justify-center rounded-lg transition"
-                                style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                 <Plus className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                             </button>
                         </>
@@ -2874,14 +2874,14 @@ export function NxSocialDesktop() {
                                 title="Sozlamalar"
                                 className="w-9 h-9 flex items-center justify-center rounded-lg transition"
                                 style={{
-                                    background: sidebarSettingsOpen ? "rgba(0,206,200,0.14)" : "rgba(43,62,232,0.06)",
-                                    border: `1px solid ${sidebarSettingsOpen ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.15)"}`,
+                                    background: sidebarSettingsOpen ? "rgb(var(--nx-accent-rgb) / 0.14)" : "rgb(var(--nx-accent-rgb) / 0.06)",
+                                    border: `1px solid ${sidebarSettingsOpen ? "rgb(var(--nx-accent-rgb) / 0.30)" : "rgb(var(--nx-accent-rgb) / 0.15)"}`,
                                 }}>
                                 <Settings className="w-4 h-4" style={{ color: sidebarSettingsOpen ? "var(--nx-accent)" : "rgba(160,176,224,0.85)" }} />
                             </button>
                             {sidebarSettingsOpen && (
                                 <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl overflow-hidden z-30"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
                                     <button onClick={() => { toggleSound(); }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left">
                                         {soundOn
@@ -2893,7 +2893,7 @@ export function NxSocialDesktop() {
                                     <button onClick={() => { toggleWatermark(); }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left">
                                         <span className="w-4 h-4 flex items-center justify-center text-[9px] font-black rounded"
-                                            style={{ background: watermarkOn ? "rgba(0,206,200,0.20)" : "rgba(43,62,232,0.20)", color: watermarkOn ? "var(--nx-accent)" : "rgba(160,176,224,0.85)" }}>WM</span>
+                                            style={{ background: watermarkOn ? "rgb(var(--nx-accent-rgb) / 0.20)" : "rgb(var(--nx-accent-rgb) / 0.20)", color: watermarkOn ? "var(--nx-accent)" : "rgba(160,176,224,0.85)" }}>WM</span>
                                         <span className="flex-1">{watermarkOn ? "Watermark yoqilgan" : "Watermark o'chiq"}</span>
                                     </button>
                                     {pushState !== "unsupported" && (
@@ -2914,7 +2914,7 @@ export function NxSocialDesktop() {
                                     <button
                                         onClick={() => { setShowHidden(v => !v); setShowArchived(false); setSidebarSettingsOpen(false); setSelectedId(null); }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left border-t"
-                                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                         {showHidden
                                             ? <Eye className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                             : <EyeOff className="w-4 h-4" style={{ color: hiddenCount > 0 ? "#F59E0B" : "rgba(160,176,224,0.85)" }} />
@@ -2927,13 +2927,13 @@ export function NxSocialDesktop() {
                                     </button>
                                     <button onClick={() => { setShortcutsHelpOpen(true); setSidebarSettingsOpen(false); }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left border-t"
-                                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                         <span className="w-4 h-4 flex items-center justify-center text-[9px] font-black rounded"
-                                            style={{ background: "rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.85)" }}>?</span>
+                                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "rgba(220,230,255,0.85)" }}>?</span>
                                         <span className="flex-1">Klaviatura yorliqlari</span>
                                     </button>
                                     <div className="px-3 py-2 border-t text-[10px]"
-                                        style={{ borderColor: "rgba(43,62,232,0.15)", color: "rgba(140,160,210,0.65)" }}>
+                                        style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", color: "rgba(140,160,210,0.65)" }}>
                                         Rasm va videolar asl sifatida yuklanadi (siqilish yo&apos;q). Watermark faqat rasmga qo&apos;shiladi (yoqilgan bo&apos;lsa).
                                     </div>
                                 </div>
@@ -2944,7 +2944,7 @@ export function NxSocialDesktop() {
                 </div>
 
                 {isDmListTab && (
-                    <div className="p-3 flex-shrink-0 space-y-2" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    <div className="p-3 flex-shrink-0 space-y-2" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                         <div className="flex items-center gap-2">
                             <div className="relative flex-1 min-w-0">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
@@ -2955,7 +2955,7 @@ export function NxSocialDesktop() {
                                     onChange={e => setFilter(e.target.value)}
                                     placeholder="Qidirish... (Ctrl+K)"
                                     className="w-full h-9 pl-9 pr-3 rounded-xl bg-transparent text-[var(--nx-text)] text-sm focus:outline-none"
-                                    style={{ border: "1px solid rgba(43,62,232,0.20)" }}
+                                    style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}
                                 />
                             </div>
                             {/* Telegram uslub — "Yangi suhbat" (compose) tugma */}
@@ -2967,15 +2967,15 @@ export function NxSocialDesktop() {
                                     style={{
                                         background: newDmOpen
                                             ? "var(--nx-accent)"
-                                            : "rgba(0,206,200,0.12)",
-                                        border: `1px solid ${newDmOpen ? "transparent" : "rgba(0,206,200,0.30)"}`,
+                                            : "rgb(var(--nx-accent-rgb) / 0.12)",
+                                        border: `1px solid ${newDmOpen ? "transparent" : "rgb(var(--nx-accent-rgb) / 0.30)"}`,
                                     }}>
                                     <PenSquare className="w-4 h-4" style={{ color: newDmOpen ? "#fff" : "var(--nx-accent)" }} />
                                 </button>
                                 {newDmOpen && (
                                     <div className="absolute right-0 top-full mt-2 w-72 rounded-2xl overflow-hidden z-30 flex flex-col"
-                                        style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)", maxHeight: 360 }}>
-                                        <div className="p-2 border-b flex items-center gap-2" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)", maxHeight: 360 }}>
+                                        <div className="p-2 border-b flex items-center gap-2" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                             <Search className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(140,160,210,0.55)" }} />
                                             <input
                                                 autoFocus
@@ -3033,8 +3033,8 @@ export function NxSocialDesktop() {
                         <button onClick={() => setStatusModalOpen(true)}
                             className="w-full flex items-center gap-2 h-8 px-2.5 rounded-lg transition hover:bg-white/[0.04] text-left"
                             style={{
-                                background: myStatus.emoji || myStatus.text ? "rgba(0,206,200,0.08)" : "rgba(43,62,232,0.06)",
-                                border: `1px solid ${myStatus.emoji || myStatus.text ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.15)"}`,
+                                background: myStatus.emoji || myStatus.text ? "rgb(var(--nx-accent-rgb) / 0.08)" : "rgb(var(--nx-accent-rgb) / 0.06)",
+                                border: `1px solid ${myStatus.emoji || myStatus.text ? "rgb(var(--nx-accent-rgb) / 0.30)" : "rgb(var(--nx-accent-rgb) / 0.15)"}`,
                             }}>
                             {(() => {
                                 const StatusIcon = statusIconForKey(myStatus.emoji);
@@ -3051,8 +3051,8 @@ export function NxSocialDesktop() {
                             <button onClick={() => setBookmarksOpen(v => !v)}
                                 className="flex-1 flex items-center gap-1.5 h-8 px-2 rounded-lg transition hover:bg-white/[0.04]"
                                 style={{
-                                    background: bookmarksOpen ? "rgba(245,158,11,0.10)" : "rgba(43,62,232,0.06)",
-                                    border: `1px solid ${bookmarksOpen ? "rgba(245,158,11,0.30)" : "rgba(43,62,232,0.15)"}`,
+                                    background: bookmarksOpen ? "rgba(245,158,11,0.10)" : "rgb(var(--nx-accent-rgb) / 0.06)",
+                                    border: `1px solid ${bookmarksOpen ? "rgba(245,158,11,0.30)" : "rgb(var(--nx-accent-rgb) / 0.15)"}`,
                                 }}
                                 title="Saqlangan xabarlar">
                                 <BookmarkCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: bookmarksOpen ? "#F59E0B" : "rgba(160,176,224,0.85)" }} />
@@ -3061,8 +3061,8 @@ export function NxSocialDesktop() {
                             <button onClick={() => setDraftsOpen(v => !v)}
                                 className="flex-1 flex items-center gap-1.5 h-8 px-2 rounded-lg transition hover:bg-white/[0.04]"
                                 style={{
-                                    background: draftsOpen ? "rgba(0,206,200,0.10)" : "rgba(43,62,232,0.06)",
-                                    border: `1px solid ${draftsOpen ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.15)"}`,
+                                    background: draftsOpen ? "rgb(var(--nx-accent-rgb) / 0.10)" : "rgb(var(--nx-accent-rgb) / 0.06)",
+                                    border: `1px solid ${draftsOpen ? "rgb(var(--nx-accent-rgb) / 0.30)" : "rgb(var(--nx-accent-rgb) / 0.15)"}`,
                                 }}
                                 title="Draftlar">
                                 <FileText className="w-3.5 h-3.5 flex-shrink-0" style={{ color: draftsOpen ? "var(--nx-accent)" : "rgba(160,176,224,0.85)" }} />
@@ -3079,11 +3079,11 @@ export function NxSocialDesktop() {
                     <button onClick={() => { setShowArchived(v => !v); setSelectedId(null); }}
                         className="w-full flex items-center gap-2.5 px-3 py-2.5 border-b transition hover:bg-white/[0.04]"
                         style={{
-                            borderColor: "rgba(43,62,232,0.14)",
-                            background: showArchived ? "rgba(0,206,200,0.06)" : "transparent",
+                            borderColor: "rgb(var(--nx-accent-rgb) / 0.14)",
+                            background: showArchived ? "rgb(var(--nx-accent-rgb) / 0.06)" : "transparent",
                         }}>
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                            style={{ background: showArchived ? "rgba(0,206,200,0.20)" : "rgba(43,62,232,0.15)" }}>
+                            style={{ background: showArchived ? "rgb(var(--nx-accent-rgb) / 0.20)" : "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                             {showArchived
                                 ? <Inbox className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                 : <Archive className="w-4 h-4" style={{ color: "rgba(180,195,235,0.85)" }} />
@@ -3094,7 +3094,7 @@ export function NxSocialDesktop() {
                         </p>
                         {!showArchived && (
                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                                style={{ background: "rgba(43,62,232,0.20)", color: "rgba(180,195,235,0.85)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "rgba(180,195,235,0.85)" }}>
                                 {archivedCount}
                             </span>
                         )}
@@ -3132,7 +3132,7 @@ export function NxSocialDesktop() {
                         ) : (
                             <>
                                 <div className="px-3 py-2 border-b flex items-center justify-between gap-2"
-                                    style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                                    style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                     <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.75)" }}>
                                         {agentsUnlimited
                                             ? `${agents.filter(a => !a.isSystem).length} ta agentingiz (limit yo'q)`
@@ -3152,9 +3152,9 @@ export function NxSocialDesktop() {
                                     <button key={a.id}
                                         onClick={() => a.username && openNewConversation({ name: a.name, username: a.username, image: a.image, verified: false, isMe: false })}
                                         className="w-full flex items-center gap-3 px-3 py-3 text-left transition-colors border-b hover:bg-white/[0.04]"
-                                        style={{ borderColor: "rgba(43,62,232,0.06)" }}>
+                                        style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.06)" }}>
                                         <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center relative"
-                                            style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                             {a.image
                                                 ? <img src={a.image} alt="" className="w-full h-full object-cover" />
                                                 : <BotIcon className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
@@ -3172,7 +3172,7 @@ export function NxSocialDesktop() {
                                                 {a.isSystem && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
                                                 {a.isSystem && (
                                                     <span className="text-[9px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
-                                                        style={{ background: "rgba(0,206,200,0.18)", color: "var(--nx-accent)" }}>RASMIY</span>
+                                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.18)", color: "var(--nx-accent)" }}>RASMIY</span>
                                                 )}
                                             </div>
                                             <p className="text-[11px] truncate" style={{ color: "rgba(140,160,210,0.70)" }}>
@@ -3198,11 +3198,11 @@ export function NxSocialDesktop() {
                                 onClick={() => setSelectedChannel(c.id)}
                                 className="w-full flex items-center gap-3 px-3 py-3 text-left transition-colors border-b"
                                 style={{
-                                    borderColor: "rgba(43,62,232,0.06)",
-                                    background: selectedChannel === c.id ? "rgba(43,62,232,0.18)" : "transparent",
+                                    borderColor: "rgb(var(--nx-accent-rgb) / 0.06)",
+                                    background: selectedChannel === c.id ? "rgb(var(--nx-accent-rgb) / 0.18)" : "transparent",
                                 }}>
                                 <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center"
-                                    style={{ background: "rgba(43,62,232,0.15)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                     {c.avatarUrl
                                         ? <img src={c.avatarUrl} alt="" className="w-full h-full object-cover" />
                                         : (c.type === "CHANNEL" ? <Megaphone className="w-5 h-5 text-white/50" /> : <Users className="w-5 h-5 text-white/50" />)
@@ -3214,7 +3214,7 @@ export function NxSocialDesktop() {
                                         {c.isSystem && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
                                         {c.isSystem && (
                                             <span className="text-[9px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
-                                                style={{ background: "rgba(0,206,200,0.18)", color: "var(--nx-accent)" }}>RASMIY</span>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.18)", color: "var(--nx-accent)" }}>RASMIY</span>
                                         )}
                                     </div>
                                     <p className="text-[11px] truncate" style={{ color: "rgba(140,160,210,0.70)" }}>
@@ -3246,10 +3246,10 @@ export function NxSocialDesktop() {
                                 onContextMenu={(e) => { e.preventDefault(); toggleConvPin(c.conversationId, !!c.pinned); }}
                                 className="w-full flex items-center gap-3 px-3 py-3 text-left transition-colors border-b"
                                 style={{
-                                    borderColor: "rgba(43,62,232,0.06)",
+                                    borderColor: "rgb(var(--nx-accent-rgb) / 0.06)",
                                     background: selectedId === c.conversationId
-                                        ? "rgba(43,62,232,0.18)"
-                                        : c.pinned ? "rgba(0,206,200,0.04)" : "transparent",
+                                        ? "rgb(var(--nx-accent-rgb) / 0.18)"
+                                        : c.pinned ? "rgb(var(--nx-accent-rgb) / 0.04)" : "transparent",
                                 }}>
                                 {(() => {
                                     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -3314,12 +3314,12 @@ export function NxSocialDesktop() {
                                     <div className="flex items-center gap-1">
                                         {isLocked(c.conversationId) && <Lock className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />}
                                         {c.muted && <BellOff className="w-3 h-3" style={{ color: "rgba(140,160,210,0.65)" }} />}
-                                        {c.pinned && <Pin className="w-3 h-3" style={{ color: "rgba(0,206,200,0.75)" }} />}
+                                        {c.pinned && <Pin className="w-3 h-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.75)" }} />}
                                         {c.unread && (
                                             <span className="w-2 h-2 rounded-full"
                                                 style={{
                                                     background: c.muted ? "rgba(140,160,210,0.60)" : "var(--nx-accent)",
-                                                    boxShadow: c.muted ? "none" : "0 0 6px rgba(0,206,200,0.7)",
+                                                    boxShadow: c.muted ? "none" : "0 0 6px rgb(var(--nx-accent-rgb) / 0.7)",
                                                 }} />
                                         )}
                                     </div>
@@ -3332,14 +3332,14 @@ export function NxSocialDesktop() {
                                     onClick={(e) => { e.stopPropagation(); setConvMenuFor(convMenuFor === c.conversationId ? null : c.conversationId); }}
                                     title="Amallar"
                                     className="w-7 h-7 rounded-lg flex items-center justify-center"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 2px 6px rgba(0,0,0,0.40)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 2px 6px rgba(0,0,0,0.40)" }}>
                                     <MoreVertical className="w-3.5 h-3.5" style={{ color: "rgba(200,215,245,0.95)" }} />
                                 </button>
                                 {convMenuFor === c.conversationId && (
                                     <div className="absolute right-0 top-full mt-1 z-40 rounded-xl overflow-hidden min-w-[180px]"
                                         onClick={e => e.stopPropagation()}
                                         onMouseDown={e => e.stopPropagation()}
-                                        style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
+                                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
                                         <MsgMenuItem
                                             icon={c.pinned ? PinOff : Pin}
                                             label={c.pinned ? "Pindan olish" : "Pinga qo'yish"}
@@ -3377,7 +3377,7 @@ export function NxSocialDesktop() {
                                                 }
                                             }}
                                         />
-                                        <div className="h-px" style={{ background: "rgba(43,62,232,0.14)" }} />
+                                        <div className="h-px" style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)" }} />
                                         {showHidden ? (
                                             /* Yashirin rejimda: qaytarish (unhide) — DELETE /hide */
                                             <button
@@ -3411,8 +3411,8 @@ export function NxSocialDesktop() {
                             {agents.length > 0 && (
                                 <>
                                     <div className="px-3 pt-3 pb-1 flex items-center gap-2 border-t"
-                                         style={{ borderColor: "rgba(43,62,232,0.14)" }}>
-                                        <BotIcon className="w-3 h-3" style={{ color: "rgba(0,206,200,0.75)" }} />
+                                         style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
+                                        <BotIcon className="w-3 h-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.75)" }} />
                                         <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>
                                             Agentlar
                                         </p>
@@ -3422,9 +3422,9 @@ export function NxSocialDesktop() {
                                         <button key={`ag-${a.id}`}
                                             onClick={() => a.username && openNewConversation({ name: a.name, username: a.username, image: a.image, verified: false, isMe: false })}
                                             className="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors border-b hover:bg-white/[0.04]"
-                                            style={{ borderColor: "rgba(43,62,232,0.06)" }}>
+                                            style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.06)" }}>
                                             <div className="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center relative"
-                                                style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                                 {a.image
                                                     ? <img src={a.image} alt="" className="w-full h-full object-cover" />
                                                     : <BotIcon className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />}
@@ -3451,8 +3451,8 @@ export function NxSocialDesktop() {
                             {channels.length > 0 && (
                                 <>
                                     <div className="px-3 pt-3 pb-1 flex items-center gap-2 border-t"
-                                         style={{ borderColor: "rgba(43,62,232,0.14)" }}>
-                                        <Hash className="w-3 h-3" style={{ color: "rgba(0,206,200,0.75)" }} />
+                                         style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
+                                        <Hash className="w-3 h-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.75)" }} />
                                         <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>
                                             Kanal &amp; Guruh
                                         </p>
@@ -3463,11 +3463,11 @@ export function NxSocialDesktop() {
                                             onClick={() => setSelectedChannel(c.id)}
                                             className="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors border-b hover:bg-white/[0.04]"
                                             style={{
-                                                borderColor: "rgba(43,62,232,0.06)",
-                                                background: selectedChannel === c.id ? "rgba(43,62,232,0.18)" : "transparent",
+                                                borderColor: "rgb(var(--nx-accent-rgb) / 0.06)",
+                                                background: selectedChannel === c.id ? "rgb(var(--nx-accent-rgb) / 0.18)" : "transparent",
                                             }}>
                                             <div className="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center"
-                                                style={{ background: "rgba(43,62,232,0.15)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                                 {c.avatarUrl
                                                     ? <img src={c.avatarUrl} alt="" className="w-full h-full object-cover" />
                                                     : (c.type === "CHANNEL" ? <Megaphone className="w-4 h-4 text-white/50" /> : <Users className="w-4 h-4 text-white/50" />)}
@@ -3489,7 +3489,7 @@ export function NxSocialDesktop() {
                     )}
                     {/* Global message search results — filter uzunligi 2+ va natija bor bo'lsa */}
                     {isDmListTab && filter.trim().length >= 2 && (
-                        <div className="border-t" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                        <div className="border-t" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             <div className="px-3 py-2 flex items-center justify-between">
                                 <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.60)" }}>
                                     Xabarlar ichidan
@@ -3508,7 +3508,7 @@ export function NxSocialDesktop() {
                                         setTimeout(() => jumpToMessage(r.messageId), 400);
                                     }}
                                     className="w-full flex items-start gap-3 px-3 py-2.5 text-left transition hover:bg-white/[0.04] border-b"
-                                    style={{ borderColor: "rgba(43,62,232,0.06)" }}>
+                                    style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.06)" }}>
                                     {r.isSelf ? (
                                         <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
                                             style={{ background: "linear-gradient(135deg,#F59E0B,#EA580C)" }}>
@@ -3557,8 +3557,8 @@ export function NxSocialDesktop() {
                 ) : !selectedId ? (
                     <div className="flex-1 flex flex-col items-center justify-center gap-3 px-8 text-center">
                         <div className="w-20 h-20 rounded-3xl flex items-center justify-center"
-                            style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}>
-                            <MessageSquare className="w-9 h-9" style={{ color: "rgba(43,62,232,0.55)" }} />
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
+                            <MessageSquare className="w-9 h-9" style={{ color: "rgb(var(--nx-accent-rgb) / 0.55)" }} />
                         </div>
                         <div>
                             <p className="text-base font-black text-[var(--nx-text)] mb-1">
@@ -3578,7 +3578,7 @@ export function NxSocialDesktop() {
                         {/* Chat header — select rejimda toolbar bilan almashadi */}
                         {selectMode ? (
                             <div className="px-4 py-3 flex items-center gap-3 flex-shrink-0"
-                                style={{ borderBottom: "1px solid rgba(0,206,200,0.30)", background: "rgba(0,206,200,0.06)" }}>
+                                style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", background: "rgb(var(--nx-accent-rgb) / 0.06)" }}>
                                 <IconBtn icon={X} title="Chiqish" onClick={exitSelectMode} />
                                 <div className="flex-1">
                                     <p className="text-sm font-black" style={{ color: "var(--nx-accent)" }}>
@@ -3607,7 +3607,7 @@ export function NxSocialDesktop() {
                             </div>
                         ) : (
                         <div className="px-4 py-3 flex items-center gap-3 flex-shrink-0"
-                            style={{ borderBottom: "1px solid rgba(43,62,232,0.14)", background: "rgba(8,12,32,0.55)" }}>
+                            style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", background: "rgba(8,12,32,0.55)" }}>
                             {/* Telegram uslub — avatar+nom bosilsa info paneli ochiladi/yopiladi */}
                             <button
                                 type="button"
@@ -3626,7 +3626,7 @@ export function NxSocialDesktop() {
                                         {!selectedConv?.isSelf && peer?.verified && <BadgeCheck className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />}
                                         {!selectedConv?.isSelf && peer?.isAgent && (
                                             <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md"
-                                                style={{ background: "rgba(0,206,200,0.18)", color: "var(--nx-accent)" }}>AGENT</span>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.18)", color: "var(--nx-accent)" }}>AGENT</span>
                                         )}
                                         {/* Chat streak — kunlik yozishuv silsilasi (3+ kun) */}
                                         {!selectedConv?.isSelf && chatStreak && chatStreak.days >= 3 && (
@@ -3636,11 +3636,11 @@ export function NxSocialDesktop() {
                                                 style={{
                                                     background: chatStreak.activeToday
                                                         ? "linear-gradient(135deg, rgba(249,115,22,0.20), rgba(239,68,68,0.20))"
-                                                        : "rgba(43,62,232,0.10)",
+                                                        : "rgb(var(--nx-accent-rgb) / 0.10)",
                                                     color: chatStreak.activeToday ? "#F97316" : "rgba(160,176,224,0.85)",
                                                     border: chatStreak.activeToday
                                                         ? "1px solid rgba(249,115,22,0.40)"
-                                                        : "1px solid rgba(43,62,232,0.25)",
+                                                        : "1px solid rgb(var(--nx-accent-rgb) / 0.25)",
                                                 }}>
                                                 <Flame className="w-2.5 h-2.5" fill={chatStreak.activeToday ? "currentColor" : "none"} />
                                                 {chatStreak.days}
@@ -3699,7 +3699,7 @@ export function NxSocialDesktop() {
                                 <IconBtn icon={MoreVertical} title="Ko'proq" onClick={() => setMoreOpen(v => !v)} />
                                 {moreOpen && (
                                     <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl overflow-hidden z-30"
-                                        style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
+                                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
                                         {/* Telegram uslub — chaqiruv variantlari More ichida */}
                                         {!peer?.isAgent && peer?.id && (
                                             <>
@@ -3709,7 +3709,7 @@ export function NxSocialDesktop() {
                                                 </button>
                                                 <button onClick={() => { if (peer.id) startCall(peer.id, "VIDEO"); setMoreOpen(false); }}
                                                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left border-b"
-                                                    style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                                    style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                                     <Video className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Video chaqiruv
                                                 </button>
                                             </>
@@ -3731,7 +3731,7 @@ export function NxSocialDesktop() {
                                         </button>
                                         <button onClick={() => { setShortcutsHelpOpen(true); setMoreOpen(false); }}
                                             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/[0.05] text-left">
-                                            <span className="w-4 h-4 flex items-center justify-center text-[9px] font-black rounded" style={{ background: "rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.85)" }}>?</span>
+                                            <span className="w-4 h-4 flex items-center justify-center text-[9px] font-black rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "rgba(220,230,255,0.85)" }}>?</span>
                                             Yorliqlar (Ctrl+/)
                                         </button>
                                         {/* Voice auto-transkript toggle (AI) — peer ovoz xabarlar avto matnga */}
@@ -3743,12 +3743,12 @@ export function NxSocialDesktop() {
                                                 <Mic className="w-4 h-4" style={{ color: autoVoice ? "var(--nx-accent)" : "rgba(160,176,224,0.80)" }} />
                                                 Ovoz avto-transkript
                                                 {autoVoice && <span className="ml-auto text-[9px] font-black px-1.5 py-0.5 rounded"
-                                                    style={{ background: "rgba(0,206,200,0.18)", color: "var(--nx-accent)" }}>AKTIV</span>}
+                                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.18)", color: "var(--nx-accent)" }}>AKTIV</span>}
                                             </button>
                                         )}
                                         {/* Auto-translate submenu (AI) — 3 til + o'chirish */}
                                         {selectedId && !peer?.isAgent && (
-                                            <div className="border-b" style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                            <div className="border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                                 <div className="px-3 pt-2.5 pb-1 flex items-center gap-1.5">
                                                     <Languages className="w-3.5 h-3.5" style={{ color: autoTranslate ? "var(--nx-accent)" : "rgba(160,176,224,0.80)" }} />
                                                     <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(160,176,224,0.85)" }}>
@@ -3763,8 +3763,8 @@ export function NxSocialDesktop() {
                                                             style={autoTranslate === lg ? {
                                                                 background: "var(--nx-accent)", color: "white",
                                                             } : {
-                                                                background: "rgba(43,62,232,0.10)", color: "rgba(200,215,245,0.75)",
-                                                                border: "1px solid rgba(43,62,232,0.20)",
+                                                                background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgba(200,215,245,0.75)",
+                                                                border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                                                             }}>
                                                             {lg}
                                                         </button>
@@ -3834,7 +3834,7 @@ export function NxSocialDesktop() {
                         {/* Qidiruv paneli (Search tugmasi bosilsa) */}
                         {searchOpen && (
                             <div className="flex-shrink-0"
-                                style={{ borderBottom: "1px solid rgba(43,62,232,0.14)", background: "var(--nx-surface)" }}>
+                                style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", background: "var(--nx-surface)" }}>
                                 <div className="px-4 py-2 flex items-center gap-2">
                                     <Search className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(140,160,210,0.60)" }} />
                                     <input
@@ -3853,14 +3853,14 @@ export function NxSocialDesktop() {
                                 </div>
                                 {/* Natijalar ro'yxati (server-side, 50 tagacha) */}
                                 {searchResults && searchResults.length > 0 && (
-                                    <div className="max-h-64 overflow-y-auto border-t" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                                    <div className="max-h-64 overflow-y-auto border-t" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                         {searchResults.map(r => (
                                             <button key={r.id} onClick={() => jumpToMessage(r.id)}
                                                 className="w-full text-left px-4 py-2 border-b hover:bg-white/[0.04] transition"
-                                                style={{ borderColor: "rgba(43,62,232,0.08)" }}>
+                                                style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.08)" }}>
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded"
-                                                        style={{ background: r.mine ? "rgba(43,62,232,0.20)" : "rgba(0,206,200,0.15)", color: r.mine ? "rgba(180,195,235,0.90)" : "var(--nx-accent)" }}>
+                                                        style={{ background: r.mine ? "rgb(var(--nx-accent-rgb) / 0.20)" : "rgb(var(--nx-accent-rgb) / 0.15)", color: r.mine ? "rgba(180,195,235,0.90)" : "var(--nx-accent)" }}>
                                                         {r.mine ? "Siz" : "Peer"}
                                                     </span>
                                                     <span className="text-[10px] tabular-nums" style={{ color: "rgba(140,160,210,0.60)" }}>
@@ -3891,7 +3891,7 @@ export function NxSocialDesktop() {
                         {streakMilestone && (
                             <div className="w-full px-4 py-3 flex items-center gap-3 flex-shrink-0 animate-pulse"
                                 style={{
-                                    background: "linear-gradient(135deg, rgba(249,115,22,0.25), rgba(239,68,68,0.20), rgba(0,206,200,0.15))",
+                                    background: "linear-gradient(135deg, rgba(249,115,22,0.25), rgba(239,68,68,0.20), rgb(var(--nx-accent-rgb) / 0.15))",
                                     borderBottom: "1px solid rgba(249,115,22,0.35)",
                                 }}>
                                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
@@ -3925,12 +3925,12 @@ export function NxSocialDesktop() {
                                 const el = document.querySelector<HTMLElement>(`[data-msg-id="${msg.id}"]`);
                                 el?.scrollIntoView({ behavior: "smooth", block: "center" });
                                 el?.animate([
-                                    { background: "rgba(0,206,200,0.20)" }, { background: "transparent" },
+                                    { background: "rgb(var(--nx-accent-rgb) / 0.20)" }, { background: "transparent" },
                                 ], { duration: 1400, iterations: 1 });
                             };
                             return (
                                 <div className="w-full flex items-center gap-2 px-3 py-2 border-b"
-                                    style={{ borderColor: "rgba(43,62,232,0.25)", background: "var(--nx-surface)" }}>
+                                    style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.25)", background: "var(--nx-surface)" }}>
                                     {/* Chap: Pin + accent bar */}
                                     <div className="flex items-center gap-2 flex-shrink-0">
                                         <div className="w-1 h-8 rounded-full" style={{ background: "linear-gradient(180deg,var(--nx-accent),var(--nx-accent))" }} />
@@ -3952,7 +3952,7 @@ export function NxSocialDesktop() {
                                     {total > 1 && (
                                         <button onClick={() => setPinnedListOpen(true)} title="Barcha pinlar"
                                             className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 hover:bg-white/[0.08]"
-                                            style={{ background: "rgba(43,62,232,0.10)" }}>
+                                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                             <MoreVertical className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
                                         </button>
                                     )}
@@ -4036,7 +4036,7 @@ export function NxSocialDesktop() {
                                                         }}
                                                         title="Sana bo'yicha o'tish"
                                                         className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full transition hover:brightness-125 active:scale-95"
-                                                        style={{ background: "var(--nx-surface)", color: "rgba(160,176,224,0.75)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                                                        style={{ background: "var(--nx-surface)", color: "rgba(160,176,224,0.75)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                                         {dateLabel}
                                                     </button>
                                                 </div>
@@ -4051,7 +4051,7 @@ export function NxSocialDesktop() {
                                     }}
                                     className={`group flex items-center gap-1 ${m.mine ? "flex-row justify-end" : "flex-row-reverse justify-end"} ${selectMode ? "cursor-pointer" : ""} ${selectedIds.has(m.id) ? "rounded-lg py-1" : ""}`}
                                     style={{
-                                        ...(selectedIds.has(m.id) ? { background: "rgba(0,206,200,0.10)" } : {}),
+                                        ...(selectedIds.has(m.id) ? { background: "rgb(var(--nx-accent-rgb) / 0.10)" } : {}),
                                         // Guruh ichida yuqori marginni kamaytiramiz (bir-biriga yaqin)
                                         marginTop: groupWithPrev ? -6 : undefined,
                                         // Optimistic UI: pending — biroz shaffof; failed — qizil orqa
@@ -4084,12 +4084,12 @@ export function NxSocialDesktop() {
                                             }}>
                                             <button onClick={() => setReactPickerFor(m.id === reactPickerFor ? null : m.id)} title="Reaksiya"
                                                 className="w-7 h-7 rounded-md flex items-center justify-center"
-                                                style={{ background: reactPickerFor === m.id ? "rgba(0,206,200,0.18)" : "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                                style={{ background: reactPickerFor === m.id ? "rgb(var(--nx-accent-rgb) / 0.18)" : "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                                 <Smile className="w-3 h-3" style={{ color: reactPickerFor === m.id ? "var(--nx-accent)" : "rgba(160,176,224,0.85)" }} />
                                             </button>
                                             {reactPickerFor === m.id && (
                                                 <div className="absolute top-full mt-1 left-0 z-40 flex gap-1 p-1.5 rounded-xl"
-                                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)", backdropFilter: "blur(12px)" }}>
+                                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)", backdropFilter: "blur(12px)" }}>
                                                     {["❤️","👍","😂","😮","😢","🔥","🙏","👏"].map(e => (
                                                         <button key={e} onClick={() => { toggleReaction(m.id, e); setReactPickerFor(null); }}
                                                             className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/[0.10] active:scale-90 transition-transform hover:scale-125">
@@ -4101,18 +4101,18 @@ export function NxSocialDesktop() {
                                         </div>
                                         <button onClick={() => setReplyTo(m)} title="Javob berish"
                                             className="w-7 h-7 rounded-md flex items-center justify-center"
-                                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                             <Reply className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
                                         </button>
                                         <div className="relative" data-msg-menu>
                                             <button onClick={() => setMsgMenuFor(msgMenuFor === m.id ? null : m.id)} title="Ko'proq"
                                                 className="w-7 h-7 rounded-md flex items-center justify-center"
-                                                style={{ background: msgMenuFor === m.id ? "rgba(0,206,200,0.18)" : "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                                style={{ background: msgMenuFor === m.id ? "rgb(var(--nx-accent-rgb) / 0.18)" : "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                                 <MoreVertical className="w-3 h-3" style={{ color: msgMenuFor === m.id ? "var(--nx-accent)" : "rgba(160,176,224,0.85)" }} />
                                             </button>
                                             {msgMenuFor === m.id && (
                                                 <div className="absolute top-full mt-1 right-0 z-40 rounded-xl overflow-hidden min-w-[180px]"
-                                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
+                                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
                                                     <MsgMenuItem icon={Forward} label="Yuborish" onClick={() => { setForwardMsg(m); setMsgMenuFor(null); }} />
                                                     <MsgMenuItem
                                                         icon={m.pinnedAt ? PinOff : Pin}
@@ -4165,7 +4165,7 @@ export function NxSocialDesktop() {
                                             {/* Tarjima sub-picker (menudan chaqiriladi) */}
                                             {translatePickerFor === m.id && (
                                                 <div className="absolute top-full mt-1 right-0 z-40 flex gap-1 p-1.5 rounded-lg"
-                                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)" }}>
+                                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)" }}>
                                                     {(["uz", "ru", "en"] as const).map(lg => (
                                                         <button key={lg}
                                                             onClick={() => translateMessage(m.id, m.text, lg)}
@@ -4189,7 +4189,7 @@ export function NxSocialDesktop() {
                                                 ? { background: "transparent", color: m.mine ? "#fff" : "rgba(220,230,255,0.92)" }
                                                 : m.mine
                                                     ? { background: "linear-gradient(135deg,var(--nx-accent),#1a6fcc)", color: "#fff" }
-                                                    : { background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.92)" }
+                                                    : { background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", color: "rgba(220,230,255,0.92)" }
                                             ),
                                             // Guruhlash: yuqori/pastki burchak radius'i mos ravishda yumshoq (sticker/circle uchun ta'siri yo'q)
                                             borderTopLeftRadius:  (m.mediaType === "sticker" || m.mediaType === "video-circle") ? 0 : (m.mine ? 16 : (groupWithPrev ? 4 : 16)),
@@ -4219,8 +4219,8 @@ export function NxSocialDesktop() {
                                             const canLink = !!href;
                                             // Ranglar: mine — beloviy, peer — teal accent
                                             const accentColor = m.mine ? "#ffffff" : "var(--nx-accent)";
-                                            const cardBg = m.mine ? "rgba(0,0,0,0.24)" : "rgba(0,206,200,0.10)";
-                                            const cardBorder = m.mine ? "rgba(255,255,255,0.22)" : "rgba(0,206,200,0.30)";
+                                            const cardBg = m.mine ? "rgba(0,0,0,0.24)" : "rgb(var(--nx-accent-rgb) / 0.10)";
+                                            const cardBorder = m.mine ? "rgba(255,255,255,0.22)" : "rgb(var(--nx-accent-rgb) / 0.30)";
                                             const Tag: 'a' | 'div' = canLink ? 'a' : 'div';
                                             return (
                                                 <Tag
@@ -4244,7 +4244,7 @@ export function NxSocialDesktop() {
                                                         <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
                                                             style={{ background: m.mine
                                                                 ? "rgba(255,255,255,0.14)"
-                                                                : "linear-gradient(135deg, rgba(43,62,232,0.30), rgba(0,206,200,0.30))",
+                                                                : "linear-gradient(135deg, rgb(var(--nx-accent-rgb) / 0.30), rgb(var(--nx-accent-rgb) / 0.30))",
                                                                 border: `1px solid ${accentColor}` }}>
                                                             <IconEl className="w-3.5 h-3.5" style={{ color: accentColor }} />
                                                         </div>
@@ -4282,7 +4282,7 @@ export function NxSocialDesktop() {
                                                 title="Asl xabarga o'tish"
                                                 className="w-full mb-2 pl-2 pr-2 py-1.5 rounded-md text-xs text-left transition hover:brightness-125 active:scale-[0.98] block"
                                                 style={{
-                                                    background: m.mine ? "rgba(0,0,0,0.20)" : "rgba(0,206,200,0.10)",
+                                                    background: m.mine ? "rgba(0,0,0,0.20)" : "rgb(var(--nx-accent-rgb) / 0.10)",
                                                     borderLeft: `3px solid ${m.mine ? "#fff" : "var(--nx-accent)"}`,
                                                 }}>
                                                 <p className="font-bold text-[11px] mb-0.5"
@@ -4312,8 +4312,8 @@ export function NxSocialDesktop() {
                                             const card = (
                                                 <div className="mb-1 rounded-2xl overflow-hidden flex items-center gap-2.5 p-2.5"
                                                     style={{
-                                                        background: m.mine ? "rgba(0,0,0,0.20)" : "rgba(43,62,232,0.10)",
-                                                        border: `1px solid ${m.mine ? "rgba(255,255,255,0.15)" : "rgba(43,62,232,0.30)"}`,
+                                                        background: m.mine ? "rgba(0,0,0,0.20)" : "rgb(var(--nx-accent-rgb) / 0.10)",
+                                                        border: `1px solid ${m.mine ? "rgba(255,255,255,0.15)" : "rgb(var(--nx-accent-rgb) / 0.30)"}`,
                                                         minWidth: 220,
                                                     }}>
                                                     <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0"
@@ -4399,9 +4399,9 @@ export function NxSocialDesktop() {
                                             return (
                                                 <a href={m.mediaUrl} target="_blank" rel="noopener noreferrer" download={m.mediaName ?? true}
                                                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 min-w-[240px]"
-                                                    style={{ background: m.mine ? "rgba(255,255,255,0.12)" : "rgba(0,206,200,0.10)", textDecoration: "none" }}>
+                                                    style={{ background: m.mine ? "rgba(255,255,255,0.12)" : "rgb(var(--nx-accent-rgb) / 0.10)", textDecoration: "none" }}>
                                                     <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                                                        style={{ background: m.mine ? "rgba(255,255,255,0.18)" : "rgba(0,206,200,0.20)" }}>
+                                                        style={{ background: m.mine ? "rgba(255,255,255,0.18)" : "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                                         <FileIcon className="w-5 h-5" style={{ color: m.mine ? "#fff" : "var(--nx-accent)" }} />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
@@ -4418,7 +4418,7 @@ export function NxSocialDesktop() {
                                         })()}
                                         {m.mediaType === "poll" && m.pollQuestion && m.pollOptions && (
                                             <div className="mb-1 rounded-lg overflow-hidden p-3"
-                                                style={{ background: m.mine ? "rgba(255,255,255,0.10)" : "rgba(0,206,200,0.08)" }}>
+                                                style={{ background: m.mine ? "rgba(255,255,255,0.10)" : "rgb(var(--nx-accent-rgb) / 0.08)" }}>
                                                 <div className="flex items-center gap-1.5 mb-2">
                                                     <BarChart2 className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                                     <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.85)" }}>
@@ -4435,7 +4435,7 @@ export function NxSocialDesktop() {
                                                             <div key={i} className="relative rounded-md overflow-hidden"
                                                                 style={{ background: "rgba(0,0,0,0.30)" }}>
                                                                 <div className="absolute inset-y-0 left-0 transition-all"
-                                                                    style={{ width: `${pct}%`, background: "rgba(0,206,200,0.20)" }} />
+                                                                    style={{ width: `${pct}%`, background: "rgb(var(--nx-accent-rgb) / 0.20)" }} />
                                                                 <div className="relative flex items-center justify-between px-2.5 py-1.5">
                                                                     <span className="text-xs">{opt}</span>
                                                                     <span className="text-[10px] font-bold" style={{ color: "rgba(140,160,210,0.85)" }}>{pct}%</span>
@@ -4465,8 +4465,8 @@ export function NxSocialDesktop() {
                                             return (
                                                 <div className="mb-1 rounded-xl overflow-hidden"
                                                     style={{
-                                                        background: m.mine ? "rgba(255,255,255,0.10)" : "rgba(0,206,200,0.08)",
-                                                        border: `1px solid ${active ? (m.mine ? "rgba(255,255,255,0.25)" : "rgba(0,206,200,0.40)") : (m.mine ? "rgba(255,255,255,0.15)" : "rgba(0,206,200,0.20)")}`,
+                                                        background: m.mine ? "rgba(255,255,255,0.10)" : "rgb(var(--nx-accent-rgb) / 0.08)",
+                                                        border: `1px solid ${active ? (m.mine ? "rgba(255,255,255,0.25)" : "rgb(var(--nx-accent-rgb) / 0.40)") : (m.mine ? "rgba(255,255,255,0.15)" : "rgb(var(--nx-accent-rgb) / 0.20)")}`,
                                                         minWidth: 280, maxWidth: 320,
                                                     }}>
                                                     {/* OpenStreetMap embed — Telegram uslubidagi xarita preview */}
@@ -4499,7 +4499,7 @@ export function NxSocialDesktop() {
                                                         </div>
                                                         {/* Yuqori-o'ngda Nexus attribution — OSM logotipi o'rniga */}
                                                         <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-md pointer-events-none"
-                                                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(0,206,200,0.30)", backdropFilter: "blur(4px)" }}>
+                                                            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", backdropFilter: "blur(4px)" }}>
                                                             <span className="text-[8px] font-black tracking-wider" style={{
                                                                 background: "linear-gradient(135deg,var(--nx-accent),var(--nx-accent))",
                                                                 WebkitBackgroundClip: "text",
@@ -4512,9 +4512,9 @@ export function NxSocialDesktop() {
                                                     <a href={`https://www.google.com/maps?q=${m.locLat},${m.locLng}`}
                                                         target="_blank" rel="noopener noreferrer"
                                                         className="flex items-center gap-2 p-3"
-                                                        style={{ textDecoration: "none", borderTop: `1px solid ${m.mine ? "rgba(255,255,255,0.10)" : "rgba(0,206,200,0.15)"}` }}>
+                                                        style={{ textDecoration: "none", borderTop: `1px solid ${m.mine ? "rgba(255,255,255,0.10)" : "rgb(var(--nx-accent-rgb) / 0.15)"}` }}>
                                                         <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 relative"
-                                                            style={{ background: m.mine ? "rgba(255,255,255,0.15)" : "rgba(0,206,200,0.20)" }}>
+                                                            style={{ background: m.mine ? "rgba(255,255,255,0.15)" : "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                                             <MapPin className="w-4 h-4" style={{ color: m.mine ? "#fff" : "var(--nx-accent)" }} />
                                                             {active && (
                                                                 <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full animate-pulse"
@@ -4526,7 +4526,7 @@ export function NxSocialDesktop() {
                                                                 {active ? "Jonli joylashuv" : isLive ? "Jonli — tugagan" : "Joylashuv"}
                                                                 {active && (
                                                                     <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full"
-                                                                        style={{ background: m.mine ? "rgba(255,255,255,0.20)" : "rgba(0,206,200,0.25)", color: m.mine ? "#fff" : "var(--nx-accent)" }}>
+                                                                        style={{ background: m.mine ? "rgba(255,255,255,0.20)" : "rgb(var(--nx-accent-rgb) / 0.25)", color: m.mine ? "#fff" : "var(--nx-accent)" }}>
                                                                         {leftLabel}
                                                                     </span>
                                                                 )}
@@ -4543,7 +4543,7 @@ export function NxSocialDesktop() {
                                                             className="w-full py-1.5 text-[10px] font-black uppercase tracking-wider border-t"
                                                             style={{
                                                                 background: "rgba(239,68,68,0.10)",
-                                                                borderColor: m.mine ? "rgba(255,255,255,0.15)" : "rgba(0,206,200,0.15)",
+                                                                borderColor: m.mine ? "rgba(255,255,255,0.15)" : "rgb(var(--nx-accent-rgb) / 0.15)",
                                                                 color: "#EF4444",
                                                             }}>
                                                             To&apos;xtatish
@@ -4554,10 +4554,10 @@ export function NxSocialDesktop() {
                                         })()}
                                         {m.mediaType === "transfer" && m.transferAmount && m.transferCurrency && (
                                             <div className="mb-1 rounded-lg overflow-hidden"
-                                                style={{ background: m.mine ? "rgba(255,255,255,0.12)" : "rgba(0,206,200,0.10)" }}>
+                                                style={{ background: m.mine ? "rgba(255,255,255,0.12)" : "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                                 <div className="flex items-center gap-2.5 p-2.5">
                                                     <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                                                        style={{ background: m.mine ? "rgba(255,255,255,0.18)" : "rgba(0,206,200,0.20)" }}>
+                                                        style={{ background: m.mine ? "rgba(255,255,255,0.18)" : "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                                         <Wallet className="w-4 h-4" style={{ color: m.mine ? "#fff" : "var(--nx-accent)" }} />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
@@ -4609,7 +4609,7 @@ export function NxSocialDesktop() {
                                         )}
                                         {translated[m.id] && (
                                             <div className="mt-1.5 pl-2 py-1 rounded text-xs italic"
-                                                style={{ borderLeft: "2px solid var(--nx-accent)", background: "rgba(0,206,200,0.08)" }}>
+                                                style={{ borderLeft: "2px solid var(--nx-accent)", background: "rgb(var(--nx-accent-rgb) / 0.08)" }}>
                                                 <span className="text-[9px] font-bold uppercase tracking-wider mr-1.5" style={{ color: "var(--nx-accent)" }}>Tarjima</span>
                                                 {translated[m.id]}
                                             </div>
@@ -4624,8 +4624,8 @@ export function NxSocialDesktop() {
                                                 <a href={p.url} target="_blank" rel="noopener noreferrer"
                                                     className="mt-2 block rounded-lg overflow-hidden max-w-[320px]"
                                                     style={{
-                                                        background: m.mine ? "rgba(255,255,255,0.10)" : "rgba(0,206,200,0.08)",
-                                                        border: `1px solid ${m.mine ? "rgba(255,255,255,0.14)" : "rgba(0,206,200,0.20)"}`,
+                                                        background: m.mine ? "rgba(255,255,255,0.10)" : "rgb(var(--nx-accent-rgb) / 0.08)",
+                                                        border: `1px solid ${m.mine ? "rgba(255,255,255,0.14)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
                                                     }}>
                                                     {p.image && (
                                                         <img src={p.image} alt="" className="w-full max-h-40 object-cover" />
@@ -4655,7 +4655,7 @@ export function NxSocialDesktop() {
                                         {/* Tahrirlash endi inline emas — composer'da (Telegram uslub, edit banner bilan) */}
                                         {editingId === m.id && (
                                             <div className="flex items-center gap-1.5 text-[10.5px] font-bold mt-1"
-                                                style={{ color: "rgba(0,206,200,0.85)" }}>
+                                                style={{ color: "rgb(var(--nx-accent-rgb) / 0.85)" }}>
                                                 <Edit3 className="w-3 h-3" />
                                                 <span>Composer'da tahrirlanmoqda...</span>
                                             </div>
@@ -4669,8 +4669,8 @@ export function NxSocialDesktop() {
                                                         title="Bosish — kim reaksiya berganini ko'rish · Ctrl/Dbl — o'chirish"
                                                         className="px-1.5 py-0.5 rounded-full text-[11px] flex items-center gap-0.5 transition"
                                                         style={{
-                                                            background: r.mine ? "rgba(0,206,200,0.25)" : "rgba(255,255,255,0.10)",
-                                                            border: `1px solid ${r.mine ? "rgba(0,206,200,0.50)" : "rgba(255,255,255,0.15)"}`,
+                                                            background: r.mine ? "rgb(var(--nx-accent-rgb) / 0.25)" : "rgba(255,255,255,0.10)",
+                                                            border: `1px solid ${r.mine ? "rgb(var(--nx-accent-rgb) / 0.50)" : "rgba(255,255,255,0.15)"}`,
                                                         }}>
                                                         <Emoji char={r.emoji} size={14} />
                                                         <span className="font-bold opacity-90">{r.count}</span>
@@ -4681,7 +4681,7 @@ export function NxSocialDesktop() {
                                         {/* Jadvalda turgan xabar belgi (faqat egasiga ko'rinadi) */}
                                         {m.scheduledFor && (
                                             <div className="flex items-center gap-1.5 mt-1 px-2 py-1 rounded-md"
-                                                style={{ background: "rgba(43,62,232,0.20)", border: "1px dashed rgba(0,206,200,0.40)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.40)" }}>
                                                 <Clock className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />
                                                 <span className="text-[10px] font-black" style={{ color: "var(--nx-accent)" }}>
                                                     Jadvalda: {new Date(m.scheduledFor).toLocaleString("uz-UZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
@@ -4821,8 +4821,8 @@ export function NxSocialDesktop() {
                                                                 }}
                                                                 className="flex-1 min-w-0 py-1.5 px-2 rounded-md text-[11px] font-bold text-[var(--nx-text)] truncate transition hover:brightness-110 active:scale-95"
                                                                 style={{
-                                                                    background: m.mine ? "rgba(255,255,255,0.14)" : "rgba(0,206,200,0.18)",
-                                                                    border: `1px solid ${m.mine ? "rgba(255,255,255,0.20)" : "rgba(0,206,200,0.35)"}`,
+                                                                    background: m.mine ? "rgba(255,255,255,0.14)" : "rgb(var(--nx-accent-rgb) / 0.18)",
+                                                                    border: `1px solid ${m.mine ? "rgba(255,255,255,0.20)" : "rgb(var(--nx-accent-rgb) / 0.35)"}`,
                                                                 }}
                                                             >
                                                                 {btn.text}
@@ -4845,7 +4845,7 @@ export function NxSocialDesktop() {
                                     className="pointer-events-auto w-11 h-11 rounded-full flex items-center justify-center transition hover:scale-105 active:scale-95 relative"
                                     style={{
                                         background: "var(--nx-surface)",
-                                        border: "1px solid rgba(43,62,232,0.40)",
+                                        border: "1px solid rgb(var(--nx-accent-rgb) / 0.40)",
                                         boxShadow: "0 4px 20px rgba(0,0,0,0.50)",
                                     }}>
                                     <ChevronDown className="w-5 h-5" style={{ color: "rgba(220,230,255,0.90)" }} />
@@ -4863,9 +4863,9 @@ export function NxSocialDesktop() {
                         {/* Emoji shortcode popover (:smile → 😊) */}
                         {emojiCode !== null && emojiCodeSuggestions.length > 0 && (
                             <div className="mx-3 mb-1 rounded-xl overflow-hidden flex-shrink-0"
-                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 -4px 16px rgba(0,0,0,0.30)" }}>
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 -4px 16px rgba(0,0,0,0.30)" }}>
                                 <p className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border-b"
-                                    style={{ color: "#F59E0B", borderColor: "rgba(43,62,232,0.20)" }}>
+                                    style={{ color: "#F59E0B", borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                     :{emojiCode} · ↑↓ · Enter/Tab — kiritish · Esc — bekor
                                 </p>
                                 <div className="max-h-48 overflow-y-auto">
@@ -4885,9 +4885,9 @@ export function NxSocialDesktop() {
                         {/* @mention autocomplete popover */}
                         {mentionQuery !== null && mentionSuggestions.length > 0 && (
                             <div className="mx-3 mb-1 rounded-xl overflow-hidden flex-shrink-0"
-                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 -4px 16px rgba(0,0,0,0.30)" }}>
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 -4px 16px rgba(0,0,0,0.30)" }}>
                                 <p className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border-b"
-                                    style={{ color: "var(--nx-accent)", borderColor: "rgba(43,62,232,0.20)" }}>
+                                    style={{ color: "var(--nx-accent)", borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                     @{mentionQuery || "..."} · ↑↓ · Enter — tanlash · Esc — bekor
                                 </p>
                                 {mentionSuggestions.map((s, i) => (
@@ -4895,11 +4895,11 @@ export function NxSocialDesktop() {
                                         onClick={() => insertMention(s.username)}
                                         onMouseEnter={() => setMentionIdx(i)}
                                         className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition"
-                                        style={{ background: i === mentionIdx ? "rgba(0,206,200,0.10)" : "transparent" }}>
+                                        style={{ background: i === mentionIdx ? "rgb(var(--nx-accent-rgb) / 0.10)" : "transparent" }}>
                                         {s.image
                                             ? <Image src={s.image} alt="" width={28} height={28} className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
                                             : <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-                                                style={{ background: "rgba(43,62,232,0.20)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                                 <BotIcon className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
                                             </div>
                                         }
@@ -4916,7 +4916,7 @@ export function NxSocialDesktop() {
                         {/* Fayl yuklash progress bar */}
                         {uploadInfo && (
                             <div className="px-3 py-2 flex-shrink-0"
-                                style={{ borderTop: "1px solid rgba(43,62,232,0.20)", background: "var(--nx-surface)" }}>
+                                style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", background: "var(--nx-surface)" }}>
                                 <div className="flex items-center gap-2 mb-1.5">
                                     <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                     <p className="text-xs font-bold truncate flex-1" style={{ color: "rgba(220,230,255,0.95)" }}>
@@ -4929,7 +4929,7 @@ export function NxSocialDesktop() {
                                         {formatBytes(uploadInfo.size)}
                                     </span>
                                 </div>
-                                <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(43,62,232,0.15)" }}>
+                                <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                     <div className="h-full transition-all duration-200 rounded-full"
                                         style={{
                                             width: `${uploadInfo.progress}%`,
@@ -4942,7 +4942,7 @@ export function NxSocialDesktop() {
                         {/* Undo-send bar (5s grace period) */}
                         {pendingSend && (
                             <div className="px-3 py-2 flex items-center gap-2 flex-shrink-0"
-                                style={{ borderTop: "1px solid rgba(0,206,200,0.30)", background: "rgba(0,206,200,0.10)" }}>
+                                style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                 <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs font-bold truncate" style={{ color: "var(--nx-accent)" }}>
@@ -4954,12 +4954,12 @@ export function NxSocialDesktop() {
                                 </div>
                                 <button onClick={cancelPending}
                                     className="text-[11px] font-black px-3 py-1.5 rounded-md"
-                                    style={{ background: "var(--nx-surface)", color: "#fff", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                    style={{ background: "var(--nx-surface)", color: "#fff", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                     BEKOR
                                 </button>
                                 <button onClick={flushPending}
                                     className="text-[11px] font-black px-3 py-1.5 rounded-md"
-                                    style={{ background: "rgba(0,206,200,0.30)", color: "#fff", border: "1px solid rgba(0,206,200,0.50)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.30)", color: "#fff", border: "1px solid rgb(var(--nx-accent-rgb) / 0.50)" }}>
                                     DARHOL
                                 </button>
                             </div>
@@ -5007,7 +5007,7 @@ export function NxSocialDesktop() {
                             const originalText = original?.text ?? "";
                             return (
                                 <div className="px-3 py-2 flex items-center gap-2 flex-shrink-0"
-                                    style={{ borderTop: "1px solid rgba(43,62,232,0.14)", background: "rgba(0,206,200,0.06)" }}>
+                                    style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", background: "rgb(var(--nx-accent-rgb) / 0.06)" }}>
                                     <Edit3 className="w-4 h-4 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                     <div className="flex-1 min-w-0 pl-2 border-l-2" style={{ borderColor: "var(--nx-accent)" }}>
                                         <p className="text-[11px] font-bold" style={{ color: "var(--nx-accent)" }}>Tahrirlash</p>
@@ -5017,7 +5017,7 @@ export function NxSocialDesktop() {
                                     </div>
                                     <button onClick={() => { setEditingId(null); setEditingText(""); }} title="Bekor (Esc)"
                                         className="w-7 h-7 rounded-md flex items-center justify-center"
-                                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                         <X className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
                                     </button>
                                 </div>
@@ -5026,7 +5026,7 @@ export function NxSocialDesktop() {
                         {/* Reply preview (composer ustida) */}
                         {replyTo && (
                             <div className="px-3 py-2 flex items-center gap-2 flex-shrink-0"
-                                style={{ borderTop: "1px solid rgba(43,62,232,0.14)", background: "var(--nx-surface)" }}>
+                                style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", background: "var(--nx-surface)" }}>
                                 <Reply className="w-4 h-4 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                 <div className="flex-1 min-w-0 pl-2 border-l-2" style={{ borderColor: "var(--nx-accent)" }}>
                                     <p className="text-[11px] font-bold" style={{ color: "var(--nx-accent)" }}>
@@ -5038,7 +5038,7 @@ export function NxSocialDesktop() {
                                 </div>
                                 <button onClick={() => setReplyTo(null)} title="Bekor"
                                     className="w-7 h-7 rounded-md flex items-center justify-center"
-                                    style={{ background: "rgba(43,62,232,0.10)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                     <X className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
                                 </button>
                             </div>
@@ -5047,14 +5047,14 @@ export function NxSocialDesktop() {
                         {/* Slash command autocomplete — input `/` bilan boshlansa */}
                         {slashOpen && slashFiltered.length > 0 && !peer?.isAgent && (
                             <div className="mx-3 mb-1 rounded-xl overflow-hidden flex-shrink-0"
-                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(0,206,200,0.35)", boxShadow: "0 8px 24px rgba(0,0,0,0.55)" }}>
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", boxShadow: "0 8px 24px rgba(0,0,0,0.55)" }}>
                                 {slashFiltered.map(c => {
                                     const Icon = c.icon;
                                     return (
                                         <button key={c.cmd}
                                             onClick={() => { setInput(`/${c.cmd} `); setSlashOpen(false); }}
                                             className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-white/[0.05] border-b transition"
-                                            style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                                            style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                             <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                                                 style={{ background: "var(--nx-accent)" }}>
                                                 <Icon className="w-4 h-4 text-[var(--nx-text)]" />
@@ -5072,7 +5072,7 @@ export function NxSocialDesktop() {
                         {/* Smart reply chip'lar — Gemini'dan 3 ta tez javob (peer xabari bo'lganda) */}
                         {!smartRepliesDismissed && !editingId && !replyTo && !recording && !videoRecording && (smartReplies.length > 0 || smartRepliesLoading) && (
                             <div className="px-3 py-2 flex items-center gap-1.5 flex-shrink-0 overflow-x-auto nx-scrollbar"
-                                style={{ borderTop: "1px solid rgba(43,62,232,0.14)", background: "var(--nx-surface)" }}>
+                                style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", background: "var(--nx-surface)" }}>
                                 <Sparkles className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                 {smartRepliesLoading ? (
                                     <span className="text-[11px] font-bold" style={{ color: "rgba(160,180,220,0.65)" }}>
@@ -5089,9 +5089,9 @@ export function NxSocialDesktop() {
                                             title="Bosing → matnga qo'yiladi (Enter yuboradi)"
                                             className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition hover:brightness-125 active:scale-95"
                                             style={{
-                                                background: "linear-gradient(135deg, rgba(43,62,232,0.20), rgba(0,206,200,0.20))",
+                                                background: "linear-gradient(135deg, rgb(var(--nx-accent-rgb) / 0.20), rgb(var(--nx-accent-rgb) / 0.20))",
                                                 color: "#fff",
-                                                border: "1px solid rgba(0,206,200,0.35)",
+                                                border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)",
                                             }}>
                                             {reply}
                                         </button>
@@ -5106,7 +5106,7 @@ export function NxSocialDesktop() {
 
                         {/* Composer — Telegram uslubi */}
                         <div className="p-3 flex items-end gap-2 flex-shrink-0 relative"
-                            style={{ borderTop: (replyTo || editingId) ? "none" : "1px solid rgba(43,62,232,0.14)", background: "rgba(8,12,32,0.55)" }}>
+                            style={{ borderTop: (replyTo || editingId) ? "none" : "1px solid rgb(var(--nx-accent-rgb) / 0.14)", background: "rgba(8,12,32,0.55)" }}>
                             <input ref={fileInputRef} type="file" multiple
                                 accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip,.txt"
                                 onChange={e => {
@@ -5148,7 +5148,7 @@ export function NxSocialDesktop() {
                                             style={{
                                                 width: 40, height: 40,
                                                 borderRadius: "44%",
-                                                border: "2px solid rgba(0,206,200,0.60)",
+                                                border: "2px solid rgb(var(--nx-accent-rgb) / 0.60)",
                                             }}>
                                             <video ref={videoPreviewRef} muted playsInline autoPlay
                                                 className="w-full h-full object-cover" />
@@ -5183,7 +5183,7 @@ export function NxSocialDesktop() {
                                         <ComposerBtn icon={Plus} title="Ilova qo'shish" onClick={() => setAttachOpen(v => !v)} accent={attachOpen} loading={uploading || locBusy} />
                                         {attachOpen && (
                                             <div className="absolute bottom-full mb-2 left-0 z-30 rounded-2xl overflow-hidden p-2"
-                                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)", minWidth: 260 }}>
+                                                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)", minWidth: 260 }}>
                                                 <div className="grid grid-cols-3 gap-1">
                                                     <AttachMenuItem icon={Paperclip} label="Fayl" onClick={() => { setAttachOpen(false); fileInputRef.current?.click(); }} />
                                                     <AttachMenuItem icon={Users} label="Kontakt" onClick={() => { setAttachOpen(false); setContactPickerOpen(true); }} />
@@ -5218,8 +5218,8 @@ export function NxSocialDesktop() {
                                     {/* Location sub-picker (attach menu'dan chaqiriladi) */}
                                     {locationPickerOpen && (
                                         <div className="absolute bottom-full mb-2 left-3 z-30 rounded-lg overflow-hidden"
-                                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)", minWidth: 200 }}>
-                                            <div className="px-3 py-1.5 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                                            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)", minWidth: 200 }}>
+                                            <div className="px-3 py-1.5 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                                 <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--nx-accent)" }}>Joylashuv turi</p>
                                                 <button onClick={() => setLocationPickerOpen(false)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-white/[0.08]">
                                                     <X className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
@@ -5243,7 +5243,7 @@ export function NxSocialDesktop() {
                                     {/* Schedule sub-picker */}
                                     {scheduleOpen && (
                                         <div className="absolute bottom-full mb-2 left-3 z-30 rounded-lg overflow-hidden p-3"
-                                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)", minWidth: 260 }}>
+                                            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)", minWidth: 260 }}>
                                             <div className="flex items-center justify-between mb-1.5">
                                                 <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--nx-accent)" }}>Qachon jo&apos;natilsin</p>
                                                 <button onClick={() => setScheduleOpen(false)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-white/[0.08]">
@@ -5253,7 +5253,7 @@ export function NxSocialDesktop() {
                                             <input type="datetime-local" value={scheduleDateTime}
                                                 onChange={e => setScheduleDateTime(e.target.value)}
                                                 className="w-full h-9 px-2 rounded text-xs text-[var(--nx-text)] bg-transparent focus:outline-none mb-2"
-                                                style={{ border: "1px solid rgba(43,62,232,0.30)", colorScheme: "dark" }} />
+                                                style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", colorScheme: "dark" }} />
                                             <div className="flex gap-1.5 mb-2">
                                                 {[
                                                     { s: 3600, label: "1 soat" },
@@ -5267,7 +5267,7 @@ export function NxSocialDesktop() {
                                                             setScheduleDateTime(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
                                                         }}
                                                         className="flex-1 text-[10px] font-bold py-1 rounded hover:bg-white/[0.08]"
-                                                        style={{ color: "rgba(220,230,255,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                                        style={{ color: "rgba(220,230,255,0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                                         {o.label}
                                                     </button>
                                                 ))}
@@ -5284,8 +5284,8 @@ export function NxSocialDesktop() {
                                     {/* TTL sub-picker */}
                                     {ttlPickerOpen && (
                                         <div className="absolute bottom-full mb-2 left-3 z-30 rounded-lg overflow-hidden"
-                                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)", minWidth: 160 }}>
-                                            <div className="px-3 py-1.5 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                                            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)", minWidth: 160 }}>
+                                            <div className="px-3 py-1.5 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                                 <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--nx-accent)" }}>Taymer</p>
                                                 <button onClick={() => setTtlPickerOpen(false)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-white/[0.08]">
                                                     <X className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
@@ -5302,7 +5302,7 @@ export function NxSocialDesktop() {
                                                 <button key={o.label}
                                                     onClick={() => { setNextTtl(o.s); setTtlPickerOpen(false); }}
                                                     className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--nx-text)] hover:bg-white/[0.06] text-left"
-                                                    style={nextTtl === o.s ? { background: "rgba(0,206,200,0.14)", color: "var(--nx-accent)" } : undefined}>
+                                                    style={nextTtl === o.s ? { background: "rgb(var(--nx-accent-rgb) / 0.14)", color: "var(--nx-accent)" } : undefined}>
                                                     {o.s === null
                                                         ? <Timer className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.75)" }} />
                                                         : <Flame className="w-3.5 h-3.5" style={{ color: "#F97316" }} />
@@ -5322,12 +5322,12 @@ export function NxSocialDesktop() {
                                             <div className="absolute bottom-full mb-2 left-3 z-40 rounded-xl overflow-hidden max-h-72 overflow-y-auto"
                                                 style={{
                                                     background: "var(--nx-surface)",
-                                                    border: "1px solid rgba(43,62,232,0.35)",
+                                                    border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)",
                                                     boxShadow: "0 12px 32px rgba(0,0,0,0.60)",
                                                     minWidth: 320,
                                                 }}>
                                                 <div className="px-3 py-2 flex items-center gap-1.5 border-b"
-                                                    style={{ borderColor: "rgba(43,62,232,0.20)", background: "rgba(43,62,232,0.08)" }}>
+                                                    style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)", background: "rgb(var(--nx-accent-rgb) / 0.08)" }}>
                                                     <BotIcon className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />
                                                     <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--nx-accent)" }}>
                                                         {peer?.name ?? peer?.username ?? "AGENT"} · BUYRUQLAR
@@ -5347,7 +5347,7 @@ export function NxSocialDesktop() {
                                                             setTimeout(() => composerInputRef.current?.focus(), 0);
                                                         }}
                                                         className="w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-white/[0.06] transition"
-                                                        style={i === 0 ? { background: "rgba(0,206,200,0.10)" } : undefined}
+                                                        style={i === 0 ? { background: "rgb(var(--nx-accent-rgb) / 0.10)" } : undefined}
                                                     >
                                                         <span className="text-xs font-mono font-bold flex-shrink-0" style={{ color: "var(--nx-accent)" }}>
                                                             /{c.cmd}
@@ -5434,7 +5434,7 @@ export function NxSocialDesktop() {
                                             </button>
                                             {sendMenuOpen && (
                                                 <div className="absolute bottom-full mb-2 right-0 z-40 rounded-xl overflow-hidden min-w-[220px]"
-                                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}
+                                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}
                                                     onMouseLeave={() => setSendMenuOpen(false)}>
                                                     <MsgMenuItem icon={BellOff} label="Ovozsiz yuborish"
                                                         onClick={() => { setSendMenuOpen(false); sendSilent(); }} />
@@ -5454,7 +5454,7 @@ export function NxSocialDesktop() {
                                                 ? "Ovozli xabar (bosib turing) — tap: video xabarga o'tish"
                                                 : "Video xabar (bosib turing) — tap: ovozli xabarga o'tish"}
                                             className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition active:scale-95 select-none"
-                                            style={{ background: "rgba(43,62,232,0.08)", touchAction: "none" }}
+                                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", touchAction: "none" }}
                                         >
                                             {composerMode === "voice"
                                                 ? <Mic className="w-4 h-4" style={{ color: "rgba(160,176,224,0.90)" }} />
@@ -5501,9 +5501,9 @@ export function NxSocialDesktop() {
                             <div className="fixed inset-0 z-[220]" onClick={() => { setContactPickerOpen(false); setContactPickerQuery(""); }}>
                                 <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
                                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[440px] max-h-[75vh] rounded-2xl overflow-hidden flex flex-col"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
                                     onClick={e => e.stopPropagation()}>
-                                    <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                                    <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                         <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "var(--nx-accent)" }}>
                                             <Users className="w-4 h-4 text-[var(--nx-text)]" />
                                         </div>
@@ -5512,11 +5512,11 @@ export function NxSocialDesktop() {
                                             <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.75)" }}>Ro&apos;yhatdan tanlang</p>
                                         </div>
                                         <button onClick={() => { setContactPickerOpen(false); setContactPickerQuery(""); }} className="w-8 h-8 rounded-lg flex items-center justify-center"
-                                            style={{ background: "rgba(43,62,232,0.10)" }}>
+                                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                             <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                                         </button>
                                     </div>
-                                    <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                                    <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                         <div className="relative">
                                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.60)" }} />
                                             <input type="text" value={contactPickerQuery}
@@ -5524,7 +5524,7 @@ export function NxSocialDesktop() {
                                                 placeholder="Ism yoki @username..."
                                                 autoFocus
                                                 className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs bg-transparent focus:outline-none"
-                                                style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(230,238,255,0.90)" }} />
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", color: "rgba(230,238,255,0.90)" }} />
                                         </div>
                                     </div>
                                     <div className="flex-1 overflow-y-auto nx-scrollbar">
@@ -5543,7 +5543,7 @@ export function NxSocialDesktop() {
                                                 <button key={c.conversationId}
                                                     onClick={() => sendContact(c)}
                                                     className="w-full flex items-center gap-3 px-4 py-2.5 border-b hover:bg-white/[0.04] text-left transition"
-                                                    style={{ borderColor: "rgba(43,62,232,0.08)" }}>
+                                                    style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.08)" }}>
                                                     <ConvAvatar other={c.other} isSelf={false} />
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-xs font-bold truncate" style={{ color: "rgba(230,238,255,0.95)" }}>
@@ -5648,8 +5648,8 @@ export function NxSocialDesktop() {
             )}
             {selectedId && !selectedChannel && showInfo && !infoView && (
                 <div className="w-[320px] flex-shrink-0 flex flex-col border-l overflow-y-auto nx-scrollbar"
-                    style={{ borderColor: "rgba(43,62,232,0.15)", background: "rgba(8,12,32,0.65)" }}>
-                    <div className="p-5 text-center border-b" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                    style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "rgba(8,12,32,0.65)" }}>
+                    <div className="p-5 text-center border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                         <div className="w-24 h-24 rounded-3xl overflow-hidden mx-auto mb-3 flex items-center justify-center"
                             style={{ background: "var(--nx-accent)" }}>
                             {peer?.image ? (
@@ -5669,7 +5669,7 @@ export function NxSocialDesktop() {
                         )}
                         {peer?.isAgent && (
                             <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full"
-                                style={{ background: "rgba(0,206,200,0.15)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                 <BotIcon className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />
                                 <span className="text-[10px] font-black" style={{ color: "var(--nx-accent)" }}>Rasmiy agent</span>
                             </div>
@@ -5687,7 +5687,7 @@ export function NxSocialDesktop() {
                     {/* Umumiy media (suhbatdagi barcha rasmlar) */}
                     {/* Chat statistikasi */}
                     {chatStats && chatStats.total > 0 && (
-                        <div className="p-4 border-t" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                        <div className="p-4 border-t" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: "rgba(140,160,210,0.55)" }}>
                                 Statistika
                             </p>
@@ -5724,7 +5724,7 @@ export function NxSocialDesktop() {
                             )}
                             {/* Boshlangan sana + eng ko'p yozgan kun */}
                             {chatStats.firstDate && (
-                                <p className="text-[10px] mt-3 pt-2 border-t" style={{ color: "rgba(140,160,210,0.60)", borderColor: "rgba(43,62,232,0.10)" }}>
+                                <p className="text-[10px] mt-3 pt-2 border-t" style={{ color: "rgba(140,160,210,0.60)", borderColor: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                     Boshlangan: {new Date(chatStats.firstDate).toLocaleDateString("uz-UZ", { day: "numeric", month: "long", year: "numeric" })}
                                 </p>
                             )}
@@ -5740,7 +5740,7 @@ export function NxSocialDesktop() {
 
                     {/* Umumiy guruh + kanallar (Telegram uslub) */}
                     {(commonGroups.length > 0 || commonChannels.length > 0) && (
-                        <div className="p-4 border-t space-y-2" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                        <div className="p-4 border-t space-y-2" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.55)" }}>
                                 Umumiy
                             </p>
@@ -5754,9 +5754,9 @@ export function NxSocialDesktop() {
                                             <button key={g.id}
                                                 onClick={() => { setListTab("groups"); setSelectedChannel(g.id); }}
                                                 className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/[0.04] text-left"
-                                                style={{ background: "rgba(43,62,232,0.06)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)" }}>
                                                 <div className="w-8 h-8 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center"
-                                                    style={{ background: "rgba(43,62,232,0.15)" }}>
+                                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                                     {g.avatarUrl
                                                         ? <img src={g.avatarUrl} alt="" className="w-full h-full object-cover" />
                                                         : <Users className="w-4 h-4" style={{ color: "rgba(180,195,235,0.60)" }} />}
@@ -5785,9 +5785,9 @@ export function NxSocialDesktop() {
                                             <button key={g.id}
                                                 onClick={() => { setListTab("channels"); setSelectedChannel(g.id); }}
                                                 className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/[0.04] text-left"
-                                                style={{ background: "rgba(43,62,232,0.06)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)" }}>
                                                 <div className="w-8 h-8 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center"
-                                                    style={{ background: "rgba(43,62,232,0.15)" }}>
+                                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                                     {g.avatarUrl
                                                         ? <img src={g.avatarUrl} alt="" className="w-full h-full object-cover" />
                                                         : <Megaphone className="w-4 h-4" style={{ color: "rgba(180,195,235,0.60)" }} />}
@@ -5810,10 +5810,10 @@ export function NxSocialDesktop() {
                     )}
 
                     {peer?.username && (
-                        <div className="p-4 border-t" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                        <div className="p-4 border-t" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             <Link href={`/nexus/u/${peer.username}`}
                                 className="w-full py-2.5 rounded-xl text-xs font-black text-center block"
-                                style={{ background: "rgba(43,62,232,0.15)", color: "rgba(220,230,255,0.95)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", color: "rgba(220,230,255,0.95)" }}>
                                 Profilni ochish
                             </Link>
                         </div>
@@ -5828,8 +5828,8 @@ export function NxSocialDesktop() {
                     onClick={() => !forwarding && (setForwardMsg(null), setBulkForwardOpen(false))}>
                     <div onClick={e => e.stopPropagation()}
                         className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
-                        style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "80vh" }}>
-                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                        style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", maxHeight: "80vh" }}>
+                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <div className="flex items-center gap-2">
                                 <Forward className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                 <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>
@@ -5841,7 +5841,7 @@ export function NxSocialDesktop() {
                                 <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                             </button>
                         </div>
-                        <div className="p-3 border-b text-xs italic line-clamp-2" style={{ borderColor: "rgba(43,62,232,0.20)", color: "rgba(160,176,224,0.75)" }}>
+                        <div className="p-3 border-b text-xs italic line-clamp-2" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)", color: "rgba(160,176,224,0.75)" }}>
                             {bulkForwardOpen
                                 ? `${selectedIds.size} ta tanlangan xabar birga jo'natiladi`
                                 : (forwardMsg?.text || (forwardMsg?.mediaType ? `[${forwardMsg.mediaType}]` : "(bo'sh)"))
@@ -5863,7 +5863,7 @@ export function NxSocialDesktop() {
                                         {c.other?.image
                                             ? <Image src={c.other.image} alt="" width={36} height={36} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
                                             : <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-                                                style={{ background: "rgba(43,62,232,0.20)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                                 <BotIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                                             </div>
                                         }
@@ -5882,7 +5882,7 @@ export function NxSocialDesktop() {
                             )}
                         </div>
                         {forwarding && (
-                            <div className="p-3 border-t flex items-center justify-center gap-2" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                            <div className="p-3 border-t flex items-center justify-center gap-2" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                 <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--nx-accent)" }} />
                                 <span className="text-xs" style={{ color: "rgba(160,176,224,0.85)" }}>Yuborilmoqda...</span>
                             </div>
@@ -5899,8 +5899,8 @@ export function NxSocialDesktop() {
                     onClick={() => setBookmarksOpen(false)}>
                     <div onClick={e => e.stopPropagation()}
                         className="w-full max-w-lg rounded-2xl overflow-hidden flex flex-col"
-                        style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "80vh" }}>
-                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                        style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", maxHeight: "80vh" }}>
+                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <div className="flex items-center gap-2">
                                 <BookmarkCheck className="w-4 h-4" style={{ color: "#F59E0B" }} />
                                 <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Saqlangan xabarlar</p>
@@ -5937,14 +5937,14 @@ export function NxSocialDesktop() {
                                         }
                                     }}
                                         className="w-full text-left px-4 py-3 border-b hover:bg-white/[0.04] transition"
-                                        style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                                        style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                         <div className="flex items-center gap-2 mb-1">
                                             {b.kind === "dm" ? (
                                                 b.peer?.image
                                                     ? <Image src={b.peer.image} alt="" width={20} height={20} className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
-                                                    : <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "rgba(43,62,232,0.20)" }} />
+                                                    : <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }} />
                                             ) : (
-                                                <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(43,62,232,0.20)" }}>
+                                                <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                                     {b.channel?.type === "GROUP"
                                                         ? <Users className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
                                                         : <Megaphone className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
@@ -5957,7 +5957,7 @@ export function NxSocialDesktop() {
                                                     : (b.channel?.name ?? "Kanal")}
                                             </span>
                                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                                                style={{ background: b.kind === "channel" ? "rgba(0,206,200,0.15)" : (b.message.mine ? "rgba(43,62,232,0.20)" : "rgba(0,206,200,0.15)"), color: b.kind === "channel" ? "var(--nx-accent)" : (b.message.mine ? "rgba(180,195,235,0.90)" : "var(--nx-accent)") }}>
+                                                style={{ background: b.kind === "channel" ? "rgb(var(--nx-accent-rgb) / 0.15)" : (b.message.mine ? "rgb(var(--nx-accent-rgb) / 0.20)" : "rgb(var(--nx-accent-rgb) / 0.15)"), color: b.kind === "channel" ? "var(--nx-accent)" : (b.message.mine ? "rgba(180,195,235,0.90)" : "var(--nx-accent)") }}>
                                                 {b.kind === "channel" ? (b.channel?.type === "GROUP" ? "Guruh" : "Kanal") : (b.message.mine ? "Siz" : "U")}
                                             </span>
                                             <span className="ml-auto text-[10px] tabular-nums" style={{ color: "rgba(140,160,210,0.60)" }}>
@@ -5982,14 +5982,14 @@ export function NxSocialDesktop() {
                     onClick={() => setDraftsOpen(false)}>
                     <div onClick={e => e.stopPropagation()}
                         className="w-full max-w-lg rounded-2xl overflow-hidden flex flex-col"
-                        style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "80vh" }}>
-                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                        style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", maxHeight: "80vh" }}>
+                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <div className="flex items-center gap-2">
                                 <FileText className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                 <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Yakunlanmagan draftlar</p>
                                 {drafts.length > 0 && (
                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                        style={{ background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)" }}>{drafts.length}</span>
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", color: "var(--nx-accent)" }}>{drafts.length}</span>
                                 )}
                             </div>
                             <button onClick={() => setDraftsOpen(false)}
@@ -6006,17 +6006,17 @@ export function NxSocialDesktop() {
                                 drafts.map(d => (
                                     <div key={`${d.kind}:${d.id}`}
                                         className="flex items-center gap-3 px-4 py-3 border-b hover:bg-white/[0.04] transition"
-                                        style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                                        style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                         {d.kind === "dm" ? (
                                             d.peer?.image
                                                 ? <Image src={d.peer.image} alt="" width={32} height={32} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
                                                 : <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                                                    style={{ background: "rgba(43,62,232,0.20)" }}>
+                                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                                     <BotIcon className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
                                                 </div>
                                         ) : (
                                             <div className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0"
-                                                style={{ background: "rgba(43,62,232,0.20)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                                 <Megaphone className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
                                             </div>
                                         )}
@@ -6056,8 +6056,8 @@ export function NxSocialDesktop() {
                     onClick={() => setShortcutsHelpOpen(false)}>
                     <div onClick={e => e.stopPropagation()}
                         className="w-full max-w-md rounded-2xl overflow-hidden"
-                        style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)" }}>
-                        <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                        style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
+                        <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Klaviatura yorliqlari</p>
                             <button onClick={() => setShortcutsHelpOpen(false)}
                                 className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
@@ -6081,7 +6081,7 @@ export function NxSocialDesktop() {
                                             <span key={j}>
                                                 {j > 0 && <span className="mx-0.5 text-[10px] opacity-50">+</span>}
                                                 <kbd className="text-[10px] font-black px-2 py-0.5 rounded"
-                                                    style={{ background: "rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.95)", border: "1px solid rgba(43,62,232,0.35)" }}>
+                                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "rgba(220,230,255,0.95)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                                     {k}
                                                 </kbd>
                                             </span>
@@ -6100,8 +6100,8 @@ export function NxSocialDesktop() {
                     onClick={() => setThemePickerOpen(false)}>
                     <div onClick={e => e.stopPropagation()}
                         className="w-full max-w-md rounded-2xl overflow-hidden"
-                        style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)" }}>
-                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                        style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
+                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <div className="flex items-center gap-2">
                                 <Palette className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                 <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Chat mavzu</p>
@@ -6116,8 +6116,8 @@ export function NxSocialDesktop() {
                                 <button key={id} onClick={() => pickTheme(id)}
                                     className="flex flex-col items-center gap-1.5 py-3 rounded-xl transition"
                                     style={{
-                                        background: (chatTheme === id && !customWallpaperUrl) ? "rgba(0,206,200,0.15)" : "rgba(43,62,232,0.08)",
-                                        border: `1px solid ${(chatTheme === id && !customWallpaperUrl) ? "rgba(0,206,200,0.50)" : "rgba(43,62,232,0.20)"}`,
+                                        background: (chatTheme === id && !customWallpaperUrl) ? "rgb(var(--nx-accent-rgb) / 0.15)" : "rgb(var(--nx-accent-rgb) / 0.08)",
+                                        border: `1px solid ${(chatTheme === id && !customWallpaperUrl) ? "rgb(var(--nx-accent-rgb) / 0.50)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
                                     }}>
                                     <div className="w-14 h-14 rounded-lg"
                                         style={{ background: t.swatch, border: "1px solid rgba(255,255,255,0.10)" }} />
@@ -6130,8 +6130,8 @@ export function NxSocialDesktop() {
                             <label
                                 className="flex flex-col items-center gap-1.5 py-3 rounded-xl transition cursor-pointer"
                                 style={{
-                                    background: customWallpaperUrl ? "rgba(0,206,200,0.15)" : "rgba(43,62,232,0.08)",
-                                    border: `1px dashed ${customWallpaperUrl ? "rgba(0,206,200,0.50)" : "rgba(43,62,232,0.35)"}`,
+                                    background: customWallpaperUrl ? "rgb(var(--nx-accent-rgb) / 0.15)" : "rgb(var(--nx-accent-rgb) / 0.08)",
+                                    border: `1px dashed ${customWallpaperUrl ? "rgb(var(--nx-accent-rgb) / 0.50)" : "rgb(var(--nx-accent-rgb) / 0.35)"}`,
                                 }}>
                                 <input type="file" accept="image/*" className="hidden"
                                     onChange={e => {
@@ -6143,7 +6143,7 @@ export function NxSocialDesktop() {
                                     style={{
                                         background: customWallpaperUrl
                                             ? `url("${customWallpaperUrl}") center/cover`
-                                            : "linear-gradient(135deg,rgba(43,62,232,0.20),rgba(0,206,200,0.15))",
+                                            : "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.20),rgb(var(--nx-accent-rgb) / 0.15))",
                                         border: "1px solid rgba(255,255,255,0.10)",
                                     }}>
                                     {uploadingWallpaper
@@ -6366,8 +6366,8 @@ export function NxSocialDesktop() {
                     onClick={() => setReactionUsers(null)}>
                     <div onClick={e => e.stopPropagation()}
                         className="w-full max-w-sm rounded-2xl overflow-hidden flex flex-col"
-                        style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "70vh" }}>
-                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                        style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", maxHeight: "70vh" }}>
+                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <div className="flex items-center gap-2">
                                 <span className="text-xl">{reactionUsers.emoji}</span>
                                 <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>
@@ -6394,7 +6394,7 @@ export function NxSocialDesktop() {
                                         {u.image
                                             ? <Image src={u.image} alt="" width={36} height={36} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
                                             : <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-                                                style={{ background: "rgba(43,62,232,0.20)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                                 <BotIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                                             </div>
                                         }
@@ -6423,8 +6423,8 @@ export function NxSocialDesktop() {
                     onClick={() => setHistoryModalOpen(false)}>
                     <div onClick={e => e.stopPropagation()}
                         className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
-                        style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "75vh" }}>
-                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                        style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", maxHeight: "75vh" }}>
+                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <div className="flex items-center gap-2">
                                 <History className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                 <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>
@@ -6448,7 +6448,7 @@ export function NxSocialDesktop() {
                             ) : (
                                 historyItems.map((item, idx) => (
                                     <div key={item.id || idx} className="p-3 rounded-xl space-y-1.5"
-                                        style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                                         <div className="flex items-center justify-between text-[10px]" style={{ color: "rgba(140,160,210,0.75)" }}>
                                             <span className="flex items-center gap-1">
                                                 <Clock className="w-3 h-3" />
@@ -6457,7 +6457,7 @@ export function NxSocialDesktop() {
                                                 })}
                                             </span>
                                             <span className="font-bold text-[9px] uppercase px-1.5 py-0.5 rounded"
-                                                style={{ background: "rgba(0,206,200,0.10)", color: "var(--nx-accent)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "var(--nx-accent)" }}>
                                                 Versiya {historyItems.length - idx}
                                             </span>
                                         </div>
@@ -6489,9 +6489,9 @@ export function NxSocialDesktop() {
                 <div className="fixed inset-0 z-[220]" onClick={() => setChatBookmarksOpen(false)}>
                     <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[560px] max-h-[75vh] rounded-2xl overflow-hidden flex flex-col"
-                        style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
                         onClick={e => e.stopPropagation()}>
-                        <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                        <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#F59E0B,#EF4444)" }}>
                                 <BookmarkCheck className="w-4 h-4 text-[var(--nx-text)]" />
                             </div>
@@ -6502,7 +6502,7 @@ export function NxSocialDesktop() {
                                 </p>
                             </div>
                             <button onClick={() => setChatBookmarksOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center"
-                                style={{ background: "rgba(43,62,232,0.10)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                 <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                             </button>
                         </div>
@@ -6535,7 +6535,7 @@ export function NxSocialDesktop() {
                                             }, 100);
                                         }}
                                         className="w-full flex items-start gap-3 px-4 py-3 border-b hover:bg-white/[0.03] text-left transition"
-                                        style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                                        style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                         <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: "linear-gradient(180deg,#F59E0B,#EF4444)" }} />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "#F59E0B" }}>
@@ -6571,15 +6571,15 @@ export function NxSocialDesktop() {
                 <div className="fixed inset-0 z-[220]" onClick={() => setPinnedListOpen(false)}>
                     <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[520px] max-h-[70vh] rounded-2xl overflow-hidden flex flex-col"
-                        style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
                         onClick={e => e.stopPropagation()}>
-                        <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                        <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "var(--nx-accent)" }}>
                                 <Pin className="w-4 h-4 text-[var(--nx-text)]" />
                             </div>
                             <h3 className="text-sm font-black flex-1" style={{ color: "rgba(230,238,255,0.98)" }}>Pinlangan xabarlar</h3>
                             <button onClick={() => setPinnedListOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center"
-                                style={{ background: "rgba(43,62,232,0.10)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                 <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                             </button>
                         </div>
@@ -6593,11 +6593,11 @@ export function NxSocialDesktop() {
                                             setTimeout(() => {
                                                 const el = document.querySelector<HTMLElement>(`[data-msg-id="${m.id}"]`);
                                                 el?.scrollIntoView({ behavior: "smooth", block: "center" });
-                                                el?.animate([{ background: "rgba(0,206,200,0.20)" }, { background: "transparent" }], { duration: 1400 });
+                                                el?.animate([{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }, { background: "transparent" }], { duration: 1400 });
                                             }, 100);
                                         }}
                                         className="w-full flex items-start gap-3 px-4 py-3 border-b hover:bg-white/[0.03] text-left transition"
-                                        style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                                        style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                         <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: "linear-gradient(180deg,var(--nx-accent),var(--nx-accent))" }} />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--nx-accent)" }}>
@@ -6625,7 +6625,7 @@ export function NxSocialDesktop() {
                 <div className="fixed inset-0 z-[240]" onClick={() => { confirmDlg.resolve(false); setConfirmDlg(null); }}>
                     <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[420px] rounded-2xl overflow-hidden"
-                        style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
                         onClick={e => e.stopPropagation()}>
                         <div className="p-5">
                             {confirmDlg.title && (
@@ -6633,17 +6633,17 @@ export function NxSocialDesktop() {
                             )}
                             <p className="text-[13.5px] leading-relaxed" style={{ color: "rgba(220,230,255,0.90)" }}>{confirmDlg.message}</p>
                         </div>
-                        <div className="p-3 flex gap-2 justify-end" style={{ borderTop: "1px solid rgba(43,62,232,0.20)", background: "rgba(3,5,15,0.40)" }}>
+                        <div className="p-3 flex gap-2 justify-end" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", background: "rgba(3,5,15,0.40)" }}>
                             <button onClick={() => { confirmDlg.resolve(false); setConfirmDlg(null); }}
                                 className="px-4 py-2 rounded-lg text-xs font-bold transition hover:brightness-125 active:scale-95"
-                                style={{ background: "rgba(43,62,232,0.10)", color: "rgba(200,215,245,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgba(200,215,245,0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                 {confirmDlg.cancelText ?? "Bekor qilish"}
                             </button>
                             <button onClick={() => { confirmDlg.resolve(true); setConfirmDlg(null); }}
                                 className="px-4 py-2 rounded-lg text-xs font-black transition hover:brightness-110 active:scale-95"
                                 style={confirmDlg.variant === "danger"
                                     ? { background: "linear-gradient(135deg,#EF4444,#DC2626)", color: "white", boxShadow: "0 4px 16px rgba(239,68,68,0.35)" }
-                                    : { background: "var(--nx-accent)", color: "white", boxShadow: "0 4px 16px rgba(43,62,232,0.35)" }}>
+                                    : { background: "var(--nx-accent)", color: "white", boxShadow: "0 4px 16px rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                 {confirmDlg.confirmText ?? "Tasdiqlash"}
                             </button>
                         </div>
@@ -6656,7 +6656,7 @@ export function NxSocialDesktop() {
                 <div className="fixed inset-0 z-[240]" onClick={() => { alertDlg.resolve(); setAlertDlg(null); }}>
                     <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[400px] rounded-2xl overflow-hidden"
-                        style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
                         onClick={e => e.stopPropagation()}>
                         <div className="p-5">
                             {alertDlg.title && (
@@ -6664,10 +6664,10 @@ export function NxSocialDesktop() {
                             )}
                             <p className="text-[13.5px] leading-relaxed" style={{ color: "rgba(220,230,255,0.90)" }}>{alertDlg.message}</p>
                         </div>
-                        <div className="p-3 flex justify-end" style={{ borderTop: "1px solid rgba(43,62,232,0.20)", background: "rgba(3,5,15,0.40)" }}>
+                        <div className="p-3 flex justify-end" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", background: "rgba(3,5,15,0.40)" }}>
                             <button onClick={() => { alertDlg.resolve(); setAlertDlg(null); }}
                                 className="px-5 py-2 rounded-lg text-xs font-black transition hover:brightness-110 active:scale-95"
-                                style={{ background: "var(--nx-accent)", color: "white", boxShadow: "0 4px 16px rgba(43,62,232,0.35)" }}>
+                                style={{ background: "var(--nx-accent)", color: "white", boxShadow: "0 4px 16px rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                 OK
                             </button>
                         </div>
@@ -6683,8 +6683,8 @@ function StatCard({ label, value, accent }: { label: string; value: string; acce
     return (
         <div className="p-2 rounded-lg"
             style={{
-                background: accent ? "rgba(0,206,200,0.08)" : "rgba(43,62,232,0.06)",
-                border: `1px solid ${accent ? "rgba(0,206,200,0.25)" : "rgba(43,62,232,0.14)"}`,
+                background: accent ? "rgb(var(--nx-accent-rgb) / 0.08)" : "rgb(var(--nx-accent-rgb) / 0.06)",
+                border: `1px solid ${accent ? "rgb(var(--nx-accent-rgb) / 0.25)" : "rgb(var(--nx-accent-rgb) / 0.14)"}`,
             }}>
             <p className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>{label}</p>
             <p className="text-sm font-black" style={{ color: accent ? "var(--nx-accent)" : "rgba(220,230,255,0.95)" }}>{value}</p>
@@ -6700,7 +6700,7 @@ function SharedMediaSection({ messages, onOpen }: { messages: Msg[]; onOpen: (in
     const displayed = images.slice(-9).reverse();
     // Original indexlarini saqlash — galery to'liq images bilan
     return (
-        <div className="p-4 border-t" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+        <div className="p-4 border-t" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
             <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: "rgba(140,160,210,0.55)" }}>
                 Umumiy media ({images.length})
             </p>
@@ -6813,7 +6813,7 @@ function NxChannelInfoPanel({ id }: { id: string }) {
     if (loading) {
         return (
             <div className="w-[320px] flex-shrink-0 flex items-center justify-center border-l"
-                style={{ borderColor: "rgba(43,62,232,0.15)", background: "rgba(8,12,32,0.65)" }}>
+                style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "rgba(8,12,32,0.65)" }}>
                 <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--nx-accent)" }} />
             </div>
         );
@@ -6826,21 +6826,21 @@ function NxChannelInfoPanel({ id }: { id: string }) {
 
     return (
         <div className="w-[320px] flex-shrink-0 flex flex-col border-l overflow-y-auto"
-            style={{ borderColor: "rgba(43,62,232,0.15)", background: "rgba(8,12,32,0.65)" }}>
-            <div className="p-5 text-center border-b" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+            style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "rgba(8,12,32,0.65)" }}>
+            <div className="p-5 text-center border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                 <img src={avatar} alt="" className="w-24 h-24 rounded-3xl object-cover mx-auto mb-3 bg-white" />
                 <p className="text-base font-black text-[var(--nx-text)] truncate">{info.name}</p>
                 {info.handle && (
                     <p className="text-xs mt-0.5" style={{ color: "rgba(140,160,210,0.75)" }}>@{info.handle}</p>
                 )}
                 <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
-                    style={{ background: "rgba(0,206,200,0.12)", color: "var(--nx-accent)" }}>
+                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", color: "var(--nx-accent)" }}>
                     <KindIcon className="w-3 h-3" />
                     {kindLabel} · {info.memberCount} a&apos;zo
                 </div>
             </div>
             {info.description && (
-                <div className="p-4 border-b" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                <div className="p-4 border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "rgba(140,160,210,0.55)" }}>Tavsif</p>
                     <p className="text-xs whitespace-pre-wrap" style={{ color: "rgba(220,230,255,0.90)" }}>{info.description}</p>
                 </div>
@@ -6859,7 +6859,7 @@ function NxChannelInfoPanel({ id }: { id: string }) {
                                 {m.image
                                     ? <Image src={m.image} alt="" width={32} height={32} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
                                     : <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                                        style={{ background: "rgba(43,62,232,0.20)" }}>
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                         <BotIcon className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
                                     </div>
                                 }
@@ -6884,7 +6884,7 @@ function NxChannelInfoPanel({ id }: { id: string }) {
                                 )}
                                 {memberMenuFor === m.profileId && (
                                     <div className="absolute right-2 top-full mt-1 z-30 rounded-lg overflow-hidden min-w-[140px]"
-                                        style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)" }}>
+                                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)" }}>
                                         {m.role === "ADMIN" ? (
                                             <button onClick={() => changeRole(m.profileId, "MEMBER")}
                                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--nx-text)] hover:bg-white/[0.06] text-left">
@@ -7069,19 +7069,19 @@ function MediaGallery({
                 onClick={e => e.stopPropagation()}
                 style={{
                     background: "var(--nx-surface)",
-                    border: "1px solid rgba(43,62,232,0.30)",
+                    border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)",
                     backdropFilter: "blur(10px)",
                     boxShadow: "0 8px 32px rgba(0,0,0,0.60)",
                 }}>
                 <span className="px-2 text-[11px] font-black tabular-nums" style={{ color: "rgba(200,215,245,0.85)" }}>
                     {idx + 1} / {images.length}
                 </span>
-                <div className="w-px h-5" style={{ background: "rgba(43,62,232,0.30)" }} />
+                <div className="w-px h-5" style={{ background: "rgb(var(--nx-accent-rgb) / 0.30)" }} />
                 <ToolBtn icon={Download} title="Yuklab olish" onClick={download} />
                 <ToolBtn icon={Forward}  title="Ulashish" onClick={share} />
                 <ToolBtn icon={Copy}     title="Rasmni nusxa olish" onClick={copyImage} />
                 <ToolBtn icon={RotateCw} title={`Aylantirish (R) — ${rotate}°`} onClick={rotateCw} />
-                <div className="w-px h-5" style={{ background: "rgba(43,62,232,0.30)" }} />
+                <div className="w-px h-5" style={{ background: "rgb(var(--nx-accent-rgb) / 0.30)" }} />
                 <ToolBtn icon={ZoomOut}  title="Kichraytirish (−)" onClick={zoomOut} disabled={zoom <= 0.5} />
                 <button onClick={fitScreen}
                     title="1:1 asl o'lchamga qaytish"
@@ -7091,7 +7091,7 @@ function MediaGallery({
                 </button>
                 <ToolBtn icon={ZoomIn}   title="Kattalashtirish (+)" onClick={zoomIn} disabled={zoom >= 8} />
                 <ToolBtn icon={Maximize2} title="Ekranga to'ldirish" onClick={actualSize} />
-                <div className="w-px h-5" style={{ background: "rgba(43,62,232,0.30)" }} />
+                <div className="w-px h-5" style={{ background: "rgb(var(--nx-accent-rgb) / 0.30)" }} />
                 <ToolBtn icon={X} title="Yopish (Esc)" onClick={onClose} danger />
             </div>
 
@@ -7100,7 +7100,7 @@ function MediaGallery({
                 <div className="absolute top-16 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg text-[11px] font-black text-[var(--nx-text)] pointer-events-none z-[210]"
                     style={{
                         background: "var(--nx-accent)",
-                        boxShadow: "0 4px 20px rgba(0,206,200,0.45)",
+                        boxShadow: "0 4px 20px rgb(var(--nx-accent-rgb) / 0.45)",
                     }}>
                     {toast}
                 </div>
@@ -7110,14 +7110,14 @@ function MediaGallery({
             {idx > 0 && (
                 <button onClick={e => { e.stopPropagation(); setIdx(i => i - 1); }}
                     className="absolute left-4 w-11 h-11 rounded-full flex items-center justify-center transition hover:brightness-125 z-[201]"
-                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", backdropFilter: "blur(6px)" }}>
+                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", backdropFilter: "blur(6px)" }}>
                     <ChevronLeft className="w-5 h-5 text-[var(--nx-text)]" />
                 </button>
             )}
             {idx < images.length - 1 && (
                 <button onClick={e => { e.stopPropagation(); setIdx(i => i + 1); }}
                     className="absolute right-4 w-11 h-11 rounded-full flex items-center justify-center transition hover:brightness-125 z-[201]"
-                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", backdropFilter: "blur(6px)" }}>
+                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", backdropFilter: "blur(6px)" }}>
                     <ChevronRight className="w-5 h-5 text-[var(--nx-text)]" />
                 </button>
             )}
@@ -7142,7 +7142,7 @@ function MediaGallery({
                     onClick={e => e.stopPropagation()}
                     style={{
                         background: "var(--nx-surface)",
-                        border: "1px solid rgba(43,62,232,0.30)",
+                        border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)",
                         backdropFilter: "blur(10px)",
                         boxShadow: "0 8px 32px rgba(0,0,0,0.60)",
                     }}>
@@ -7150,8 +7150,8 @@ function MediaGallery({
                         <button key={i} onClick={() => setIdx(i)}
                             className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 transition"
                             style={{
-                                border: `2px solid ${i === idx ? "var(--nx-accent)" : "rgba(43,62,232,0.20)"}`,
-                                boxShadow: i === idx ? "0 0 12px rgba(0,206,200,0.55)" : undefined,
+                                border: `2px solid ${i === idx ? "var(--nx-accent)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
+                                boxShadow: i === idx ? "0 0 12px rgb(var(--nx-accent-rgb) / 0.55)" : undefined,
                                 opacity: i === idx ? 1 : 0.55,
                             }}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -7163,7 +7163,7 @@ function MediaGallery({
 
             {/* Klaviatura yordami — pastki-chap */}
             <div className="absolute bottom-3 left-3 flex items-center gap-1 px-2 py-1 rounded-lg text-[9.5px] font-black pointer-events-none"
-                style={{ background: "var(--nx-surface)", color: "rgba(160,180,220,0.65)", border: "1px solid rgba(43,62,232,0.20)", backdropFilter: "blur(6px)" }}>
+                style={{ background: "var(--nx-surface)", color: "rgba(160,180,220,0.65)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", backdropFilter: "blur(6px)" }}>
                 ← → · +/− · R · 0 · Esc
             </div>
         </div>
@@ -7258,19 +7258,19 @@ function MediaDetailPanel({ type, messages, onBack, onOpenImage }: {
 
     return (
         <div className="w-[320px] flex-shrink-0 flex flex-col border-l overflow-hidden"
-            style={{ borderColor: "rgba(43,62,232,0.15)", background: "rgba(8,12,32,0.65)" }}>
+            style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "rgba(8,12,32,0.65)" }}>
             {/* Header */}
             <div className="px-4 py-3 flex items-center gap-3 border-b flex-shrink-0"
-                style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                 <button onClick={onBack}
                     className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{ background: "rgba(43,62,232,0.10)" }}>
+                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                     <ChevronLeft className="w-4 h-4 text-[var(--nx-text)]" />
                 </button>
                 <Icon className="w-4 h-4" style={{ color: meta.color }} />
                 <p className="text-sm font-black flex-1 text-[var(--nx-text)]">{meta.label}</p>
                 <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)" }}>
+                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", color: "var(--nx-accent)" }}>
                     {items.length}
                 </span>
             </div>
@@ -7310,8 +7310,8 @@ function MediaDetailPanel({ type, messages, onBack, onOpenImage }: {
                         {items.map(m => m.mediaUrl && (
                             <div key={m.id} className="p-2.5 rounded-xl"
                                 style={{
-                                    background: "rgba(43,62,232,0.10)",
-                                    border: "1px solid rgba(43,62,232,0.20)",
+                                    background: "rgb(var(--nx-accent-rgb) / 0.10)",
+                                    border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                                 }}>
                                 <p className="text-[10px] mb-1.5 font-bold" style={{ color: m.mine ? "var(--nx-accent)" : "rgba(200,215,245,0.70)" }}>
                                     {m.mine ? "Siz" : "U kishi"} · {new Date(m.createdAt).toLocaleDateString("uz-UZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
@@ -7325,7 +7325,7 @@ function MediaDetailPanel({ type, messages, onBack, onOpenImage }: {
                         {items.map(m => m.mediaUrl && (
                             <a key={m.id} href={m.mediaUrl} target="_blank" rel="noopener noreferrer" download={m.mediaName ?? true}
                                 className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/[0.04]"
-                                style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.15)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                 <FileIcon className="w-6 h-6 flex-shrink-0" style={{ color: "#94A3B8" }} />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs font-bold truncate text-[var(--nx-text)]">{m.mediaName || "Fayl"}</p>
@@ -7346,7 +7346,7 @@ function MediaDetailPanel({ type, messages, onBack, onOpenImage }: {
                                 <a key={m.id} href={`https://www.google.com/maps?q=${m.locLat},${m.locLng}`}
                                     target="_blank" rel="noopener noreferrer"
                                     className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/[0.04]"
-                                    style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.15)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                     <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: "#F97316" }} />
                                     <div className="flex-1 min-w-0">
                                         <p className="text-xs font-bold text-[var(--nx-text)]">
@@ -7365,7 +7365,7 @@ function MediaDetailPanel({ type, messages, onBack, onOpenImage }: {
                     <div className="space-y-1.5">
                         {items.map(m => (
                             <div key={m.id} className="p-3 rounded-lg"
-                                style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.25)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                 <div className="flex items-center gap-2 mb-1">
                                     <Wallet className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                     <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--nx-accent)" }}>
@@ -7390,7 +7390,7 @@ function MediaDetailPanel({ type, messages, onBack, onOpenImage }: {
                     // Boshqa turlari (poll, agent, ...) — matnli ro'yxat
                     <div className="space-y-1.5">
                         {items.map(m => (
-                            <div key={m.id} className="p-2.5 rounded-lg" style={{ background: "rgba(43,62,232,0.06)" }}>
+                            <div key={m.id} className="p-2.5 rounded-lg" style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)" }}>
                                 <p className="text-xs truncate text-[var(--nx-text)]">
                                     {m.text || m.pollQuestion || "(bo'sh)"}
                                 </p>
@@ -7439,12 +7439,12 @@ function DatePickerModal({ month, onMonthChange, minDate, maxDate, onPick, onClo
             onClick={onClose}>
             <div onClick={e => e.stopPropagation()}
                 className="w-full max-w-xs rounded-2xl overflow-hidden p-4"
-                style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                 <div className="flex items-center justify-between mb-3">
                     <button onClick={() => canPrev && onMonthChange(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
                         disabled={!canPrev}
                         className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30"
-                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                         <ChevronLeft className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                     <p className="text-sm font-black capitalize" style={{ color: "rgba(220,230,255,0.95)" }}>
@@ -7453,7 +7453,7 @@ function DatePickerModal({ month, onMonthChange, minDate, maxDate, onPick, onClo
                     <button onClick={() => canNext && onMonthChange(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
                         disabled={!canNext}
                         className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30"
-                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                         <ChevronRight className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -7477,7 +7477,7 @@ function DatePickerModal({ month, onMonthChange, minDate, maxDate, onPick, onClo
                                 style={{
                                     background: isToday
                                         ? "var(--nx-accent)"
-                                        : outOfRange ? "transparent" : "rgba(43,62,232,0.10)",
+                                        : outOfRange ? "transparent" : "rgb(var(--nx-accent-rgb) / 0.10)",
                                     color: isToday ? "#fff" : outOfRange ? "rgba(140,160,210,0.40)" : "rgba(220,230,255,0.95)",
                                 }}>
                                 {d.getDate()}
@@ -7533,7 +7533,7 @@ function AgentCreateModal({ unlimited, onClose, onCreated }: {
             <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
                 style={{ background: "rgba(3,7,25,0.75)", backdropFilter: "blur(6px)" }}>
                 <div className="w-full max-w-md rounded-2xl overflow-hidden p-5"
-                    style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                    style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                     <div className="flex items-center gap-2 mb-3">
                         <BotIcon className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                         <p className="text-sm font-black text-[var(--nx-text)] flex-1">Agent yaratildi</p>
@@ -7543,13 +7543,13 @@ function AgentCreateModal({ unlimited, onClose, onCreated }: {
                         Webhook bilan xabar yuborish uchun kerak.
                     </p>
                     <div className="p-2 rounded-lg mb-3 break-all font-mono text-xs"
-                        style={{ background: "rgba(0,0,0,0.40)", border: "1px solid rgba(0,206,200,0.30)", color: "var(--nx-accent)" }}>
+                        style={{ background: "rgba(0,0,0,0.40)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "var(--nx-accent)" }}>
                         {apiKey}
                     </div>
                     <div className="flex gap-2">
                         <button onClick={() => copyToClipboard(apiKey)}
                             className="flex-1 h-9 rounded-lg text-xs font-bold text-[var(--nx-text)]"
-                            style={{ background: "rgba(43,62,232,0.20)", border: "1px solid rgba(43,62,232,0.35)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)" }}>
                             Nusxa olish
                         </button>
                         <button onClick={() => { setApiKey(null); onCreated(); }}
@@ -7569,7 +7569,7 @@ function AgentCreateModal({ unlimited, onClose, onCreated }: {
             onClick={() => !busy && onClose()}>
             <div onClick={e => e.stopPropagation()}
                 className="w-full max-w-md rounded-2xl overflow-hidden p-5"
-                style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         <BotIcon className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
@@ -7587,7 +7587,7 @@ function AgentCreateModal({ unlimited, onClose, onCreated }: {
                     <input value={name} onChange={e => setName(e.target.value)}
                         maxLength={50} placeholder="Masalan: Mening yordamchim"
                         className="mt-1 w-full h-10 px-3 rounded-lg bg-transparent text-[var(--nx-text)] text-sm focus:outline-none"
-                        style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
+                        style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }} />
                 </label>
                 <label className="block mb-3">
                     <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.75)" }}>
@@ -7598,7 +7598,7 @@ function AgentCreateModal({ unlimited, onClose, onCreated }: {
                         <input value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                             maxLength={26} placeholder="my_helper"
                             className="flex-1 h-10 px-3 rounded-lg bg-transparent text-[var(--nx-text)] text-sm focus:outline-none"
-                            style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
+                            style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }} />
                         <span className="text-xs font-bold" style={{ color: "var(--nx-accent)" }}>_agent</span>
                     </div>
                     <p className="mt-1 text-[10px]" style={{ color: "rgba(140,160,210,0.60)" }}>
@@ -7634,8 +7634,8 @@ function ComposerBtn({ icon: Icon, title, onClick, loading, accent }: {
         <button onClick={onClick} disabled={loading} title={title}
             className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition disabled:opacity-40 active:scale-95"
             style={accent
-                ? { background: "linear-gradient(135deg,rgba(0,206,200,0.20),rgba(43,62,232,0.20))" }
-                : { background: "rgba(43,62,232,0.08)" }
+                ? { background: "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.20),rgb(var(--nx-accent-rgb) / 0.20))" }
+                : { background: "rgb(var(--nx-accent-rgb) / 0.08)" }
             }>
             {loading
                 ? <Loader2 className="w-4 h-4 text-[var(--nx-text)] animate-spin" />
@@ -7668,11 +7668,11 @@ function AttachMenuItem({ icon: Icon, label, onClick, accent }: {
     return (
         <button onClick={onClick} type="button"
             className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]"
-            style={accent ? { background: "rgba(0,206,200,0.10)" } : undefined}>
+            style={accent ? { background: "rgb(var(--nx-accent-rgb) / 0.10)" } : undefined}>
             <span className="w-9 h-9 rounded-full flex items-center justify-center"
                 style={{ background: accent
-                    ? "linear-gradient(135deg,rgba(0,206,200,0.25),rgba(43,62,232,0.25))"
-                    : "rgba(43,62,232,0.14)" }}>
+                    ? "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.25),rgb(var(--nx-accent-rgb) / 0.25))"
+                    : "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                 <Icon className="w-4 h-4" style={{ color: accent ? "var(--nx-accent)" : "rgba(200,215,245,0.90)" }} />
             </span>
             <span className="text-[10px] font-bold" style={{ color: accent ? "var(--nx-accent)" : "rgba(220,230,255,0.85)" }}>
@@ -7718,10 +7718,10 @@ function TransferSheet({
         <>
             <div className="fixed inset-0 z-[80]" style={{ background: "var(--nx-surface)" }} onClick={() => !busy && onClose()} />
             <div className="fixed z-[80] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-sm rounded-2xl overflow-hidden"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(43,62,232,0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
-                <div className="px-5 py-4 flex items-center gap-3" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
+                <div className="px-5 py-4 flex items-center gap-3" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                        style={{ background: "linear-gradient(135deg,rgba(0,206,200,0.20),rgba(43,62,232,0.20))" }}>
+                        style={{ background: "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.20),rgb(var(--nx-accent-rgb) / 0.20))" }}>
                         <Wallet className="w-5 h-5 text-[var(--nx-text)]" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -7736,20 +7736,20 @@ function TransferSheet({
                         <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.75)" }}>Miqdor</label>
                         <input value={amount} onChange={e => setAmount(e.target.value)} placeholder="10 000" inputMode="decimal" autoFocus
                             className="w-full mt-1.5 px-3 py-3 rounded-xl text-lg font-black text-[var(--nx-text)] bg-transparent focus:outline-none"
-                            style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
+                            style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }} />
                     </div>
                     <div>
                         <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.75)" }}>Izoh (ixtiyoriy)</label>
                         <input value={note} onChange={e => setNote(e.target.value)} placeholder="Nima uchun" maxLength={120}
                             className="w-full mt-1.5 px-3 py-2.5 rounded-xl text-sm text-[var(--nx-text)] bg-transparent focus:outline-none"
-                            style={{ border: "1px solid rgba(43,62,232,0.20)" }} />
+                            style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }} />
                     </div>
                     {err && <p className="text-xs" style={{ color: "#EF4444" }}>{err}</p>}
                 </div>
-                <div className="p-3 flex gap-2" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                <div className="p-3 flex gap-2" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <button onClick={() => !busy && onClose()} disabled={busy}
                         className="flex-1 py-2.5 rounded-xl text-xs font-bold text-[var(--nx-text)] disabled:opacity-40"
-                        style={{ background: "rgba(43,62,232,0.10)" }}>Bekor</button>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>Bekor</button>
                     <button onClick={submit} disabled={busy || !amount.trim()}
                         className="flex-1 py-2.5 rounded-xl text-xs font-black text-[var(--nx-text)] disabled:opacity-40 flex items-center justify-center gap-2"
                         style={{ background: "var(--nx-accent)" }}>
@@ -7845,7 +7845,7 @@ function markdownToHtml(text: string): string {
     // Inline: **bold**, *italic*, `code`
     src = src.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
     src = src.replace(/(^|[\s(])_([^_\n]+)_(?=[\s.,;:!?)]|$)/g, "$1<em>$2</em>");
-    src = src.replace(/`([^`\n]+)`/g, '<code style="background:rgba(0,206,200,0.15);padding:1px 4px;border-radius:3px;">$1</code>');
+    src = src.replace(/`([^`\n]+)`/g, '<code style="background:rgb(var(--nx-accent-rgb) / 0.15);padding:1px 4px;border-radius:3px;">$1</code>');
     // Link [text](url)
     src = src.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" style="color:var(--nx-accent);text-decoration:underline;">$1</a>');
     // URL avto (agar hali link'ga o'ralmagan bo'lsa)
@@ -7864,12 +7864,12 @@ function highlightText(text: string, query: string): React.ReactNode {
     return parts.map((part, i) =>
         part.toLowerCase() === q.toLowerCase()
             ? <mark key={i} style={{
-                background: "linear-gradient(180deg, rgba(0,206,200,0.35), rgba(43,62,232,0.35))",
+                background: "linear-gradient(180deg, rgb(var(--nx-accent-rgb) / 0.35), rgb(var(--nx-accent-rgb) / 0.35))",
                 color: "#fff",
                 padding: "0 3px",
                 borderRadius: 4,
                 fontWeight: 900,
-                boxShadow: "0 0 0 1px rgba(0,206,200,0.55)",
+                boxShadow: "0 0 0 1px rgb(var(--nx-accent-rgb) / 0.55)",
             }}>{part}</mark>
             : <span key={i}>{part}</span>
     );
@@ -7992,9 +7992,9 @@ function EmojiPicker({ onPick, onPickMedia, onClose }: {
     return (
         <div ref={ref}
             className="absolute bottom-full right-2 mb-2 w-[360px] rounded-2xl overflow-hidden z-40 flex flex-col"
-            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
+            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
             {/* Top: 3 asosiy tab (Emoji / Sticker / GIF) — Telegram uslubi */}
-            <div className="flex items-center gap-1 p-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.16)" }}>
+            <div className="flex items-center gap-1 p-2 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.16)" }}>
                 {([
                     { id: "emoji" as const, label: "Emoji", icon: Smile },
                     { id: "sticker" as const, label: "Sticker", icon: Sticker },
@@ -8004,7 +8004,7 @@ function EmojiPicker({ onPick, onPickMedia, onClose }: {
                         className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11.5px] font-black transition"
                         style={mainTab === t.id
                             ? { background: "var(--nx-accent)", color: "#fff" }
-                            : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,220,0.80)" }}>
+                            : { background: "rgb(var(--nx-accent-rgb) / 0.06)", color: "rgba(160,180,220,0.80)" }}>
                         <t.icon className="w-3.5 h-3.5" /> {t.label}
                     </button>
                 ))}
@@ -8016,18 +8016,18 @@ function EmojiPicker({ onPick, onPickMedia, onClose }: {
             ) : (
                 <>
                     {/* Search + boshqarish havolasi */}
-                    <div className="p-2 flex items-center gap-2 relative" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                    <div className="p-2 flex items-center gap-2 relative" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.10)" }}>
                         <div className="flex-1 relative">
                             <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "rgba(140,160,210,0.55)" }} />
                             <input type="search" value={q} onChange={e => setQ(e.target.value)}
                                 placeholder={mainTab === "sticker" ? "Sticker qidirish..." : "GIF qidirish..."}
                                 className="w-full h-8 pl-8 pr-2 rounded-lg text-[11.5px] outline-none"
-                                style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.16)", color: "rgba(230,238,255,0.96)", caretColor: "var(--nx-accent)" }} />
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.16)", color: "rgba(230,238,255,0.96)", caretColor: "var(--nx-accent)" }} />
                         </div>
                         <a href={`/nexus/agent/${kindKey}`} target="_blank" rel="noopener"
                             title="Pack yaratish/boshqarish"
                             className="w-8 h-8 flex items-center justify-center rounded-lg flex-shrink-0"
-                            style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.25)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                             <ExternalLink className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                         </a>
                     </div>
@@ -8061,7 +8061,7 @@ function EmojiPicker({ onPick, onPickMedia, onClose }: {
                                             {(pack.items ?? []).slice(0, mainTab === "sticker" ? 15 : 9).map(it => (
                                                 <button key={it.id} onClick={() => pickMedia(pack, it)}
                                                     className="aspect-square rounded-md overflow-hidden active:scale-90 transition-transform"
-                                                    style={{ background: "rgba(43,62,232,0.08)" }}>
+                                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)" }}>
                                                     {pack.kind === "GIF" ? (
                                                         it.thumbUrl ? (
                                                             // eslint-disable-next-line @next/next/no-img-element
@@ -8091,7 +8091,7 @@ function IconBtn({ icon: Icon, title, onClick }: { icon: React.ElementType; titl
     return (
         <button onClick={onClick} title={title}
             className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
-            style={{ background: "rgba(43,62,232,0.10)" }}>
+            style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
             <Icon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
         </button>
     );
@@ -8140,14 +8140,14 @@ function NxEmojiGrid({ onPick, activeCat, setActiveCat }: {
     return (
         <>
             {/* Kategoriya tugmalari — 2 qatorli grid-cols-4 (hech qanday horizontal scroll shart emas) */}
-            <div className="p-2 grid grid-cols-4 gap-1" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+            <div className="p-2 grid grid-cols-4 gap-1" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.10)" }}>
                 {EMOJI_CATEGORIES.map((c, i) => (
                     <button key={c.name} onClick={() => jumpTo(i)}
                         title={c.name}
                         className="py-1 rounded-md text-[10.5px] font-bold truncate transition"
                         style={activeCat === i
-                            ? { background: "rgba(0,206,200,0.20)", color: "var(--nx-accent)", border: "1px solid rgba(0,206,200,0.30)" }
-                            : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,220,0.75)", border: "1px solid transparent" }}>
+                            ? { background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "var(--nx-accent)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }
+                            : { background: "rgb(var(--nx-accent-rgb) / 0.06)", color: "rgba(160,180,220,0.75)", border: "1px solid transparent" }}>
                         {c.name}
                     </button>
                 ))}
@@ -8229,7 +8229,7 @@ const NxComposerTextarea = React.forwardRef<HTMLTextAreaElement, NxComposerTexta
                 rows={1}
                 className="nx-scrollbar flex-1 min-w-0 px-4 py-2.5 rounded-xl bg-transparent text-[var(--nx-text)] text-sm focus:outline-none resize-none"
                 style={{
-                    border: "1px solid rgba(43,62,232,0.20)",
+                    border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                     minHeight: 40,
                     maxHeight: 200,
                     lineHeight: "20px",
@@ -8284,8 +8284,8 @@ function NxCirclePlayer({ src, durationMs }: { src: string; durationMs?: number 
                 width: SIZE, height: SIZE,
                 borderRadius: RADIUS,
                 cursor: "pointer",
-                border: "1px solid rgba(0,206,200,0.30)",
-                boxShadow: "0 4px 20px rgba(0,206,200,0.15)",
+                border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)",
+                boxShadow: "0 4px 20px rgb(var(--nx-accent-rgb) / 0.15)",
             }}
             onClick={() => {
                 setMuted(m => {
@@ -8314,7 +8314,7 @@ function NxCirclePlayer({ src, durationMs }: { src: string; durationMs?: number 
                     style={{
                         width: `${progress * 100}%`,
                         background: "linear-gradient(90deg,var(--nx-accent),var(--nx-accent))",
-                        boxShadow: "0 0 6px rgba(0,206,200,0.60)",
+                        boxShadow: "0 0 6px rgb(var(--nx-accent-rgb) / 0.60)",
                         transition: "width 0.15s linear",
                     }} />
             </div>
@@ -8341,7 +8341,7 @@ function NxAlbumGrid({ items, onOpenImage }: { items: Msg[]; onOpenImage: (msgId
 
     return (
         <div className={`mb-1 grid gap-0.5 ${layout} rounded-2xl overflow-hidden`}
-            style={{ width: 340, border: "1px solid rgba(43,62,232,0.28)", boxShadow: "0 4px 20px rgba(43,62,232,0.14)" }}>
+            style={{ width: 340, border: "1px solid rgb(var(--nx-accent-rgb) / 0.28)", boxShadow: "0 4px 20px rgb(var(--nx-accent-rgb) / 0.14)" }}>
             {shown.map((it, i) => {
                 // 3-rasm layout: 1-si baland, 2-3 kichik ustunda — grid uchun span
                 const isVideo = it.mediaType === "video";
@@ -8394,16 +8394,16 @@ function NxMediaImage({ src, onOpen }: { src: string; onOpen?: () => void }) {
         <button type="button" onClick={onOpen}
             className="relative block mb-1 rounded-2xl overflow-hidden group active:scale-[0.98] transition-transform"
             style={{
-                border: "1px solid rgba(43,62,232,0.28)",
-                boxShadow: "0 4px 20px rgba(43,62,232,0.12), inset 0 0 40px rgba(0,206,200,0.04)",
-                background: "linear-gradient(135deg, rgba(43,62,232,0.06), rgba(0,206,200,0.04))",
+                border: "1px solid rgb(var(--nx-accent-rgb) / 0.28)",
+                boxShadow: "0 4px 20px rgb(var(--nx-accent-rgb) / 0.12), inset 0 0 40px rgb(var(--nx-accent-rgb) / 0.04)",
+                background: "linear-gradient(135deg, rgb(var(--nx-accent-rgb) / 0.06), rgb(var(--nx-accent-rgb) / 0.04))",
             }}>
             {/* Loading skeleton — shimmer */}
             {!loaded && (
                 <div className="w-[280px] h-[200px] relative overflow-hidden"
                     style={{ background: "var(--nx-surface)" }}>
                     <div className="absolute inset-0 animate-pulse"
-                        style={{ background: "linear-gradient(90deg, transparent, rgba(0,206,200,0.08), transparent)", backgroundSize: "200% 100%" }} />
+                        style={{ background: "linear-gradient(90deg, transparent, rgb(var(--nx-accent-rgb) / 0.08), transparent)", backgroundSize: "200% 100%" }} />
                 </div>
             )}
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -8415,7 +8415,7 @@ function NxMediaImage({ src, onOpen }: { src: string; onOpen?: () => void }) {
             <div className="absolute top-2 right-2 w-5 h-5 rounded-md flex items-center justify-center opacity-70 group-hover:opacity-100 transition"
                 style={{
                     background: "var(--nx-surface)",
-                    border: "1px solid rgba(0,206,200,0.30)",
+                    border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)",
                     backdropFilter: "blur(6px)",
                 }}>
                 <span className="text-[9px] font-black" style={{
@@ -8474,9 +8474,9 @@ function NxMediaVideo({ src, durationMs }: { src: string; durationMs?: number | 
                 onMouseEnter={() => setHover(true)}
                 onMouseLeave={() => setHover(false)}
                 style={{
-                    border: "1px solid rgba(43,62,232,0.30)",
-                    boxShadow: "0 4px 20px rgba(0,206,200,0.12), inset 0 0 60px rgba(43,62,232,0.05)",
-                    background: "linear-gradient(135deg, rgba(43,62,232,0.10), rgba(0,206,200,0.06))",
+                    border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)",
+                    boxShadow: "0 4px 20px rgb(var(--nx-accent-rgb) / 0.12), inset 0 0 60px rgb(var(--nx-accent-rgb) / 0.05)",
+                    background: "linear-gradient(135deg, rgb(var(--nx-accent-rgb) / 0.10), rgb(var(--nx-accent-rgb) / 0.06))",
                 }}>
                 <video ref={videoRef} src={src}
                     autoPlay muted loop playsInline
@@ -8490,7 +8490,7 @@ function NxMediaVideo({ src, durationMs }: { src: string; durationMs?: number | 
                     <div className="w-14 h-14 rounded-full flex items-center justify-center transition-transform hover:scale-110"
                         style={{
                             background: "var(--nx-accent)",
-                            boxShadow: "0 8px 28px rgba(0,206,200,0.45), 0 0 50px rgba(43,62,232,0.30)",
+                            boxShadow: "0 8px 28px rgb(var(--nx-accent-rgb) / 0.45), 0 0 50px rgb(var(--nx-accent-rgb) / 0.30)",
                         }}>
                         <Play className="w-6 h-6 text-[var(--nx-text)] translate-x-0.5" fill="#fff" />
                     </div>
@@ -8498,14 +8498,14 @@ function NxMediaVideo({ src, durationMs }: { src: string; durationMs?: number | 
 
                 {/* Yuqori-chapda VIDEO badge */}
                 <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full pointer-events-none"
-                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(0,206,200,0.30)", backdropFilter: "blur(6px)" }}>
+                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", backdropFilter: "blur(6px)" }}>
                     <Film className="w-2.5 h-2.5" style={{ color: "var(--nx-accent)" }} />
                     <span className="text-[9px] font-black tracking-wider" style={{ color: "var(--nx-accent)" }}>VIDEO</span>
                 </div>
 
                 {/* Yuqori-o'ngda: muted icon + davomiylik */}
                 <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full pointer-events-none"
-                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", backdropFilter: "blur(6px)" }}>
+                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", backdropFilter: "blur(6px)" }}>
                     <VolumeX className="w-2.5 h-2.5" style={{ color: "rgba(255,255,255,0.75)" }} />
                     {duration > 0 && (
                         <span className="text-[10px] font-black tabular-nums text-[var(--nx-text)]">{fmt(duration)}</span>
@@ -8672,8 +8672,8 @@ function NxVideoLightbox({ src, onClose }: { src: string; onClose: () => void })
                 style={{
                     maxWidth: "min(1200px, 92vw)",
                     maxHeight: "88vh",
-                    boxShadow: "0 24px 64px rgba(0,0,0,0.80), 0 0 80px rgba(0,206,200,0.15)",
-                    border: "1px solid rgba(43,62,232,0.30)",
+                    boxShadow: "0 24px 64px rgba(0,0,0,0.80), 0 0 80px rgb(var(--nx-accent-rgb) / 0.15)",
+                    border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)",
                 }}
                 onClick={e => e.stopPropagation()}>
                 <video ref={videoRef} src={src}
@@ -8685,21 +8685,21 @@ function NxVideoLightbox({ src, onClose }: { src: string; onClose: () => void })
                 {/* Loading spinner */}
                 {waiting && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <Loader2 className="w-12 h-12 animate-spin" style={{ color: "var(--nx-accent)", filter: "drop-shadow(0 0 16px rgba(0,206,200,0.75))" }} />
+                        <Loader2 className="w-12 h-12 animate-spin" style={{ color: "var(--nx-accent)", filter: "drop-shadow(0 0 16px rgb(var(--nx-accent-rgb) / 0.75))" }} />
                     </div>
                 )}
 
                 {/* Yopish tugma — yuqori-o'ngda, doim ko'rinadi */}
                 <button onClick={onClose}
                     className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center transition hover:brightness-125 z-10"
-                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", backdropFilter: "blur(6px)" }}>
+                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", backdropFilter: "blur(6px)" }}>
                     <X className="w-5 h-5 text-[var(--nx-text)]" />
                 </button>
 
                 {/* Yuklab olish — yuqori-chap */}
                 <button onClick={download} title="Yuklab olish"
                     className={`absolute top-3 left-3 w-10 h-10 rounded-full flex items-center justify-center transition hover:brightness-125 z-10 ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", backdropFilter: "blur(6px)" }}>
+                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", backdropFilter: "blur(6px)" }}>
                     <Download className="w-4 h-4 text-[var(--nx-text)]" />
                 </button>
 
@@ -8712,7 +8712,7 @@ function NxVideoLightbox({ src, onClose }: { src: string; onClose: () => void })
                         <div className="w-20 h-20 rounded-full flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
                             style={{
                                 background: "var(--nx-accent)",
-                                boxShadow: "0 12px 40px rgba(0,206,200,0.50), 0 0 80px rgba(43,62,232,0.35)",
+                                boxShadow: "0 12px 40px rgb(var(--nx-accent-rgb) / 0.50), 0 0 80px rgb(var(--nx-accent-rgb) / 0.35)",
                             }}>
                             <Play className="w-10 h-10 text-[var(--nx-text)] translate-x-0.5" fill="#fff" />
                         </div>
@@ -8730,15 +8730,15 @@ function NxVideoLightbox({ src, onClose }: { src: string; onClose: () => void })
                         onMouseMove={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setHoverSeek({ x: e.clientX - rect.left, time: duration * ((e.clientX - rect.left) / rect.width) }); }}
                         onMouseLeave={() => setHoverSeek(null)}>
                         <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${buffered * 100}%`, background: "rgba(255,255,255,0.30)" }} />
-                        <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${progress * 100}%`, background: "linear-gradient(90deg,var(--nx-accent),var(--nx-accent))", boxShadow: "0 0 10px rgba(0,206,200,0.75)" }} />
+                        <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${progress * 100}%`, background: "linear-gradient(90deg,var(--nx-accent),var(--nx-accent))", boxShadow: "0 0 10px rgb(var(--nx-accent-rgb) / 0.75)" }} />
                         {hoverSeek && (
                             <div className="absolute -top-7 px-2 py-0.5 rounded text-[11px] font-black tabular-nums text-[var(--nx-text)] pointer-events-none -translate-x-1/2"
-                                style={{ left: hoverSeek.x, background: "var(--nx-surface)", border: "1px solid rgba(0,206,200,0.35)" }}>
+                                style={{ left: hoverSeek.x, background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                 {fmt(hoverSeek.time)}
                             </div>
                         )}
                         <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full transition-transform group-hover/bar:scale-125"
-                            style={{ left: `calc(${progress * 100}% - 8px)`, background: "#fff", boxShadow: "0 0 10px rgba(0,206,200,0.90)" }} />
+                            style={{ left: `calc(${progress * 100}% - 8px)`, background: "#fff", boxShadow: "0 0 10px rgb(var(--nx-accent-rgb) / 0.90)" }} />
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -8749,7 +8749,7 @@ function NxVideoLightbox({ src, onClose }: { src: string; onClose: () => void })
                         </button>
                         <button onClick={toggle}
                             className="w-11 h-11 rounded-full flex items-center justify-center transition"
-                            style={{ background: "var(--nx-accent)", boxShadow: "0 4px 12px rgba(0,206,200,0.35)" }}>
+                            style={{ background: "var(--nx-accent)", boxShadow: "0 4px 12px rgb(var(--nx-accent-rgb) / 0.35)" }}>
                             {playing
                                 ? <Pause className="w-5 h-5 text-[var(--nx-text)]" fill="#fff" />
                                 : <Play className="w-5 h-5 text-[var(--nx-text)] translate-x-0.5" fill="#fff" />}
@@ -8793,16 +8793,16 @@ function NxVideoLightbox({ src, onClose }: { src: string; onClose: () => void })
                         <div className="relative">
                             <button onClick={() => setSpeedOpen(o => !o)}
                                 className="h-9 min-w-[42px] px-2 rounded-lg text-[11px] font-black text-[var(--nx-text)] flex-shrink-0 transition"
-                                style={{ background: speedOpen ? "rgba(0,206,200,0.25)" : "var(--nx-surface)" }}>
+                                style={{ background: speedOpen ? "rgb(var(--nx-accent-rgb) / 0.25)" : "var(--nx-surface)" }}>
                                 {speed}x
                             </button>
                             {speedOpen && (
                                 <div className="absolute bottom-full right-0 mb-1 rounded-lg overflow-hidden min-w-[100px]"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.60)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.60)" }}>
                                     {([0.5, 1, 1.25, 1.5, 2] as const).map(s => (
                                         <button key={s} onClick={() => { setSpeed(s); setSpeedOpen(false); }}
                                             className="w-full text-left px-3 py-1.5 text-[12px] font-black text-[var(--nx-text)] hover:bg-white/[0.08]"
-                                            style={s === speed ? { background: "rgba(0,206,200,0.20)", color: "var(--nx-accent)" } : undefined}>
+                                            style={s === speed ? { background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "var(--nx-accent)" } : undefined}>
                                             {s}x{s === 1 ? " · oddiy" : ""}
                                         </button>
                                     ))}
@@ -8812,7 +8812,7 @@ function NxVideoLightbox({ src, onClose }: { src: string; onClose: () => void })
 
                         <button onClick={togglePip} title="Picture-in-Picture"
                             className="w-9 h-9 rounded-lg flex items-center justify-center transition"
-                            style={{ background: pip ? "rgba(0,206,200,0.25)" : "var(--nx-surface)" }}>
+                            style={{ background: pip ? "rgb(var(--nx-accent-rgb) / 0.25)" : "var(--nx-surface)" }}>
                             <MessageSquare className="w-4 h-4 text-[var(--nx-text)] -scale-x-100" />
                         </button>
                         <button onClick={toggleFullscreen} title={fullscreen ? "Chiqish (F)" : "To'liq ekran (F)"}
@@ -8845,8 +8845,8 @@ function NxMediaGif({ src }: { src: string }) {
     return (
         <div className="relative mb-1 rounded-2xl overflow-hidden inline-block"
             style={{
-                border: "1px solid rgba(43,62,232,0.28)",
-                boxShadow: "0 4px 16px rgba(0,206,200,0.10)",
+                border: "1px solid rgb(var(--nx-accent-rgb) / 0.28)",
+                boxShadow: "0 4px 16px rgb(var(--nx-accent-rgb) / 0.10)",
                 background: "var(--nx-surface)",
             }}>
             {isMp4 ? (
@@ -8862,7 +8862,7 @@ function NxMediaGif({ src }: { src: string }) {
             <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md pointer-events-none"
                 style={{
                     background: "var(--nx-surface)",
-                    border: "1px solid rgba(0,206,200,0.30)",
+                    border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)",
                     backdropFilter: "blur(4px)",
                 }}>
                 <span className="text-[9px] font-black tracking-wider" style={{
@@ -8967,13 +8967,13 @@ function NxAudioCard({ src, name, sizeBytes, mine }: {
                 maxWidth: 380,
                 background: mine
                     ? "linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04))"
-                    : "linear-gradient(135deg, rgba(43,62,232,0.14), rgba(0,206,200,0.08))",
-                border: `1px solid ${mine ? "rgba(255,255,255,0.20)" : "rgba(0,206,200,0.28)"}`,
-                boxShadow: mine ? "none" : "0 4px 16px rgba(0,206,200,0.10), inset 0 0 40px rgba(43,62,232,0.06)",
+                    : "linear-gradient(135deg, rgb(var(--nx-accent-rgb) / 0.14), rgb(var(--nx-accent-rgb) / 0.08))",
+                border: `1px solid ${mine ? "rgba(255,255,255,0.20)" : "rgb(var(--nx-accent-rgb) / 0.28)"}`,
+                boxShadow: mine ? "none" : "0 4px 16px rgb(var(--nx-accent-rgb) / 0.10), inset 0 0 40px rgb(var(--nx-accent-rgb) / 0.06)",
             }}>
             {/* Glow orbital — dekorativ, Nexus brend belgisi */}
             <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full pointer-events-none"
-                style={{ background: "radial-gradient(circle, rgba(0,206,200,0.20), transparent 70%)" }} />
+                style={{ background: "radial-gradient(circle, rgb(var(--nx-accent-rgb) / 0.20), transparent 70%)" }} />
 
             {/* Row 1: Play + Waveform */}
             <div className="flex items-center gap-3 px-3 pt-3">
@@ -8984,7 +8984,7 @@ function NxAudioCard({ src, name, sizeBytes, mine }: {
                         background: playing
                             ? "linear-gradient(135deg,var(--nx-accent),var(--nx-accent))"
                             : "var(--nx-accent)",
-                        boxShadow: "0 4px 12px rgba(0,206,200,0.35), 0 0 24px rgba(43,62,232,0.20)",
+                        boxShadow: "0 4px 12px rgb(var(--nx-accent-rgb) / 0.35), 0 0 24px rgb(var(--nx-accent-rgb) / 0.20)",
                     }}>
                     {playing
                         ? <Pause className="w-5 h-5 text-[var(--nx-text)]" fill="#fff" />
@@ -9033,9 +9033,9 @@ function NxAudioCard({ src, name, sizeBytes, mine }: {
                 <button onClick={nextSpeed}
                     className="h-6 min-w-[30px] px-1.5 rounded-md text-[10px] font-black flex-shrink-0"
                     style={{
-                        background: mine ? "rgba(255,255,255,0.15)" : "rgba(0,206,200,0.14)",
+                        background: mine ? "rgba(255,255,255,0.15)" : "rgb(var(--nx-accent-rgb) / 0.14)",
                         color: mine ? "#fff" : "var(--nx-accent)",
-                        border: `1px solid ${mine ? "rgba(255,255,255,0.20)" : "rgba(0,206,200,0.30)"}`,
+                        border: `1px solid ${mine ? "rgba(255,255,255,0.20)" : "rgb(var(--nx-accent-rgb) / 0.30)"}`,
                     }}>
                     {speed}x
                 </button>
@@ -9045,8 +9045,8 @@ function NxAudioCard({ src, name, sizeBytes, mine }: {
                     title="Yuklab olish"
                     className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
                     style={{
-                        background: mine ? "rgba(255,255,255,0.15)" : "rgba(43,62,232,0.14)",
-                        border: `1px solid ${mine ? "rgba(255,255,255,0.20)" : "rgba(43,62,232,0.28)"}`,
+                        background: mine ? "rgba(255,255,255,0.15)" : "rgb(var(--nx-accent-rgb) / 0.14)",
+                        border: `1px solid ${mine ? "rgba(255,255,255,0.20)" : "rgb(var(--nx-accent-rgb) / 0.28)"}`,
                     }}>
                     <Download className="w-3.5 h-3.5" style={{ color: mine ? "#fff" : "rgba(200,215,245,0.85)" }} />
                 </a>
@@ -9095,12 +9095,12 @@ function NxEmptyChat({ peerName, isSelf, onQuick }: {
             <div className="relative mb-5">
                 <div className="w-24 h-24 rounded-full flex items-center justify-center relative"
                     style={{
-                        background: "linear-gradient(135deg, rgba(43,62,232,0.18), rgba(0,206,200,0.18))",
-                        border: "2px solid rgba(43,62,232,0.35)",
-                        boxShadow: "0 0 60px rgba(0,206,200,0.20), inset 0 0 30px rgba(43,62,232,0.15)",
+                        background: "linear-gradient(135deg, rgb(var(--nx-accent-rgb) / 0.18), rgb(var(--nx-accent-rgb) / 0.18))",
+                        border: "2px solid rgb(var(--nx-accent-rgb) / 0.35)",
+                        boxShadow: "0 0 60px rgb(var(--nx-accent-rgb) / 0.20), inset 0 0 30px rgb(var(--nx-accent-rgb) / 0.15)",
                     }}>
                     {isSelf ? (
-                        <Bookmark className="w-9 h-9" style={{ color: "var(--nx-accent)" }} fill="rgba(0,206,200,0.20)" />
+                        <Bookmark className="w-9 h-9" style={{ color: "var(--nx-accent)" }} fill="rgb(var(--nx-accent-rgb) / 0.20)" />
                     ) : (
                         <span className="text-4xl font-black" style={{
                             background: "var(--nx-accent)",
@@ -9112,7 +9112,7 @@ function NxEmptyChat({ peerName, isSelf, onQuick }: {
                 </div>
                 {/* Orbital dot — tirikligini bildiruvchi kichik detal */}
                 <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse"
-                    style={{ background: "var(--nx-accent)", boxShadow: "0 0 10px rgba(0,206,200,0.90)" }} />
+                    style={{ background: "var(--nx-accent)", boxShadow: "0 0 10px rgb(var(--nx-accent-rgb) / 0.90)" }} />
             </div>
 
             {/* Sarlavha */}
@@ -9134,7 +9134,7 @@ function NxEmptyChat({ peerName, isSelf, onQuick }: {
                         className="text-left p-2.5 rounded-xl transition hover:brightness-125 active:scale-[0.98]"
                         style={{
                             background: "var(--nx-surface)",
-                            border: "1px solid rgba(43,62,232,0.28)",
+                            border: "1px solid rgb(var(--nx-accent-rgb) / 0.28)",
                         }}>
                         <p className="text-[11.5px] font-bold line-clamp-2"
                             style={{ color: "rgba(220,232,255,0.90)" }}>{s}</p>
@@ -9145,7 +9145,7 @@ function NxEmptyChat({ peerName, isSelf, onQuick }: {
             {/* Nozik yordamchi matn (Telegram'nikidan farqli — biz maslahat beramiz) */}
             <p className="mt-6 text-[10.5px] text-center flex items-center gap-1.5"
                 style={{ color: "rgba(140,160,210,0.55)" }}>
-                <Sparkles className="w-3 h-3" style={{ color: "rgba(0,206,200,0.60)" }} />
+                <Sparkles className="w-3 h-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.60)" }} />
                 Kartochkani bosing yoki pastdan o&apos;zingizni yozing
             </p>
         </div>
@@ -9250,10 +9250,10 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved, askC
         <div className="fixed inset-0 z-[220]" onClick={onClose}>
             <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[860px] h-[86vh] rounded-2xl overflow-hidden flex flex-col"
-                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
                 onClick={e => e.stopPropagation()}>
                 {/* Header */}
-                <div className="p-4 flex items-center gap-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                <div className="p-4 flex items-center gap-3 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "var(--nx-accent)" }}>
                         <FileText className="w-4 h-4 text-[var(--nx-text)]" />
                     </div>
@@ -9264,7 +9264,7 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved, askC
                         </p>
                     </div>
                     <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                         <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                     </button>
                 </div>
@@ -9272,10 +9272,10 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved, askC
                 <div className="flex-1 flex min-h-0">
                     {/* Chap: papkalar ro'yhati */}
                     <div className="w-[260px] flex-shrink-0 flex flex-col border-r overflow-y-auto nx-scrollbar"
-                        style={{ borderColor: "rgba(43,62,232,0.15)", background: "rgba(8,12,32,0.35)" }}>
+                        style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "rgba(8,12,32,0.35)" }}>
                         <button onClick={createFolder} disabled={savingBusy || folders.length >= 20}
                             className="m-2 flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-black transition hover:brightness-125 disabled:opacity-50"
-                            style={{ background: "var(--nx-accent)", color: "white", boxShadow: "0 4px 12px rgba(43,62,232,0.35)" }}>
+                            style={{ background: "var(--nx-accent)", color: "white", boxShadow: "0 4px 12px rgb(var(--nx-accent-rgb) / 0.35)" }}>
                             <Plus className="w-3.5 h-3.5" /> Yangi papka
                         </button>
                         {folders.length === 0 && (
@@ -9291,8 +9291,8 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved, askC
                                     onClick={() => setSelectedId(f.id)}
                                     className="flex items-center gap-2.5 px-3 py-2.5 text-left border-b hover:bg-white/[0.04] transition"
                                     style={{
-                                        borderColor: "rgba(43,62,232,0.10)",
-                                        background: isSelected ? "rgba(0,206,200,0.12)" : undefined,
+                                        borderColor: "rgb(var(--nx-accent-rgb) / 0.10)",
+                                        background: isSelected ? "rgb(var(--nx-accent-rgb) / 0.12)" : undefined,
                                         borderLeft: isSelected ? `3px solid ${cHex}` : "3px solid transparent",
                                     }}>
                                     <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -9316,7 +9316,7 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved, askC
                         {!selected ? (
                             <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-3">
                                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                                    style={{ background: "rgba(43,62,232,0.15)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                     <FileText className="w-8 h-8" style={{ color: "rgba(160,176,224,0.55)" }} />
                                 </div>
                                 <p className="text-sm font-bold" style={{ color: "rgba(220,230,255,0.85)" }}>
@@ -9327,7 +9327,7 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved, askC
                             <>
                                 {/* Avatar + nom (Telegram-like top section) */}
                                 <div className="p-5 flex items-center gap-4"
-                                    style={{ borderBottom: "1px solid rgba(43,62,232,0.15)" }}>
+                                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                     <button onClick={() => setEmojiPickerOpen(true)}
                                         title="Ikonani o'zgartirish"
                                         className="relative w-16 h-16 rounded-2xl flex items-center justify-center transition hover:brightness-110 active:scale-95 flex-shrink-0"
@@ -9349,20 +9349,20 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved, askC
                                 </div>
 
                                 {/* Tanlangan chatlar */}
-                                <div className="p-4" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                                <div className="p-4" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                     <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: "rgba(140,160,210,0.75)" }}>
                                         Tanlangan chatlar
                                     </p>
                                     <button onClick={() => setChatPickerFor("include")}
                                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition hover:brightness-125"
-                                        style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.30)", color: "var(--nx-accent)" }}>
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "var(--nx-accent)" }}>
                                         <div className="w-8 h-8 rounded-full flex items-center justify-center"
-                                            style={{ background: "rgba(0,206,200,0.20)" }}>
+                                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                             <Plus className="w-4 h-4" />
                                         </div>
                                         <span className="flex-1 text-left">Chatlarni qo&apos;shish</span>
                                         {(selected.includeChatIds.length > 0 || selected.includeTypes.length > 0) && (
-                                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(0,206,200,0.20)" }}>
+                                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                                 {selected.includeChatIds.length + selected.includeTypes.length}
                                             </span>
                                         )}
@@ -9373,7 +9373,7 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved, askC
                                 </div>
 
                                 {/* Chiqarilgan chatlar (excluded) */}
-                                <div className="p-4" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                                <div className="p-4" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                     <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: "rgba(140,160,210,0.75)" }}>
                                         Chiqarilgan chatlar
                                     </p>
@@ -9397,14 +9397,14 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved, askC
                                 </div>
 
                                 {/* Unread toggle */}
-                                <div className="p-4" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                                <div className="p-4" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                     <label className="flex items-center gap-3 cursor-pointer">
                                         <div className="relative">
                                             <input type="checkbox" checked={selected.includeUnread}
                                                 onChange={e => updateFolder({ includeUnread: e.target.checked })}
                                                 className="sr-only" />
                                             <div className="w-10 h-6 rounded-full transition"
-                                                style={{ background: selected.includeUnread ? activeColorHex : "rgba(43,62,232,0.20)" }}>
+                                                style={{ background: selected.includeUnread ? activeColorHex : "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                                 <div className="absolute w-5 h-5 bg-white rounded-full top-0.5 transition"
                                                     style={{ left: selected.includeUnread ? "18px" : "2px" }} />
                                             </div>
@@ -9421,7 +9421,7 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved, askC
                                 </div>
 
                                 {/* Ranglar */}
-                                <div className="p-4" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                                <div className="p-4" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                     <div className="flex items-center justify-between mb-3">
                                         <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.75)" }}>
                                             Papka rangi
@@ -9468,12 +9468,12 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved, askC
                     onClick={() => setEmojiPickerOpen(false)}>
                     <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.55)" }} />
                     <div className="relative w-full max-w-[360px] rounded-2xl overflow-hidden"
-                        style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.40)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.40)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
                         onClick={e => e.stopPropagation()}>
-                        <div className="p-4 flex items-center gap-2" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                        <div className="p-4 flex items-center gap-2" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <p className="text-sm font-black flex-1" style={{ color: "rgba(230,238,255,0.98)" }}>Ikonani tanlang</p>
                             <button onClick={() => setEmojiPickerOpen(false)} className="w-7 h-7 rounded-lg flex items-center justify-center"
-                                style={{ background: "rgba(43,62,232,0.10)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                 <X className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
                             </button>
                         </div>
@@ -9482,7 +9482,7 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved, askC
                                 <button key={e}
                                     onClick={() => { updateFolder({ emoji: e }); setEmojiPickerOpen(false); }}
                                     className="w-10 h-10 rounded-lg flex items-center justify-center text-xl transition hover:brightness-125 hover:scale-110"
-                                    style={{ background: selected.emoji === e ? "rgba(0,206,200,0.20)" : "rgba(43,62,232,0.06)" }}>
+                                    style={{ background: selected.emoji === e ? "rgb(var(--nx-accent-rgb) / 0.20)" : "rgb(var(--nx-accent-rgb) / 0.06)" }}>
                                     {e}
                                 </button>
                             ))}
@@ -9549,11 +9549,11 @@ function NxFolderChatPicker({ mode, folder, convs, onClose, onSave }: {
         <div className="fixed inset-0 z-[230] flex items-center justify-center p-4" onClick={onClose}>
             <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.55)" }} />
             <div className="relative w-full max-w-[420px] max-h-[85vh] rounded-2xl overflow-hidden flex flex-col"
-                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.40)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.40)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
                 onClick={e => e.stopPropagation()}>
-                <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                         <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                     </button>
                     <div className="flex-1">
@@ -9568,14 +9568,14 @@ function NxFolderChatPicker({ mode, folder, convs, onClose, onSave }: {
                         Saqlash
                     </button>
                 </div>
-                <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.10)" }}>
                     <div className="relative">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.60)" }} />
                         <input type="text" value={query}
                             onChange={e => setQuery(e.target.value)}
                             placeholder="Qidiruv..."
                             className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs bg-transparent focus:outline-none"
-                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(230,238,255,0.90)" }} />
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", color: "rgba(230,238,255,0.90)" }} />
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto nx-scrollbar">
@@ -9592,7 +9592,7 @@ function NxFolderChatPicker({ mode, folder, convs, onClose, onSave }: {
                                     <button key={t.key}
                                         onClick={() => togglePicked(t.key, pickedTypes, setPickedTypes)}
                                         className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/[0.03] transition"
-                                        style={{ borderBottom: "1px solid rgba(43,62,232,0.05)" }}>
+                                        style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.05)" }}>
                                         <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
                                             style={{ background: t.color + "20", border: `1px solid ${t.color}40` }}>
                                             <Icon className="w-4 h-4" style={{ color: t.color }} />
@@ -9621,9 +9621,9 @@ function NxFolderChatPicker({ mode, folder, convs, onClose, onSave }: {
                             <button key={c.conversationId}
                                 onClick={() => togglePicked(c.conversationId, pickedChats, setPickedChats)}
                                 className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/[0.03] transition"
-                                style={{ borderBottom: "1px solid rgba(43,62,232,0.05)" }}>
+                                style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.05)" }}>
                                 <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden"
-                                    style={{ background: "rgba(43,62,232,0.20)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                     {c.other?.image ? (
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img src={c.other.image} alt="" className="w-full h-full object-cover" />
@@ -9703,9 +9703,9 @@ function NxDiscoverModal({ type, onClose, onJoined, onSelect }: {
         <div className="fixed inset-0 z-[220]" onClick={onClose}>
             <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[560px] max-h-[80vh] rounded-2xl overflow-hidden flex flex-col"
-                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
                 onClick={e => e.stopPropagation()}>
-                <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "var(--nx-accent)" }}>
                         {type === "CHANNEL" ? <Megaphone className="w-4 h-4 text-[var(--nx-text)]" /> : <Users className="w-4 h-4 text-[var(--nx-text)]" />}
                     </div>
@@ -9714,18 +9714,18 @@ function NxDiscoverModal({ type, onClose, onJoined, onSelect }: {
                         <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.75)" }}>Mashhur ochiq {label.toLowerCase()}</p>
                     </div>
                     <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                         <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                     </button>
                 </div>
-                <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.10)" }}>
                     <div className="relative">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.60)" }} />
                         <input type="text" value={query}
                             onChange={e => setQuery(e.target.value)}
                             placeholder="Nom yoki @handle..."
                             className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs bg-transparent focus:outline-none"
-                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(230,238,255,0.90)" }} />
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", color: "rgba(230,238,255,0.90)" }} />
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto nx-scrollbar">
@@ -9741,7 +9741,7 @@ function NxDiscoverModal({ type, onClose, onJoined, onSelect }: {
                     ) : filtered.map(item => (
                         <div key={item.id}
                             className="flex items-start gap-3 px-4 py-3 border-b hover:bg-white/[0.03] transition"
-                            style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                            style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                             <button onClick={() => onSelect(item.id)}
                                 className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0 hover:brightness-110"
                                 style={{ background: "var(--nx-accent)" }}>
@@ -9768,13 +9768,13 @@ function NxDiscoverModal({ type, onClose, onJoined, onSelect }: {
                             </button>
                             {item.isMember ? (
                                 <span className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-bold"
-                                    style={{ background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", color: "var(--nx-accent)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                     A&apos;zo
                                 </span>
                             ) : (
                                 <button onClick={() => join(item)} disabled={joining === item.id}
                                     className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black transition hover:brightness-110 disabled:opacity-50"
-                                    style={{ background: "var(--nx-accent)", color: "white", boxShadow: "0 2px 8px rgba(43,62,232,0.35)" }}>
+                                    style={{ background: "var(--nx-accent)", color: "white", boxShadow: "0 2px 8px rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                     {joining === item.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Qo'shilish"}
                                 </button>
                             )}
@@ -9823,9 +9823,9 @@ function NxAgentDiscoverModal({ onClose, onSelect }: {
         <div className="fixed inset-0 z-[220]" onClick={onClose}>
             <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[560px] max-h-[80vh] rounded-2xl overflow-hidden flex flex-col"
-                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
                 onClick={e => e.stopPropagation()}>
-                <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "var(--nx-accent)" }}>
                         <BotIcon className="w-4 h-4 text-[var(--nx-text)]" />
                     </div>
@@ -9834,18 +9834,18 @@ function NxAgentDiscoverModal({ onClose, onSelect }: {
                         <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.75)" }}>Mavjud avtomatlashtirilgan yordamchilar</p>
                     </div>
                     <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                         <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                     </button>
                 </div>
-                <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.10)" }}>
                     <div className="relative">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.60)" }} />
                         <input type="text" value={query}
                             onChange={e => setQuery(e.target.value)}
                             placeholder="Nom, @username yoki modul..."
                             className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs bg-transparent focus:outline-none"
-                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(230,238,255,0.90)" }} />
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", color: "rgba(230,238,255,0.90)" }} />
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto nx-scrollbar">
@@ -9862,7 +9862,7 @@ function NxAgentDiscoverModal({ onClose, onSelect }: {
                             <button key={a.id}
                                 onClick={() => { if (a.username) onSelect(a.username); }}
                                 className="w-full flex items-start gap-3 px-4 py-3 border-b hover:bg-white/[0.03] text-left transition"
-                                style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                                style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                 <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0"
                                     style={{ background: "var(--nx-accent)" }}>
                                     {a.image ? (
@@ -9883,7 +9883,7 @@ function NxAgentDiscoverModal({ onClose, onSelect }: {
                                             <BadgeCheck className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                         )}
                                         <span className="text-[9px] font-black px-1.5 py-0.5 rounded"
-                                            style={{ background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)" }}>{a.module}</span>
+                                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", color: "var(--nx-accent)" }}>{a.module}</span>
                                     </div>
                                     <p className="text-[11px] mt-0.5" style={{ color: "rgba(160,180,220,0.75)" }}>@{a.username}</p>
                                     {a.bio && (
@@ -9896,7 +9896,7 @@ function NxAgentDiscoverModal({ onClose, onSelect }: {
                                     )}
                                 </div>
                                 <span className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black transition"
-                                    style={{ background: "var(--nx-accent)", color: "white", boxShadow: "0 2px 8px rgba(43,62,232,0.35)" }}>
+                                    style={{ background: "var(--nx-accent)", color: "white", boxShadow: "0 2px 8px rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                     Ochish
                                 </span>
                             </button>
@@ -9948,10 +9948,10 @@ function DeleteChatModal({ convId, convName, isSelf, onClose, onDone }: {
         <div className="fixed inset-0 z-[220]" onClick={busy ? undefined : onClose}>
             <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[440px] rounded-2xl overflow-hidden"
-                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
                 onClick={e => e.stopPropagation()}>
                 {/* Header */}
-                <div className="p-4 flex items-center gap-3" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                <div className="p-4 flex items-center gap-3" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
                         style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.35)" }}>
                         <Trash2 className="w-5 h-5" style={{ color: "#EF4444" }} />
@@ -9964,7 +9964,7 @@ function DeleteChatModal({ convId, convName, isSelf, onClose, onDone }: {
                     </div>
                     {!busy && (
                         <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center transition"
-                            style={{ background: "rgba(43,62,232,0.10)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                             <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                         </button>
                     )}
@@ -9996,10 +9996,10 @@ function DeleteChatModal({ convId, convName, isSelf, onClose, onDone }: {
                 )}
 
                 {/* Footer */}
-                <div className="p-3 flex justify-end" style={{ borderTop: "1px solid rgba(43,62,232,0.20)" }}>
+                <div className="p-3 flex justify-end" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <button onClick={onClose} disabled={!!busy}
                         className="h-9 px-4 rounded-lg text-[12px] font-black transition disabled:opacity-40"
-                        style={{ background: "rgba(43,62,232,0.10)", color: "rgba(200,215,245,0.85)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgba(200,215,245,0.85)" }}>
                         Bekor qilish
                     </button>
                 </div>
@@ -10014,8 +10014,8 @@ function DcOption({ icon: Icon, title, desc, danger, warning, busy, disabled, on
     onClick: () => void;
 }) {
     const accent = warning ? "#F59E0B" : danger ? "#EF4444" : "var(--nx-accent)";
-    const bg = warning ? "rgba(245,158,11,0.10)" : danger ? "rgba(239,68,68,0.08)" : "rgba(0,206,200,0.08)";
-    const bd = warning ? "rgba(245,158,11,0.30)" : danger ? "rgba(239,68,68,0.25)" : "rgba(0,206,200,0.25)";
+    const bg = warning ? "rgba(245,158,11,0.10)" : danger ? "rgba(239,68,68,0.08)" : "rgb(var(--nx-accent-rgb) / 0.08)";
+    const bd = warning ? "rgba(245,158,11,0.30)" : danger ? "rgba(239,68,68,0.25)" : "rgb(var(--nx-accent-rgb) / 0.25)";
     return (
         <button onClick={onClick} disabled={disabled}
             className="w-full flex items-start gap-3 p-3 rounded-xl text-left transition disabled:opacity-50 hover:brightness-110"

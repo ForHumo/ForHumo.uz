@@ -68,7 +68,7 @@ export function FeedView() {
                             color: "white",
                         } : {
                             background: "var(--nx-surface)",
-                            border: "1px solid rgba(43,62,232,0.22)",
+                            border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)",
                             color: "rgba(140,160,210,0.85)",
                         }}>
                         {t.label}
@@ -183,7 +183,7 @@ function SocialViewMobile() {
                             color: "white",
                         } : {
                             background: "var(--nx-surface)",
-                            border: "1px solid rgba(43,62,232,0.22)",
+                            border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)",
                             color: "rgba(140,160,210,0.85)",
                         }}
                     >
@@ -203,7 +203,7 @@ function SocialViewMobile() {
                             color: "white",
                         } : {
                             background: "var(--nx-surface)",
-                            border: `1px solid ${f.color ? colorHex(f.color) + "55" : "rgba(43,62,232,0.22)"}`,
+                            border: `1px solid ${f.color ? colorHex(f.color) + "55" : "rgb(var(--nx-accent-rgb) / 0.22)"}`,
                             color: f.color ? colorHex(f.color) : "rgba(140,160,210,0.85)",
                         }}
                     >
@@ -218,7 +218,7 @@ function SocialViewMobile() {
                     className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl transition-all active:scale-95"
                     style={{
                         background: "var(--nx-surface)",
-                        border: "1px dashed rgba(43,62,232,0.35)",
+                        border: "1px dashed rgb(var(--nx-accent-rgb) / 0.35)",
                         color: "rgba(140,160,210,0.85)",
                     }}
                 >
@@ -269,7 +269,7 @@ function FolderView({ folder }: { folder: UserFolder | null }) {
             {showChannels && <NxChannels type="CHANNEL" />}
             {types.length === 0 && !folder.includeUnread && (
                 <div className="mx-4 flex flex-col items-center justify-center py-10 px-6 text-center rounded-2xl"
-                    style={{ background: "var(--nx-surface)", border: "1px dashed rgba(43,62,232,0.25)" }}>
+                    style={{ background: "var(--nx-surface)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.25)" }}>
                     <p className="text-sm font-black text-[var(--nx-text)] mb-1">Papka bo&apos;sh</p>
                     <p className="text-xs" style={{ color: "rgba(140,160,210,0.75)" }}>
                         Papkaga chat turlarini qo&apos;shing (o&apos;chirish uchun ikki marta bosing)
@@ -346,7 +346,7 @@ function AgentsTab() {
                     <button key={s} onClick={() => setScope(s)}
                         className="px-3 py-1.5 rounded-lg text-xs font-bold transition"
                         style={scope === s
-                            ? { background: "rgba(43,62,232,0.18)", color: "#fff" }
+                            ? { background: "rgb(var(--nx-accent-rgb) / 0.18)", color: "#fff" }
                             : { background: "var(--nx-surface)", color: "rgba(140,160,210,0.8)" }}>
                         {s === "mine" ? "Mening" : "Kashfiyot"}
                     </button>
@@ -365,7 +365,7 @@ function AgentsTab() {
                 <input value={search} onChange={e => setSearch(e.target.value)}
                     placeholder="Bot qidirish..."
                     className="w-full h-10 rounded-xl pl-9 pr-3 text-sm focus:outline-none"
-                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.20)", color: "white" }}
+                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", color: "white" }}
                 />
             </div>
 
@@ -375,16 +375,16 @@ function AgentsTab() {
                     <button onClick={() => setModuleFilter(null)}
                         className="px-3 h-7 rounded-full text-[10px] font-black flex-shrink-0"
                         style={!moduleFilter
-                            ? { background: "rgba(0,206,200,0.20)", color: "white", border: "1px solid var(--nx-accent)" }
-                            : { background: "var(--nx-surface)", color: "rgba(160,176,224,0.85)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                            ? { background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "white", border: "1px solid var(--nx-accent)" }
+                            : { background: "var(--nx-surface)", color: "rgba(160,176,224,0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                         Barchasi
                     </button>
                     {modules.map(m => (
                         <button key={m} onClick={() => setModuleFilter(m === moduleFilter ? null : m)}
                             className="px-3 h-7 rounded-full text-[10px] font-black flex-shrink-0"
                             style={moduleFilter === m
-                                ? { background: "rgba(0,206,200,0.20)", color: "white", border: "1px solid var(--nx-accent)" }
-                                : { background: "var(--nx-surface)", color: "rgba(160,176,224,0.85)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                ? { background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "white", border: "1px solid var(--nx-accent)" }
+                                : { background: "var(--nx-surface)", color: "rgba(160,176,224,0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             {MODULE_LABELS[m] ?? m}
                         </button>
                     ))}
@@ -396,7 +396,7 @@ function AgentsTab() {
                 <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-white/30" /></div>
             ) : filtered.length === 0 ? (
                 <div className="p-8 rounded-2xl text-center"
-                    style={{ background: "var(--nx-surface)", border: "1px dashed rgba(43,62,232,0.20)" }}>
+                    style={{ background: "var(--nx-surface)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <Bot className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "var(--nx-accent)" }} />
                     <p className="text-sm" style={{ color: "rgba(160,176,224,0.75)" }}>
                         {scope === "mine" ? "Sizda bot yo'q" : "Bot topilmadi"}
@@ -444,17 +444,17 @@ function AgentCard({
 }) {
     return (
         <div className="p-3 rounded-2xl"
-            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.18)" }}>
+            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
             <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0"
-                    style={{ background: "rgba(43,62,232,0.15)" }}>
+                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                     {agent.image ? <img src={agent.image} alt="" className="w-full h-full object-cover" /> : <Bot className="w-5 h-5 text-white/50" />}
                 </div>
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                         <p className="text-sm font-bold text-[var(--nx-text)] truncate">{agent.name}</p>
                         <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded flex-shrink-0"
-                            style={{ background: "rgba(0,206,200,0.14)", color: "var(--nx-accent)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)", color: "var(--nx-accent)" }}>
                             BOT
                         </span>
                         {agent.isSystem && (
@@ -474,7 +474,7 @@ function AgentCard({
                 </button>
                 <button onClick={onShare} title="Ulash"
                     className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{ background: "rgba(43,62,232,0.15)", color: "white" }}>
+                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", color: "white" }}>
                     <Share2 className="w-3 h-3" />
                 </button>
                 {isMine && (
@@ -586,16 +586,16 @@ export function ProfileView() {
         <ViewShell>
             {/* ── Profil kartasi ────────────────────────────────────────── */}
             <div className="mx-4 mt-4 rounded-2xl p-6 relative overflow-hidden"
-                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                 <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none"
-                    style={{ background: "radial-gradient(circle,rgba(43,62,232,0.22) 0%,transparent 70%)" }} />
+                    style={{ background: "radial-gradient(circle,rgb(var(--nx-accent-rgb) / 0.22) 0%,transparent 70%)" }} />
                 <div className="absolute -bottom-12 -left-12 w-36 h-36 rounded-full pointer-events-none"
-                    style={{ background: "radial-gradient(circle,rgba(0,206,200,0.12) 0%,transparent 70%)" }} />
+                    style={{ background: "radial-gradient(circle,rgb(var(--nx-accent-rgb) / 0.12) 0%,transparent 70%)" }} />
 
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 relative">
                     {/* Avatar */}
                     <div className="w-20 h-20 rounded-2xl p-[2.5px] flex-shrink-0"
-                        style={{ background: "var(--nx-accent)", boxShadow: "0 0 32px rgba(43,62,232,0.45)" }}>
+                        style={{ background: "var(--nx-accent)", boxShadow: "0 0 32px rgb(var(--nx-accent-rgb) / 0.45)" }}>
                         <div className="w-full h-full rounded-[14px] bg-[var(--nx-bg)] overflow-hidden flex items-center justify-center text-2xl font-black text-[var(--nx-text)]">
                             {displayImage
                                 ? <img src={displayImage} alt={displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -618,14 +618,14 @@ export function ProfileView() {
                         <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                             {verified && (
                                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[var(--nx-text)]"
-                                    style={{ background: "rgba(0,206,200,0.14)", border: "1px solid rgba(0,206,200,0.35)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                     <BadgeCheck className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />
                                     Tasdiqlangan
                                 </span>
                             )}
                             {profile?.humoId && (
                                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[var(--nx-text)] font-mono"
-                                    style={{ background: "rgba(43,62,232,0.18)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.18)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                     <Shield className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />
                                     {profile.humoId}
                                 </span>
@@ -644,7 +644,7 @@ export function ProfileView() {
                         <button
                             onClick={openEdit}
                             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-[var(--nx-text)] transition-opacity duration-150 hover:opacity-85 active:scale-95"
-                            style={{ background: "var(--nx-accent)", boxShadow: "0 4px 18px rgba(43,62,232,0.45)" }}
+                            style={{ background: "var(--nx-accent)", boxShadow: "0 4px 18px rgb(var(--nx-accent-rgb) / 0.45)" }}
                         >
                             <Edit3 className="w-3.5 h-3.5" />
                             Tahrirlash
@@ -661,13 +661,13 @@ export function ProfileView() {
                             <>
                                 <Link href={`/nexus/u/${profile.username}`}
                                     className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-[var(--nx-text)] transition-opacity duration-150 hover:opacity-85 active:scale-95"
-                                    style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                     <ExternalLink className="w-3.5 h-3.5" />
                                     Ommaviy profil
                                 </Link>
                                 <button onClick={() => setQrOpen(true)}
                                     className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-[var(--nx-text)] transition-opacity duration-150 hover:opacity-85 active:scale-95"
-                                    style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                     <QrCode className="w-3.5 h-3.5" />
                                     QR ulashish
                                 </button>
@@ -686,9 +686,9 @@ export function ProfileView() {
                 ].map(({ label, value, action }, i) => (
                     <button key={i} onClick={action}
                         className="flex flex-col items-center py-4 rounded-2xl transition-all duration-150"
-                        style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.18)", cursor: action ? "pointer" : "default" }}
-                        onMouseEnter={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)")}
-                        onMouseLeave={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)")}
+                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", cursor: action ? "pointer" : "default" }}
+                        onMouseEnter={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgb(var(--nx-accent-rgb) / 0.40)")}
+                        onMouseLeave={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgb(var(--nx-accent-rgb) / 0.18)")}
                     >
                         <p className="text-2xl font-black text-[var(--nx-text)]">{value}</p>
                         <p className="text-[10px] mt-0.5 font-bold" style={{ color: "rgba(100,120,170,0.75)" }}>{label}</p>
@@ -715,7 +715,7 @@ export function ProfileView() {
                         </>
                     );
                     const cls = "flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-150 active:scale-95";
-                    const st = { background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.18)" };
+                    const st = { background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" };
                     return href
                         ? <Link key={i} href={href} className={cls} style={st}>{inner}</Link>
                         : <button key={i} onClick={action} className={cls} style={st}>{inner}</button>;
@@ -742,14 +742,14 @@ export function ProfileView() {
                         </>
                     );
                     const cls = "flex items-center gap-3 p-4 rounded-2xl transition-all duration-150 text-left";
-                    const st = { background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.18)" };
+                    const st = { background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" };
                     if (href) return <Link key={i} href={href} className={cls} style={st}>{inner}</Link>;
                     return (
                         <button key={i} onClick={action}
                             className={cls}
                             style={{ ...st, cursor: action ? "pointer" : "default" }}
-                            onMouseEnter={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)")}
-                            onMouseLeave={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)")}
+                            onMouseEnter={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgb(var(--nx-accent-rgb) / 0.40)")}
+                            onMouseLeave={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgb(var(--nx-accent-rgb) / 0.18)")}
                         >{inner}</button>
                     );
                 })}
@@ -764,9 +764,9 @@ export function ProfileView() {
             {/* ── Ko'rish tarixi ────────────────────────────────────────── */}
             {watchHistory.length > 0 && (
                 <div className="mx-4 mt-3 rounded-2xl overflow-hidden"
-                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                     <div className="flex items-center justify-between px-5 py-3"
-                        style={{ borderBottom: "1px solid rgba(43,62,232,0.12)" }}>
+                        style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.12)" }}>
                         <h3 className="text-sm font-black text-[var(--nx-text)] flex items-center gap-2">
                             <Clock className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                             Ko&apos;rish tarixi ({watchHistory.length})
@@ -774,7 +774,7 @@ export function ProfileView() {
                         <div className="flex items-center gap-2">
                             <button onClick={openSavedHistory}
                                 className="text-[10px] font-bold px-2.5 py-1 rounded-lg"
-                                style={{ color: "var(--nx-accent)", background: "rgba(0,206,200,0.08)" }}>
+                                style={{ color: "var(--nx-accent)", background: "rgb(var(--nx-accent-rgb) / 0.08)" }}>
                                 Barchasi
                             </button>
                             <button onClick={clearHistory}
@@ -793,7 +793,7 @@ export function ProfileView() {
                                 className="flex-shrink-0 w-32 group text-left"
                             >
                                 <div className="relative aspect-video rounded-lg overflow-hidden mb-1"
-                                    style={{ border: "1px solid rgba(43,62,232,0.15)" }}>
+                                    style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                     <img src={v.image} alt={v.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                                         style={{ background: "rgba(5,8,24,0.50)" }}>
@@ -812,7 +812,7 @@ export function ProfileView() {
 
             {/* ── Hisob ─────────────────────────────────────────────────── */}
             <div className="mx-4 mt-3 rounded-2xl p-5"
-                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                 <h3 className="text-sm font-black text-[var(--nx-text)] mb-3 flex items-center gap-2">
                     <Settings className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                     Hisob
@@ -820,9 +820,9 @@ export function ProfileView() {
                 <div className="space-y-2">
                     <Link href="/id"
                         className="flex items-center justify-between p-3 rounded-xl text-sm font-medium transition-colors duration-150"
-                        style={{ background: "rgba(5,8,24,0.50)", border: "1px solid rgba(43,62,232,0.12)", color: "rgba(140,160,210,0.85)" }}>
+                        style={{ background: "rgba(5,8,24,0.50)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.12)", color: "rgba(140,160,210,0.85)" }}>
                         <span>Humo ID sozlamalari</span>
-                        <ExternalLink className="w-4 h-4" style={{ color: "rgba(43,62,232,0.6)" }} />
+                        <ExternalLink className="w-4 h-4" style={{ color: "rgb(var(--nx-accent-rgb) / 0.6)" }} />
                     </Link>
                     <button
                         onClick={() => signOut()}
@@ -849,19 +849,19 @@ export function ProfileView() {
                         className="fixed inset-x-4 bottom-0 z-[60] rounded-t-3xl overflow-hidden md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[420px] md:rounded-3xl"
                         style={{
                             background: "rgba(8,12,32,0.98)",
-                            border: "1px solid rgba(43,62,232,0.25)",
+                            border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)",
                             boxShadow: "0 32px 80px rgba(0,0,0,0.60)",
                         }}
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between px-5 py-4"
-                            style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                            style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             <h3 className="text-base font-black text-[var(--nx-text)]">Profilni tahrirlash</h3>
                             <button
                                 onClick={() => setEditOpen(false)}
                                 className="w-8 h-8 flex items-center justify-center rounded-xl"
-                                style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}
                             >
                                 <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
                             </button>
@@ -872,7 +872,7 @@ export function ProfileView() {
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-[10px] font-bold uppercase tracking-widest block mb-1.5"
-                                        style={{ color: "rgba(43,62,232,0.70)" }}>Ism</label>
+                                        style={{ color: "rgb(var(--nx-accent-rgb) / 0.70)" }}>Ism</label>
                                     <input
                                         value={editFirst}
                                         onChange={e => setEditFirst(e.target.value)}
@@ -880,16 +880,16 @@ export function ProfileView() {
                                         className="w-full h-10 px-3 rounded-xl text-sm text-[var(--nx-text)] outline-none"
                                         style={{
                                             background: "rgba(5,8,24,0.70)",
-                                            border: "1px solid rgba(43,62,232,0.25)",
+                                            border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)",
                                             caretColor: "var(--nx-accent)",
                                         }}
-                                        onFocus={e => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.55)")}
-                                        onBlur={e  => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.25)")}
+                                        onFocus={e => (e.currentTarget.style.borderColor = "rgb(var(--nx-accent-rgb) / 0.55)")}
+                                        onBlur={e  => (e.currentTarget.style.borderColor = "rgb(var(--nx-accent-rgb) / 0.25)")}
                                     />
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-bold uppercase tracking-widest block mb-1.5"
-                                        style={{ color: "rgba(43,62,232,0.70)" }}>Familiya</label>
+                                        style={{ color: "rgb(var(--nx-accent-rgb) / 0.70)" }}>Familiya</label>
                                     <input
                                         value={editLast}
                                         onChange={e => setEditLast(e.target.value)}
@@ -897,18 +897,18 @@ export function ProfileView() {
                                         className="w-full h-10 px-3 rounded-xl text-sm text-[var(--nx-text)] outline-none"
                                         style={{
                                             background: "rgba(5,8,24,0.70)",
-                                            border: "1px solid rgba(43,62,232,0.25)",
+                                            border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)",
                                             caretColor: "var(--nx-accent)",
                                         }}
-                                        onFocus={e => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.55)")}
-                                        onBlur={e  => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.25)")}
+                                        onFocus={e => (e.currentTarget.style.borderColor = "rgb(var(--nx-accent-rgb) / 0.55)")}
+                                        onBlur={e  => (e.currentTarget.style.borderColor = "rgb(var(--nx-accent-rgb) / 0.25)")}
                                     />
                                 </div>
                             </div>
 
                             <div>
                                 <label className="text-[10px] font-bold uppercase tracking-widest block mb-1.5"
-                                    style={{ color: "rgba(43,62,232,0.70)" }}>Bio ({editBio.length}/160)</label>
+                                    style={{ color: "rgb(var(--nx-accent-rgb) / 0.70)" }}>Bio ({editBio.length}/160)</label>
                                 <textarea
                                     value={editBio}
                                     onChange={e => setEditBio(e.target.value.slice(0, 160))}
@@ -917,11 +917,11 @@ export function ProfileView() {
                                     className="w-full px-3 py-2.5 rounded-xl text-sm text-[var(--nx-text)] outline-none resize-none"
                                     style={{
                                         background: "rgba(5,8,24,0.70)",
-                                        border: "1px solid rgba(43,62,232,0.25)",
+                                        border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)",
                                         caretColor: "var(--nx-accent)",
                                     }}
-                                    onFocus={e => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.55)")}
-                                    onBlur={e  => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.25)")}
+                                    onFocus={e => (e.currentTarget.style.borderColor = "rgb(var(--nx-accent-rgb) / 0.55)")}
+                                    onBlur={e  => (e.currentTarget.style.borderColor = "rgb(var(--nx-accent-rgb) / 0.25)")}
                                 />
                             </div>
 
@@ -935,7 +935,7 @@ export function ProfileView() {
                                 className="w-full h-11 rounded-xl text-sm font-black text-[var(--nx-text)] flex items-center justify-center gap-2 transition-opacity duration-150"
                                 style={{
                                     background: "var(--nx-accent)",
-                                    boxShadow: "0 4px 18px rgba(43,62,232,0.40)",
+                                    boxShadow: "0 4px 18px rgb(var(--nx-accent-rgb) / 0.40)",
                                     opacity: saving ? 0.70 : 1,
                                 }}
                             >

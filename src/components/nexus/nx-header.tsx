@@ -26,7 +26,7 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
                 background: "var(--nx-surface)",
                 backdropFilter: "blur(20px)",
                 WebkitBackdropFilter: "blur(20px)",
-                borderBottom: "1px solid rgba(43,62,232,0.18)",
+                borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.18)",
             }}
         >
             {/* ── Menu button (chapdan ochiladi) ───────────────────── */}
@@ -41,8 +41,8 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
                 href="/"
                 className="w-9 h-9 flex items-center justify-center rounded-xl transition-colors"
                 style={{
-                    background: "rgba(43,62,232,0.08)",
-                    border: "1px solid rgba(43,62,232,0.18)",
+                    background: "rgb(var(--nx-accent-rgb) / 0.08)",
+                    border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)",
                 }}
                 title="For Humo"
             >
@@ -77,7 +77,7 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
             <div className="flex-1 max-w-xl relative group">
                 <Search
                     className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
-                    style={{ color: "rgba(43,62,232,0.50)" }}
+                    style={{ color: "rgb(var(--nx-accent-rgb) / 0.50)" }}
                 />
                 <input
                     type="text"
@@ -85,8 +85,8 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
                     placeholder="Kontent, kreator, kanal..."
                     className="w-full h-9 rounded-xl pl-9 pr-4 text-sm outline-none text-[var(--nx-text)] cursor-pointer transition-all duration-200"
                     style={{
-                        background: "rgba(43,62,232,0.08)",
-                        border: "1px solid rgba(43,62,232,0.18)",
+                        background: "rgb(var(--nx-accent-rgb) / 0.08)",
+                        border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)",
                     }}
                     onClick={() => setSearchOpen(true)}
                 />
@@ -164,16 +164,16 @@ function HeaderIconBtn({ onClick, icon: Icon, iconColor, badge, className = "" }
             onClick={handleClick}
             className={`nx-ripple-wrap nx-press relative w-9 h-9 flex items-center justify-center rounded-xl ${className}`}
             style={{
-                background: "rgba(43,62,232,0.08)",
-                border: "1px solid rgba(43,62,232,0.18)",
+                background: "rgb(var(--nx-accent-rgb) / 0.08)",
+                border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)",
             }}
             onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.18)";
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)";
+                (e.currentTarget as HTMLElement).style.background = "rgb(var(--nx-accent-rgb) / 0.18)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgb(var(--nx-accent-rgb) / 0.40)";
             }}
             onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)";
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)";
+                (e.currentTarget as HTMLElement).style.background = "rgb(var(--nx-accent-rgb) / 0.08)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgb(var(--nx-accent-rgb) / 0.18)";
             }}
         >
             <Icon
@@ -219,14 +219,14 @@ function CreateBtn({ onClick }: { onClick: () => void }) {
             onClick={handleClick}
             className="nx-ripple-wrap nx-press hidden sm:flex items-center gap-1.5 h-9 px-3 rounded-xl"
             style={{
-                background: "linear-gradient(135deg,rgba(43,62,232,0.20),rgba(0,206,200,0.12))",
-                border: "1px solid rgba(43,62,232,0.30)",
+                background: "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.20),rgb(var(--nx-accent-rgb) / 0.12))",
+                border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)",
             }}
             onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.background = "linear-gradient(135deg,rgba(43,62,232,0.30),rgba(0,206,200,0.18))";
+                (e.currentTarget as HTMLElement).style.background = "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.30),rgb(var(--nx-accent-rgb) / 0.18))";
             }}
             onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.background = "linear-gradient(135deg,rgba(43,62,232,0.20),rgba(0,206,200,0.12))";
+                (e.currentTarget as HTMLElement).style.background = "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.20),rgb(var(--nx-accent-rgb) / 0.12))";
             }}
         >
             <PlusSquare
@@ -288,16 +288,16 @@ function BellButton({ onOpen }: { onOpen: () => void }) {
             onClick={handleClick}
             className="nx-ripple-wrap nx-press relative w-9 h-9 flex items-center justify-center rounded-xl"
             style={{
-                background: "rgba(43,62,232,0.08)",
-                border: "1px solid rgba(43,62,232,0.18)",
+                background: "rgb(var(--nx-accent-rgb) / 0.08)",
+                border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)",
             }}
             onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.18)";
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)";
+                (e.currentTarget as HTMLElement).style.background = "rgb(var(--nx-accent-rgb) / 0.18)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgb(var(--nx-accent-rgb) / 0.40)";
             }}
             onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)";
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)";
+                (e.currentTarget as HTMLElement).style.background = "rgb(var(--nx-accent-rgb) / 0.08)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgb(var(--nx-accent-rgb) / 0.18)";
             }}
         >
             <Bell
@@ -308,7 +308,7 @@ function BellButton({ onOpen }: { onOpen: () => void }) {
             {unread > 0 && (
                 <span
                     className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-black text-[var(--nx-text)]"
-                    style={{ background: "var(--nx-accent)", boxShadow: "0 0 6px rgba(0,206,200,0.8)" }}
+                    style={{ background: "var(--nx-accent)", boxShadow: "0 0 6px rgb(var(--nx-accent-rgb) / 0.8)" }}
                 >
                     {unread > 9 ? "9+" : unread}
                 </span>
@@ -362,9 +362,9 @@ function MessagesButton({ onOpen }: { onOpen: () => void }) {
         <button
             onClick={handleClick}
             className="nx-ripple-wrap nx-press relative w-9 h-9 flex items-center justify-center rounded-xl"
-            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.18)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)"; }}
+            style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgb(var(--nx-accent-rgb) / 0.18)"; (e.currentTarget as HTMLElement).style.borderColor = "rgb(var(--nx-accent-rgb) / 0.40)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgb(var(--nx-accent-rgb) / 0.08)"; (e.currentTarget as HTMLElement).style.borderColor = "rgb(var(--nx-accent-rgb) / 0.18)"; }}
         >
             <MessageCircle ref={iconRef as React.Ref<SVGSVGElement>} className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
             {unread > 0 && (
@@ -390,16 +390,16 @@ function ProfileButton({ session }: { session: ReturnType<typeof useSession>["da
             onClick={() => window.dispatchEvent(new CustomEvent("nexus:navigate", { detail: "profile" }))}
             className="nx-press flex items-center gap-2 h-9 pl-1 pr-2.5 rounded-xl transition-colors duration-150"
             style={{
-                background: "rgba(43,62,232,0.08)",
-                border: "1px solid rgba(43,62,232,0.18)",
+                background: "rgb(var(--nx-accent-rgb) / 0.08)",
+                border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)",
             }}
             onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.18)";
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)";
+                (e.currentTarget as HTMLElement).style.background = "rgb(var(--nx-accent-rgb) / 0.18)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgb(var(--nx-accent-rgb) / 0.40)";
             }}
             onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)";
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)";
+                (e.currentTarget as HTMLElement).style.background = "rgb(var(--nx-accent-rgb) / 0.08)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgb(var(--nx-accent-rgb) / 0.18)";
             }}
         >
             {/* Avatar */}
@@ -425,7 +425,7 @@ function ProfileButton({ session }: { session: ReturnType<typeof useSession>["da
                 </span>
             )}
 
-            <ChevronDown className="hidden md:block w-3 h-3 flex-shrink-0" style={{ color: "rgba(43,62,232,0.60)" }} />
+            <ChevronDown className="hidden md:block w-3 h-3 flex-shrink-0" style={{ color: "rgb(var(--nx-accent-rgb) / 0.60)" }} />
         </button>
     );
 }

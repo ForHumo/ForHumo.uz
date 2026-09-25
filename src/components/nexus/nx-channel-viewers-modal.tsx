@@ -47,16 +47,16 @@ export function NxChannelViewersModal({
         <>
             <div className="fixed inset-0 z-[320] bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-x-0 bottom-0 z-[321] flex max-h-[85vh] flex-col overflow-hidden rounded-t-3xl md:inset-y-0 md:right-0 md:inset-x-auto md:max-h-full md:w-[440px] md:rounded-none md:rounded-l-3xl"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.30)" }}
+                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Eye className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Ko&apos;rganlar · {total}
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(43,62,232,0.12)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                         <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -80,7 +80,7 @@ export function NxChannelViewersModal({
                                     style={{ background: "var(--nx-surface)" }}>
                                     <img src={v.image ?? "/logos/forhumo.png"} alt=""
                                         className="w-8 h-8 rounded-full object-cover"
-                                        style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
+                                        style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }} />
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-bold text-[var(--nx-text)] truncate">{v.name ?? v.username ?? "?"}</p>
                                         {v.username && <p className="text-[10px]" style={{ color: "var(--nx-text-3)" }}>@{v.username}</p>}

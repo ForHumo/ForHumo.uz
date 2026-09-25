@@ -1,7 +1,7 @@
 "use client";
 
 // Nexus GIF / Sticker "Agent" boshqaruv sahifasi. Nexus palette
-// (var(--nx-surface) fon, rgba(43,62,232,...) accent + var(--nx-accent)) —
+// (var(--nx-surface) fon, rgb(var(--nx-accent-rgb)/...) accent + var(--nx-accent)) —
 // Nexus shell bilan bir xil vizual tili.
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -52,11 +52,11 @@ const NX = {
     bg: "var(--nx-bg)",
     panel: "var(--nx-surface)",
     panelStrong: "var(--nx-surface)",
-    border: "rgba(43,62,232,0.28)",
-    borderSoft: "rgba(43,62,232,0.16)",
+    border: "rgb(var(--nx-accent-rgb) / 0.28)",
+    borderSoft: "rgb(var(--nx-accent-rgb) / 0.16)",
     accent: "var(--nx-accent)",
-    accentBg: "rgba(0,206,200,0.14)",
-    blueBg: "rgba(43,62,232,0.10)",
+    accentBg: "rgb(var(--nx-accent-rgb) / 0.14)",
+    blueBg: "rgb(var(--nx-accent-rgb) / 0.10)",
     text: "rgba(230,238,255,0.96)",
     text2: "rgba(200,215,245,0.75)",
     text3: "var(--nx-text-2)",
@@ -91,8 +91,8 @@ export function NxHumoMediaManager({ kind }: { kind: Kind }) {
         <div className="absolute inset-0 overflow-y-auto" style={{ background: NX.bg, color: NX.text }}>
             {/* Fon nurlari — Nexus stili */}
             <div className="pointer-events-none fixed inset-0" style={{
-                background: "radial-gradient(ellipse 60% 60% at 20% 10%, rgba(43,62,232,0.15) 0%, transparent 60%), "
-                    + "radial-gradient(ellipse 60% 60% at 80% 90%, rgba(0,206,200,0.10) 0%, transparent 60%)"
+                background: "radial-gradient(ellipse 60% 60% at 20% 10%, rgb(var(--nx-accent-rgb) / 0.15) 0%, transparent 60%), "
+                    + "radial-gradient(ellipse 60% 60% at 80% 90%, rgb(var(--nx-accent-rgb) / 0.10) 0%, transparent 60%)"
             }} />
 
             <header className="sticky top-0 z-10 backdrop-blur-md" style={{

@@ -53,8 +53,8 @@ export function NxSettings({ open, onClose }: Props) {
                         background: "rgba(8,12,32,0.98)",
                         backdropFilter: "blur(24px)",
                         WebkitBackdropFilter: "blur(24px)",
-                        border: "1px solid rgba(43,62,232,0.25)",
-                        boxShadow: "0 32px 80px rgba(0,0,0,0.60), 0 0 0 1px rgba(43,62,232,0.10), inset 0 1px 0 rgba(43,62,232,0.15)",
+                        border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)",
+                        boxShadow: "0 32px 80px rgba(0,0,0,0.60), 0 0 0 1px rgb(var(--nx-accent-rgb) / 0.10), inset 0 1px 0 rgb(var(--nx-accent-rgb) / 0.15)",
                         opacity: open ? 1 : 0,
                         // MUHIM: yopiq holatda ko'rinmas panel bosishlarni yutmasin (opacity:0 pointer-events'ni o'chirmaydi)
                         pointerEvents: open ? "auto" : "none",
@@ -64,7 +64,7 @@ export function NxSettings({ open, onClose }: Props) {
                     {/* ── Modal header ──────────────────────────────── */}
                     <div
                         className="flex items-center justify-between px-6 py-4 flex-shrink-0"
-                        style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}
+                        style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}
                     >
                         <div>
                             <h2 className="text-base font-black text-[var(--nx-text)]">Sozlamalar</h2>
@@ -76,8 +76,8 @@ export function NxSettings({ open, onClose }: Props) {
                             onClick={onClose}
                             className="w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-90"
                             style={{
-                                background: "rgba(43,62,232,0.10)",
-                                border: "1px solid rgba(43,62,232,0.20)",
+                                background: "rgb(var(--nx-accent-rgb) / 0.10)",
+                                border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                             }}
                         >
                             <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
@@ -90,7 +90,7 @@ export function NxSettings({ open, onClose }: Props) {
                         <div
                             className="w-44 flex-shrink-0 flex flex-col gap-0.5 py-3 px-2 overflow-y-auto"
                             style={{
-                                borderRight: "1px solid rgba(43,62,232,0.14)",
+                                borderRight: "1px solid rgb(var(--nx-accent-rgb) / 0.14)",
                                 scrollbarWidth: "none",
                             }}
                         >
@@ -103,10 +103,10 @@ export function NxSettings({ open, onClose }: Props) {
                                         className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all duration-150"
                                         style={{
                                             background: active
-                                                ? "rgba(43,62,232,0.15)"
+                                                ? "rgb(var(--nx-accent-rgb) / 0.15)"
                                                 : "transparent",
                                             border: active
-                                                ? "1px solid rgba(43,62,232,0.30)"
+                                                ? "1px solid rgb(var(--nx-accent-rgb) / 0.30)"
                                                 : "1px solid transparent",
                                         }}
                                     >
@@ -153,13 +153,13 @@ function SettingsGroup({ title, children }: { title: string; children: React.Rea
         <div className="mb-5">
             <p
                 className="text-[9px] font-black uppercase tracking-widest mb-2"
-                style={{ color: "rgba(43,62,232,0.60)" }}
+                style={{ color: "rgb(var(--nx-accent-rgb) / 0.60)" }}
             >
                 {title}
             </p>
             <div
                 className="rounded-2xl overflow-hidden"
-                style={{ border: "1px solid rgba(43,62,232,0.14)" }}
+                style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}
             >
                 {children}
             </div>
@@ -181,11 +181,11 @@ function SettingsRow({
     return (
         <div
             className="flex items-center gap-3.5 px-4 py-3.5 transition-colors duration-150"
-            style={{ borderBottom: "1px solid rgba(43,62,232,0.08)" }}
+            style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.08)" }}
         >
             <div
                 className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ background: "rgba(43,62,232,0.12)" }}
+                style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}
             >
                 <Icon className="w-3.5 h-3.5" style={{ color: "rgba(100,140,220,0.90)" }} />
             </div>
@@ -211,7 +211,7 @@ function Toggle({ defaultOn = false }: { defaultOn?: boolean }) {
             style={{
                 background: on
                     ? "var(--nx-accent)"
-                    : "rgba(43,62,232,0.18)",
+                    : "rgb(var(--nx-accent-rgb) / 0.18)",
                 minWidth: "40px",
                 height: "22px",
             }}
@@ -220,7 +220,7 @@ function Toggle({ defaultOn = false }: { defaultOn?: boolean }) {
                 className="absolute top-0.5 left-0.5 w-[18px] h-[18px] rounded-full bg-white transition-all duration-200 flex items-center justify-center"
                 style={{
                     transform: on ? "translateX(18px)" : "translateX(0)",
-                    boxShadow: on ? "0 0 8px rgba(0,206,200,0.50)" : "none",
+                    boxShadow: on ? "0 0 8px rgb(var(--nx-accent-rgb) / 0.50)" : "none",
                 }}
             >
                 {on && <Check className="w-2.5 h-2.5" style={{ color: "var(--nx-accent)" }} />}
@@ -239,9 +239,9 @@ function SelectBadge({ options, defaultVal }: { options: string[]; defaultVal: s
                     onClick={() => setVal(opt)}
                     className="px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all duration-150"
                     style={{
-                        background: val === opt ? "var(--nx-accent)" : "rgba(43,62,232,0.12)",
+                        background: val === opt ? "var(--nx-accent)" : "rgb(var(--nx-accent-rgb) / 0.12)",
                         color: val === opt ? "#fff" : "var(--nx-text-3)",
-                        border: val === opt ? "none" : "1px solid rgba(43,62,232,0.16)",
+                        border: val === opt ? "none" : "1px solid rgb(var(--nx-accent-rgb) / 0.16)",
                     }}
                 >
                     {opt}
@@ -252,7 +252,7 @@ function SelectBadge({ options, defaultVal }: { options: string[]; defaultVal: s
 }
 
 function ArrowRight() {
-    return <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(43,62,232,0.45)" }} />;
+    return <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "rgb(var(--nx-accent-rgb) / 0.45)" }} />;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -393,10 +393,10 @@ function PrivacyPanel() {
             </SettingsGroup>
 
             <SettingsGroup title="Bildirishnoma">
-                <div className="px-3 py-2.5" style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                <div className="px-3 py-2.5" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                     <div className="flex items-center gap-3 mb-2">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                            style={{ background: "rgba(43,62,232,0.15)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                             <Bell className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -413,13 +413,13 @@ function PrivacyPanel() {
                                 disabled={saving === "privacyPushPreview"}
                                 className="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition disabled:opacity-50"
                                 style={state.privacyPushPreview === opt ? {
-                                    background: "rgba(0,206,200,0.15)",
+                                    background: "rgb(var(--nx-accent-rgb) / 0.15)",
                                     color: "var(--nx-accent)",
-                                    border: "1px solid rgba(0,206,200,0.40)",
+                                    border: "1px solid rgb(var(--nx-accent-rgb) / 0.40)",
                                 } : {
-                                    background: "rgba(43,62,232,0.06)",
+                                    background: "rgb(var(--nx-accent-rgb) / 0.06)",
                                     color: "rgba(140,160,210,0.85)",
-                                    border: "1px solid rgba(43,62,232,0.20)",
+                                    border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                                 }}>
                                 {PUSH_PREVIEW_LABELS[opt]}
                             </button>
@@ -450,10 +450,10 @@ function PrivacyRow({ icon: Icon, label, description, value, onChange, saving }:
 }) {
     const options: PrivacyValue[] = ["all", "contacts", "none"];
     return (
-        <div className="px-3 py-2.5 border-b" style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+        <div className="px-3 py-2.5 border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
             <div className="flex items-center gap-3 mb-2">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: "rgba(43,62,232,0.15)" }}>
+                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                     <Icon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -467,13 +467,13 @@ function PrivacyRow({ icon: Icon, label, description, value, onChange, saving }:
                     <button key={opt} type="button" onClick={() => onChange(opt)} disabled={saving}
                         className="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition disabled:opacity-50"
                         style={value === opt ? {
-                            background: "rgba(0,206,200,0.15)",
+                            background: "rgb(var(--nx-accent-rgb) / 0.15)",
                             color: "var(--nx-accent)",
-                            border: "1px solid rgba(0,206,200,0.40)",
+                            border: "1px solid rgb(var(--nx-accent-rgb) / 0.40)",
                         } : {
-                            background: "rgba(43,62,232,0.06)",
+                            background: "rgb(var(--nx-accent-rgb) / 0.06)",
                             color: "rgba(140,160,210,0.85)",
-                            border: "1px solid rgba(43,62,232,0.20)",
+                            border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                         }}>
                         {PRIVACY_LABELS[opt]}
                     </button>

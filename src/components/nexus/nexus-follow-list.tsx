@@ -47,10 +47,10 @@ export function NexusFollowList({ username, type, onClose }: {
     return (
         <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
             <div onClick={e => e.stopPropagation()} className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl overflow-hidden flex flex-col"
-                style={{ background: "rgba(8,14,32,0.98)", border: "1px solid rgba(43,62,232,0.25)", maxHeight: "75vh" }}>
-                <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(43,62,232,0.15)" }}>
+                style={{ background: "rgba(8,14,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", maxHeight: "75vh" }}>
+                <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                     <h3 className="text-sm font-black text-[var(--nx-text)]">{title}</h3>
-                    <button onClick={onClose} className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: "rgba(43,62,232,0.12)" }}>
+                    <button onClick={onClose} className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                         <X className="w-3.5 h-3.5 text-white/60" />
                     </button>
                 </div>
@@ -75,7 +75,7 @@ export function NexusFollowList({ username, type, onClose }: {
                                 <button onClick={() => toggleFollow(u)} disabled={busy === u.username}
                                     className="px-3 py-1.5 rounded-lg text-[11px] font-black flex-shrink-0 active:scale-95 transition"
                                     style={u.isFollowing
-                                        ? { background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)", color: "rgba(140,160,210,0.85)" }
+                                        ? { background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", color: "rgba(140,160,210,0.85)" }
                                         : { background: "var(--nx-accent)", color: "#fff" }}>
                                     {u.isFollowing ? "Kuzatilmoqda" : "Kuzatish"}
                                 </button>

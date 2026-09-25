@@ -166,7 +166,7 @@ export function NxSearch() {
                 {!u.isMe && u.username && (
                     isFollowingNow(u) ? (
                         <span className="px-3 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1 flex-shrink-0"
-                            style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)", color: "rgba(140,160,210,0.85)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", color: "rgba(140,160,210,0.85)" }}>
                             <UserCheck className="w-3 h-3" /> Kuzatilmoqda
                         </span>
                     ) : (
@@ -184,7 +184,7 @@ export function NxSearch() {
     function Section({ label, children }: { label: string; children: React.ReactNode }) {
         return (
             <div className="mb-2">
-                <p className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-2" style={{ color: "rgba(43,62,232,0.55)" }}>{label}</p>
+                <p className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-2" style={{ color: "rgb(var(--nx-accent-rgb) / 0.55)" }}>{label}</p>
                 {children}
             </div>
         );
@@ -198,26 +198,26 @@ export function NxSearch() {
 
             <div className="fixed inset-x-0 top-0 z-50 flex flex-col transition-all duration-300"
                 style={{
-                    background: "rgba(8,12,32,0.98)", borderBottom: "1px solid rgba(43,62,232,0.22)",
+                    background: "rgba(8,12,32,0.98)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.22)",
                     boxShadow: "0 8px 48px rgba(0,0,0,0.60)", maxHeight: searchOpen ? "85vh" : "0",
                     opacity: searchOpen ? 1 : 0, pointerEvents: searchOpen ? "auto" : "none",
                     transform: searchOpen ? "translateY(0)" : "translateY(-8px)",
                 }}>
                 {/* Input */}
-                <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid rgba(43,62,232,0.12)" }}>
-                    <Search className="w-5 h-5 flex-shrink-0" style={{ color: "rgba(43,62,232,0.60)" }} />
+                <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.12)" }}>
+                    <Search className="w-5 h-5 flex-shrink-0" style={{ color: "rgb(var(--nx-accent-rgb) / 0.60)" }} />
                     <input ref={inputRef} type="text" value={query} onChange={e => setQuery(e.target.value)}
                         placeholder="Odamlar, video, audio, jonli, #hashtag..."
                         className="flex-1 bg-transparent text-[var(--nx-text)] text-base outline-none" style={{ caretColor: "var(--nx-accent)" }} />
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--nx-accent)" }} />
                         : query && <button onClick={() => setQuery("")}><X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.60)" }} /></button>}
                     <button onClick={close} className="px-3 py-1.5 rounded-lg text-xs font-bold"
-                        style={{ background: "rgba(43,62,232,0.12)", color: "rgba(160,176,224,0.80)" }}>Bekor</button>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", color: "rgba(160,176,224,0.80)" }}>Bekor</button>
                 </div>
 
                 {/* Filter tabs — faqat natija chiqganda */}
                 {hasQuery && hasAny && (
-                    <div className="flex gap-1.5 overflow-x-auto px-4 py-2" style={{ borderBottom: "1px solid rgba(43,62,232,0.08)", scrollbarWidth: "none" }}>
+                    <div className="flex gap-1.5 overflow-x-auto px-4 py-2" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.08)", scrollbarWidth: "none" }}>
                         {([
                             { id: "all",    label: "Barchasi", n: (results.users.length + results.tags.length + results.posts.length + results.videos.length + results.tracks.length + results.lives.length) },
                             { id: "people", label: "Odamlar",  n: results.users.length },
@@ -231,7 +231,7 @@ export function NxSearch() {
                                 className="flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all active:scale-95"
                                 style={filter === t.id
                                     ? { background: "var(--nx-accent)", color: "#fff" }
-                                    : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "var(--nx-text-2)" }}>
+                                    : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "var(--nx-text-2)" }}>
                                 {t.label}<span className="ml-1 opacity-70">{t.n}</span>
                             </button>
                         ))}
@@ -273,7 +273,7 @@ export function NxSearch() {
                                         {discover.trendingTags.map(t => (
                                             <Link key={t.tag} href={`/nexus/tag/${t.tag}`} onClick={close}
                                                 className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold"
-                                                style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)", color: "var(--nx-text-2)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", color: "var(--nx-text-2)" }}>
                                                 <Hash className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />{t.tag}
                                                 <span className="text-[10px]" style={{ color: "var(--nx-text-3)" }}>{t.count}</span>
                                             </Link>
@@ -294,7 +294,7 @@ export function NxSearch() {
                         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                     ) : !hasAny ? (
                         <div className="flex flex-col items-center justify-center py-14">
-                            <Search className="w-10 h-10 mb-3" style={{ color: "rgba(43,62,232,0.25)" }} />
+                            <Search className="w-10 h-10 mb-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.25)" }} />
                             <p className="text-sm font-bold text-white/40">Natija topilmadi</p>
                             <p className="text-xs mt-1" style={{ color: "rgba(100,120,170,0.50)" }}>&ldquo;{query}&rdquo; bo&apos;yicha hech narsa yo&apos;q</p>
                         </div>
@@ -309,7 +309,7 @@ export function NxSearch() {
                                     {results.tags.map(t => (
                                         <Link key={t.tag} href={`/nexus/tag/${t.tag}`} onClick={close}
                                             className="flex items-center gap-3 px-2 py-2 rounded-xl">
-                                            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(43,62,232,0.12)" }}>
+                                            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                                                 <Hash className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                                             </div>
                                             <div className="min-w-0">
@@ -348,7 +348,7 @@ export function NxSearch() {
                                             <div className="relative w-20 h-12 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "var(--nx-surface)" }}>
                                                 {v.thumbUrl ? <img src={v.thumbUrl} alt="" className="w-full h-full object-cover" />
                                                     : <div className="w-full h-full flex items-center justify-center"><Play className="w-4 h-4" style={{ color: "var(--nx-text-3)" }} /></div>}
-                                                {v.price > 0 && <span className="absolute top-0.5 left-0.5 flex items-center gap-0.5 px-1 rounded text-[8px] font-black text-[var(--nx-text)]" style={{ background: "rgba(43,62,232,0.9)" }}><Lock className="w-2 h-2" />{fmtN(v.price)}</span>}
+                                                {v.price > 0 && <span className="absolute top-0.5 left-0.5 flex items-center gap-0.5 px-1 rounded text-[8px] font-black text-[var(--nx-text)]" style={{ background: "rgb(var(--nx-accent-rgb) / 0.9)" }}><Lock className="w-2 h-2" />{fmtN(v.price)}</span>}
                                                 <span className="absolute bottom-0.5 right-0.5 px-1 rounded text-[8px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.85)" }}>{v.duration}</span>
                                             </div>
                                             <div className="min-w-0 flex-1">
@@ -365,7 +365,7 @@ export function NxSearch() {
                                 <Section label="Audio">
                                     {results.tracks.map(t => (
                                         <button key={t.id} onClick={() => listenTrack(t)} className="w-full flex items-center gap-3 px-2 py-2 rounded-xl text-left active:scale-[0.99] transition">
-                                            <div className="relative w-11 h-11 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "rgba(43,62,232,0.15)" }}>
+                                            <div className="relative w-11 h-11 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                                 {t.coverUrl ? <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
                                                     : <div className="w-full h-full flex items-center justify-center"><Music2 className="w-4 h-4" style={{ color: "var(--nx-text-3)" }} /></div>}
                                             </div>

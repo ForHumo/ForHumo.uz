@@ -44,15 +44,15 @@ export function NxChannelReactorsModal({
         <>
             <div className="fixed inset-0 z-[320] bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-x-0 bottom-0 z-[321] flex max-h-[85vh] flex-col overflow-hidden rounded-t-3xl md:inset-y-0 md:right-0 md:inset-x-auto md:max-h-full md:w-[440px] md:rounded-none md:rounded-l-3xl"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.30)" }}
+                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Smile className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Reaksiya berganlar
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(43,62,232,0.12)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                         <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -66,14 +66,14 @@ export function NxChannelReactorsModal({
                     </div>
                 ) : (
                     <>
-                        <div className="px-3 py-3 flex-shrink-0 overflow-x-auto" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)", scrollbarWidth: "none" }}>
+                        <div className="px-3 py-3 flex-shrink-0 overflow-x-auto" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.10)", scrollbarWidth: "none" }}>
                             <div className="flex gap-1.5">
                                 {groups.map(g => (
                                     <button key={g.emoji} onClick={() => setActiveEmoji(g.emoji)}
                                         className="inline-flex items-center gap-1.5 px-3 h-9 rounded-full flex-shrink-0"
                                         style={activeEmoji === g.emoji
-                                            ? { background: "rgba(0,206,200,0.20)", border: "1px solid var(--nx-accent)", color: "white" }
-                                            : { background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(200,214,247,0.9)" }}>
+                                            ? { background: "rgb(var(--nx-accent-rgb) / 0.20)", border: "1px solid var(--nx-accent)", color: "white" }
+                                            : { background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(200,214,247,0.9)" }}>
                                         <span className="text-lg leading-none">{g.emoji}</span>
                                         <span className="text-xs font-bold">{g.count}</span>
                                     </button>
@@ -86,7 +86,7 @@ export function NxChannelReactorsModal({
                                     style={{ background: "var(--nx-surface)" }}>
                                     <img src={u.image ?? "/logos/forhumo.png"} alt=""
                                         className="w-8 h-8 rounded-full object-cover"
-                                        style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
+                                        style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }} />
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-bold text-[var(--nx-text)] truncate">{u.name ?? u.username ?? "?"}</p>
                                         {u.username && <p className="text-[10px]" style={{ color: "var(--nx-text-3)" }}>@{u.username}</p>}

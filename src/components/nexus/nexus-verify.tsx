@@ -68,8 +68,8 @@ export function NexusVerify() {
     return (
         <div className="h-full overflow-y-auto text-[var(--nx-text)]" style={{ background: "var(--nx-bg)" }}>
             <header className="sticky top-0 z-20 flex items-center gap-3 px-3 h-14 backdrop-blur-xl"
-                style={{ background: "rgba(5,8,24,0.80)", borderBottom: "1px solid rgba(43,62,232,0.18)" }}>
-                <button onClick={() => router.back()} className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(43,62,232,0.12)" }}>
+                style={{ background: "rgba(5,8,24,0.80)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
+                <button onClick={() => router.back()} className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                     <ArrowLeft className="w-4 h-4 text-[var(--nx-text)]" />
                 </button>
                 <div className="flex items-center gap-2">
@@ -98,7 +98,7 @@ export function NexusVerify() {
                             ) : (
                                 <div className="flex flex-col gap-2.5">
                                     {data.queue.map(q => (
-                                        <div key={q.id} className="rounded-2xl p-3.5" style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                                        <div key={q.id} className="rounded-2xl p-3.5" style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                                             <div className="flex items-center gap-2.5 mb-2">
                                                 <img src={avatarOf(q.applicant)} alt="" className="w-9 h-9 rounded-xl object-cover bg-white" />
                                                 <div className="min-w-0 flex-1">
@@ -130,7 +130,7 @@ export function NexusVerify() {
                     {/* Foydalanuvchi holati */}
                     {data.verified ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
-                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.35)" }}>
+                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                 <BadgeCheck className="w-8 h-8" style={{ color: "var(--nx-accent)" }} />
                             </div>
                             <p className="text-lg font-black text-[var(--nx-text)]">Siz tasdiqlangansiz</p>
@@ -156,7 +156,7 @@ export function NexusVerify() {
 
                             <label className="text-[11px] font-bold block mb-1.5 px-1" style={{ color: "rgba(150,170,210,0.85)" }}>Haqiqiy ism / nom</label>
                             <input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Masalan: Ali Valiyev"
-                                className="w-full px-3.5 py-3 rounded-xl text-sm text-[var(--nx-text)] outline-none mb-3" style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
+                                className="w-full px-3.5 py-3 rounded-xl text-sm text-[var(--nx-text)] outline-none mb-3" style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
 
                             <label className="text-[11px] font-bold block mb-1.5 px-1" style={{ color: "rgba(150,170,210,0.85)" }}>Toifa</label>
                             <p className="text-[10px] mb-2 px-1" style={{ color: "var(--nx-text-3)" }}>
@@ -170,8 +170,8 @@ export function NexusVerify() {
                                         <button key={c.key} onClick={() => setCategory(c.key)}
                                             className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-left transition active:scale-95"
                                             style={active
-                                                ? { background: "rgba(0,206,200,0.14)", border: `1px solid ${c.color}` }
-                                                : { background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.15)" }}>
+                                                ? { background: "rgb(var(--nx-accent-rgb) / 0.14)", border: `1px solid ${c.color}` }
+                                                : { background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                             <Icon className="w-4 h-4 flex-shrink-0" style={{ color: c.color }} strokeWidth={2.5} />
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-[11px] font-bold text-[var(--nx-text)] truncate">{c.shortLabel}</p>
@@ -184,13 +184,13 @@ export function NexusVerify() {
 
                             <label className="text-[11px] font-bold block mb-1.5 px-1" style={{ color: "rgba(150,170,210,0.85)" }}>Nega tasdiqlanishingiz kerak?</label>
                             <textarea value={reason} onChange={e => setReason(e.target.value.slice(0, 1000))} rows={4} placeholder="Faoliyatingiz, mashhurligingiz haqida qisqacha..."
-                                className="w-full px-3.5 py-3 rounded-xl text-sm text-[var(--nx-text)] outline-none resize-none mb-3" style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
+                                className="w-full px-3.5 py-3 rounded-xl text-sm text-[var(--nx-text)] outline-none resize-none mb-3" style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
 
                             <label className="text-[11px] font-bold block mb-1.5 px-1" style={{ color: "rgba(150,170,210,0.85)" }}>Havolalar (ijtimoiy tarmoq, OAV)</label>
                             {links.map((l, i) => (
                                 <div key={i} className="flex gap-2 mb-2">
                                     <input value={l} onChange={e => setLinks(ls => ls.map((x, j) => j === i ? e.target.value : x))} placeholder="https://..."
-                                        className="flex-1 px-3.5 py-2.5 rounded-xl text-sm text-[var(--nx-text)] outline-none" style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
+                                        className="flex-1 px-3.5 py-2.5 rounded-xl text-sm text-[var(--nx-text)] outline-none" style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                                     {links.length > 1 && (
                                         <button onClick={() => setLinks(ls => ls.filter((_, j) => j !== i))} className="w-10 flex items-center justify-center rounded-xl" style={{ background: "rgba(239,68,68,0.1)" }}>
                                             <Trash2 className="w-4 h-4" style={{ color: "#ff8a96" }} />
@@ -208,7 +208,7 @@ export function NexusVerify() {
 
                             <button onClick={submit} disabled={submitting}
                                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-black text-[var(--nx-text)] disabled:opacity-50 active:scale-[0.99] transition"
-                                style={{ background: "var(--nx-accent)", boxShadow: "0 6px 24px rgba(43,62,232,0.35)" }}>
+                                style={{ background: "var(--nx-accent)", boxShadow: "0 6px 24px rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                 {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Ariza yuborish
                             </button>
                         </div>

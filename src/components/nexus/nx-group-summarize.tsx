@@ -42,15 +42,15 @@ export function NxGroupSummarize({
         <>
             <div className="fixed inset-0 z-[320] bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-lg mx-auto z-[321] max-h-[85vh] flex flex-col overflow-hidden rounded-3xl"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)" }}
+                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)" }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Sparkles className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> AI xulosa
                     </h3>
                     <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full"
-                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                         <X className="h-4 w-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -65,7 +65,7 @@ export function NxGroupSummarize({
                                 className="flex-1 py-2 rounded-xl text-xs font-bold transition"
                                 style={count === c
                                     ? { background: "var(--nx-accent)", color: "white" }
-                                    : { background: "var(--nx-surface)", color: "rgba(200,215,245,0.85)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    : { background: "var(--nx-surface)", color: "rgba(200,215,245,0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                 {c}
                             </button>
                         ))}
@@ -86,7 +86,7 @@ export function NxGroupSummarize({
                     {summary && (
                         <>
                             <div className="p-4 rounded-2xl mt-2"
-                                style={{ background: "rgba(0,206,200,0.06)", border: "1px solid rgba(0,206,200,0.22)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                                 <p className="text-[10px] uppercase tracking-widest mb-2 flex items-center gap-1" style={{ color: "var(--nx-accent)" }}>
                                     <Sparkles className="w-3 h-3" /> Xulosa · {msgCount} xabar
                                 </p>
@@ -97,7 +97,7 @@ export function NxGroupSummarize({
                             <div className="flex gap-2 mt-3">
                                 <button onClick={() => summary && copyToClipboard(summary)}
                                     className="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
-                                    style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)", color: "white" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", color: "white" }}>
                                     <Copy className="w-4 h-4" /> Nusxa
                                 </button>
                                 <button onClick={run} disabled={busy}

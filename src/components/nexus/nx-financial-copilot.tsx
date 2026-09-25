@@ -55,11 +55,11 @@ export function NxFinancialCopilot({
         <>
             <div className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-lg mx-auto z-[401] max-h-[90vh] flex flex-col overflow-hidden rounded-3xl"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)" }}
+                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)" }}
                 onClick={e => e.stopPropagation()}>
 
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <div>
                         <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                             <Sparkles className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Financial Copilot
@@ -69,7 +69,7 @@ export function NxFinancialCopilot({
                         </p>
                     </div>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(43,62,232,0.12)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                         <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -85,7 +85,7 @@ export function NxFinancialCopilot({
                                     rows={2} maxLength={500}
                                     placeholder="Masalan: '200k qarz berishga arziydimi?' yoki bo'sh qoldiring — AI o'zi topadi"
                                     className="w-full rounded-xl px-3 py-2 text-sm text-[var(--nx-text)] outline-none resize-none"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)" }} />
+                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
                             </div>
                             <div>
                                 <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "rgba(140,160,210,0.7)" }}>
@@ -97,7 +97,7 @@ export function NxFinancialCopilot({
                                             className="flex-1 py-2 rounded-xl text-xs font-bold"
                                             style={scanDepth === d
                                                 ? { background: "var(--nx-accent)", color: "white" }
-                                                : { background: "var(--nx-surface)", color: "rgba(200,215,245,0.85)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                                : { background: "var(--nx-surface)", color: "rgba(200,215,245,0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                             {d}
                                         </button>
                                     ))}
@@ -124,11 +124,11 @@ export function NxFinancialCopilot({
                         <>
                             {/* Snapshot cards */}
                             <div className="grid grid-cols-2 gap-2">
-                                <div className="p-3 rounded-2xl" style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.25)" }}>
+                                <div className="p-3 rounded-2xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                     <p className="text-[10px] uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.7)" }}>Balans</p>
                                     <p className="text-sm font-black text-[var(--nx-text)]">{formatMoney(snapshot.balance)}</p>
                                 </div>
-                                <div className="p-3 rounded-2xl" style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                <div className="p-3 rounded-2xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                     <p className="text-[10px] uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.7)" }}>Kunlik xavfsiz</p>
                                     <p className="text-sm font-black text-[var(--nx-text)]">{formatMoney(snapshot.dailyBudgetSafeToSpend)}</p>
                                 </div>
@@ -136,7 +136,7 @@ export function NxFinancialCopilot({
 
                             {/* Private */}
                             <div className="p-4 rounded-2xl"
-                                style={{ background: "rgba(0,206,200,0.06)", border: "1px solid rgba(0,206,200,0.22)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                                 <p className="text-[10px] uppercase tracking-widest mb-2 flex items-center gap-1" style={{ color: "var(--nx-accent)" }}>
                                     <TrendingUp className="w-3 h-3" /> Faqat siz uchun (sirli)
                                 </p>
@@ -148,7 +148,7 @@ export function NxFinancialCopilot({
                             {/* Public */}
                             {pub && (
                                 <div className="p-4 rounded-2xl"
-                                    style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                                     <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "var(--nx-text-2)" }}>
                                         Chatga yuborish uchun (raqamlarsiz)
                                     </p>
@@ -158,7 +158,7 @@ export function NxFinancialCopilot({
                                     <div className="flex gap-2">
                                         <button onClick={() => copyToClipboard(pub)}
                                             className="flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
-                                            style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)", color: "white" }}>
+                                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", color: "white" }}>
                                             <Copy className="w-3.5 h-3.5" /> Nusxa
                                         </button>
                                         {onSendPublic && (
@@ -174,7 +174,7 @@ export function NxFinancialCopilot({
 
                             <button onClick={() => { setPriv(null); setPub(null); setSnapshot(null); }}
                                 className="w-full py-2 rounded-xl text-xs"
-                                style={{ background: "rgba(43,62,232,0.08)", color: "var(--nx-text-2)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", color: "var(--nx-text-2)" }}>
                                 Yangi savol
                             </button>
                         </>

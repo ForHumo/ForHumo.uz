@@ -11,11 +11,11 @@ import { X, Search, Loader2, UserPlus, ExternalLink, Package } from "lucide-reac
 // Nexus tema — nx-messages, nx-sidebar bilan bir xil
 const NX = {
     panelStrong: "var(--nx-surface)",
-    border: "rgba(43,62,232,0.30)",
-    borderSoft: "rgba(43,62,232,0.16)",
+    border: "rgb(var(--nx-accent-rgb) / 0.30)",
+    borderSoft: "rgb(var(--nx-accent-rgb) / 0.16)",
     accent: "var(--nx-accent)",
-    blueBg: "rgba(43,62,232,0.10)",
-    blueBgActive: "rgba(43,62,232,0.20)",
+    blueBg: "rgb(var(--nx-accent-rgb) / 0.10)",
+    blueBgActive: "rgb(var(--nx-accent-rgb) / 0.20)",
     text: "rgba(230,238,255,0.96)",
     text2: "rgba(200,215,245,0.75)",
     text3: "var(--nx-text-2)",

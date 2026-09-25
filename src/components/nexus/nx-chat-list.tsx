@@ -79,7 +79,7 @@ export function NxChatList({ filterUnread = false }: { filterUnread?: boolean } 
         <div className="px-4">
             <button onClick={() => setMessagesOpen(true)}
                 className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl text-sm font-bold text-[var(--nx-text)] mb-3 transition-all duration-150 active:scale-[0.99]"
-                style={{ background: "var(--nx-accent)", boxShadow: "0 4px 20px rgba(43,62,232,0.35)" }}>
+                style={{ background: "var(--nx-accent)", boxShadow: "0 4px 20px rgb(var(--nx-accent-rgb) / 0.35)" }}>
                 <Pencil className="w-4 h-4" /> Yangi suhbat
             </button>
 
@@ -87,8 +87,8 @@ export function NxChatList({ filterUnread = false }: { filterUnread?: boolean } 
                 <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
             ) : displayed.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.15)" }}>
-                        <MessageCircle className="w-5 h-5" style={{ color: "rgba(43,62,232,0.45)" }} />
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
+                        <MessageCircle className="w-5 h-5" style={{ color: "rgb(var(--nx-accent-rgb) / 0.45)" }} />
                     </div>
                     <p className="text-sm font-bold text-white/60 mb-1">
                         {filterUnread ? "O'qilmagan suhbat yo'q" : "Hali suhbat yo'q"}
@@ -110,14 +110,14 @@ export function NxChatList({ filterUnread = false }: { filterUnread?: boolean } 
                                     if (c.other?.username) openDM(c.other.username);
                                 }}
                                 className="w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all duration-150 active:scale-[0.99]"
-                                style={{ background: c.unread ? "rgba(43,62,232,0.10)" : "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                style={{ background: c.unread ? "rgb(var(--nx-accent-rgb) / 0.10)" : "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                 {isSelf ? (
                                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                                        style={{ background: "var(--nx-accent)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                        style={{ background: "var(--nx-accent)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                         <Bookmark className="w-5 h-5 text-[var(--nx-text)]" />
                                     </div>
                                 ) : (
-                                    <img src={avatarOf(c.other)} alt="" className="w-12 h-12 rounded-2xl object-cover bg-white flex-shrink-0" style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
+                                    <img src={avatarOf(c.other)} alt="" className="w-12 h-12 rounded-2xl object-cover bg-white flex-shrink-0" style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }} />
                                 )}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">

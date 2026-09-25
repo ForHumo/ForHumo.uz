@@ -458,12 +458,12 @@ export function NxGoLive() {
             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-3">
                 <button onClick={() => setMicOn(m => !m)}
                     className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-150"
-                    style={{ background: micOn ? "rgba(43,62,232,0.35)" : "rgba(239,68,68,0.50)", backdropFilter: "blur(8px)" }}>
+                    style={{ background: micOn ? "rgb(var(--nx-accent-rgb) / 0.35)" : "rgba(239,68,68,0.50)", backdropFilter: "blur(8px)" }}>
                     {micOn ? <Mic className="w-4 h-4 text-white" /> : <MicOff className="w-4 h-4 text-white" />}
                 </button>
                 <button onClick={() => setCamOn(c => !c)}
                     className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-150"
-                    style={{ background: camOn ? "rgba(43,62,232,0.35)" : "rgba(239,68,68,0.50)", backdropFilter: "blur(8px)" }}>
+                    style={{ background: camOn ? "rgb(var(--nx-accent-rgb) / 0.35)" : "rgba(239,68,68,0.50)", backdropFilter: "blur(8px)" }}>
                     {camOn ? <Camera className="w-4 h-4 text-white" /> : <CameraOff className="w-4 h-4 text-white" />}
                 </button>
             </div>
@@ -496,7 +496,7 @@ export function NxGoLive() {
                             </div>
                             <h2 className="text-base font-black text-white">Jonli efir boshlash</h2>
                         </div>
-                        <button onClick={close} className="w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                        <button onClick={close} className="w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                             <X className="w-4 h-4 text-white" />
                         </button>
                     </div>
@@ -508,7 +508,7 @@ export function NxGoLive() {
                             <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>Efir sarlavhasi</p>
                             <input value={title} onChange={e => setTitle(e.target.value.slice(0, 120))} placeholder="Bu efirda nima bo'ladi?"
                                 className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none"
-                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#F97316" }} />
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "#F97316" }} />
                         </div>
 
                         <div>
@@ -516,7 +516,7 @@ export function NxGoLive() {
                             <textarea value={description} onChange={e => setDescription(e.target.value.slice(0, 2000))} rows={2}
                                 placeholder="Efir haqida bir necha jumla..."
                                 className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none resize-y"
-                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#F97316" }} />
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "#F97316" }} />
                         </div>
 
                         {/* Scene layout — Solo/Podkast/PiP/Ekran */}
@@ -545,7 +545,7 @@ export function NxGoLive() {
                             <button onClick={toggleScreen}
                                 className="w-full flex items-center gap-2 justify-center py-2.5 rounded-xl text-xs font-black transition active:scale-95"
                                 style={screenOn
-                                    ? { background: "rgba(0,206,200,0.15)", border: "1px solid rgba(0,206,200,0.40)", color: "var(--nx-accent)" }
+                                    ? { background: "rgb(var(--nx-accent-rgb) / 0.15)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.40)", color: "var(--nx-accent)" }
                                     : { background: "rgba(239,68,68,0.06)", border: "1px dashed rgba(239,68,68,0.30)", color: "rgba(220,160,150,0.85)" }}>
                                 {screenOn ? <><Monitor className="w-3.5 h-3.5" />Ekran ulashilyapti — bekor qilish</>
                                           : <><Monitor className="w-3.5 h-3.5" />Ekranni ulash</>}
@@ -575,7 +575,7 @@ export function NxGoLive() {
                                         className="flex items-center gap-3 px-4 py-3 rounded-xl text-left transition"
                                         style={privacy === value
                                             ? { background: "rgba(239,68,68,0.14)", border: "1px solid rgba(239,68,68,0.40)" }
-                                            : { background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.16)" }}>
+                                            : { background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.16)" }}>
                                         <Icon className="w-4 h-4" style={{ color: privacy === value ? "#F97316" : "rgba(140,160,210,0.7)" }} />
                                         <span className="text-xs font-bold text-white">{label}</span>
                                     </button>
@@ -619,8 +619,8 @@ export function NxGoLive() {
                             <button onClick={toggleScreen}
                                 className="w-full mb-2 flex items-center gap-2 justify-center py-2 rounded-xl text-xs font-black transition active:scale-95"
                                 style={screenOn
-                                    ? { background: "rgba(0,206,200,0.15)", border: "1px solid rgba(0,206,200,0.40)", color: "var(--nx-accent)" }
-                                    : { background: "rgba(43,62,232,0.06)", border: "1px dashed rgba(43,62,232,0.30)", color: "rgba(160,180,230,0.85)" }}>
+                                    ? { background: "rgb(var(--nx-accent-rgb) / 0.15)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.40)", color: "var(--nx-accent)" }
+                                    : { background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.30)", color: "rgba(160,180,230,0.85)" }}>
                                 {screenOn ? <><MonitorOff className="w-3.5 h-3.5" />Ekranni to&apos;xtatish</>
                                           : <><Monitor className="w-3.5 h-3.5" />Ekranni ulash</>}
                             </button>
@@ -824,7 +824,7 @@ export function NxGoLive() {
                     ))}
                 </div>
                 {recordingReady && recordingUrl && (
-                    <div className="mb-4 p-3 rounded-xl" style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                    <div className="mb-4 p-3 rounded-xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                         <p className="text-[11px] font-black mb-1" style={{ color: "var(--nx-accent)" }}>Yozuv tayyor</p>
                         <p className="text-[10px] mb-2" style={{ color: "rgba(160,220,215,0.85)" }}>
                             Efir Nexus'da endi qayta ko&apos;rish mumkin

@@ -79,9 +79,9 @@ export function NxFolderModal({
             <div className="fixed inset-0 z-[70]" style={{ background: "rgba(5,8,24,0.65)" }}
                 onClick={() => !busy && onClose()} />
             <div className="fixed z-[70] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md rounded-2xl overflow-hidden max-h-[90vh] flex flex-col"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(43,62,232,0.25)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
+                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
                 <div className="px-5 py-4 flex items-center gap-3 flex-shrink-0"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center"
                         style={{ background: "var(--nx-accent)" }}>
                         <Folder className="w-4 h-4 text-[var(--nx-text)]" />
@@ -94,7 +94,7 @@ export function NxFolderModal({
                     </div>
                     <button onClick={() => !busy && onClose()} disabled={busy}
                         className="w-7 h-7 rounded-full flex items-center justify-center disabled:opacity-40"
-                        style={{ background: "rgba(43,62,232,0.12)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                         <X className="w-3.5 h-3.5 text-white/60" />
                     </button>
                 </div>
@@ -107,7 +107,7 @@ export function NxFolderModal({
                             placeholder="Ish, IT, Do'stlar..."
                             maxLength={30} autoFocus
                             className="w-full mt-1.5 px-3 py-2.5 rounded-xl bg-transparent text-[var(--nx-text)] text-sm focus:outline-none"
-                            style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
+                            style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }} />
                     </div>
 
                     {/* Emoji */}
@@ -118,8 +118,8 @@ export function NxFolderModal({
                                 <button key={e} onClick={() => setEmoji(emoji === e ? "" : e)}
                                     className="w-9 h-9 rounded-lg text-lg transition-all active:scale-90"
                                     style={emoji === e
-                                        ? { background: "rgba(0,206,200,0.20)", border: "1px solid rgba(0,206,200,0.55)" }
-                                        : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                                        ? { background: "rgb(var(--nx-accent-rgb) / 0.20)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.55)" }
+                                        : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                                     {e}
                                 </button>
                             ))}
@@ -147,7 +147,7 @@ export function NxFolderModal({
                         <div className="mt-2 space-y-1.5">
                             {TYPE_OPTIONS.map(t => (
                                 <label key={t.id} className="flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer"
-                                    style={{ background: "rgba(43,62,232,0.06)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)" }}>
                                     <input type="checkbox" checked={types.has(t.id)}
                                         onChange={() => {
                                             const n = new Set(types);
@@ -160,7 +160,7 @@ export function NxFolderModal({
                                 </label>
                             ))}
                             <label className="flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer"
-                                style={{ background: "rgba(43,62,232,0.06)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)" }}>
                                 <input type="checkbox" checked={includeUnread}
                                     onChange={e => setIncludeUnread(e.target.checked)}
                                     className="w-4 h-4 rounded" style={{ accentColor: "var(--nx-accent)" }} />
@@ -172,10 +172,10 @@ export function NxFolderModal({
                     {err && <p className="text-xs" style={{ color: "#EF4444" }}>{err}</p>}
                 </div>
 
-                <div className="p-3 flex gap-2 flex-shrink-0" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                <div className="p-3 flex gap-2 flex-shrink-0" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <button onClick={() => !busy && onClose()} disabled={busy}
                         className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white/70"
-                        style={{ background: "rgba(43,62,232,0.10)" }}>Bekor</button>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>Bekor</button>
                     <button onClick={save} disabled={busy || !name.trim()}
                         className="flex-1 py-2.5 rounded-xl text-xs font-black text-[var(--nx-text)] disabled:opacity-40 flex items-center justify-center gap-2"
                         style={{ background: "var(--nx-accent)" }}>

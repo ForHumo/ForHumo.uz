@@ -144,7 +144,7 @@ export function NxVideoCircleRecorder({ open, onClose, onRecorded }: Props) {
                     )}
                     {/* Dumaloq video */}
                     <div className="absolute inset-2 rounded-full overflow-hidden bg-black"
-                        style={{ border: "2px solid rgba(43,62,232,0.30)" }}>
+                        style={{ border: "2px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                         {ready ? (
                             <video ref={videoRef} muted playsInline autoPlay
                                 className="w-full h-full object-cover"

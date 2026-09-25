@@ -59,12 +59,12 @@ export function NxAgentInlineMode({
         <div className="absolute bottom-full left-2 right-2 mb-2 max-h-[320px] overflow-y-auto z-[400] rounded-2xl"
             style={{
                 background: "rgba(8,12,32,0.99)",
-                border: "1px solid rgba(43,62,232,0.30)",
+                border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)",
                 boxShadow: "0 12px 32px rgba(0,0,0,0.4)",
                 scrollbarWidth: "none",
             }}>
             <div className="px-3 py-2 text-[10px] uppercase tracking-widest flex items-center justify-between"
-                style={{ color: "rgba(140,160,210,0.7)", borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                style={{ color: "rgba(140,160,210,0.7)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                 <div className="flex items-center gap-1.5">
                     <Sparkles className="w-3 h-3" /> Inline · @{bot}
                     {query && <span className="opacity-60">· {query.slice(0, 30)}</span>}
@@ -95,7 +95,7 @@ export function NxAgentInlineMode({
                             {r.thumbnailUrl && (
                                 <img src={r.thumbnailUrl} alt=""
                                     className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
-                                    style={{ background: "rgba(43,62,232,0.10)" }} />
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }} />
                             )}
                             <div className="flex-1 min-w-0">
                                 <p className="text-xs font-bold text-[var(--nx-text)] truncate">{r.title}</p>

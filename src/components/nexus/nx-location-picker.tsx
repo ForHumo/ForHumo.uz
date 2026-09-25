@@ -42,8 +42,8 @@ export function NxLocationPicker({ value, onChange, disabled }: Props) {
             <button type="button" onClick={() => setOpen(true)} disabled={disabled}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition active:scale-95 disabled:opacity-50"
                 style={value
-                    ? { background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.35)", color: "var(--nx-accent)" }
-                    : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", color: "var(--nx-text-2)" }}>
+                    ? { background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", color: "var(--nx-accent)" }
+                    : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", color: "var(--nx-text-2)" }}>
                 <MapPin className="w-3.5 h-3.5" />
                 {value ? <span className="truncate max-w-[180px]">{value.name}</span> : "Joylashuv"}
                 {value && (
@@ -94,7 +94,7 @@ function MapModal({ value, onChange, onClose }: {
             // Marker
             const icon = L.divIcon({
                 className: "",
-                html: `<div style="width:26px;height:26px;border-radius:50%;background:var(--nx-accent);border:3px solid #fff;box-shadow:0 4px 16px rgba(0,206,200,0.6);"></div>`,
+                html: `<div style="width:26px;height:26px;border-radius:50%;background:var(--nx-accent);border:3px solid #fff;box-shadow:0 4px 16px rgb(var(--nx-accent-rgb) / 0.6);"></div>`,
                 iconSize: [26, 26], iconAnchor: [13, 13],
             });
             const marker = L.marker([startLat, startLng], { icon, draggable: true }).addTo(map);
@@ -213,17 +213,17 @@ function MapModal({ value, onChange, onClose }: {
         <>
             <div className="fixed inset-0 z-[80]" style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(8px)" }} onClick={onClose} />
             <div className="fixed inset-2 bottom-2 top-2 z-[80] flex flex-col rounded-3xl overflow-hidden md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[720px] md:h-[760px] md:max-w-[calc(100vw-32px)] md:max-h-[92vh]"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(43,62,232,0.25)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)" }}
+                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)" }}
                 onClick={e => e.stopPropagation()}>
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <MapPin className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Joylashuvni tanlang
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl"
-                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                         <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -232,23 +232,23 @@ function MapModal({ value, onChange, onClose }: {
                 <div className="px-4 pt-3 pb-2 flex-shrink-0 space-y-2">
                     <div className="flex gap-2">
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "rgba(0,206,200,0.55)" }} />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "rgb(var(--nx-accent-rgb) / 0.55)" }} />
                             <input value={query} onChange={e => setQuery(e.target.value)}
                                 placeholder="Chorsu bozori, Amir Temur ko'chasi..."
                                 className="w-full h-10 rounded-xl pl-9 pr-9 text-sm text-[var(--nx-text)] outline-none"
-                                style={{ background: "rgba(0,206,200,0.06)", border: "1px solid rgba(0,206,200,0.25)", caretColor: "var(--nx-accent)" }} />
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", caretColor: "var(--nx-accent)" }} />
                             {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin" style={{ color: "var(--nx-accent)" }} />}
                         </div>
                         <button onClick={askAi} disabled={!query.trim() || aiBusy} title="AI orqali topish"
                             className="h-10 px-3 flex items-center gap-1 rounded-xl text-[11px] font-black transition active:scale-95 disabled:opacity-50"
-                            style={{ background: "linear-gradient(135deg,rgba(139,92,246,0.18),rgba(0,206,200,0.18))",
+                            style={{ background: "linear-gradient(135deg,rgba(139,92,246,0.18),rgb(var(--nx-accent-rgb) / 0.18))",
                                 border: "1px solid rgba(139,92,246,0.35)", color: "#C4B5FD" }}>
                             {aiBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                             AI
                         </button>
                         <button onClick={useGps} disabled={gpsBusy} title="Joyimni aniqlash (GPS)"
                             className="h-10 w-10 flex items-center justify-center rounded-xl transition active:scale-95 disabled:opacity-50"
-                            style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                             {gpsBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "var(--nx-accent)" }} /> : <LocateFixed className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />}
                         </button>
                     </div>
@@ -269,7 +269,7 @@ function MapModal({ value, onChange, onClose }: {
                             {results.map((r, i) => (
                                 <button key={i} onClick={() => selectResult(r)}
                                     className="w-full flex items-start gap-2 p-2 rounded-lg text-left transition active:scale-[0.99]"
-                                    style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                     <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                     <div className="min-w-0">
                                         <p className="text-xs font-bold text-[var(--nx-text)] truncate">{r.name}</p>
@@ -297,9 +297,9 @@ function MapModal({ value, onChange, onClose }: {
                 </div>
 
                 {/* Tasdiqlash */}
-                <div className="px-4 py-3 flex-shrink-0 space-y-2" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                <div className="px-4 py-3 flex-shrink-0 space-y-2" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     {pending && (
-                        <div className="flex items-center gap-2 p-2.5 rounded-xl" style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.25)" }}>
+                        <div className="flex items-center gap-2 p-2.5 rounded-xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                             <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                             <div className="min-w-0 flex-1">
                                 <p className="text-xs font-bold text-[var(--nx-text)] truncate">

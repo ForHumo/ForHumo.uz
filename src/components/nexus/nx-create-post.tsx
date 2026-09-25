@@ -12,7 +12,7 @@ function AiBtn({ busy, onClick, label }: { busy: boolean; onClick: () => void; l
     return (
         <button onClick={onClick} disabled={busy}
             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition active:scale-95 disabled:opacity-50"
-            style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.25)", color: "rgba(150,230,225,0.95)" }}>
+            style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", color: "rgba(150,230,225,0.95)" }}>
             {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : null}{label}
         </button>
     );
@@ -213,12 +213,12 @@ export function NxCreatePost() {
 
             <div
                 className="fixed inset-x-0 bottom-0 z-[55] flex flex-col rounded-t-3xl overflow-hidden md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[520px] md:max-h-[90vh] md:rounded-3xl"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(43,62,232,0.22)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)", maxHeight: "92vh" }}
+                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)", maxHeight: "92vh" }}
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "var(--nx-accent)" }}>
                             <Plus className="w-4 h-4 text-[var(--nx-text)]" />
@@ -229,14 +229,14 @@ export function NxCreatePost() {
                         <div className="relative">
                             <button onClick={() => setShowPrivacy(p => !p)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150"
-                                style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)", color: "rgba(140,160,210,0.90)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", color: "rgba(140,160,210,0.90)" }}>
                                 <PrivacyIcon className="w-3 h-3" />
                                 {privacyOpt.label}
                                 <ChevronDown className="w-3 h-3" />
                             </button>
                             {showPrivacy && (
                                 <div className="absolute right-0 top-full mt-1 z-10 rounded-xl overflow-hidden w-36"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.25)", boxShadow: "0 8px 24px rgba(0,0,0,0.60)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", boxShadow: "0 8px 24px rgba(0,0,0,0.60)" }}>
                                     {privacyOptions.map(({ value, label, icon: Icon }) => (
                                         <button key={value}
                                             onClick={() => { setPrivacy(value); setShowPrivacy(false); }}
@@ -251,7 +251,7 @@ export function NxCreatePost() {
                         </div>
                         <button onClick={close}
                             className="w-8 h-8 flex items-center justify-center rounded-full"
-                            style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                             <X className="w-4 h-4 text-[var(--nx-text)]" />
                         </button>
                     </div>
@@ -267,7 +267,7 @@ export function NxCreatePost() {
                                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl flex-shrink-0 transition-all duration-200"
                                 style={isActive
                                     ? { background: `${pt.color}22`, border: `1px solid ${pt.color}55`, color: pt.color }
-                                    : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(140,160,210,0.80)" }}>
+                                    : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "rgba(140,160,210,0.80)" }}>
                                 <Icon className="w-3.5 h-3.5" />
                                 <span className="text-xs font-bold">{pt.label}</span>
                             </button>
@@ -309,7 +309,7 @@ export function NxCreatePost() {
                             {media.length > 0 && (
                                 <div className={`grid gap-1.5 mb-2 ${media.length > 1 ? "grid-cols-3" : "grid-cols-1"}`}>
                                     {media.map((url, i) => (
-                                        <div key={url} className="relative rounded-xl overflow-hidden" style={{ background: "rgba(43,62,232,0.10)" }}>
+                                        <div key={url} className="relative rounded-xl overflow-hidden" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                             {isVid(url)
                                                 ? <video src={url} className="w-full h-24 object-cover" />
                                                 : <img src={url} alt="" className={`w-full object-cover ${media.length > 1 ? "h-24" : "max-h-64"}`} />}
@@ -323,11 +323,11 @@ export function NxCreatePost() {
                             )}
                             {((postType === "photo" && media.length < 9) || (postType === "video" && media.length < 1)) && (
                                 <label className="w-full flex flex-col items-center justify-center gap-2 py-6 rounded-2xl cursor-pointer transition-all duration-150"
-                                    style={{ background: "rgba(43,62,232,0.06)", border: "2px dashed rgba(43,62,232,0.25)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "2px dashed rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                     {uploading ? (
                                         <Loader2 className="w-7 h-7 animate-spin" style={{ color: "var(--nx-accent)" }} />
                                     ) : postType === "photo" ? (
-                                        <ImgIcon className="w-8 h-8" style={{ color: "rgba(43,62,232,0.50)" }} />
+                                        <ImgIcon className="w-8 h-8" style={{ color: "rgb(var(--nx-accent-rgb) / 0.50)" }} />
                                     ) : (
                                         <Film className="w-8 h-8" style={{ color: "rgba(239,68,68,0.50)" }} />
                                     )}
@@ -356,7 +356,7 @@ export function NxCreatePost() {
                                         placeholder={`${i + 1}-variant`}
                                         maxLength={60}
                                         className="flex-1 px-4 py-3 rounded-xl bg-transparent text-sm text-[var(--nx-text)] placeholder:text-[var(--nx-text-2)] outline-none"
-                                        style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)" }}
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}
                                     />
                                     {pollOptions.length > 2 && (
                                         <button onClick={() => removePollOption(i)}
@@ -370,7 +370,7 @@ export function NxCreatePost() {
                             {pollOptions.length < 4 && (
                                 <button onClick={addPollOption}
                                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-150"
-                                    style={{ background: "rgba(43,62,232,0.08)", border: "1px dashed rgba(43,62,232,0.30)", color: "rgba(140,160,210,0.80)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.30)", color: "rgba(140,160,210,0.80)" }}>
                                     <Plus className="w-3.5 h-3.5" /> Variant qo&apos;shish
                                 </button>
                             )}
@@ -381,8 +381,8 @@ export function NxCreatePost() {
                                         <button key={d.hours} onClick={() => setPollHours(d.hours)}
                                             className="px-2 py-1 rounded-lg text-[10px] font-bold transition-all duration-150"
                                             style={pollHours === d.hours
-                                                ? { background: "rgba(43,62,232,0.30)", color: "var(--nx-accent)" }
-                                                : { background: "rgba(43,62,232,0.10)", color: "rgba(140,160,210,0.80)" }}>{d.label}</button>
+                                                ? { background: "rgb(var(--nx-accent-rgb) / 0.30)", color: "var(--nx-accent)" }
+                                                : { background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgba(140,160,210,0.80)" }}>{d.label}</button>
                                     ))}
                                 </div>
                             </div>
@@ -402,8 +402,8 @@ export function NxCreatePost() {
                                         <button key={tag} onClick={() => toggleTag(tag)}
                                             className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold transition-all duration-150"
                                             style={active
-                                                ? { background: "rgba(43,62,232,0.25)", border: "1px solid rgba(43,62,232,0.50)", color: "var(--nx-accent)" }
-                                                : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(140,160,210,0.80)" }}>
+                                                ? { background: "rgb(var(--nx-accent-rgb) / 0.25)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.50)", color: "var(--nx-accent)" }
+                                                : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "rgba(140,160,210,0.80)" }}>
                                             <Hash className="w-2.5 h-2.5" />
                                             {tag}
                                         </button>
@@ -447,7 +447,7 @@ export function NxCreatePost() {
                             </div>
                         </div>
                         {price > 0 && (
-                            <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg" style={{ background: "rgba(0,206,200,0.05)", border: "1px solid rgba(0,206,200,0.14)" }}>
+                            <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg" style={{ background: "rgb(var(--nx-accent-rgb) / 0.05)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                 <input type="checkbox" checked={subsFree} onChange={e => setSubsFree(e.target.checked)} className="w-3.5 h-3.5" />
                                 <span className="text-[11px]" style={{ color: "rgba(150,220,215,0.90)" }}>
                                     Pullik obunachi kuzatuvchilarga <b>bepul</b> ko&apos;rsatish (qolganlar sotib oladi)
@@ -464,8 +464,8 @@ export function NxCreatePost() {
                     {/* Kanalga ham joylash — kanal(lar) mavjud bo'lsa */}
                     {hasChannel && (
                         <div className="mb-2 rounded-2xl overflow-hidden"
-                            style={{ background: crossToChannel ? "rgba(0,206,200,0.08)" : "rgba(43,62,232,0.06)",
-                                border: `1px solid ${crossToChannel ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.20)"}` }}>
+                            style={{ background: crossToChannel ? "rgb(var(--nx-accent-rgb) / 0.08)" : "rgb(var(--nx-accent-rgb) / 0.06)",
+                                border: `1px solid ${crossToChannel ? "rgb(var(--nx-accent-rgb) / 0.30)" : "rgb(var(--nx-accent-rgb) / 0.20)"}` }}>
                             <label className="flex items-center gap-2 cursor-pointer p-3">
                                 <input type="checkbox" checked={crossToChannel} onChange={e => setCrossToChannel(e.target.checked)} className="w-4 h-4" />
                                 <div className="flex-1 min-w-0">
@@ -476,15 +476,15 @@ export function NxCreatePost() {
                                 </div>
                             </label>
                             {crossToChannel && channels.length > 1 && (
-                                <div className="px-3 pb-3 flex flex-col gap-1.5" style={{ borderTop: "1px solid rgba(0,206,200,0.15)" }}>
-                                    <p className="text-[9px] font-black uppercase tracking-wide mt-2" style={{ color: "rgba(0,206,200,0.75)" }}>Qaysi kanalga?</p>
+                                <div className="px-3 pb-3 flex flex-col gap-1.5" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
+                                    <p className="text-[9px] font-black uppercase tracking-wide mt-2" style={{ color: "rgb(var(--nx-accent-rgb) / 0.75)" }}>Qaysi kanalga?</p>
                                     <div className="flex flex-col gap-1 max-h-40 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
                                         {channels.map(c => (
                                             <button key={c.id} type="button" onClick={() => setCrossChannelId(c.id)}
                                                 className="flex items-center gap-2 p-2 rounded-lg text-left transition active:scale-[0.99]"
                                                 style={crossChannelId === c.id
-                                                    ? { background: "rgba(0,206,200,0.15)", border: "1px solid rgba(0,206,200,0.40)" }
-                                                    : { background: "rgba(43,62,232,0.05)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                                    ? { background: "rgb(var(--nx-accent-rgb) / 0.15)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.40)" }
+                                                    : { background: "rgb(var(--nx-accent-rgb) / 0.05)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                                 {c.avatarUrl
                                                     ? <img src={c.avatarUrl} alt="" className="w-7 h-7 rounded-lg object-cover flex-shrink-0" />
                                                     : <div className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-[10px] font-black text-[var(--nx-text)]"
@@ -510,7 +510,7 @@ export function NxCreatePost() {
                 </div>
 
                 {/* E'lon qilish */}
-                <div className="px-5 pb-5 pt-2 flex-shrink-0" style={{ borderTop: "1px solid rgba(43,62,232,0.12)" }}>
+                <div className="px-5 pb-5 pt-2 flex-shrink-0" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.12)" }}>
                     {published ? (
                         <div className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2"
                             style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.30)" }}>
@@ -521,8 +521,8 @@ export function NxCreatePost() {
                         <button onClick={publish} disabled={!canPublish || publishing || uploading}
                             className="w-full py-3.5 rounded-2xl font-black text-sm text-[var(--nx-text)] flex items-center justify-center gap-2 transition-all duration-200"
                             style={canPublish && !publishing && !uploading
-                                ? { background: "var(--nx-accent)", boxShadow: "0 8px 24px rgba(43,62,232,0.35)" }
-                                : { background: "rgba(43,62,232,0.15)", opacity: 0.6 }}>
+                                ? { background: "var(--nx-accent)", boxShadow: "0 8px 24px rgb(var(--nx-accent-rgb) / 0.35)" }
+                                : { background: "rgb(var(--nx-accent-rgb) / 0.15)", opacity: 0.6 }}>
                             {publishing
                                 ? <><Loader2 className="w-4 h-4 animate-spin" /> E&apos;lon qilinmoqda...</>
                                 : <><Send className="w-4 h-4" /> E&apos;lon qilish</>

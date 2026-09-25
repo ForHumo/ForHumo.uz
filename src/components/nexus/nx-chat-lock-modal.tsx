@@ -112,8 +112,8 @@ export function NxChatLockModal({
             onClick={() => !busy && onClose()}>
             <div onClick={e => e.stopPropagation()}
                 className="w-full max-w-sm rounded-2xl overflow-hidden"
-                style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)" }}>
-                <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
+                <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <div className="flex items-center gap-2">
                         {mode === "unlock" ? <Unlock className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                             : <Lock className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />}
@@ -133,8 +133,8 @@ export function NxChatLockModal({
                             <button onClick={() => setKind("pin")}
                                 className="py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"
                                 style={{
-                                    background: kind === "pin" ? "rgba(0,206,200,0.15)" : "rgba(43,62,232,0.08)",
-                                    border: `1px solid ${kind === "pin" ? "rgba(0,206,200,0.50)" : "rgba(43,62,232,0.20)"}`,
+                                    background: kind === "pin" ? "rgb(var(--nx-accent-rgb) / 0.15)" : "rgb(var(--nx-accent-rgb) / 0.08)",
+                                    border: `1px solid ${kind === "pin" ? "rgb(var(--nx-accent-rgb) / 0.50)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
                                     color: kind === "pin" ? "var(--nx-accent)" : "rgba(220,230,255,0.85)",
                                 }}>
                                 <Lock className="w-3.5 h-3.5" /> PIN
@@ -143,8 +143,8 @@ export function NxChatLockModal({
                                 disabled={!canBio}
                                 className="py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition disabled:opacity-40"
                                 style={{
-                                    background: kind === "biometric" ? "rgba(0,206,200,0.15)" : "rgba(43,62,232,0.08)",
-                                    border: `1px solid ${kind === "biometric" ? "rgba(0,206,200,0.50)" : "rgba(43,62,232,0.20)"}`,
+                                    background: kind === "biometric" ? "rgb(var(--nx-accent-rgb) / 0.15)" : "rgb(var(--nx-accent-rgb) / 0.08)",
+                                    border: `1px solid ${kind === "biometric" ? "rgb(var(--nx-accent-rgb) / 0.50)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
                                     color: kind === "biometric" ? "var(--nx-accent)" : "rgba(220,230,255,0.85)",
                                 }}>
                                 <Fingerprint className="w-3.5 h-3.5" /> Biometrik
@@ -159,8 +159,8 @@ export function NxChatLockModal({
                                 {Array.from({ length: 6 }).map((_, i) => (
                                     <div key={i} className="w-3 h-3 rounded-full transition-colors"
                                         style={{
-                                            background: i < pin.length ? "var(--nx-accent)" : "rgba(43,62,232,0.30)",
-                                            boxShadow: i < pin.length ? "0 0 8px rgba(0,206,200,0.6)" : "none",
+                                            background: i < pin.length ? "var(--nx-accent)" : "rgb(var(--nx-accent-rgb) / 0.30)",
+                                            boxShadow: i < pin.length ? "0 0 8px rgb(var(--nx-accent-rgb) / 0.6)" : "none",
                                         }} />
                                 ))}
                             </div>
@@ -180,14 +180,14 @@ export function NxChatLockModal({
                                 {["1","2","3","4","5","6","7","8","9"].map(d => (
                                     <button key={d} type="button" onClick={() => addDigit(d)}
                                         className="h-12 rounded-xl text-lg font-black text-[var(--nx-text)] transition active:scale-95"
-                                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                         {d}
                                     </button>
                                 ))}
                                 <div /> {/* bo'sh joy */}
                                 <button type="button" onClick={() => addDigit("0")}
                                     className="h-12 rounded-xl text-lg font-black text-[var(--nx-text)] transition active:scale-95"
-                                    style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)" }}>0</button>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>0</button>
                                 <button type="button" onClick={backDigit}
                                     className="h-12 rounded-xl flex items-center justify-center transition active:scale-95"
                                     style={{ background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.25)" }}>
@@ -200,7 +200,7 @@ export function NxChatLockModal({
                     {kind === "biometric" && (
                         <div className="flex flex-col items-center py-6 gap-2">
                             <div className="w-16 h-16 rounded-full flex items-center justify-center"
-                                style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                 <Fingerprint className="w-8 h-8" style={{ color: "var(--nx-accent)" }} />
                             </div>
                             <p className="text-[11px] text-center" style={{ color: "rgba(140,160,210,0.75)" }}>

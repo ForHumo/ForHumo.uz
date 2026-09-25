@@ -94,11 +94,11 @@ export function NxOnboarding() {
     return (
         <div className="mx-4 mt-4 rounded-2xl overflow-hidden"
             style={{
-                background: "linear-gradient(135deg,rgba(43,62,232,0.14),rgba(0,206,200,0.10))",
-                border: "1px solid rgba(43,62,232,0.28)",
-                boxShadow: "0 4px 24px rgba(43,62,232,0.14)",
+                background: "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.14),rgb(var(--nx-accent-rgb) / 0.10))",
+                border: "1px solid rgb(var(--nx-accent-rgb) / 0.28)",
+                boxShadow: "0 4px 24px rgb(var(--nx-accent-rgb) / 0.14)",
             }}>
-            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                 <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl flex items-center justify-center"
                         style={{ background: "var(--nx-accent)" }}>
@@ -110,7 +110,7 @@ export function NxOnboarding() {
                     </div>
                 </div>
                 <button onClick={dismiss} className="w-7 h-7 rounded-lg flex items-center justify-center active:scale-90 transition"
-                    style={{ background: "rgba(43,62,232,0.14)" }}>
+                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <X className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.85)" }} />
                 </button>
             </div>
@@ -121,7 +121,7 @@ export function NxOnboarding() {
                             <div className="w-5 h-5 flex-shrink-0">
                                 {s.done ? <CheckCircle2 className="w-5 h-5" style={{ color: "var(--nx-accent)" }} /> : <Circle className="w-5 h-5" style={{ color: "rgba(140,160,210,0.4)" }} />}
                             </div>
-                            <s.icon className="w-4 h-4 flex-shrink-0" style={{ color: s.done ? "rgba(0,206,200,0.6)" : "rgba(140,160,210,0.75)" }} />
+                            <s.icon className="w-4 h-4 flex-shrink-0" style={{ color: s.done ? "rgb(var(--nx-accent-rgb) / 0.6)" : "rgba(140,160,210,0.75)" }} />
                             <span className="text-xs font-semibold flex-1 truncate" style={{ color: s.done ? "rgba(140,160,210,0.55)" : "rgba(230,235,250,0.95)", textDecoration: s.done ? "line-through" : "none" }}>
                                 {s.label}
                             </span>
@@ -129,7 +129,7 @@ export function NxOnboarding() {
                         </>
                     );
                     const cls = "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all active:scale-[0.98]";
-                    const st = { background: s.done ? "transparent" : "rgba(43,62,232,0.05)" };
+                    const st = { background: s.done ? "transparent" : "rgb(var(--nx-accent-rgb) / 0.05)" };
                     if (s.done) return <div key={s.key} className={cls} style={st}>{inner}</div>;
                     if (s.href) return <a key={s.key} href={s.href} className={cls} style={st}>{inner}</a>;
                     return <button key={s.key} onClick={s.action} className={cls} style={st}>{inner}</button>;

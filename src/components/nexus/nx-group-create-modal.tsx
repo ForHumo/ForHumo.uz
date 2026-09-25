@@ -138,9 +138,9 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
             onClick={() => !busy && onClose()}>
             <div onClick={e => e.stopPropagation()}
                 className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
-                style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "85vh" }}>
+                style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", maxHeight: "85vh" }}>
                 {/* Header */}
-                <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <div className="flex items-center gap-2">
                         <Users className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>
@@ -154,7 +154,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                 </div>
 
                 {/* Sarlavha input */}
-                <div className="p-4 space-y-3 border-b" style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                <div className="p-4 space-y-3 border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                     <div>
                         <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>
                             Guruh nomi
@@ -162,7 +162,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                         <input value={title} onChange={e => setTitle(e.target.value)}
                             maxLength={64} autoFocus placeholder="Do'stlar guruhi..."
                             className="w-full h-10 px-3 mt-1 rounded-lg bg-transparent text-[var(--nx-text)] text-sm focus:outline-none"
-                            style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
+                            style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }} />
                     </div>
                     {folders.length > 0 && (
                         <div>
@@ -174,13 +174,13 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                                 <button type="button" onClick={() => setFolderId(null)}
                                     className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex-shrink-0 transition"
                                     style={folderId === null ? {
-                                        background: "rgba(0,206,200,0.14)",
+                                        background: "rgb(var(--nx-accent-rgb) / 0.14)",
                                         color: "var(--nx-accent)",
-                                        border: "1px solid rgba(0,206,200,0.35)",
+                                        border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)",
                                     } : {
-                                        background: "rgba(43,62,232,0.06)",
+                                        background: "rgb(var(--nx-accent-rgb) / 0.06)",
                                         color: "rgba(140,160,210,0.75)",
-                                        border: "1px solid rgba(43,62,232,0.20)",
+                                        border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                                     }}>
                                     Yo&apos;q
                                 </button>
@@ -190,13 +190,13 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                                         <button key={f.id} type="button" onClick={() => setFolderId(f.id)}
                                             className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex-shrink-0 transition flex items-center gap-1"
                                             style={sel ? {
-                                                background: "rgba(0,206,200,0.14)",
+                                                background: "rgb(var(--nx-accent-rgb) / 0.14)",
                                                 color: "var(--nx-accent)",
-                                                border: "1px solid rgba(0,206,200,0.35)",
+                                                border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)",
                                             } : {
-                                                background: "rgba(43,62,232,0.06)",
+                                                background: "rgb(var(--nx-accent-rgb) / 0.06)",
                                                 color: "rgba(140,160,210,0.85)",
-                                                border: "1px solid rgba(43,62,232,0.20)",
+                                                border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                                             }}>
                                             {f.emoji && <span>{f.emoji}</span>}
                                             {f.name}
@@ -238,15 +238,15 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                                         onClick={() => toggleSelect(c.profileId)}
                                         className="w-full flex items-center gap-3 p-2 rounded-xl transition text-left"
                                         style={{
-                                            background: isSelected ? "rgba(0,206,200,0.12)" : "rgba(43,62,232,0.06)",
-                                            border: `1px solid ${isSelected ? "rgba(0,206,200,0.40)" : "transparent"}`,
+                                            background: isSelected ? "rgb(var(--nx-accent-rgb) / 0.12)" : "rgb(var(--nx-accent-rgb) / 0.06)",
+                                            border: `1px solid ${isSelected ? "rgb(var(--nx-accent-rgb) / 0.40)" : "transparent"}`,
                                         }}
                                     >
                                         {c.image ? (
                                             <Image src={c.image} alt="" width={36} height={36} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
                                         ) : (
                                             <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-                                                style={{ background: "rgba(43,62,232,0.20)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                                 <BotIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                                             </div>
                                         )}
@@ -263,8 +263,8 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                                         <div
                                             className="w-5 h-5 rounded-md flex items-center justify-center transition"
                                             style={{
-                                                background: isSelected ? "var(--nx-accent)" : "rgba(43,62,232,0.20)",
-                                                border: `1px solid ${isSelected ? "var(--nx-accent)" : "rgba(43,62,232,0.40)"}`,
+                                                background: isSelected ? "var(--nx-accent)" : "rgb(var(--nx-accent-rgb) / 0.20)",
+                                                border: `1px solid ${isSelected ? "var(--nx-accent)" : "rgb(var(--nx-accent-rgb) / 0.40)"}`,
                                             }}
                                         >
                                             {isSelected && <Check className="w-3 h-3 text-black font-black" />}
@@ -283,13 +283,13 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                 )}
 
                 {/* Footer */}
-                <div className="p-4 border-t flex items-center gap-2" style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                <div className="p-4 border-t flex items-center gap-2" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                     <button
                         type="button"
                         onClick={onClose}
                         disabled={busy}
                         className="flex-1 py-2.5 rounded-xl text-xs font-bold text-[var(--nx-text)] transition disabled:opacity-40"
-                        style={{ background: "rgba(43,62,232,0.10)" }}
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}
                     >
                         Bekor
                     </button>

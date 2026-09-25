@@ -35,9 +35,9 @@ export function NxMentionAutocomplete({
 
     return (
         <div className="absolute bottom-full left-2 mb-2 min-w-[240px] max-h-[280px] overflow-y-auto z-[400] rounded-2xl"
-            style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)", boxShadow: "0 12px 32px rgba(0,0,0,0.4)", scrollbarWidth: "none" }}>
+            style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)", boxShadow: "0 12px 32px rgba(0,0,0,0.4)", scrollbarWidth: "none" }}>
             <div className="px-3 py-2 text-[10px] uppercase tracking-widest flex items-center gap-1.5"
-                style={{ color: "rgba(140,160,210,0.7)", borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                style={{ color: "rgba(140,160,210,0.7)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                 <AtSign className="w-3 h-3" /> A&apos;zoni tanlang
             </div>
             {loading ? (
@@ -51,7 +51,7 @@ export function NxMentionAutocomplete({
                         className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5">
                         <img src={u.image ?? "/logos/forhumo.png"} alt=""
                             className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                            style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
+                            style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }} />
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-[var(--nx-text)] truncate">{u.name ?? u.username}</p>
                             {u.username && <p className="text-[11px]" style={{ color: "var(--nx-text-3)" }}>@{u.username}</p>}

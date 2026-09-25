@@ -70,7 +70,7 @@ export function NxTopWritersRow() {
                                     background: i === 0 ? "linear-gradient(135deg,#F5B301,#F97316)"
                                         : i === 1 ? "linear-gradient(135deg,#C0C0C0,#9CA3AF)"
                                         : i === 2 ? "linear-gradient(135deg,#B08D57,#8B6B3E)"
-                                        : "rgba(43,62,232,0.85)",
+                                        : "rgb(var(--nx-accent-rgb) / 0.85)",
                                     boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
                                 }}>
                                 {i + 1}
@@ -81,7 +81,7 @@ export function NxTopWritersRow() {
                                     border: i === 0 ? "2.5px solid #F5B301"
                                         : i === 1 ? "2.5px solid #C0C0C0"
                                         : i === 2 ? "2.5px solid #B08D57"
-                                        : "1.5px solid rgba(43,62,232,0.30)",
+                                        : "1.5px solid rgb(var(--nx-accent-rgb) / 0.30)",
                                     boxShadow: i < 3 ? `0 0 12px ${i === 0 ? "rgba(245,179,1,0.35)" : i === 1 ? "rgba(192,192,192,0.30)" : "rgba(176,141,87,0.30)"}` : undefined,
                                 }}>
                                 <img src={avatarOf(w)} alt="" className="w-full h-full object-cover bg-white" />

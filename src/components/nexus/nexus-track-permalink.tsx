@@ -91,7 +91,7 @@ function Inner({ id }: { id: string }) {
                         </button>
                     </div>
                     {t.uploader?.username && (
-                        <Link href={`/nexus/u/${t.uploader.username}`} className="mt-4 text-xs font-bold" style={{ color: "rgba(0,206,200,0.85)" }}>
+                        <Link href={`/nexus/u/${t.uploader.username}`} className="mt-4 text-xs font-bold" style={{ color: "rgb(var(--nx-accent-rgb) / 0.85)" }}>
                             @{t.uploader.username} profilini ko&apos;rish
                         </Link>
                     )}

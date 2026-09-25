@@ -82,15 +82,15 @@ export function NxDmChatLockSetup({
         <>
             <div className="fixed inset-0 z-[330] bg-black/70 backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 md:inset-x-0 md:mx-auto md:max-w-md z-[331] rounded-3xl overflow-hidden"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                 <div className="flex items-center justify-between px-5 py-4"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Lock className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Yopiq chatlar (PIN)
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(43,62,232,0.12)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                         <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -113,7 +113,7 @@ export function NxDmChatLockSetup({
                             ) : (
                                 <>
                                     <div className="p-4 rounded-2xl flex items-center gap-3"
-                                        style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                         <Lock className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-black text-[var(--nx-text)]">PIN yoqilgan</p>
@@ -126,7 +126,7 @@ export function NxDmChatLockSetup({
                                     </div>
                                     <button onClick={() => setMode("change")}
                                         className="w-full h-11 rounded-xl font-bold text-sm"
-                                        style={{ background: "rgba(43,62,232,0.20)", color: "white" }}>
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "white" }}>
                                         PIN o&apos;zgartirish
                                     </button>
                                     <button onClick={() => setMode("delete")}
@@ -152,13 +152,13 @@ export function NxDmChatLockSetup({
                                 <input value={hint} onChange={e => setHint(e.target.value.slice(0, 80))}
                                     placeholder="Tug'ilgan yil / oxirgi 4 raqam..."
                                     className="w-full h-10 rounded-lg px-3 text-sm focus:outline-none"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }} />
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "white" }} />
                             </div>
                             {error && <ErrorBox error={error} />}
                             <div className="flex gap-2">
                                 <button onClick={() => { setMode("idle"); setError(null); }}
                                     className="flex-1 h-11 rounded-xl font-bold text-sm"
-                                    style={{ background: "rgba(43,62,232,0.20)", color: "white" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "white" }}>
                                     Bekor
                                 </button>
                                 <button onClick={create} disabled={busy}
@@ -180,7 +180,7 @@ export function NxDmChatLockSetup({
                             <div className="flex gap-2">
                                 <button onClick={() => { setMode("idle"); setError(null); }}
                                     className="flex-1 h-11 rounded-xl font-bold text-sm"
-                                    style={{ background: "rgba(43,62,232,0.20)", color: "white" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "white" }}>
                                     Bekor
                                 </button>
                                 <button onClick={change} disabled={busy}
@@ -203,7 +203,7 @@ export function NxDmChatLockSetup({
                             <div className="flex gap-2">
                                 <button onClick={() => { setMode("idle"); setError(null); }}
                                     className="flex-1 h-11 rounded-xl font-bold text-sm"
-                                    style={{ background: "rgba(43,62,232,0.20)", color: "white" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)", color: "white" }}>
                                     Bekor
                                 </button>
                                 <button onClick={del} disabled={busy}
@@ -233,7 +233,7 @@ function PinField({ label, value, onChange }: { label: string; value: string; on
                 onChange={e => onChange(e.target.value.replace(/\D/g, "").slice(0, 8))}
                 placeholder="••••"
                 className="w-full h-11 rounded-xl px-3 text-lg text-center tracking-widest focus:outline-none"
-                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", color: "white", letterSpacing: "0.4em" }} />
+                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "white", letterSpacing: "0.4em" }} />
         </div>
     );
 }

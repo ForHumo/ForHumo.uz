@@ -75,13 +75,13 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
         <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-0 sm:p-4"
             style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(12px)" }} onClick={onClose}>
             <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden"
-                style={{ background: "rgba(11,16,40,0.98)", border: "1px solid rgba(43,62,232,0.22)", maxHeight: "90vh" }}
+                style={{ background: "rgba(11,16,40,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", maxHeight: "90vh" }}
                 onClick={e => e.stopPropagation()}>
 
-                <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <BarChart2 className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                     <p className="text-base font-black text-[var(--nx-text)] flex-1">Yangi so&apos;rovnoma</p>
-                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.10)" }}>
+                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                         <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -93,7 +93,7 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
                         <input value={question} onChange={e => setQuestion(e.target.value.slice(0, 300))}
                             placeholder="Nima haqida so'rayapsiz?"
                             className="w-full px-3.5 py-3 rounded-xl text-sm text-[var(--nx-text)] outline-none"
-                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                         <p className="text-[10px] mt-1 text-right" style={{ color: "rgba(140,160,210,0.60)" }}>{question.length}/300</p>
                     </div>
 
@@ -108,7 +108,7 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
                                     <input value={o} onChange={e => updateOption(i, e.target.value)}
                                         placeholder={`Variant ${i + 1}`}
                                         className="flex-1 px-3 py-2.5 rounded-lg text-sm text-[var(--nx-text)] outline-none"
-                                        style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.20)", caretColor: "var(--nx-accent)" }} />
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", caretColor: "var(--nx-accent)" }} />
                                     {options.length > 2 && (
                                         <button onClick={() => removeOption(i)} title="O'chirish"
                                             className="w-10 flex items-center justify-center rounded-lg flex-shrink-0"
@@ -121,7 +121,7 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
                             {options.length < 10 && (
                                 <button onClick={addOption}
                                     className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-bold transition"
-                                    style={{ background: "rgba(43,62,232,0.06)", border: "1px dashed rgba(43,62,232,0.30)", color: "rgba(140,160,210,0.85)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.30)", color: "rgba(140,160,210,0.85)" }}>
                                     <Plus className="w-3.5 h-3.5" /> Variant qo&apos;shish
                                 </button>
                             )}
@@ -131,7 +131,7 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
                     {/* Multi toggle */}
                     <button onClick={() => setMulti(!multi)}
                         className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition"
-                        style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                         <div className="text-left">
                             <p className="text-xs font-bold text-[var(--nx-text)]">Bir necha variant tanlash</p>
                             <p className="text-[10px] mt-0.5" style={{ color: "rgba(140,160,210,0.70)" }}>
@@ -154,7 +154,7 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
                                     className="px-2 py-2 rounded-lg text-[11px] font-bold transition active:scale-95"
                                     style={duration === d.key
                                         ? { background: "var(--nx-accent)", color: "#fff" }
-                                        : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.20)", color: "var(--nx-text-2)" }}>
+                                        : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", color: "var(--nx-text-2)" }}>
                                     {d.label}
                                 </button>
                             ))}
@@ -166,10 +166,10 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
                     )}
                 </div>
 
-                <div className="px-5 py-3 flex gap-2" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                <div className="px-5 py-3 flex gap-2" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <button onClick={onClose} disabled={busy}
                         className="flex-1 px-4 py-3 rounded-xl text-xs font-bold text-[var(--nx-text)] disabled:opacity-50"
-                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                         Bekor
                     </button>
                     <button onClick={submit} disabled={!canSubmit}

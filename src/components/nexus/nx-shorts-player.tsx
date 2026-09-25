@@ -257,7 +257,7 @@ export function NxShortsPlayer() {
                 {!playing && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="w-16 h-16 rounded-full flex items-center justify-center"
-                            style={{ background: "rgba(43,62,232,0.80)", backdropFilter: "blur(8px)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.80)", backdropFilter: "blur(8px)" }}>
                             <Play className="w-7 h-7 text-white fill-white ml-1" />
                         </div>
                     </div>
@@ -311,11 +311,11 @@ export function NxShortsPlayer() {
                 {/* Real izohlar paneli */}
                 {commentsOpen && (
                     <div className="absolute inset-x-0 bottom-0 flex flex-col rounded-t-2xl overflow-hidden"
-                        style={{ height: "62%", background: "rgba(8,12,32,0.97)", border: "1px solid rgba(43,62,232,0.25)", borderBottom: "none", zIndex: 10 }}
+                        style={{ height: "62%", background: "rgba(8,12,32,0.97)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", borderBottom: "none", zIndex: 10 }}
                         onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                            <span className="text-sm font-black text-white">Izohlar {comments.length > 0 && <span style={{ color: "rgba(0,206,200,0.9)" }}>{comments.length}</span>}</span>
-                            <button onClick={() => setCommentsOpen(false)} className="w-7 h-7 flex items-center justify-center rounded-lg" style={{ background: "rgba(43,62,232,0.10)" }}>
+                        <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
+                            <span className="text-sm font-black text-white">Izohlar {comments.length > 0 && <span style={{ color: "rgb(var(--nx-accent-rgb) / 0.9)" }}>{comments.length}</span>}</span>
+                            <button onClick={() => setCommentsOpen(false)} className="w-7 h-7 flex items-center justify-center rounded-lg" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                 <X className="w-4 h-4 text-white" />
                             </button>
                         </div>
@@ -338,10 +338,10 @@ export function NxShortsPlayer() {
                                 </div>
                             ))}
                         </div>
-                        <div className="flex gap-2 px-4 py-3 flex-shrink-0" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                        <div className="flex gap-2 px-4 py-3 flex-shrink-0" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             <input value={cInput} onChange={e => setCInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendComment()}
                                 placeholder="Izoh yozing..." className="flex-1 h-9 rounded-xl px-3 text-sm text-white outline-none"
-                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "var(--nx-accent)" }} />
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.16)", caretColor: "var(--nx-accent)" }} />
                             <button onClick={sendComment} disabled={cBusy || !cInput.trim()}
                                 className="w-9 h-9 flex items-center justify-center rounded-xl text-white disabled:opacity-40"
                                 style={{ background: "var(--nx-accent)" }}>

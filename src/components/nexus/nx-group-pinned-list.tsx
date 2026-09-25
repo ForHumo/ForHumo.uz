@@ -36,15 +36,15 @@ export function NxGroupPinnedList({
         <>
             <div className="fixed inset-0 z-[320] bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-x-0 bottom-0 z-[321] flex max-h-[85vh] flex-col overflow-hidden rounded-t-3xl md:inset-y-0 md:right-0 md:inset-x-auto md:max-h-full md:w-[440px] md:rounded-none md:rounded-l-3xl"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)" }}
+                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)" }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Pin className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Pinlangan · {items.length}
                     </h3>
                     <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full"
-                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                         <X className="h-4 w-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -58,7 +58,7 @@ export function NxGroupPinnedList({
                     ) : items.map(m => (
                         <button key={m.id} onClick={() => { onJump?.(m.id); onClose(); }}
                             className="w-full text-left rounded-2xl px-3 py-2.5 mb-1 hover:bg-white/5 transition"
-                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             <div className="flex items-center gap-2 mb-1">
                                 {m.author?.image && <img src={m.author.image} alt="" className="w-5 h-5 rounded-full object-cover" />}
                                 <p className="text-[11px] font-bold" style={{ color: "var(--nx-accent)" }}>

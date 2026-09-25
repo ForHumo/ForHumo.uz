@@ -32,7 +32,7 @@ export function NxGroupChat({ open, onClose }: { open: boolean; onClose: () => v
             <div className="fixed inset-0 z-[310] bg-black/60 backdrop-blur-sm md:hidden"
                 onClick={onClose} />
             <div className="fixed inset-x-0 bottom-0 z-[311] flex max-h-[70vh] flex-col overflow-hidden rounded-t-3xl bg-[#080C20] shadow-2xl md:inset-y-0 md:inset-x-auto md:right-0 md:max-h-full md:w-[380px] md:rounded-none md:rounded-l-3xl"
-                style={{ border: "1px solid rgba(43,62,232,0.22)" }}
+                style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex flex-shrink-0 items-center justify-between px-5 pt-5 pb-3">
                     <h3 className="flex items-center gap-2 text-base font-black text-[var(--nx-text)]">
@@ -40,7 +40,7 @@ export function NxGroupChat({ open, onClose }: { open: boolean; onClose: () => v
                     </h3>
                     <button onClick={onClose}
                         className="flex h-8 w-8 items-center justify-center rounded-full"
-                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                         <X className="h-4 w-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -56,12 +56,12 @@ export function NxGroupChat({ open, onClose }: { open: boolean; onClose: () => v
                             <div key={i} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                                 <div className="flex max-w-[80%] flex-col gap-0.5">
                                     {!mine && (
-                                        <p className="pl-2 text-[10px] font-bold" style={{ color: "rgba(0,206,200,0.85)" }}>{label}</p>
+                                        <p className="pl-2 text-[10px] font-bold" style={{ color: "rgb(var(--nx-accent-rgb) / 0.85)" }}>{label}</p>
                                     )}
                                     <div className={`rounded-2xl px-3 py-2 text-sm ${mine ? "text-[var(--nx-text)]" : "text-[var(--nx-text)]"}`}
                                         style={mine
                                             ? { background: "var(--nx-accent)" }
-                                            : { background: "rgba(43,62,232,0.15)" }}>
+                                            : { background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                         {m.message}
                                     </div>
                                 </div>
@@ -72,11 +72,11 @@ export function NxGroupChat({ open, onClose }: { open: boolean; onClose: () => v
 
                 <form onSubmit={submit}
                     className="flex flex-shrink-0 items-center gap-2 px-4 py-3"
-                    style={{ borderTop: "1px solid rgba(43,62,232,0.15)" }}>
+                    style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                     <input value={text} onChange={e => setText(e.target.value)}
                         placeholder="Xabar yozing..."
                         className="flex-1 rounded-xl px-3 py-2 text-sm text-[var(--nx-text)] outline-none"
-                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
+                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                     <button type="submit" disabled={isSending || !text.trim()}
                         className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--nx-text)] shadow-lg disabled:opacity-40"
                         style={{ background: "var(--nx-accent)" }}>

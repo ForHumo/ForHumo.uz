@@ -97,7 +97,7 @@ export function NxTipSheet({
                                 <h3 className="text-base font-black text-[var(--nx-text)] truncate">Qo&apos;llab-quvvatlash</h3>
                                 <p className="text-[11px] truncate" style={{ color: "var(--nx-text-3)" }}>{displayName}ni qo&apos;llab-quvvatlang</p>
                             </div>
-                            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.10)" }}>
+                            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                 <X className="w-4 h-4 text-[var(--nx-text)]" />
                             </button>
                         </div>
@@ -131,7 +131,7 @@ export function NxTipSheet({
                             <textarea value={message} onChange={e => setMessage(e.target.value.slice(0, 200))}
                                 placeholder="Xabar qoldiring (ixtiyoriy)" rows={2}
                                 className="mt-3 w-full px-3 py-2.5 rounded-xl bg-transparent text-[var(--nx-text)] text-sm outline-none resize-none"
-                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.20)", caretColor: "var(--nx-accent)" }} />
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", caretColor: "var(--nx-accent)" }} />
 
                             {/* Balans */}
                             {balance !== null && (

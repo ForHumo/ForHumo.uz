@@ -156,14 +156,14 @@ export function VideoView() {
         <div className="animate-in fade-in slide-in-from-bottom-1 duration-250 pb-32">
             {/* ── Sub-navbar (yopishqoq) ── */}
             <div className="sticky top-0 z-20 px-4 py-2"
-                style={{ background: "rgba(5,8,24,0.88)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                style={{ background: "rgba(5,8,24,0.88)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                 <div className="flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
                     {SECTIONS.map(s => (
                         <button key={s.id} onClick={() => { setSection(s.id); setCat(""); }}
                             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black flex-shrink-0 transition active:scale-95"
                             style={section === s.id
-                                ? { background: "var(--nx-accent)", color: "#fff", boxShadow: "0 2px 12px rgba(43,62,232,0.35)" }
-                                : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(150,168,215,0.85)" }}>
+                                ? { background: "var(--nx-accent)", color: "#fff", boxShadow: "0 2px 12px rgb(var(--nx-accent-rgb) / 0.35)" }
+                                : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "rgba(150,168,215,0.85)" }}>
                             <s.icon className="w-3.5 h-3.5" />{s.label}
                         </button>
                     ))}
@@ -172,18 +172,18 @@ export function VideoView() {
 
             {/* ── Header (qidiruv + sort + kategoriya) ── */}
             {section !== "mine" && (
-                <div className="mx-4 mt-4 mb-3 p-5 rounded-2xl relative overflow-hidden" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                    <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(43,62,232,0.22) 0%, transparent 70%)" }} />
+                <div className="mx-4 mt-4 mb-3 p-5 rounded-2xl relative overflow-hidden" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
+                    <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgb(var(--nx-accent-rgb) / 0.22) 0%, transparent 70%)" }} />
                     <div className="flex items-center justify-between gap-3 mb-4 relative">
                         <h2 className="text-2xl md:text-3xl font-black text-white">Video <span style={{ background: "var(--nx-accent)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Dunyo</span></h2>
-                        <button onClick={() => setUploadOpen(true)} className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black text-white flex-shrink-0" style={{ background: "var(--nx-accent)", boxShadow: "0 4px 16px rgba(43,62,232,0.4)" }}>
+                        <button onClick={() => setUploadOpen(true)} className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black text-white flex-shrink-0" style={{ background: "var(--nx-accent)", boxShadow: "0 4px 16px rgb(var(--nx-accent-rgb) / 0.4)" }}>
                             <Plus className="w-4 h-4" /> Video yuklash
                         </button>
                     </div>
                     <div className="relative mb-3">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "rgba(43,62,232,0.55)" }} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "rgb(var(--nx-accent-rgb) / 0.55)" }} />
                         <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Video qidiring..."
-                            className="w-full h-11 rounded-xl pl-11 pr-4 text-sm text-white outline-none" style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
+                            className="w-full h-11 rounded-xl pl-11 pr-4 text-sm text-white outline-none" style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                     </div>
                     <div className="flex gap-2 overflow-x-auto pb-1 relative" style={{ scrollbarWidth: "none" }}>
                         {SORTS.map(f => (
@@ -191,7 +191,7 @@ export function VideoView() {
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold flex-shrink-0 transition active:scale-95"
                                 style={sort === f.id
                                     ? { background: "var(--nx-accent)", color: "#fff" }
-                                    : { background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)", color: "rgba(140,160,210,0.85)" }}>
+                                    : { background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", color: "rgba(140,160,210,0.85)" }}>
                                 <f.icon className="w-3 h-3" />{f.label}
                             </button>
                         ))}
@@ -200,7 +200,7 @@ export function VideoView() {
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold flex-shrink-0 transition active:scale-95"
                                 style={cat === c.id
                                     ? { background: "var(--nx-accent)", color: "#fff" }
-                                    : { background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)", color: "rgba(140,160,210,0.85)" }}>
+                                    : { background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", color: "rgba(140,160,210,0.85)" }}>
                                 <Hash className="w-3 h-3" />{c.label}
                             </button>
                         ))}
@@ -267,7 +267,7 @@ export function VideoView() {
                                 <div className="flex justify-center mt-6 px-4">
                                     <button onClick={loadMore} disabled={loadingMore}
                                         className="px-6 py-2.5 rounded-xl text-xs font-black text-white active:scale-95 transition disabled:opacity-50"
-                                        style={{ background: "var(--nx-accent)", boxShadow: "0 4px 16px rgba(43,62,232,0.35)" }}>
+                                        style={{ background: "var(--nx-accent)", boxShadow: "0 4px 16px rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                         {loadingMore ? <><Loader2 className="w-3.5 h-3.5 animate-spin inline mr-1.5" />Yuklanmoqda</> : "Ko'proq video"}
                                     </button>
                                 </div>
@@ -314,7 +314,7 @@ function HCard({ v, onOpen, onSave, w }: { v: Vid; onOpen: () => void; onSave: (
     return (
         <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={e => e.key === "Enter" && onOpen()}
             className={`text-left group cursor-pointer flex-shrink-0 ${w ?? ""}`}>
-            <div className="relative aspect-video rounded-xl overflow-hidden mb-2" style={{ border: "1px solid rgba(43,62,232,0.18)", background: "rgba(43,62,232,0.08)" }}>
+            <div className="relative aspect-video rounded-xl overflow-hidden mb-2" style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", background: "rgb(var(--nx-accent-rgb) / 0.08)" }}>
                 {v.thumbUrl
                     ? <img src={v.thumbUrl} alt={v.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     : <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg,#1a2a8a,#0a3d3a)" }}><Film className="w-8 h-8 text-white/40" /></div>}
@@ -326,7 +326,7 @@ function HCard({ v, onOpen, onSave, w }: { v: Vid; onOpen: () => void; onSave: (
                 {v.durationSec > 0 && <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
             </div>
             <div className="flex gap-2.5">
-                <img src={avatarOf(v.author)} alt="" className="w-8 h-8 rounded-full flex-shrink-0 object-cover bg-white" style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
+                <img src={avatarOf(v.author)} alt="" className="w-8 h-8 rounded-full flex-shrink-0 object-cover bg-white" style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }} />
                 <div className="min-w-0">
                     <h4 className="text-sm font-bold text-white leading-snug line-clamp-2 group-hover:text-[var(--nx-accent)] transition-colors">{v.title}</h4>
                     <p className="text-[11px] mt-1 flex items-center gap-1.5" style={{ color: "rgba(100,120,170,0.8)" }}>
@@ -345,7 +345,7 @@ function VCard({ v, onOpen, onSave, w }: { v: Vid; onOpen: () => void; onSave: (
     return (
         <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={e => e.key === "Enter" && onOpen()}
             className={`relative aspect-[9/16] rounded-2xl overflow-hidden group cursor-pointer flex-shrink-0 ${w ?? ""}`}
-            style={{ border: "1px solid rgba(43,62,232,0.20)", background: "rgba(43,62,232,0.08)" }}>
+            style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", background: "rgb(var(--nx-accent-rgb) / 0.08)" }}>
             {v.thumbUrl
                 ? <img src={v.thumbUrl} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 : <div className="w-full h-full flex items-center justify-center"><Play className="w-6 h-6 text-white/40" /></div>}
@@ -373,7 +373,7 @@ function LibRow({ icon: Icon, title, items, onOpen, onSave, empty, action }: {
                 <span className="text-[11px] font-bold" style={{ color: "rgba(100,120,170,0.7)" }}>{items.length}</span>
             </div>
             {items.length === 0 ? (
-                <div className="mx-4 px-4 py-6 rounded-2xl flex flex-col items-center gap-3 text-center" style={{ background: "rgba(43,62,232,0.05)", border: "1px dashed rgba(43,62,232,0.20)" }}>
+                <div className="mx-4 px-4 py-6 rounded-2xl flex flex-col items-center gap-3 text-center" style={{ background: "rgb(var(--nx-accent-rgb) / 0.05)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <p className="text-xs" style={{ color: "rgba(130,150,200,0.75)" }}>{empty}</p>
                     {action}
                 </div>
@@ -392,12 +392,12 @@ function LibRow({ icon: Icon, title, items, onOpen, onSave, empty, action }: {
 function HSkeleton() {
     return (
         <div className="animate-pulse">
-            <div className="aspect-video rounded-xl mb-2" style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.12)" }} />
+            <div className="aspect-video rounded-xl mb-2" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.12)" }} />
             <div className="flex gap-2.5">
-                <div className="w-8 h-8 rounded-full flex-shrink-0" style={{ background: "rgba(43,62,232,0.15)" }} />
+                <div className="w-8 h-8 rounded-full flex-shrink-0" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }} />
                 <div className="flex-1 space-y-1.5">
-                    <div className="h-2.5 rounded" style={{ background: "rgba(43,62,232,0.15)" }} />
-                    <div className="h-2 rounded" style={{ background: "rgba(43,62,232,0.10)", width: "50%" }} />
+                    <div className="h-2.5 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }} />
+                    <div className="h-2 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", width: "50%" }} />
                 </div>
             </div>
         </div>
@@ -405,15 +405,15 @@ function HSkeleton() {
 }
 function VSkeleton() {
     return (
-        <div className="animate-pulse aspect-[9/16] rounded-2xl" style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.15)" }} />
+        <div className="animate-pulse aspect-[9/16] rounded-2xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }} />
     );
 }
 
 function EmptyState({ icon: Icon, title, hint, action }: { icon: React.ElementType; title: string; hint?: string; action?: React.ReactNode }) {
     return (
         <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.15)" }}>
-                <Icon className="w-6 h-6" style={{ color: "rgba(43,62,232,0.45)" }} />
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
+                <Icon className="w-6 h-6" style={{ color: "rgb(var(--nx-accent-rgb) / 0.45)" }} />
             </div>
             <p className="text-sm font-bold text-white/70 mb-1">{title}</p>
             {hint && <p className="text-xs mb-2" style={{ color: "rgba(110,130,180,0.7)" }}>{hint}</p>}

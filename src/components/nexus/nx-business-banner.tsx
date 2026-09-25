@@ -43,7 +43,7 @@ export function NxBusinessBanner({ username }: { username: string }) {
             : null;
 
     return (
-        <div className="rounded-2xl p-4 mb-3" style={{ background: "linear-gradient(135deg, rgba(249,115,22,0.10), rgba(43,62,232,0.06))", border: "1px solid rgba(249,115,22,0.25)" }}>
+        <div className="rounded-2xl p-4 mb-3" style={{ background: "linear-gradient(135deg, rgba(249,115,22,0.10), rgb(var(--nx-accent-rgb) / 0.06))", border: "1px solid rgba(249,115,22,0.25)" }}>
             <div className="flex items-center gap-2 mb-2">
                 <div className="w-8 h-8 rounded-lg bg-orange-500/20 text-orange-500 flex items-center justify-center">
                     <Store className="w-4 h-4" />

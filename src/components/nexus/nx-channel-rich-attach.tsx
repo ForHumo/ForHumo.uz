@@ -193,12 +193,12 @@ export function NxChannelRichAttach({
             <button onClick={() => setOpen(v => !v)} disabled={disabled || busy}
                 title="Media qo'shish"
                 className="w-10 h-10 flex items-center justify-center rounded-xl text-[var(--nx-text)] disabled:opacity-40"
-                style={{ background: "rgba(43,62,232,0.15)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
             </button>
             {open && (
                 <div className="absolute left-0 bottom-full mb-2 min-w-[180px] z-[400] py-1 rounded-2xl"
-                    style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)", boxShadow: "0 12px 32px rgba(0,0,0,0.4)" }}>
+                    style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)", boxShadow: "0 12px 32px rgba(0,0,0,0.4)" }}>
                     <button onClick={() => startRecording("voice")}
                         className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm text-[var(--nx-text)]">
                         <Mic className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
@@ -219,7 +219,7 @@ export function NxChannelRichAttach({
                         <User className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Kontakt
                     </button>
-                    <div style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }} />
+                    <div style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }} />
                     <button onClick={() => setViewOnceMode(v => !v)}
                         className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm"
                         style={{ color: viewOnceMode ? "#FFC107" : "white" }}>
@@ -232,7 +232,7 @@ export function NxChannelRichAttach({
                 <>
                     <div className="fixed inset-0 z-[500] bg-black/60" onClick={() => setContactOpen(false)} />
                     <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto z-[501] p-5 rounded-3xl"
-                        style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)" }}
+                        style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)" }}
                         onClick={e => e.stopPropagation()}>
                         <h3 className="text-base font-black text-[var(--nx-text)] mb-4 flex items-center gap-2">
                             <User className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Kontakt ulashish
@@ -241,20 +241,20 @@ export function NxChannelRichAttach({
                             <input value={contactName} onChange={e => setContactName(e.target.value)}
                                 placeholder="Ism (majburiy)"
                                 className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none"
-                                style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)" }} />
+                                style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
                             <input value={contactPhone} onChange={e => setContactPhone(e.target.value)}
                                 placeholder="Telefon (majburiy)" inputMode="tel"
                                 className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none"
-                                style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)" }} />
+                                style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
                             <input value={contactUsername} onChange={e => setContactUsername(e.target.value)}
                                 placeholder="@username (ixtiyoriy — Humo hisobi)"
                                 className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none"
-                                style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)" }} />
+                                style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
                         </div>
                         <div className="flex gap-2 mt-4">
                             <button onClick={() => setContactOpen(false)}
                                 className="flex-1 py-2.5 rounded-xl text-sm font-bold text-[var(--nx-text)]"
-                                style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                                 Bekor
                             </button>
                             <button onClick={sendContact} disabled={!contactName.trim() || !contactPhone.trim() || busy}

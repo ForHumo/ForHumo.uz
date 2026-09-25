@@ -962,7 +962,7 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                     className="fixed bottom-4 right-4 z-[300] flex max-w-[220px] items-center gap-3 rounded-2xl bg-black/85 p-2.5 pr-4 text-white shadow-2xl ring-1 ring-white/15 backdrop-blur-md transition-transform hover:scale-[1.03] active:scale-95 sm:bottom-6 sm:right-6"
                     aria-label="Chaqiruvni kengaytirish">
                     <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/15"
-                        style={remoteLevel > 8 ? { boxShadow: `0 0 ${10 + remoteLevel * 0.25}px rgba(0,206,200,${0.4 + remoteLevel / 300})` } : undefined}>
+                        style={remoteLevel > 8 ? { boxShadow: `0 0 ${10 + remoteLevel * 0.25}px rgb(var(--nx-accent-rgb) / ${0.4 + remoteLevel / 300})` } : undefined}>
                         {peer.image
                             ? <Image src={peer.image} alt="" width={40} height={40} className="h-full w-full object-cover" />
                             : <div className="flex h-full w-full items-center justify-center text-xs font-black">{peerLabel.slice(0, 2).toUpperCase()}</div>}
@@ -992,7 +992,7 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                         <div className="pointer-events-none absolute inset-0 rounded-full transition-all duration-100"
                             style={{
                                 transform: `scale(${1 + remoteLevel / 200})`,
-                                boxShadow: `0 0 ${40 + remoteLevel * 0.6}px ${remoteLevel * 0.3}px rgba(0,206,200,${0.15 + remoteLevel / 300})`,
+                                boxShadow: `0 0 ${40 + remoteLevel * 0.6}px ${remoteLevel * 0.3}px rgb(var(--nx-accent-rgb) / ${0.15 + remoteLevel / 300})`,
                             }} />
                         <div className="relative flex h-40 w-40 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-2 ring-white/30">
                             {peer.image
@@ -1013,7 +1013,7 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                         <Minimize2 className="h-4 w-4" />
                     </button>
                     <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white/15"
-                        style={remoteLevel > 8 ? { boxShadow: `0 0 ${12 + remoteLevel * 0.25}px rgba(0,206,200,${0.4 + remoteLevel / 300})` } : undefined}>
+                        style={remoteLevel > 8 ? { boxShadow: `0 0 ${12 + remoteLevel * 0.25}px rgb(var(--nx-accent-rgb) / ${0.4 + remoteLevel / 300})` } : undefined}>
                         {peer.image
                             ? <Image src={peer.image} alt="" width={44} height={44} className="h-full w-full object-cover" />
                             : <div className="flex h-full w-full items-center justify-center text-sm font-black">{peerLabel.slice(0, 2).toUpperCase()}</div>}
@@ -1064,7 +1064,7 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                             <span className="pointer-events-none absolute inset-0 rounded-full transition-all duration-100"
                                 style={{
                                     transform: `scale(${1 + localLevel / 220})`,
-                                    boxShadow: `0 0 ${8 + localLevel * 0.4}px rgba(0,206,200,${0.35 + localLevel / 300})`,
+                                    boxShadow: `0 0 ${8 + localLevel * 0.4}px rgb(var(--nx-accent-rgb) / ${0.35 + localLevel / 300})`,
                                 }} />
                         )}
                         <CtrlButton onClick={toggleMute} active={!muted}
@@ -1136,7 +1136,7 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                             const active = voiceFx === fx.id;
                             return (
                                 <button key={fx.id} onClick={() => applyVoiceFx(fx.id)}
-                                    style={active ? { background: "var(--nx-accent)", boxShadow: "0 4px 20px rgba(43,62,232,0.45)" } : undefined}
+                                    style={active ? { background: "var(--nx-accent)", boxShadow: "0 4px 20px rgb(var(--nx-accent-rgb) / 0.45)" } : undefined}
                                     className={`flex flex-col items-center gap-0.5 rounded-2xl p-3 text-center transition-transform hover:scale-105 active:scale-95 ${active ? "text-white" : "bg-white/10 text-white/90 ring-1 ring-white/15"}`}>
                                     <span className="text-sm font-black">{fx.label}</span>
                                     <span className="text-[10px] opacity-70">{fx.hint}</span>
@@ -1155,7 +1155,7 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                             const hint = id === "none" ? "Asl fon" : "MediaPipe segmentatsiya";
                             return (
                                 <button key={id} onClick={() => applyBgFx(id)} disabled={disabled}
-                                    style={active ? { background: "var(--nx-accent)", boxShadow: "0 4px 20px rgba(43,62,232,0.45)" } : undefined}
+                                    style={active ? { background: "var(--nx-accent)", boxShadow: "0 4px 20px rgb(var(--nx-accent-rgb) / 0.45)" } : undefined}
                                     className={`flex flex-col items-center gap-0.5 rounded-2xl p-3 text-center transition-transform hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 ${active ? "text-white" : "bg-white/10 text-white/90 ring-1 ring-white/15"}`}>
                                     <span className="text-sm font-black">{label}</span>
                                     <span className="text-[10px] opacity-70">{bgBusy && active ? "Yuklanmoqda…" : hint}</span>
@@ -1200,7 +1200,7 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
 function CtrlButton({ onClick, active, icon, disabled }: { onClick: () => void; active: boolean; icon: React.ReactNode; disabled?: boolean }) {
     return (
         <button onClick={onClick} disabled={disabled}
-            style={active ? { background: "var(--nx-accent)", boxShadow: "0 4px 20px rgba(43,62,232,0.45)" } : undefined}
+            style={active ? { background: "var(--nx-accent)", boxShadow: "0 4px 20px rgb(var(--nx-accent-rgb) / 0.45)" } : undefined}
             className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 ${active ? "" : "bg-white/15 ring-1 ring-white/25 backdrop-blur-sm"}`}>
             {icon}
         </button>

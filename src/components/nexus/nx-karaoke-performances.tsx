@@ -122,7 +122,7 @@ export function KaraokePerformanceCard({ p, onDeleted }: { p: KaraokePerformance
                 </div>
                 {/* Score badge */}
                 <div className="flex-shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center flex-col"
-                    style={{ background: scoreColor(p.score), boxShadow: `0 4px 12px ${p.score >= 60 ? "rgba(0,206,200,0.35)" : "rgba(139,92,246,0.35)"}` }}>
+                    style={{ background: scoreColor(p.score), boxShadow: `0 4px 12px ${p.score >= 60 ? "rgb(var(--nx-accent-rgb) / 0.35)" : "rgba(139,92,246,0.35)"}` }}>
                     <span className="text-sm font-black text-[var(--nx-text)] leading-none">{p.score}</span>
                     <span className="text-[7px] font-black text-white/85 uppercase mt-0.5">Ball</span>
                 </div>

@@ -63,7 +63,7 @@ export function NxCreatorSubSettings({
                         <h3 className="text-base font-black text-[var(--nx-text)]">Pullik obuna</h3>
                         <p className="text-[11px]" style={{ color: "var(--nx-text-3)" }}>Oylik narxni belgilang (0 = o&apos;chiq)</p>
                     </div>
-                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.10)" }}>
+                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                         <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>

@@ -46,8 +46,8 @@ export function NxE2eBanner({ peerName, peerFingerprint, myFingerprint }: Props)
             <button onClick={() => setOpen(true)}
                 className="w-full flex items-center gap-2 px-4 py-1.5 text-xs font-bold border-b transition-colors"
                 style={{
-                    background: verified ? "rgba(16,185,129,0.08)" : "rgba(0,206,200,0.08)",
-                    borderColor: verified ? "rgba(16,185,129,0.20)" : "rgba(0,206,200,0.20)",
+                    background: verified ? "rgba(16,185,129,0.08)" : "rgb(var(--nx-accent-rgb) / 0.08)",
+                    borderColor: verified ? "rgba(16,185,129,0.20)" : "rgb(var(--nx-accent-rgb) / 0.20)",
                     color: verified ? "#10B981" : "var(--nx-accent)",
                 }}>
                 <Lock className="w-3.5 h-3.5" />

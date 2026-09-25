@@ -102,7 +102,7 @@ export function NxInlinePopover({ text, convId, onSent }: Props) {
 
     return (
         <div className="absolute bottom-full left-0 right-0 mb-2 mx-3 rounded-2xl overflow-hidden z-30"
-            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", backdropFilter: "blur(14px)", maxHeight: "50vh" }}>
+            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", backdropFilter: "blur(14px)", maxHeight: "50vh" }}>
             <div className="px-3 py-2 border-b border-white/[0.06] flex items-center gap-2 text-xs text-white/60">
                 <Bot className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                 <span><span className="font-bold text-[var(--nx-text)]">@{bot}</span> {q ? `— ${q}` : ""}</span>
@@ -120,7 +120,7 @@ export function NxInlinePopover({ text, convId, onSent }: Props) {
                         onClick={() => pick(r)}
                         disabled={!convId || !!sending}
                         className="w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-white/[0.06] transition disabled:opacity-50"
-                        style={i === idx ? { background: "rgba(0,206,200,0.08)" } : undefined}>
+                        style={i === idx ? { background: "rgb(var(--nx-accent-rgb) / 0.08)" } : undefined}>
                         {r.thumbnailUrl
                             ? <img src={r.thumbnailUrl} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                             : <div className="w-10 h-10 rounded-lg bg-white/[0.05] flex items-center justify-center flex-shrink-0"><Bot className="w-4 h-4 text-white/40" /></div>}

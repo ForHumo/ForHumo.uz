@@ -16,7 +16,7 @@ const COLORS = ["var(--nx-accent)", "var(--nx-accent)", "#10B981", "#F59E0B", "#
 const BADGE_COLORS: Record<string, string> = {
     "Moderator": "rgba(16,185,129,0.20)",
     "VIP": "rgba(245,158,11,0.20)",
-    "Pro": "rgba(43,62,232,0.20)",
+    "Pro": "rgb(var(--nx-accent-rgb) / 0.20)",
 };
 
 const SEED_MSGS: Omit<LiveMsg, "id">[] = [
@@ -129,12 +129,12 @@ export function NxLiveChat() {
                     </span>
                     <button onClick={() => setCollapsed(p => !p)}
                         className="w-6 h-6 flex items-center justify-center rounded-lg"
-                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                         <ChevronUp className={`w-3.5 h-3.5 text-white transition-transform duration-200 ${collapsed ? "rotate-180" : ""}`} />
                     </button>
                     <button onClick={() => setLiveChatOpen(false)}
                         className="w-6 h-6 flex items-center justify-center rounded-lg"
-                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                         <X className="w-3.5 h-3.5 text-white" />
                     </button>
                 </div>
@@ -147,7 +147,7 @@ export function NxLiveChat() {
                                 <div key={m.id} className="flex items-start gap-1.5 mb-1.5">
                                     {m.badge && (
                                         <span className="flex-shrink-0 px-1.5 py-0.5 rounded text-[8px] font-black mt-0.5"
-                                            style={{ background: BADGE_COLORS[m.badge] ?? "rgba(43,62,232,0.15)", color: "#fff" }}>
+                                            style={{ background: BADGE_COLORS[m.badge] ?? "rgb(var(--nx-accent-rgb) / 0.15)", color: "#fff" }}>
                                             {m.badge}
                                         </span>
                                     )}
@@ -165,12 +165,12 @@ export function NxLiveChat() {
 
                         {/* Emotes bar */}
                         <div className="px-3 py-1.5 flex gap-1.5 overflow-x-auto flex-shrink-0"
-                            style={{ scrollbarWidth: "none", borderTop: "1px solid rgba(43,62,232,0.10)" }}>
+                            style={{ scrollbarWidth: "none", borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.10)" }}>
                             {EMOTES.map(e => (
                                 <button key={e}
                                     onClick={() => setInput(prev => prev + ` ${e}`)}
                                     className="flex-shrink-0 px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all duration-150 active:scale-95"
-                                    style={{ background: "rgba(43,62,232,0.10)", color: "rgba(140,160,210,0.80)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgba(140,160,210,0.80)" }}>
                                     {e}
                                 </button>
                             ))}
@@ -178,9 +178,9 @@ export function NxLiveChat() {
 
                         {/* Input */}
                         <div className="flex items-center gap-2 px-3 py-2.5 flex-shrink-0"
-                            style={{ borderTop: "1px solid rgba(43,62,232,0.12)" }}>
+                            style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.12)" }}>
                             <button className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0"
-                                style={{ background: "rgba(43,62,232,0.08)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)" }}>
                                 <Smile className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.60)" }} />
                             </button>
                             <input
@@ -189,7 +189,7 @@ export function NxLiveChat() {
                                 onKeyDown={e => e.key === "Enter" && send()}
                                 placeholder="Chat..."
                                 className="flex-1 h-7 rounded-lg px-2.5 text-xs text-white outline-none"
-                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "var(--nx-accent)" }}
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.16)", caretColor: "var(--nx-accent)" }}
                             />
                             <button onClick={send}
                                 className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0 transition-all duration-150 active:scale-95"

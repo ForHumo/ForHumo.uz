@@ -123,7 +123,7 @@ export function NexusProfile({ username }: { username: string }) {
                 <header className="sticky top-0 z-20 flex items-center gap-3 px-3 h-14 backdrop-blur-xl"
                     style={{ background: "var(--nx-surface)", borderBottom: "1px solid var(--nx-border)" }}>
                     <button onClick={() => router.back()} className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: "rgba(43,62,232,0.12)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                         <ArrowLeft className="w-4 h-4 text-white" />
                     </button>
                     <div className="min-w-0">
@@ -132,7 +132,7 @@ export function NexusProfile({ username }: { username: string }) {
                             {p?.verified && <NxVerifiedBadge category={(p as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={14} />}
                             {p?.username?.toLowerCase().endsWith("_agent") && (
                                 <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded flex-shrink-0"
-                                    style={{ background: "rgba(0,206,200,0.14)", color: "var(--nx-accent)" }}>BOT</span>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)", color: "var(--nx-accent)" }}>BOT</span>
                             )}
                         </div>
                         {!loading && data && <span className="text-[10px]" style={{ color: "var(--nx-text-3)" }}>{fzNum(data.stats.posts)} post</span>}
@@ -170,7 +170,7 @@ export function NexusProfile({ username }: { username: string }) {
                                 {/* Tugma */}
                                 {data.isMe ? (
                                     <Link href="/id/edit" className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-black mb-1"
-                                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)", color: "var(--nx-text-2)" }}>
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "var(--nx-text-2)" }}>
                                         <Edit3 className="w-3.5 h-3.5" /> Tahrirlash
                                     </Link>
                                 ) : (
@@ -185,8 +185,8 @@ export function NexusProfile({ username }: { username: string }) {
                                             <button onClick={toggleFollow} disabled={busy || blockedMe}
                                                 className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-black active:scale-95 transition disabled:opacity-60"
                                                 style={following
-                                                    ? { background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.30)", color: "rgba(140,160,210,0.9)" }
-                                                    : { background: "var(--nx-accent)", color: "#fff", boxShadow: "0 4px 18px rgba(43,62,232,0.4)" }}>
+                                                    ? { background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "rgba(140,160,210,0.9)" }
+                                                    : { background: "var(--nx-accent)", color: "#fff", boxShadow: "0 4px 18px rgb(var(--nx-accent-rgb) / 0.4)" }}>
                                                 {following ? <><UserCheck className="w-4 h-4" /> Kuzatilmoqda</> : <><UserPlus className="w-4 h-4" /> Kuzatish</>}
                                             </button>
                                         )}
@@ -199,7 +199,7 @@ export function NexusProfile({ username }: { username: string }) {
                                                 </button>
                                                 <Link href={`/nexus?dm=${username}`} title="Xabar"
                                                     className="flex items-center justify-center w-11 h-11 rounded-xl active:scale-95 transition"
-                                                    style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                                     <MessageCircle className="w-4 h-4" style={{ color: "var(--nx-text-2)" }} />
                                                 </Link>
                                             </>
@@ -208,14 +208,14 @@ export function NexusProfile({ username }: { username: string }) {
                                         <div className="relative">
                                             <button onClick={() => setMenuOpen(o => !o)} title="Ko'proq"
                                                 className="flex items-center justify-center w-11 h-11 rounded-xl active:scale-95 transition"
-                                                style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                                 <MoreHorizontal className="w-4 h-4" style={{ color: "var(--nx-text-2)" }} />
                                             </button>
                                             {menuOpen && (
                                                 <>
                                                     <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
                                                     <div className="absolute right-0 mt-2 w-52 rounded-2xl overflow-hidden z-40 backdrop-blur-xl"
-                                                        style={{ background: "rgba(10,16,40,0.97)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 40px rgba(0,0,0,0.5)" }}>
+                                                        style={{ background: "rgba(10,16,40,0.97)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 40px rgba(0,0,0,0.5)" }}>
                                                         {!iBlocked && (
                                                             <button onClick={toggleMute} disabled={busy}
                                                                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-white active:bg-white/5 transition">
@@ -242,7 +242,7 @@ export function NexusProfile({ username }: { username: string }) {
                                     {data.profile.verified && <NxVerifiedBadge category={(data.profile as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={20} />}
                                     {data.profile.username?.toLowerCase().endsWith("_agent") && (
                                         <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded"
-                                            style={{ background: "rgba(0,206,200,0.14)", color: "var(--nx-accent)" }}>BOT</span>
+                                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)", color: "var(--nx-accent)" }}>BOT</span>
                                     )}
                                 </div>
                                 {data.profile.username && <p className="text-sm font-mono" style={{ color: "var(--nx-accent)" }}>@{data.profile.username}</p>}
@@ -297,7 +297,7 @@ export function NexusProfile({ username }: { username: string }) {
                                     </button>
                                     <Link href="/nexus/analytics"
                                         className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black active:scale-[0.99] transition"
-                                        style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.30)", color: "rgba(150,230,225,0.95)" }}>
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "rgba(150,230,225,0.95)" }}>
                                         <TrendingUp className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Analitika
                                     </Link>
                                 </div>
@@ -305,7 +305,7 @@ export function NexusProfile({ username }: { username: string }) {
                             {data.isMe && !data.profile.verified && (
                                 <Link href="/nexus/verify"
                                     className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs font-bold active:scale-[0.99] transition"
-                                    style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(150,170,210,0.9)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "rgba(150,170,210,0.9)" }}>
                                     <BadgeCheck className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} /> Ko&apos;k belgi uchun ariza
                                 </Link>
                             )}
@@ -313,7 +313,7 @@ export function NexusProfile({ username }: { username: string }) {
                                 <Link href="/nexus/reklama"
                                     className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs font-bold active:scale-[0.99] transition"
                                     style={{
-                                        background: "linear-gradient(135deg, rgba(43,62,232,0.14) 0%, rgba(109,40,217,0.14) 50%, rgba(236,72,153,0.14) 100%)",
+                                        background: "linear-gradient(135deg, rgb(var(--nx-accent-rgb) / 0.14) 0%, rgba(109,40,217,0.14) 50%, rgba(236,72,153,0.14) 100%)",
                                         border: "1px solid rgba(236,72,153,0.30)",
                                         color: "rgba(245,200,220,0.95)",
                                     }}>

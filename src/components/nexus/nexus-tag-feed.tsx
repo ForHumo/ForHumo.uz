@@ -12,9 +12,9 @@ export function NexusTagFeed({ tag }: { tag: string }) {
         <NxPlayerProvider>
             <div className="h-full overflow-y-auto text-[var(--nx-text)]" style={{ background: "var(--nx-bg)" }}>
                 <header className="sticky top-0 z-20 flex items-center gap-3 px-3 h-14 backdrop-blur-xl"
-                    style={{ background: "rgba(5,8,24,0.80)", borderBottom: "1px solid rgba(43,62,232,0.18)" }}>
+                    style={{ background: "rgba(5,8,24,0.80)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                     <button onClick={() => router.back()} className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: "rgba(43,62,232,0.12)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                         <ArrowLeft className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                     <div className="flex items-center gap-1.5 min-w-0">

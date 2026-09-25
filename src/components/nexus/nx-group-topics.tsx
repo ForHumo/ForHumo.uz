@@ -68,15 +68,15 @@ export function NxGroupTopicsModal({
         <>
             <div className="fixed inset-0 z-[320] bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-x-0 bottom-0 z-[321] flex max-h-[85vh] flex-col overflow-hidden rounded-t-3xl md:inset-y-0 md:right-0 md:inset-x-auto md:max-h-full md:w-[420px] md:rounded-none md:rounded-l-3xl"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)" }}
+                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)" }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Hash className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Mavzular
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(43,62,232,0.12)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                         <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -86,8 +86,8 @@ export function NxGroupTopicsModal({
                     <button onClick={() => { onSelect(null); onClose(); }}
                         className="w-full flex items-center gap-3 rounded-2xl px-3 py-3 mb-1 text-left"
                         style={{
-                            background: currentTopicId === null ? "rgba(0,206,200,0.10)" : "var(--nx-surface)",
-                            border: `1px solid ${currentTopicId === null ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.14)"}`,
+                            background: currentTopicId === null ? "rgb(var(--nx-accent-rgb) / 0.10)" : "var(--nx-surface)",
+                            border: `1px solid ${currentTopicId === null ? "rgb(var(--nx-accent-rgb) / 0.30)" : "rgb(var(--nx-accent-rgb) / 0.14)"}`,
                         }}>
                         <MessageSquare className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(160,176,224,0.85)" }} />
                         <p className="flex-1 text-sm font-bold text-[var(--nx-text)]">Umumiy</p>
@@ -100,8 +100,8 @@ export function NxGroupTopicsModal({
                     {topics.map(t => (
                         <div key={t.id} className="flex items-center gap-2 rounded-2xl px-3 py-2.5 mb-1"
                             style={{
-                                background: currentTopicId === t.id ? "rgba(0,206,200,0.10)" : "var(--nx-surface)",
-                                border: `1px solid ${currentTopicId === t.id ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.14)"}`,
+                                background: currentTopicId === t.id ? "rgb(var(--nx-accent-rgb) / 0.10)" : "var(--nx-surface)",
+                                border: `1px solid ${currentTopicId === t.id ? "rgb(var(--nx-accent-rgb) / 0.30)" : "rgb(var(--nx-accent-rgb) / 0.14)"}`,
                             }}>
                             <button onClick={() => { onSelect(t.id); onClose(); }}
                                 className="flex-1 flex items-center gap-2 text-left">
@@ -125,7 +125,7 @@ export function NxGroupTopicsModal({
                 </div>
 
                 {canManage && (
-                    <div className="flex-shrink-0 p-3" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                    <div className="flex-shrink-0 p-3" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                         {!createOpen ? (
                             <button onClick={() => setCreateOpen(true)}
                                 className="w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
@@ -137,14 +137,14 @@ export function NxGroupTopicsModal({
                                 <input value={newName} onChange={e => setNewName(e.target.value)}
                                     placeholder="Mavzu nomi..." maxLength={80}
                                     className="w-full rounded-xl px-3 py-2 text-sm text-[var(--nx-text)] outline-none"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)" }} />
+                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
                                 <div className="flex gap-1 overflow-x-auto py-1" style={{ scrollbarWidth: "none" }}>
                                     {ICONS.map(i => (
                                         <button key={i} onClick={() => setNewIcon(i)}
                                             className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-xl"
                                             style={newIcon === i
-                                                ? { background: "rgba(0,206,200,0.15)", border: "1px solid rgba(0,206,200,0.35)" }
-                                                : { background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                                ? { background: "rgb(var(--nx-accent-rgb) / 0.15)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)" }
+                                                : { background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                             {i}
                                         </button>
                                     ))}
@@ -152,7 +152,7 @@ export function NxGroupTopicsModal({
                                 <div className="flex gap-2">
                                     <button onClick={() => setCreateOpen(false)}
                                         className="flex-1 py-2 rounded-xl text-xs font-bold"
-                                        style={{ background: "rgba(43,62,232,0.12)", color: "white" }}>Bekor</button>
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", color: "white" }}>Bekor</button>
                                     <button onClick={create} disabled={busy || !newName.trim()}
                                         className="flex-1 py-2 rounded-xl text-xs font-bold text-[var(--nx-text)] disabled:opacity-50"
                                         style={{ background: "var(--nx-accent)" }}>

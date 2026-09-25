@@ -153,8 +153,8 @@ export function MediaView() {
                     <button key={id} onClick={() => setSub(id)}
                         className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold flex-shrink-0 transition-all duration-200 active:scale-95"
                         style={sub === id
-                            ? { background: "var(--nx-accent)", color: "white", boxShadow: "0 4px 16px rgba(43,62,232,0.40)" }
-                            : { background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.22)", color: "rgba(140,160,210,0.85)" }}>
+                            ? { background: "var(--nx-accent)", color: "white", boxShadow: "0 4px 16px rgb(var(--nx-accent-rgb) / 0.40)" }
+                            : { background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", color: "rgba(140,160,210,0.85)" }}>
                         <Icon className="w-4 h-4" />
                         {label}
                     </button>
@@ -252,7 +252,7 @@ export function MediaView() {
                                 onClick={() => openVideo({ id: v.id, title: v.title, image: v.thumbUrl || "", author: v.author?.name || v.author?.username || "", avatar: v.author?.image || "", views: fmtN(v.views), duration: fmtDur(v.durationSec) })}
                                 onKeyDown={e => e.key === "Enter" && openVideo({ id: v.id, title: v.title, image: v.thumbUrl || "", author: v.author?.name || "", avatar: "", views: fmtN(v.views), duration: fmtDur(v.durationSec) })}
                                 className="text-left group cursor-pointer">
-                                <div className="relative aspect-video rounded-xl overflow-hidden mb-2" style={{ border: "1px solid rgba(43,62,232,0.18)", background: "rgba(43,62,232,0.08)" }}>
+                                <div className="relative aspect-video rounded-xl overflow-hidden mb-2" style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", background: "rgb(var(--nx-accent-rgb) / 0.08)" }}>
                                     {v.thumbUrl
                                         ? <img src={v.thumbUrl} alt={v.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                                         : <div className="w-full h-full flex items-center justify-center"><Film className="w-8 h-8 text-white/40" /></div>}
@@ -399,8 +399,8 @@ function SkelRow() {
 function EmptyState({ icon: Icon, title, hint }: { icon: React.ElementType; title: string; hint?: string }) {
     return (
         <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.15)" }}>
-                <Icon className="w-6 h-6" style={{ color: "rgba(43,62,232,0.45)" }} />
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
+                <Icon className="w-6 h-6" style={{ color: "rgb(var(--nx-accent-rgb) / 0.45)" }} />
             </div>
             <p className="text-sm font-bold text-white/70 mb-1">{title}</p>
             {hint && <p className="text-xs max-w-xs" style={{ color: "rgba(110,130,180,0.7)" }}>{hint}</p>}

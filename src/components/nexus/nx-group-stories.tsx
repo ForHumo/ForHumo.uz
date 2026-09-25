@@ -44,7 +44,7 @@ export function NxGroupStoriesBar({
                 <button onClick={() => setCreateOpen(true)}
                     className="flex-shrink-0 flex flex-col items-center gap-1 min-w-[60px]">
                     <div className="w-14 h-14 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(43,62,232,0.10)", border: "1px dashed rgba(0,206,200,0.35)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.35)" }}>
                         <Camera className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                     </div>
                     <span className="text-[10px] font-bold" style={{ color: "var(--nx-text-2)" }}>Hikoya</span>
@@ -61,7 +61,7 @@ export function NxGroupStoriesBar({
                 <button onClick={() => setCreateOpen(true)}
                     className="flex-shrink-0 flex flex-col items-center gap-1 min-w-[60px]">
                     <div className="w-14 h-14 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(43,62,232,0.10)", border: "1px dashed rgba(0,206,200,0.35)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.35)" }}>
                         <Camera className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                     </div>
                     <span className="text-[10px] font-bold truncate max-w-[60px]" style={{ color: "var(--nx-text-2)" }}>Siz</span>
@@ -303,14 +303,14 @@ function NxGroupStoryCreate({
     return (
         <div className="fixed inset-0 z-[500] bg-black/85 flex items-center justify-center p-4">
             <div className="max-w-md w-full rounded-3xl overflow-hidden flex flex-col"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)", maxHeight: "90vh" }}>
+                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)", maxHeight: "90vh" }}>
                 <div className="flex items-center justify-between px-5 py-4"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Camera className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Yangi hikoya (24 soat)
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(43,62,232,0.12)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                         <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -320,7 +320,7 @@ function NxGroupStoryCreate({
                             <input type="file" accept="image/*,video/*" className="hidden"
                                 onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
                             <div className="border-2 border-dashed rounded-2xl py-16 flex flex-col items-center gap-2 cursor-pointer"
-                                style={{ borderColor: "rgba(0,206,200,0.35)" }}>
+                                style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                 <Upload className="w-8 h-8" style={{ color: "var(--nx-accent)" }} />
                                 <p className="text-sm font-bold text-[var(--nx-text)]">Rasm yoki video tanlang</p>
                                 <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>24 soatga jonli bo&apos;ladi</p>
@@ -345,11 +345,11 @@ function NxGroupStoryCreate({
                             placeholder="Izoh (ixtiyoriy)..."
                             rows={2} maxLength={500}
                             className="w-full rounded-xl px-3 py-2 text-sm text-[var(--nx-text)] outline-none resize-none"
-                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.22)" }} />
+                            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
                     )}
                 </div>
                 {preview && (
-                    <div className="flex-shrink-0 px-5 py-4" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                    <div className="flex-shrink-0 px-5 py-4" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                         <button onClick={upload} disabled={busy}
                             className="w-full py-3 rounded-xl text-sm font-bold text-[var(--nx-text)] flex items-center justify-center gap-2 disabled:opacity-60"
                             style={{ background: "var(--nx-accent)" }}>

@@ -88,8 +88,8 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
             onClick={() => !busy && onClose()}>
             <div onClick={e => e.stopPropagation()}
                 className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
-                style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "85vh" }}>
-                <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", maxHeight: "85vh" }}>
+                <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Maxsus status</p>
                     <button onClick={onClose} disabled={busy}
                         className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
@@ -100,13 +100,13 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
                 <div className="p-4 space-y-3 overflow-y-auto">
                     <div className="flex gap-2">
                         <div className="w-14 h-11 flex items-center justify-center rounded-lg flex-shrink-0"
-                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                             <SelectedIcon className="w-5 h-5" style={{ color: selected?.color ?? "rgba(160,176,224,0.85)" }} />
                         </div>
                         <input value={text} onChange={e => setText(e.target.value.slice(0, 60))}
                             placeholder="Nima qilyapsiz..."
                             className="flex-1 h-11 px-3 rounded-lg bg-transparent text-[var(--nx-text)] text-sm focus:outline-none"
-                            style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
+                            style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }} />
                     </div>
 
                     <div>
@@ -123,8 +123,8 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
                                 <button key={o.label} onClick={() => setMins(o.m)}
                                     className="text-[11px] font-bold px-2.5 py-1 rounded-full transition"
                                     style={{
-                                        background: mins === o.m ? "rgba(0,206,200,0.20)" : "rgba(43,62,232,0.08)",
-                                        border: `1px solid ${mins === o.m ? "rgba(0,206,200,0.50)" : "rgba(43,62,232,0.20)"}`,
+                                        background: mins === o.m ? "rgb(var(--nx-accent-rgb) / 0.20)" : "rgb(var(--nx-accent-rgb) / 0.08)",
+                                        border: `1px solid ${mins === o.m ? "rgb(var(--nx-accent-rgb) / 0.50)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
                                         color: mins === o.m ? "var(--nx-accent)" : "rgba(220,230,255,0.85)",
                                     }}>
                                     {o.label}
@@ -146,8 +146,8 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
                                     }}
                                         className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition"
                                         style={{
-                                            background: isActive ? "rgba(0,206,200,0.10)" : "rgba(43,62,232,0.06)",
-                                            border: `1px solid ${isActive ? "rgba(0,206,200,0.40)" : "rgba(43,62,232,0.15)"}`,
+                                            background: isActive ? "rgb(var(--nx-accent-rgb) / 0.10)" : "rgb(var(--nx-accent-rgb) / 0.06)",
+                                            border: `1px solid ${isActive ? "rgb(var(--nx-accent-rgb) / 0.40)" : "rgb(var(--nx-accent-rgb) / 0.15)"}`,
                                         }}>
                                         <Icon className="w-4 h-4 flex-shrink-0" style={{ color: p.color }} />
                                         <span className="text-xs truncate" style={{ color: isActive ? "var(--nx-accent)" : "rgba(220,230,255,0.90)" }}>
@@ -162,7 +162,7 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
                     {err && <p className="text-[11px] font-bold" style={{ color: "#EF4444" }}>{err}</p>}
                 </div>
 
-                <div className="p-4 border-t flex gap-2" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                <div className="p-4 border-t flex gap-2" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     {(initialEmoji || initialText) && (
                         <button onClick={clearStatus} disabled={busy}
                             title="Statusni o'chirish"
@@ -173,7 +173,7 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
                     )}
                     <button onClick={onClose} disabled={busy}
                         className="flex-1 h-10 rounded-lg text-sm font-black"
-                        style={{ background: "var(--nx-surface)", color: "#fff", border: "1px solid rgba(43,62,232,0.30)" }}>
+                        style={{ background: "var(--nx-surface)", color: "#fff", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                         Bekor
                     </button>
                     <button onClick={save} disabled={busy || (!selectedKey && !text.trim())}

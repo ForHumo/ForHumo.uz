@@ -44,7 +44,7 @@ export function NxChannelRichMsg(props: Props) {
         };
         return (
             <div className="flex items-center gap-2 min-w-[180px] max-w-[280px] p-2 rounded-2xl"
-                style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                 <button onClick={toggle}
                     className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                     style={{ background: "var(--nx-accent)" }}>
@@ -52,7 +52,7 @@ export function NxChannelRichMsg(props: Props) {
                 </button>
                 <div className="flex-1 min-w-0">
                     <div className="h-1 rounded-full overflow-hidden mb-1"
-                        style={{ background: "rgba(0,206,200,0.15)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                         <div className="h-full transition-all"
                             style={{ width: `${progress}%`, background: "linear-gradient(90deg,var(--nx-accent),var(--nx-accent))" }} />
                     </div>
@@ -76,7 +76,7 @@ export function NxChannelRichMsg(props: Props) {
             <div className="relative">
                 <video src={url} controls playsInline
                     className="w-56 h-56 rounded-full object-cover"
-                    style={{ border: "2px solid rgba(43,62,232,0.35)" }} />
+                    style={{ border: "2px solid rgb(var(--nx-accent-rgb) / 0.35)" }} />
             </div>
         );
     }
@@ -89,7 +89,7 @@ export function NxChannelRichMsg(props: Props) {
         const gmapsUrl = `https://www.google.com/maps?q=${locLat},${locLng}`;
         return (
             <div className="rounded-2xl overflow-hidden w-64 max-w-full"
-                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                 <iframe src={mapUrl} className="w-full h-40 border-0" title="Xarita" />
                 <a href={gmapsUrl} target="_blank" rel="noopener"
                     className="flex items-center gap-2 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/5">
@@ -105,7 +105,7 @@ export function NxChannelRichMsg(props: Props) {
     if (mediaType === "contact" && contactName) {
         return (
             <div className="flex items-center gap-3 min-w-[220px] max-w-[300px] p-3 rounded-2xl"
-                style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                 <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
                     style={{ background: "var(--nx-accent)" }}>
                     <User className="w-5 h-5 text-[var(--nx-text)]" />

@@ -35,7 +35,7 @@ export async function addWatermarkToImage(file: File, text: string): Promise<Fil
     );
 
     // Turkuaz matn
-    ctx.fillStyle = "rgba(0, 206, 200, 0.95)";
+    ctx.fillStyle = "rgb(var(--nx-accent-rgb) / 0.95)";
     ctx.fillText(text, canvas.width - pad, canvas.height - pad);
 
     // Yangi Blob → File

@@ -46,11 +46,11 @@ export function NexusUsernameGate({ suggested }: { suggested?: string }) {
 
     return (
         <div className="fixed inset-0 z-[100] overflow-hidden flex items-center justify-center p-6" style={{ background: "var(--nx-bg)" }}>
-            <div className="absolute pointer-events-none" style={{ top: "-15%", left: "-10%", width: "60%", height: "60%", background: "radial-gradient(ellipse at center, rgba(43,62,232,0.20) 0%, transparent 70%)" }} />
-            <div className="absolute pointer-events-none" style={{ bottom: "-15%", right: "-10%", width: "60%", height: "60%", background: "radial-gradient(ellipse at center, rgba(0,206,200,0.16) 0%, transparent 70%)" }} />
+            <div className="absolute pointer-events-none" style={{ top: "-15%", left: "-10%", width: "60%", height: "60%", background: "radial-gradient(ellipse at center, rgb(var(--nx-accent-rgb) / 0.20) 0%, transparent 70%)" }} />
+            <div className="absolute pointer-events-none" style={{ bottom: "-15%", right: "-10%", width: "60%", height: "60%", background: "radial-gradient(ellipse at center, rgb(var(--nx-accent-rgb) / 0.16) 0%, transparent 70%)" }} />
 
-            <div className="relative w-full max-w-md p-8 rounded-3xl text-center" style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.28)", backdropFilter: "blur(20px)" }}>
-                <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-5" style={{ background: "var(--nx-accent)", boxShadow: "0 8px 32px rgba(43,62,232,0.45)" }}>
+            <div className="relative w-full max-w-md p-8 rounded-3xl text-center" style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.28)", backdropFilter: "blur(20px)" }}>
+                <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-5" style={{ background: "var(--nx-accent)", boxShadow: "0 8px 32px rgb(var(--nx-accent-rgb) / 0.45)" }}>
                     <AtSign className="w-8 h-8 text-[var(--nx-text)]" />
                 </div>
                 <h1 className="text-xl font-black text-[var(--nx-text)] mb-2">Username tanlang</h1>
@@ -59,7 +59,7 @@ export function NexusUsernameGate({ suggested }: { suggested?: string }) {
                 </p>
 
                 <div className="relative mb-2">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base font-bold" style={{ color: "rgba(43,62,232,0.7)" }}>@</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base font-bold" style={{ color: "rgb(var(--nx-accent-rgb) / 0.7)" }}>@</span>
                     <input
                         value={value}
                         onChange={e => { setValue(e.target.value.replace(/\s/g, "")); setErr(null); }}
@@ -68,7 +68,7 @@ export function NexusUsernameGate({ suggested }: { suggested?: string }) {
                         autoFocus
                         maxLength={20}
                         className="w-full h-12 rounded-xl pl-9 pr-11 text-sm text-[var(--nx-text)] outline-none lowercase"
-                        style={{ background: "rgba(5,8,24,0.60)", border: `1px solid ${err ? "rgba(239,68,68,0.5)" : valid ? "rgba(0,206,200,0.5)" : "rgba(43,62,232,0.25)"}`, caretColor: "var(--nx-accent)" }} />
+                        style={{ background: "rgba(5,8,24,0.60)", border: `1px solid ${err ? "rgba(239,68,68,0.5)" : valid ? "rgb(var(--nx-accent-rgb) / 0.5)" : "rgb(var(--nx-accent-rgb) / 0.25)"}`, caretColor: "var(--nx-accent)" }} />
                     {valid && <Check className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "var(--nx-accent)" }} />}
                 </div>
 
@@ -78,7 +78,7 @@ export function NexusUsernameGate({ suggested }: { suggested?: string }) {
 
                 <button onClick={save} disabled={!valid || saving || done}
                     className="w-full h-12 rounded-xl text-sm font-black text-[var(--nx-text)] flex items-center justify-center gap-2 disabled:opacity-50"
-                    style={{ background: "var(--nx-accent)", boxShadow: "0 4px 20px rgba(43,62,232,0.4)" }}>
+                    style={{ background: "var(--nx-accent)", boxShadow: "0 4px 20px rgb(var(--nx-accent-rgb) / 0.4)" }}>
                     {done ? <><Check className="w-4 h-4" /> Tayyor!</> : saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Davom etish <ArrowRight className="w-4 h-4" /></>}
                 </button>
 

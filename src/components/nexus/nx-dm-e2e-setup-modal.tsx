@@ -152,22 +152,22 @@ export function NxDmE2eSetupModal({
         <>
             <div className="fixed inset-0 z-[330] bg-black/70 backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-x-0 bottom-0 z-[331] flex max-h-[90vh] flex-col overflow-hidden rounded-t-3xl md:inset-y-0 md:right-0 md:inset-x-auto md:max-h-full md:w-[480px] md:rounded-none md:rounded-l-3xl"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <KeyRound className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         E2E shifrlash kalitlari
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(43,62,232,0.12)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                         <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-5 space-y-4" style={{ scrollbarWidth: "none" }}>
                     <div className="p-3 rounded-xl flex items-start gap-2"
-                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                         <Info className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--nx-accent)" }} />
                         <p className="text-[11px] leading-snug" style={{ color: "rgba(220,230,250,0.92)" }}>
                             <b>End-to-End shifrlash</b> — xabarlar faqat sizda va boshqa peer qurilmasida ochiladi.
@@ -184,7 +184,7 @@ export function NxDmE2eSetupModal({
                     )}
                     {success && (
                         <div className="p-3 rounded-xl flex items-start gap-2"
-                            style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                             <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--nx-accent)" }} />
                             <p className="text-[11px] leading-snug" style={{ color: "rgba(200,240,235,0.95)" }}>{success}</p>
                         </div>
@@ -208,7 +208,7 @@ export function NxDmE2eSetupModal({
                             </div>
                         ) : serverKeysWithStatus.length === 0 ? (
                             <div className="p-6 rounded-xl text-center"
-                                style={{ background: "var(--nx-surface)", border: "1px dashed rgba(43,62,232,0.20)" }}>
+                                style={{ background: "var(--nx-surface)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                 <KeyRound className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "var(--nx-accent)" }} />
                                 <p className="text-sm" style={{ color: "rgba(160,176,224,0.75)" }}>
                                     Kalit yo&apos;q. Yuqoridagi tugma bilan yarating.
@@ -220,7 +220,7 @@ export function NxDmE2eSetupModal({
                                     <div key={k.id} className="p-3 rounded-xl"
                                         style={{
                                             background: "var(--nx-surface)",
-                                            border: `1px solid ${k.isActive ? "var(--nx-accent)" : "rgba(43,62,232,0.14)"}`,
+                                            border: `1px solid ${k.isActive ? "var(--nx-accent)" : "rgb(var(--nx-accent-rgb) / 0.14)"}`,
                                         }}>
                                         <div className="flex items-center gap-2 mb-1.5">
                                             <KeyRound className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
@@ -231,7 +231,7 @@ export function NxDmE2eSetupModal({
                                             <div className="flex-1" />
                                             {k.isActive && (
                                                 <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase px-1.5 py-0.5 rounded"
-                                                    style={{ background: "rgba(0,206,200,0.14)", color: "var(--nx-accent)" }}>
+                                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)", color: "var(--nx-accent)" }}>
                                                     <Star className="w-2.5 h-2.5" fill="var(--nx-accent)" /> Faol
                                                 </span>
                                             )}
@@ -259,7 +259,7 @@ export function NxDmE2eSetupModal({
                                             {k.hasPrivate && !k.isActive && (
                                                 <button onClick={() => activate(k.id)}
                                                     className="flex-1 h-8 rounded-lg text-[11px] font-black"
-                                                    style={{ background: "rgba(0,206,200,0.14)", border: "1px solid rgba(0,206,200,0.35)", color: "var(--nx-accent)" }}>
+                                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", color: "var(--nx-accent)" }}>
                                                     Faollashtirish
                                                 </button>
                                             )}
@@ -276,7 +276,7 @@ export function NxDmE2eSetupModal({
                         )}
                     </div>
 
-                    <div className="pt-4" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                    <div className="pt-4" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                         <p className="text-[10px] font-black uppercase tracking-widest mb-2"
                             style={{ color: "rgba(160,176,224,0.7)" }}>
                             Xavfsizlik eslatmalari

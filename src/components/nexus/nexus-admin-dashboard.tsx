@@ -54,7 +54,7 @@ export function NexusAdminDashboard() {
                     <div className="flex items-center gap-3">
                         <Link href="/nexus"
                             className="w-9 h-9 rounded-xl flex items-center justify-center transition"
-                            style={{ background: "rgba(43,62,232,0.14)", border: "1px solid rgba(43,62,232,0.28)" }}>
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.28)" }}>
                             <ArrowLeft className="w-4 h-4 text-[var(--nx-text)]" />
                         </Link>
                         <div>
@@ -72,7 +72,7 @@ export function NexusAdminDashboard() {
                         onClick={() => load(false)}
                         disabled={refreshing || loading}
                         className="w-10 h-10 rounded-xl flex items-center justify-center transition disabled:opacity-40"
-                        style={{ background: "rgba(0,206,200,0.14)", border: "1px solid rgba(0,206,200,0.30)" }}
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}
                         title="Yangilash"
                     >
                         {refreshing ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--nx-accent)" }} /> : <RefreshCw className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />}
@@ -99,7 +99,7 @@ export function NexusAdminDashboard() {
 
                         {/* 30-day chart */}
                         <div className="rounded-2xl p-4 md:p-5 mb-6"
-                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-sm font-black text-[var(--nx-text)]">Xabarlar (30 kun)</h2>
                                 <div className="flex items-center gap-3 text-[10px]" style={{ color: "rgba(180,192,224,0.85)" }}>
@@ -141,7 +141,7 @@ export function NexusAdminDashboard() {
                         {/* Top senderlar + kanallar (2 ustun) */}
                         <div className="grid md:grid-cols-2 gap-4">
                             <div className="rounded-2xl p-4"
-                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                 <h2 className="text-sm font-black text-[var(--nx-text)] mb-3">Top 10 yozuvchi (7 kun)</h2>
                                 {data.topSenders7d.length === 0 ? (
                                     <p className="text-xs py-4 text-center" style={{ color: "rgba(140,160,210,0.60)" }}>
@@ -151,7 +151,7 @@ export function NexusAdminDashboard() {
                                     <div className="space-y-1.5">
                                         {data.topSenders7d.map((s, i) => (
                                             <div key={s.profileId} className="flex items-center gap-2.5 p-2 rounded-lg"
-                                                style={{ background: "rgba(43,62,232,0.06)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)" }}>
                                                 <span className="w-5 text-[10px] font-black text-center"
                                                     style={{ color: i < 3 ? "var(--nx-accent)" : "rgba(140,160,210,0.65)" }}>
                                                     {i + 1}
@@ -160,7 +160,7 @@ export function NexusAdminDashboard() {
                                                     <Image src={s.image} alt="" width={28} height={28} className="w-7 h-7 rounded-full object-cover" />
                                                 ) : (
                                                     <div className="w-7 h-7 rounded-full flex items-center justify-center"
-                                                        style={{ background: "rgba(43,62,232,0.24)" }}>
+                                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.24)" }}>
                                                         <BotIcon className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
                                                     </div>
                                                 )}
@@ -184,7 +184,7 @@ export function NexusAdminDashboard() {
                             </div>
 
                             <div className="rounded-2xl p-4"
-                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                 <h2 className="text-sm font-black text-[var(--nx-text)] mb-3">Top 10 kanal/guruh (7 kun)</h2>
                                 {data.topChannels7d.length === 0 ? (
                                     <p className="text-xs py-4 text-center" style={{ color: "rgba(140,160,210,0.60)" }}>
@@ -194,7 +194,7 @@ export function NexusAdminDashboard() {
                                     <div className="space-y-1.5">
                                         {data.topChannels7d.map((c, i) => (
                                             <div key={c.channelId} className="flex items-center gap-2.5 p-2 rounded-lg"
-                                                style={{ background: "rgba(43,62,232,0.06)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)" }}>
                                                 <span className="w-5 text-[10px] font-black text-center"
                                                     style={{ color: i < 3 ? "var(--nx-accent)" : "rgba(140,160,210,0.65)" }}>
                                                     {i + 1}
@@ -285,7 +285,7 @@ function DailyChart({ data }: { data: Array<{ date: string; dm: number; channel:
                     const y = padT + chartH - (tick / maxVal) * chartH;
                     return (
                         <g key={i}>
-                            <line x1={padL} y1={y} x2={W - padR} y2={y} stroke="rgba(43,62,232,0.14)" strokeDasharray="2 4" />
+                            <line x1={padL} y1={y} x2={W - padR} y2={y} stroke="rgb(var(--nx-accent-rgb) / 0.14)" strokeDasharray="2 4" />
                             <text x={padL - 4} y={y + 3} textAnchor="end" fontSize="9" fill="rgba(140,160,210,0.6)">
                                 {tick}
                             </text>

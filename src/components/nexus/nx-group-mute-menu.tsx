@@ -58,7 +58,7 @@ export function NxGroupMuteButton({ channelId }: { channelId: string }) {
             <button onClick={() => setOpen(v => !v)} disabled={busy}
                 title={isMuted ? "Xabarnoma o'chirilgan" : "Xabarnoma yoqilgan"}
                 className="w-9 h-9 rounded-full flex items-center justify-center disabled:opacity-50"
-                style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                 {busy ? <Loader2 className="w-4 h-4 animate-spin text-[var(--nx-text)]" />
                     : isMuted ? <BellOff className="w-4 h-4" style={{ color: "#FFC107" }} />
                         : <Bell className="w-4 h-4 text-[var(--nx-text)]" />}
@@ -66,9 +66,9 @@ export function NxGroupMuteButton({ channelId }: { channelId: string }) {
 
             {open && (
                 <div className="absolute right-0 top-11 min-w-[180px] z-[400] py-1 rounded-2xl overflow-hidden"
-                    style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)", boxShadow: "0 12px 32px rgba(0,0,0,0.4)" }}>
+                    style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)", boxShadow: "0 12px 32px rgba(0,0,0,0.4)" }}>
                     <div className="px-3 py-2 text-[10px] uppercase tracking-widest"
-                        style={{ color: "rgba(140,160,210,0.7)", borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                        style={{ color: "rgba(140,160,210,0.7)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                         Ovozsizlantirish
                     </div>
                     {OPTIONS.map(o => (
@@ -79,7 +79,7 @@ export function NxGroupMuteButton({ channelId }: { channelId: string }) {
                     ))}
                     {isMuted && (
                         <>
-                            <div style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }} />
+                            <div style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }} />
                             <button onClick={() => setMute("off")}
                                 className="w-full text-left px-3 py-2 text-sm hover:bg-white/5"
                                 style={{ color: "var(--nx-accent)" }}>

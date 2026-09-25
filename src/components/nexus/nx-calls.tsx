@@ -89,7 +89,7 @@ export function NxCalls() {
                 onClick={() => setCallsOpen(false)} />
             <div
                 className="fixed inset-x-0 bottom-0 z-[55] flex flex-col overflow-hidden rounded-t-3xl md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:w-[460px] md:max-h-[86vh] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-3xl"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(43,62,232,0.22)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)", maxHeight: "88vh" }}
+                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)", maxHeight: "88vh" }}
                 onClick={e => e.stopPropagation()}>
 
                 <div className="flex flex-shrink-0 items-center justify-between px-5 pt-5 pb-3">
@@ -99,7 +99,7 @@ export function NxCalls() {
                     </div>
                     <button onClick={() => setCallsOpen(false)}
                         className="flex h-8 w-8 items-center justify-center rounded-full"
-                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                         <X className="h-4 w-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -107,11 +107,11 @@ export function NxCalls() {
                 {/* Qidiruv + filter tabs (C-1, C-2) */}
                 <div className="flex-shrink-0 px-4 pb-3">
                     <div className="relative mb-2">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" style={{ color: "rgba(43,62,232,0.55)" }} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" style={{ color: "rgb(var(--nx-accent-rgb) / 0.55)" }} />
                         <input value={query} onChange={e => setQuery(e.target.value)}
                             placeholder="Qidirish..."
                             className="w-full h-9 rounded-xl pl-9 pr-9 text-sm text-[var(--nx-text)] outline-none"
-                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", caretColor: "var(--nx-accent)" }} />
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", caretColor: "var(--nx-accent)" }} />
                         {query && (
                             <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
                                 <X className="h-3.5 w-3.5" style={{ color: "rgba(160,180,220,0.70)" }} />
@@ -128,7 +128,7 @@ export function NxCalls() {
                                 className="flex-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition active:scale-95"
                                 style={filter === t.id
                                     ? { background: "var(--nx-accent)", color: "#fff" }
-                                    : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "var(--nx-text-2)" }}>
+                                    : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "var(--nx-text-2)" }}>
                                 {t.label}{t.n > 0 && <span className="ml-1 opacity-70">{t.n}</span>}
                             </button>
                         ))}
@@ -153,10 +153,10 @@ export function NxCalls() {
                     {/* Faol guruh chaqiruvlar (agar bo'lsa — birinchi ko'rsatiladi) */}
                     {filter !== "missed" && filteredGroups.filter(g => g.status === "ACTIVE").length > 0 && (
                         <div className="mb-3">
-                            <p className="mb-1.5 px-1 text-[10px] font-black uppercase" style={{ color: "rgba(0,206,200,0.85)" }}>Faol guruh</p>
+                            <p className="mb-1.5 px-1 text-[10px] font-black uppercase" style={{ color: "rgb(var(--nx-accent-rgb) / 0.85)" }}>Faol guruh</p>
                             {filteredGroups.filter(g => g.status === "ACTIVE").map(g => (
                                 <div key={g.id} className="mb-1 flex items-center gap-3 rounded-2xl p-3"
-                                    style={{ border: "1px solid rgba(0,206,200,0.35)", background: "rgba(0,206,200,0.05)" }}>
+                                    style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", background: "rgb(var(--nx-accent-rgb) / 0.05)" }}>
                                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
                                         style={{ background: "var(--nx-accent)" }}>
                                         <Users className="h-5 w-5 text-[var(--nx-text)]" />
@@ -184,7 +184,7 @@ export function NxCalls() {
                             {filteredGroups.filter(g => g.status === "ENDED").slice(0, filter === "groups" ? 30 : 5).map(g => (
                                 <div key={g.id} className="mb-1 flex flex-col rounded-2xl">
                                     <div className="flex items-center gap-3 p-3">
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl" style={{ background: "rgba(43,62,232,0.15)" }}>
+                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                             <Users className="h-5 w-5" style={{ color: "rgba(140,160,210,0.8)" }} />
                                         </div>
                                         <div className="min-w-0 flex-1">
@@ -200,7 +200,7 @@ export function NxCalls() {
                                         </div>
                                     </div>
                                     {g.recordings && g.recordings.length > 0 && (
-                                        <div className="flex flex-col gap-1.5 border-t px-3 py-2.5" style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        <div className="flex flex-col gap-1.5 border-t px-3 py-2.5" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                             {g.recordings.map(r => (
                                                 <div key={r.id} className="flex items-center gap-2">
                                                     <Mic className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--nx-accent)" }} />
@@ -236,7 +236,7 @@ export function NxCalls() {
                                     {dg.items.map(c => {
                                         const peerLabel = c.peer?.name || c.peer?.username || c.peer?.humoId || "Peer";
                                         const Icon = c.missed ? PhoneMissed : c.dir === "in" ? PhoneIncoming : PhoneOutgoing;
-                                        const iconColor = c.missed ? "#EF4444" : c.dir === "in" ? "rgba(0,206,200,0.85)" : "rgba(43,62,232,0.85)";
+                                        const iconColor = c.missed ? "#EF4444" : c.dir === "in" ? "rgb(var(--nx-accent-rgb) / 0.85)" : "rgb(var(--nx-accent-rgb) / 0.85)";
                                         return (
                                             <div key={c.id} className="flex flex-col rounded-2xl transition-colors hover:bg-white/[0.03]">
                                                 <div className="flex items-center gap-3 p-3">
@@ -264,19 +264,19 @@ export function NxCalls() {
                                                         <button onClick={() => dial(c.peer?.id, "AUDIO")}
                                                             disabled={!c.peer?.id}
                                                             className="flex h-9 w-9 items-center justify-center rounded-xl transition-all active:scale-90 disabled:opacity-30"
-                                                            style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                                                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                                                             <Phone className="h-4 w-4" style={{ color: "var(--nx-accent)" }} />
                                                         </button>
                                                         <button onClick={() => dial(c.peer?.id, "VIDEO")}
                                                             disabled={!c.peer?.id}
                                                             className="flex h-9 w-9 items-center justify-center rounded-xl transition-all active:scale-90 disabled:opacity-30"
-                                                            style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                                                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                                                             <Video className="h-4 w-4" style={{ color: "var(--nx-accent)" }} />
                                                         </button>
                                                     </div>
                                                 </div>
                                                 {c.recordings && c.recordings.length > 0 && (
-                                                    <div className="flex flex-col gap-1.5 border-t px-3 py-2.5" style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                                    <div className="flex flex-col gap-1.5 border-t px-3 py-2.5" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                                         {c.recordings.map(r => (
                                                             <div key={r.id} className="flex items-center gap-2">
                                                                 <Mic className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--nx-accent)" }} />
@@ -337,14 +337,14 @@ function groupByDay(items: CallItem[]): { label: string; items: CallItem[] }[] {
 function CallSkeleton() {
     return (
         <div className="flex items-center gap-3 rounded-2xl p-3 animate-pulse">
-            <div className="h-11 w-11 shrink-0 rounded-2xl" style={{ background: "rgba(43,62,232,0.15)" }} />
+            <div className="h-11 w-11 shrink-0 rounded-2xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }} />
             <div className="flex-1 space-y-1.5">
-                <div className="h-2.5 rounded" style={{ background: "rgba(43,62,232,0.15)", width: "60%" }} />
-                <div className="h-2 rounded" style={{ background: "rgba(43,62,232,0.10)", width: "40%" }} />
+                <div className="h-2.5 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", width: "60%" }} />
+                <div className="h-2 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", width: "40%" }} />
             </div>
             <div className="flex shrink-0 gap-2">
-                <div className="h-9 w-9 rounded-xl" style={{ background: "rgba(43,62,232,0.10)" }} />
-                <div className="h-9 w-9 rounded-xl" style={{ background: "rgba(43,62,232,0.10)" }} />
+                <div className="h-9 w-9 rounded-xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }} />
+                <div className="h-9 w-9 rounded-xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }} />
             </div>
         </div>
     );

@@ -93,9 +93,9 @@ export function NxChannelFullscreenComposer({
     return (
         <div className="fixed inset-0 z-[400] flex flex-col" style={{ background: "rgba(5,8,24,0.99)" }}>
             <div className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-                style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                 <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ background: "rgba(43,62,232,0.12)" }}>
+                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                     <X className="w-4 h-4 text-[var(--nx-text)]" />
                 </button>
                 <div className="flex-1 min-w-0 text-center px-3">
@@ -110,8 +110,8 @@ export function NxChannelFullscreenComposer({
                     <button onClick={() => setPreview(p => !p)}
                         className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={preview
-                            ? { background: "rgba(0,206,200,0.20)", border: "1px solid var(--nx-accent)" }
-                            : { background: "rgba(43,62,232,0.12)" }}>
+                            ? { background: "rgb(var(--nx-accent-rgb) / 0.20)", border: "1px solid var(--nx-accent)" }
+                            : { background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                         {preview ? <Edit3 className="w-4 h-4 text-[var(--nx-text)]" /> : <Eye className="w-4 h-4 text-[var(--nx-text)]" />}
                     </button>
                     <button onClick={send} disabled={!canSend}
@@ -126,12 +126,12 @@ export function NxChannelFullscreenComposer({
             {/* Markdown toolbar */}
             {!preview && (
                 <div className="flex items-center gap-1 px-3 py-2 flex-shrink-0 overflow-x-auto"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.10)", scrollbarWidth: "none" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.10)", scrollbarWidth: "none" }}>
                     <ToolbarBtn onClick={() => apply(el => wrapSelection(el, "**"))} title="Bold" icon={<Bold className="w-4 h-4" />} />
                     <ToolbarBtn onClick={() => apply(el => wrapSelection(el, "*"))} title="Italic" icon={<Italic className="w-4 h-4" />} />
                     <ToolbarBtn onClick={() => apply(el => wrapSelection(el, "`"))} title="Code" icon={<Code className="w-4 h-4" />} />
                     <ToolbarBtn onClick={() => apply(el => wrapSelection(el, "[", "](url)"))} title="Link" icon={<LinkIcon className="w-4 h-4" />} />
-                    <div className="w-px h-6" style={{ background: "rgba(43,62,232,0.20)" }} />
+                    <div className="w-px h-6" style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }} />
                     <ToolbarBtn onClick={() => apply(el => insertPrefix(el, "- "))} title="Ro'yxat" icon={<List className="w-4 h-4" />} />
                     <ToolbarBtn onClick={() => apply(el => insertPrefix(el, "> "))} title="Iqtibos" icon={<Quote className="w-4 h-4" />} />
                     <div className="flex-1" />
@@ -146,7 +146,7 @@ export function NxChannelFullscreenComposer({
                 {preview ? (
                     <div className="max-w-2xl mx-auto">
                         <div className="rounded-2xl p-4"
-                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             {text.trim() ? (
                                 <div className="text-sm text-[var(--nx-text)] whitespace-pre-wrap">
                                     <NxMarkdown text={text} />
@@ -177,7 +177,7 @@ export function NxChannelFullscreenComposer({
                             className="w-full min-h-[50vh] rounded-xl p-4 text-sm resize-y focus:outline-none"
                             style={{
                                 background: "var(--nx-surface)",
-                                border: "1px solid rgba(43,62,232,0.20)",
+                                border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)",
                                 color: "white",
                                 lineHeight: 1.6,
                                 fontFamily: "system-ui",
@@ -186,7 +186,7 @@ export function NxChannelFullscreenComposer({
                         />
                         {sponsoredEnabled && isOwner && channelType === "CHANNEL" && (
                             <div className="mt-4 p-3 rounded-xl"
-                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input type="checkbox" checked={sponsored}
                                         onChange={e => setSponsored(e.target.checked)} />
@@ -198,7 +198,7 @@ export function NxChannelFullscreenComposer({
                                         onChange={e => setSponsoredUrl(e.target.value.slice(0, 500))}
                                         placeholder="Reklama URL (ixtiyoriy) — https://..."
                                         className="mt-2 w-full h-10 rounded-lg px-3 text-xs focus:outline-none"
-                                        style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }}
+                                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "white" }}
                                     />
                                 )}
                             </div>
@@ -214,7 +214,7 @@ function ToolbarBtn({ onClick, title, icon }: { onClick: () => void; title: stri
     return (
         <button type="button" onClick={onClick} title={title}
             className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-white/[0.05]"
-            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(200,214,247,0.9)" }}>
+            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", color: "rgba(200,214,247,0.9)" }}>
             {icon}
         </button>
     );

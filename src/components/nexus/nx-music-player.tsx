@@ -35,8 +35,8 @@ function MiniPlayer() {
                 background: "rgba(8,12,36,0.95)",
                 backdropFilter: "blur(20px)",
                 WebkitBackdropFilter: "blur(20px)",
-                border: "1px solid rgba(43,62,232,0.30)",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.50), 0 0 0 1px rgba(43,62,232,0.10)",
+                border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.50), 0 0 0 1px rgb(var(--nx-accent-rgb) / 0.10)",
             }}
         >
             {/* Progress xat */}
@@ -49,7 +49,7 @@ function MiniPlayer() {
                 src={track.image} alt={track.title}
                 className="w-10 h-10 rounded-xl object-cover flex-shrink-0 cursor-pointer"
                 onClick={() => setMusicExpanded(true)}
-                style={{ border: "1px solid rgba(43,62,232,0.25)" }}
+                style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}
             />
 
             <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setMusicExpanded(true)}>
@@ -121,7 +121,7 @@ function ExpandedPlayer() {
                         <ChevronDown className="w-6 h-6" style={{ color: "rgba(160,176,224,0.70)" }} />
                     </button>
                     <div className="text-center">
-                        <p className="text-xs font-black uppercase tracking-widest" style={{ color: "rgba(43,62,232,0.70)" }}>
+                        <p className="text-xs font-black uppercase tracking-widest" style={{ color: "rgb(var(--nx-accent-rgb) / 0.70)" }}>
                             Endi ijro etilmoqda
                         </p>
                         {queue.length > 1 && (
@@ -140,9 +140,9 @@ function ExpandedPlayer() {
                 <div
                     className="w-64 h-64 md:w-72 md:h-72 rounded-3xl overflow-hidden flex-shrink-0"
                     style={{
-                        border: "2px solid rgba(43,62,232,0.25)",
+                        border: "2px solid rgb(var(--nx-accent-rgb) / 0.25)",
                         boxShadow: isPlaying
-                            ? "0 0 60px rgba(43,62,232,0.35), 0 0 120px rgba(0,206,200,0.15)"
+                            ? "0 0 60px rgb(var(--nx-accent-rgb) / 0.35), 0 0 120px rgb(var(--nx-accent-rgb) / 0.15)"
                             : "0 16px 48px rgba(0,0,0,0.60)",
                         transform: isPlaying ? "scale(1.04)" : "scale(1.00)",
                         transition: "transform 0.4s ease, box-shadow 0.4s ease",
@@ -165,13 +165,13 @@ function ExpandedPlayer() {
                     <div
                         ref={progressRef}
                         className="relative h-1.5 rounded-full cursor-pointer group"
-                        style={{ background: "rgba(43,62,232,0.20)" }}
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }}
                         onClick={handleSeek}
                     >
                         <div className="absolute left-0 top-0 h-full rounded-full transition-all duration-1000"
                             style={{ width: `${progress}%`, background: "linear-gradient(90deg,var(--nx-accent),var(--nx-accent))" }} />
                         <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                            style={{ left: `calc(${progress}% - 8px)`, boxShadow: "0 0 8px rgba(43,62,232,0.60)" }} />
+                            style={{ left: `calc(${progress}% - 8px)`, boxShadow: "0 0 8px rgb(var(--nx-accent-rgb) / 0.60)" }} />
                     </div>
                     <div className="flex justify-between mt-2">
                         <span className="text-[10px]" style={{ color: "rgba(100,120,170,0.70)" }}>{formatTime(progress)}</span>
@@ -204,7 +204,7 @@ function ExpandedPlayer() {
                             : <Volume2 className="w-4 h-4" style={{ color: "rgba(100,120,170,0.60)" }} />}
                     </button>
                     <div className="flex-1 h-1.5 rounded-full cursor-pointer"
-                        style={{ background: "rgba(43,62,232,0.20)" }}
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }}
                         onClick={e => {
                             const rect = e.currentTarget.getBoundingClientRect();
                             setVol(Math.round(((e.clientX - rect.left) / rect.width) * 100));
@@ -223,12 +223,12 @@ function ExpandedPlayer() {
                     className="flex flex-col w-72 border-l overflow-hidden"
                     style={{
                         background: "rgba(8,12,32,0.98)",
-                        borderColor: "rgba(43,62,232,0.18)",
+                        borderColor: "rgb(var(--nx-accent-rgb) / 0.18)",
                     }}
                 >
                     <div className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-                        style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                        <p className="text-xs font-black uppercase tracking-widest" style={{ color: "rgba(43,62,232,0.60)" }}>
+                        style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
+                        <p className="text-xs font-black uppercase tracking-widest" style={{ color: "rgb(var(--nx-accent-rgb) / 0.60)" }}>
                             Navbat — {queue.length} ta
                         </p>
                         <button onClick={() => setShowQueue(false)}>
@@ -242,18 +242,18 @@ function ExpandedPlayer() {
                                 onClick={() => playQueue(queue, i)}
                                 className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all duration-150"
                                 style={{
-                                    background: i === queueIndex ? "rgba(43,62,232,0.12)" : "transparent",
-                                    borderBottom: "1px solid rgba(43,62,232,0.07)",
+                                    background: i === queueIndex ? "rgb(var(--nx-accent-rgb) / 0.12)" : "transparent",
+                                    borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.07)",
                                 }}
-                                onMouseEnter={e => { if (i !== queueIndex) (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.06)"; }}
+                                onMouseEnter={e => { if (i !== queueIndex) (e.currentTarget as HTMLElement).style.background = "rgb(var(--nx-accent-rgb) / 0.06)"; }}
                                 onMouseLeave={e => { if (i !== queueIndex) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                             >
                                 <div className="w-9 h-9 rounded-lg overflow-hidden flex-shrink-0 relative"
-                                    style={{ border: "1px solid rgba(43,62,232,0.20)" }}>
+                                    style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                     <img src={t.image} alt={t.title} className="w-full h-full object-cover" />
                                     {i === queueIndex && (
                                         <div className="absolute inset-0 flex items-center justify-center"
-                                            style={{ background: "rgba(43,62,232,0.60)" }}>
+                                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.60)" }}>
                                             <Music2 className="w-3.5 h-3.5 text-white" />
                                         </div>
                                     )}
@@ -296,7 +296,7 @@ function IconBtn({ onClick, children }: { onClick: () => void; children: React.R
         <button
             onClick={handleClick}
             className="nx-ripple-wrap nx-press w-9 h-9 flex items-center justify-center rounded-xl"
-            style={{ background: "rgba(43,62,232,0.10)" }}
+            style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}
         >
             {children}
         </button>
@@ -322,7 +322,7 @@ function HeartBtn({ liked, onToggle }: { liked: boolean; onToggle: () => void })
         <button
             onClick={handleClick}
             className="nx-press w-10 h-10 flex items-center justify-center rounded-full transition-colors duration-200"
-            style={{ background: liked ? "rgba(239,68,68,0.15)" : "rgba(43,62,232,0.10)" }}
+            style={{ background: liked ? "rgba(239,68,68,0.15)" : "rgb(var(--nx-accent-rgb) / 0.10)" }}
         >
             <Heart
                 ref={heartRef as React.Ref<SVGSVGElement>}
@@ -354,7 +354,7 @@ function PlayPauseBtn({ isPlaying, onToggle }: { isPlaying: boolean; onToggle: (
             className="nx-press w-16 h-16 flex items-center justify-center rounded-full"
             style={{
                 background: "var(--nx-accent)",
-                boxShadow: "0 0 32px rgba(43,62,232,0.50), 0 0 64px rgba(0,206,200,0.20)",
+                boxShadow: "0 0 32px rgb(var(--nx-accent-rgb) / 0.50), 0 0 64px rgb(var(--nx-accent-rgb) / 0.20)",
             }}
         >
             {isPlaying
@@ -383,7 +383,7 @@ function SkipBtn({ onClick, direction }: { onClick: () => void; direction: "back
         <button
             onClick={handleClick}
             className="nx-press w-12 h-12 flex items-center justify-center rounded-full transition-colors duration-150"
-            style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)" }}
+            style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}
         >
             {direction === "back"
                 ? <SkipBack    ref={iconRef as React.Ref<SVGSVGElement>} className="w-5 h-5 fill-white text-white" />

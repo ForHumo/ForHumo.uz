@@ -54,9 +54,9 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
             onClick={() => !busy && onClose()}>
             <div onClick={e => e.stopPropagation()}
                 className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
-                style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "85vh" }}>
+                style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", maxHeight: "85vh" }}>
                 {/* Header */}
-                <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>
                         Yangi {type === "CHANNEL" ? "kanal" : "guruh"}
                     </p>
@@ -71,8 +71,8 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
                     <button onClick={() => setType("CHANNEL")}
                         className="flex flex-col items-center gap-1.5 py-3 rounded-xl transition"
                         style={{
-                            background: type === "CHANNEL" ? "rgba(0,206,200,0.15)" : "rgba(43,62,232,0.08)",
-                            border: `1px solid ${type === "CHANNEL" ? "rgba(0,206,200,0.50)" : "rgba(43,62,232,0.20)"}`,
+                            background: type === "CHANNEL" ? "rgb(var(--nx-accent-rgb) / 0.15)" : "rgb(var(--nx-accent-rgb) / 0.08)",
+                            border: `1px solid ${type === "CHANNEL" ? "rgb(var(--nx-accent-rgb) / 0.50)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
                         }}>
                         <Megaphone className="w-5 h-5" style={{ color: type === "CHANNEL" ? "var(--nx-accent)" : "rgba(160,176,224,0.85)" }} />
                         <span className="text-xs font-black" style={{ color: type === "CHANNEL" ? "var(--nx-accent)" : "rgba(220,230,255,0.85)" }}>Kanal</span>
@@ -81,8 +81,8 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
                     <button onClick={() => setType("GROUP")}
                         className="flex flex-col items-center gap-1.5 py-3 rounded-xl transition"
                         style={{
-                            background: type === "GROUP" ? "rgba(0,206,200,0.15)" : "rgba(43,62,232,0.08)",
-                            border: `1px solid ${type === "GROUP" ? "rgba(0,206,200,0.50)" : "rgba(43,62,232,0.20)"}`,
+                            background: type === "GROUP" ? "rgb(var(--nx-accent-rgb) / 0.15)" : "rgb(var(--nx-accent-rgb) / 0.08)",
+                            border: `1px solid ${type === "GROUP" ? "rgb(var(--nx-accent-rgb) / 0.50)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
                         }}>
                         <Users className="w-5 h-5" style={{ color: type === "GROUP" ? "var(--nx-accent)" : "rgba(160,176,224,0.85)" }} />
                         <span className="text-xs font-black" style={{ color: type === "GROUP" ? "var(--nx-accent)" : "rgba(220,230,255,0.85)" }}>Guruh</span>
@@ -97,11 +97,11 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
                         <input value={name} onChange={e => setName(e.target.value)}
                             maxLength={80} placeholder={type === "CHANNEL" ? "Mening kanalim" : "Do'stlar guruhi"}
                             className="w-full h-10 px-3 mt-1 rounded-lg bg-transparent text-[var(--nx-text)] text-sm focus:outline-none"
-                            style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
+                            style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }} />
                     </div>
                     <div>
                         <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>Handle (ixtiyoriy)</label>
-                        <div className="flex items-center mt-1 rounded-lg" style={{ border: "1px solid rgba(43,62,232,0.30)" }}>
+                        <div className="flex items-center mt-1 rounded-lg" style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                             <span className="pl-3 pr-1 text-white/60 text-sm">@</span>
                             <input value={handle} onChange={e => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 30))}
                                 placeholder="mening_kanalim"
@@ -113,14 +113,14 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
                         <textarea value={description} onChange={e => setDescription(e.target.value.slice(0, 500))}
                             rows={2} placeholder="Bu erda nima haqida gaplashiladi..."
                             className="w-full px-3 py-2 mt-1 rounded-lg bg-transparent text-[var(--nx-text)] text-xs focus:outline-none resize-none"
-                            style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
+                            style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }} />
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                         <button onClick={() => setIsPrivate(false)}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg transition"
                             style={{
-                                background: !isPrivate ? "rgba(0,206,200,0.12)" : "rgba(43,62,232,0.06)",
-                                border: `1px solid ${!isPrivate ? "rgba(0,206,200,0.40)" : "rgba(43,62,232,0.20)"}`,
+                                background: !isPrivate ? "rgb(var(--nx-accent-rgb) / 0.12)" : "rgb(var(--nx-accent-rgb) / 0.06)",
+                                border: `1px solid ${!isPrivate ? "rgb(var(--nx-accent-rgb) / 0.40)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
                             }}>
                             <Globe className="w-3.5 h-3.5" style={{ color: !isPrivate ? "var(--nx-accent)" : "rgba(160,176,224,0.75)" }} />
                             <div className="text-left">
@@ -131,8 +131,8 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
                         <button onClick={() => setIsPrivate(true)}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg transition"
                             style={{
-                                background: isPrivate ? "rgba(0,206,200,0.12)" : "rgba(43,62,232,0.06)",
-                                border: `1px solid ${isPrivate ? "rgba(0,206,200,0.40)" : "rgba(43,62,232,0.20)"}`,
+                                background: isPrivate ? "rgb(var(--nx-accent-rgb) / 0.12)" : "rgb(var(--nx-accent-rgb) / 0.06)",
+                                border: `1px solid ${isPrivate ? "rgb(var(--nx-accent-rgb) / 0.40)" : "rgb(var(--nx-accent-rgb) / 0.20)"}`,
                             }}>
                             <Lock className="w-3.5 h-3.5" style={{ color: isPrivate ? "var(--nx-accent)" : "rgba(160,176,224,0.75)" }} />
                             <div className="text-left">
@@ -147,10 +147,10 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t flex gap-2" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                <div className="p-4 border-t flex gap-2" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <button onClick={onClose} disabled={busy}
                         className="flex-1 h-10 rounded-lg text-sm font-black"
-                        style={{ background: "var(--nx-surface)", color: "#fff", border: "1px solid rgba(43,62,232,0.30)" }}>
+                        style={{ background: "var(--nx-surface)", color: "#fff", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                         Bekor
                     </button>
                     <button onClick={submit} disabled={busy || !name.trim()}

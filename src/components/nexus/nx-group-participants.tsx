@@ -42,7 +42,7 @@ export function NxGroupParticipants({ open, onClose, callId, isHost }: Props) {
             <div className="fixed inset-0 z-[310] bg-black/60 backdrop-blur-sm md:hidden"
                 onClick={onClose} />
             <div className="fixed inset-x-0 bottom-0 z-[311] flex max-h-[70vh] flex-col overflow-hidden rounded-t-3xl bg-[#080C20] shadow-2xl md:inset-y-0 md:inset-x-auto md:left-0 md:max-h-full md:w-[340px] md:rounded-none md:rounded-r-3xl"
-                style={{ border: "1px solid rgba(43,62,232,0.22)" }}
+                style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex flex-shrink-0 items-center justify-between px-5 pt-5 pb-3">
                     <h3 className="flex items-center gap-2 text-base font-black text-[var(--nx-text)]">
@@ -50,7 +50,7 @@ export function NxGroupParticipants({ open, onClose, callId, isHost }: Props) {
                     </h3>
                     <button onClick={onClose}
                         className="flex h-8 w-8 items-center justify-center rounded-full"
-                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                         <X className="h-4 w-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -69,7 +69,7 @@ export function NxGroupParticipants({ open, onClose, callId, isHost }: Props) {
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-1.5">
                                         <p className="truncate text-sm font-bold text-[var(--nx-text)]">{label}</p>
-                                        {isMe && <span className="rounded-md px-1.5 py-0.5 text-[9px] font-black text-[var(--nx-text)]" style={{ background: "rgba(0,206,200,0.25)", color: "var(--nx-accent)" }}>Siz</span>}
+                                        {isMe && <span className="rounded-md px-1.5 py-0.5 text-[9px] font-black text-[var(--nx-text)]" style={{ background: "rgb(var(--nx-accent-rgb) / 0.25)", color: "var(--nx-accent)" }}>Siz</span>}
                                     </div>
                                     <p className="mt-0.5 text-[10px]" style={{ color: p.isSpeaking ? "var(--nx-accent)" : "var(--nx-text-2)" }}>
                                         {p.isSpeaking ? "Gapiryapti" : (p.isMicrophoneEnabled ? "Mikrofon yoniq" : "Mikrofon o'chiq")}
@@ -81,7 +81,7 @@ export function NxGroupParticipants({ open, onClose, callId, isHost }: Props) {
                                             <button onClick={() => mute(p.identity, "audio")} disabled={isBusy}
                                                 title="Mikrofonini o'chirish"
                                                 className="flex h-8 w-8 items-center justify-center rounded-lg disabled:opacity-50"
-                                                style={{ background: "rgba(43,62,232,0.15)" }}>
+                                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                                 <MicOff className="h-3.5 w-3.5 text-[var(--nx-text)]" />
                                             </button>
                                         )}

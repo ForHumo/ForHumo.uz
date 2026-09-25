@@ -125,11 +125,11 @@ export function NxSaved() {
         <>
             <div className="fixed inset-0 z-[60]" style={{ background: "rgba(5,8,24,0.80)", backdropFilter: "blur(8px)" }} onClick={() => setSavedOpen(false)} />
             <div className="fixed inset-x-0 bottom-0 z-[60] flex flex-col rounded-t-3xl overflow-hidden md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[520px] md:max-h-[88vh] md:rounded-3xl"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(43,62,232,0.22)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)", maxHeight: "90vh" }}
+                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)", maxHeight: "90vh" }}
                 onClick={e => e.stopPropagation()}>
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
                         {([
                             ["all", "Postlar", Bookmark],
@@ -140,13 +140,13 @@ export function NxSaved() {
                                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition flex-shrink-0"
                                 style={tab === id
                                     ? { background: "var(--nx-accent)", color: "#fff" }
-                                    : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(140,160,210,0.85)" }}>
+                                    : { background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", color: "rgba(140,160,210,0.85)" }}>
                                 <Icon className="w-3.5 h-3.5" />{label}
                             </button>
                         ))}
                     </div>
                     <button onClick={() => setSavedOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full flex-shrink-0"
-                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                         <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -154,11 +154,11 @@ export function NxSaved() {
                 {/* Qidiruv */}
                 <div className="px-4 pt-3 pb-2 flex-shrink-0">
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "rgba(43,62,232,0.55)" }} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "rgb(var(--nx-accent-rgb) / 0.55)" }} />
                         <input value={query} onChange={e => setQuery(e.target.value)}
                             placeholder={tab === "all" ? "Post ichidan qidirish..." : tab === "videos" ? "Video ichidan qidirish..." : "Tarix ichidan qidirish..."}
                             className="w-full h-9 rounded-xl pl-9 pr-9 text-sm text-[var(--nx-text)] outline-none"
-                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", caretColor: "var(--nx-accent)" }} />
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", caretColor: "var(--nx-accent)" }} />
                         {query && (
                             <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
                                 <X className="w-3.5 h-3.5" style={{ color: "rgba(160,180,220,0.70)" }} />
@@ -179,10 +179,10 @@ export function NxSaved() {
                             <>
                                 <div className="flex flex-col gap-2">
                                     {filteredPosts.map(p => (
-                                        <div key={p.id} className="flex gap-3 p-3 rounded-2xl" style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.16)" }}>
+                                        <div key={p.id} className="flex gap-3 p-3 rounded-2xl" style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.16)" }}>
                                             <Link href={`/nexus/p/${p.id}`} onClick={() => setSavedOpen(false)} className="flex gap-3 flex-1 min-w-0">
                                                 {p.media[0] && (
-                                                    <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0" style={{ background: "rgba(43,62,232,0.10)" }}>
+                                                    <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                                                         <img src={p.media[0]} alt="" className="w-full h-full object-cover" />
                                                     </div>
                                                 )}
@@ -223,7 +223,7 @@ export function NxSaved() {
                                 {filteredVideos.map(v => (
                                     <div key={v.id} className="text-left group relative">
                                         <button onClick={() => openVideoFrom(v)} className="w-full">
-                                            <div className="relative aspect-video rounded-xl overflow-hidden mb-1.5" style={{ border: "1px solid rgba(43,62,232,0.18)", background: "rgba(43,62,232,0.08)" }}>
+                                            <div className="relative aspect-video rounded-xl overflow-hidden mb-1.5" style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)", background: "rgb(var(--nx-accent-rgb) / 0.08)" }}>
                                                 {v.thumbUrl
                                                     ? <img src={v.thumbUrl} alt={v.title} className="w-full h-full object-cover" />
                                                     : <div className="w-full h-full flex items-center justify-center"><Film className="w-6 h-6 text-white/30" /></div>}
@@ -258,7 +258,7 @@ export function NxSaved() {
                                 <div className="grid grid-cols-2 gap-3">
                                     {filteredHistory.map((v, i) => (
                                         <button key={i} onClick={() => { setSavedOpen(false); openVideo(v); }} className="text-left group">
-                                            <div className="relative aspect-video rounded-xl overflow-hidden mb-1.5" style={{ border: "1px solid rgba(43,62,232,0.15)", background: "rgba(43,62,232,0.08)" }}>
+                                            <div className="relative aspect-video rounded-xl overflow-hidden mb-1.5" style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)", background: "rgb(var(--nx-accent-rgb) / 0.08)" }}>
                                                 {v.image && <img src={v.image} alt={v.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />}
                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(5,8,24,0.45)" }}>
                                                     <Play className="w-6 h-6 text-[var(--nx-text)] fill-white" />
@@ -281,12 +281,12 @@ export function NxSaved() {
 
 function SavedSkeleton() {
     return (
-        <div className="flex gap-3 p-3 rounded-2xl animate-pulse" style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.12)" }}>
-            <div className="w-16 h-16 rounded-xl flex-shrink-0" style={{ background: "rgba(43,62,232,0.15)" }} />
+        <div className="flex gap-3 p-3 rounded-2xl animate-pulse" style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.12)" }}>
+            <div className="w-16 h-16 rounded-xl flex-shrink-0" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }} />
             <div className="flex-1 space-y-1.5">
-                <div className="h-2.5 rounded" style={{ background: "rgba(43,62,232,0.15)", width: "40%" }} />
-                <div className="h-2 rounded" style={{ background: "rgba(43,62,232,0.10)" }} />
-                <div className="h-2 rounded" style={{ background: "rgba(43,62,232,0.10)", width: "80%" }} />
+                <div className="h-2.5 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", width: "40%" }} />
+                <div className="h-2 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }} />
+                <div className="h-2 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", width: "80%" }} />
             </div>
         </div>
     );
@@ -295,8 +295,8 @@ function SavedSkeleton() {
 function Empty({ icon: Icon, text }: { icon: React.ElementType; text: string }) {
     return (
         <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.15)" }}>
-                <Icon className="w-5 h-5" style={{ color: "rgba(43,62,232,0.45)" }} />
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
+                <Icon className="w-5 h-5" style={{ color: "rgb(var(--nx-accent-rgb) / 0.45)" }} />
             </div>
             <p className="text-xs" style={{ color: "rgba(130,150,200,0.75)" }}>{text}</p>
         </div>

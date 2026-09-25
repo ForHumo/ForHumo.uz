@@ -435,7 +435,7 @@ export function NxKaraokePlayer(p: Props) {
                                 <div className="flex gap-2">
                                     <button onClick={() => { setPendingResult(null); setCaption(""); setRecError(null); }} disabled={submitting}
                                         className="flex-1 h-11 rounded-xl text-sm font-black disabled:opacity-50"
-                                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)", color: "rgba(160,180,230,0.85)" }}>
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", color: "rgba(160,180,230,0.85)" }}>
                                         Bekor
                                     </button>
                                     <button onClick={submitPerformance} disabled={submitting}

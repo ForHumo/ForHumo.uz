@@ -71,9 +71,9 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
 
                 {data && (
                     <div className="rounded-2xl overflow-hidden"
-                        style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                         {/* Kanal header */}
-                        <div className="p-5 border-b flex items-center gap-3" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                        <div className="p-5 border-b flex items-center gap-3" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             <img src={data.channel.avatarUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${encodeURIComponent(data.channel.name)}`}
                                 alt="" className="w-14 h-14 rounded-2xl object-cover bg-white flex-shrink-0" />
                             <div className="flex-1 min-w-0">
@@ -106,7 +106,7 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
 
                             {data.message.text && (
                                 <div className="text-sm whitespace-pre-wrap p-4 rounded-xl"
-                                    style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.15)", color: "rgba(220,230,255,0.95)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)", color: "rgba(220,230,255,0.95)" }}>
                                     <NxMarkdown text={data.message.text} />
                                 </div>
                             )}
@@ -124,7 +124,7 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
 
                             {data.message.pollQuestion && (
                                 <div className="mt-3 p-3 rounded-xl"
-                                    style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                     <p className="text-xs font-black text-[var(--nx-text)]">{data.message.pollQuestion}</p>
                                     <div className="mt-2 space-y-1">
                                         {(data.message.pollOptions ?? []).map((o, i) => (
@@ -136,10 +136,10 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
                         </div>
 
                         {/* Amallar */}
-                        <div className="p-5 border-t flex gap-2" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                        <div className="p-5 border-t flex gap-2" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             <button onClick={copyLink}
                                 className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 text-xs font-black"
-                                style={{ background: "rgba(43,62,232,0.15)", color: "#fff", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", color: "#fff", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                 <Copy className="w-3.5 h-3.5" /> Havoladan nusxa olish
                             </button>
                             <Link href={`/nexus?channel=${data.channel.handle}`}

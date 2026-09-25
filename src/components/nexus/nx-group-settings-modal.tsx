@@ -134,15 +134,15 @@ export function NxGroupSettingsModal({
         <>
             <div className="fixed inset-0 z-[320] bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-x-0 bottom-0 z-[321] flex max-h-[90vh] flex-col overflow-hidden rounded-t-3xl md:inset-y-0 md:right-0 md:inset-x-auto md:max-h-full md:w-[460px] md:rounded-none md:rounded-l-3xl"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)" }}
+                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)" }}
                 onClick={e => e.stopPropagation()}>
 
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <h3 className="text-base font-black text-[var(--nx-text)]">Guruh sozlamalari</h3>
                     <button onClick={onClose}
                         className="flex h-8 w-8 items-center justify-center rounded-full"
-                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                         <X className="h-4 w-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -158,9 +158,9 @@ export function NxGroupSettingsModal({
                             {data.systemOwned && data.esTeamId && (
                                 <a href={`/esport/teams/${data.esTeamId}`} target="_blank" rel="noopener"
                                     className="flex items-center gap-3 p-3 rounded-2xl block"
-                                    style={{ background: "linear-gradient(90deg,rgba(43,62,232,0.15),rgba(0,206,200,0.15))", border: "1px solid rgba(0,206,200,0.35)" }}>
+                                    style={{ background: "linear-gradient(90deg,rgb(var(--nx-accent-rgb) / 0.15),rgb(var(--nx-accent-rgb) / 0.15))", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                     <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                                        style={{ background: "rgba(0,206,200,0.15)" }}>
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                         <Info className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -178,7 +178,7 @@ export function NxGroupSettingsModal({
                                     <label className="block relative rounded-2xl overflow-hidden cursor-pointer h-24"
                                         style={{ background: data.coverUrl
                                             ? `url(${data.coverUrl}) center/cover`
-                                            : "linear-gradient(135deg,rgba(43,62,232,0.35),rgba(0,206,200,0.35))" }}>
+                                            : "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.35),rgb(var(--nx-accent-rgb) / 0.35))" }}>
                                         <input type="file" accept="image/*" className="hidden"
                                             onChange={async (e) => {
                                                 const f = e.target.files?.[0]; if (!f) return;
@@ -203,7 +203,7 @@ export function NxGroupSettingsModal({
                                     </label>
                                     {/* Avatar (cover ustida) */}
                                     <label className="absolute left-3 -bottom-6 w-14 h-14 rounded-full cursor-pointer overflow-hidden"
-                                        style={{ background: data.avatarUrl ? `url(${data.avatarUrl}) center/cover` : "rgba(43,62,232,0.35)",
+                                        style={{ background: data.avatarUrl ? `url(${data.avatarUrl}) center/cover` : "rgb(var(--nx-accent-rgb) / 0.35)",
                                                  border: "3px solid rgba(8,12,32,0.99)" }}>
                                         <input type="file" accept="image/*" className="hidden"
                                             onChange={async (e) => {
@@ -238,7 +238,7 @@ export function NxGroupSettingsModal({
                                 <input disabled={!canEdit} value={data.name}
                                     onChange={e => setData({ ...data, name: e.target.value })}
                                     className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none disabled:opacity-60"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
+                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                             </div>
 
                             {/* Tavsif */}
@@ -250,7 +250,7 @@ export function NxGroupSettingsModal({
                                     onChange={e => setData({ ...data, description: e.target.value })}
                                     rows={3}
                                     className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none resize-none disabled:opacity-60"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
+                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                             </div>
 
                             {/* Qoidalar */}
@@ -263,7 +263,7 @@ export function NxGroupSettingsModal({
                                     rows={4}
                                     placeholder="Guruh qoidalarini yozing..."
                                     className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none resize-none disabled:opacity-60"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
+                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                             </div>
 
                             {/* Slow mode */}
@@ -275,7 +275,7 @@ export function NxGroupSettingsModal({
                                     <select disabled={!canEdit} value={data.slowModeSeconds}
                                         onChange={e => setData({ ...data, slowModeSeconds: Number(e.target.value) })}
                                         className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none disabled:opacity-60"
-                                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                                         {SLOW_MODE_OPTIONS.map(o => (
                                             <option key={o.value} value={o.value} style={{ background: "#080C20" }}>{o.label}</option>
                                         ))}
@@ -291,7 +291,7 @@ export function NxGroupSettingsModal({
                                 <select disabled={!canEdit} value={data.autoDeleteAfterSeconds}
                                     onChange={e => setData({ ...data, autoDeleteAfterSeconds: Number(e.target.value) })}
                                     className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none disabled:opacity-60"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                                     {AUTO_DELETE_OPTIONS.map(o => (
                                         <option key={o.value} value={o.value} style={{ background: "#080C20" }}>{o.label}</option>
                                     ))}
@@ -301,7 +301,7 @@ export function NxGroupSettingsModal({
                             {/* Restrict forwarding — faqat owner */}
                             {isOwner && (
                                 <label className="flex items-center gap-3 rounded-xl px-3 py-3"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                     <input type="checkbox" checked={data.restrictForwarding}
                                         onChange={e => setData({ ...data, restrictForwarding: e.target.checked })} />
                                     <div className="flex-1">
@@ -318,7 +318,7 @@ export function NxGroupSettingsModal({
                             {/* AI moderator — faqat owner */}
                             {isOwner && (
                                 <label className="flex items-center gap-3 rounded-xl px-3 py-3"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                     <input type="checkbox" checked={data.aiModerator}
                                         onChange={e => setData({ ...data, aiModerator: e.target.checked })} />
                                     <div className="flex-1">
@@ -335,7 +335,7 @@ export function NxGroupSettingsModal({
                             {/* Post signature — faqat owner + CHANNEL */}
                             {isOwner && data.type === "CHANNEL" && (
                                 <label className="flex items-center gap-3 rounded-xl px-3 py-3"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                     <input type="checkbox" checked={data.signaturesEnabled}
                                         onChange={e => setData({ ...data, signaturesEnabled: e.target.checked })} />
                                     <div className="flex-1">
@@ -383,7 +383,7 @@ export function NxGroupSettingsModal({
                             {/* Auto-translate — faqat owner */}
                             {isOwner && data.type === "GROUP" && (
                                 <label className="flex items-center gap-3 rounded-xl px-3 py-3"
-                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                     <input type="checkbox" checked={data.autoTranslate}
                                         onChange={e => setData({ ...data, autoTranslate: e.target.checked })} />
                                     <div className="flex-1">
@@ -410,7 +410,7 @@ export function NxGroupSettingsModal({
                                             return (
                                                 <label key={key}
                                                     className="flex items-center gap-3 rounded-xl px-3 py-2.5"
-                                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                                     <input type="checkbox" checked={val}
                                                         onChange={e => setPerm(key, e.target.checked)} />
                                                     <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(140,160,210,0.8)" }} />
@@ -424,7 +424,7 @@ export function NxGroupSettingsModal({
                         </div>
 
                         {/* Actions */}
-                        <div className="flex-shrink-0 px-5 py-4 space-y-2" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                        <div className="flex-shrink-0 px-5 py-4 space-y-2" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             {canEdit && (
                                 <button onClick={save} disabled={saving}
                                     className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-[var(--nx-text)] disabled:opacity-60"
@@ -470,7 +470,7 @@ function DiscussionGroupPicker({
 
     return (
         <div className="rounded-xl px-3 py-3"
-            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
             <p className="text-sm font-bold text-[var(--nx-text)] flex items-center gap-1.5 mb-1">
                 <MessageSquare className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                 Muhokama guruhi
@@ -481,7 +481,7 @@ function DiscussionGroupPicker({
             <select disabled={loading} value={value ?? ""}
                 onChange={e => onChange(e.target.value || null)}
                 className="w-full h-10 rounded-lg px-3 text-xs focus:outline-none"
-                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }}>
+                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", color: "white" }}>
                 <option value="">— Yo&apos;q (uzish) —</option>
                 {groups.map(g => (
                     <option key={g.id} value={g.id}>{g.name}</option>
@@ -517,7 +517,7 @@ function AllowedReactionsEditor({
 
     return (
         <div className="rounded-xl px-3 py-3"
-            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
             <div className="flex items-center gap-2 mb-2">
                 <Smile className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                 <p className="text-sm font-bold text-[var(--nx-text)] flex-1">Ruxsat etilgan reaksiyalar</p>
@@ -541,8 +541,8 @@ function AllowedReactionsEditor({
                         <button key={e} type="button" onClick={() => toggle(e)}
                             className="w-9 h-9 rounded-lg flex items-center justify-center text-xl transition"
                             style={on
-                                ? { background: "rgba(0,206,200,0.20)", border: "1px solid var(--nx-accent)" }
-                                : { background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                ? { background: "rgb(var(--nx-accent-rgb) / 0.20)", border: "1px solid var(--nx-accent)" }
+                                : { background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             {e}
                         </button>
                     );

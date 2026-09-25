@@ -1432,7 +1432,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                         } ${pipSize === "sm" ? "w-32 h-20" : pipSize === "md" ? "w-48 h-28" : "w-64 h-40"}`}
                         style={{
                             border: "2px solid rgba(255,255,255,0.35)",
-                            boxShadow: "0 12px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,206,200,0.25)",
+                            boxShadow: "0 12px 32px rgba(0,0,0,0.55), 0 0 0 1px rgb(var(--nx-accent-rgb) / 0.25)",
                             background: "#000",
                             touchAction: "none",
                         }}
@@ -1476,7 +1476,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 {isLive && hasScreen && hasCamera && !pipVisible && (
                     <button onClick={() => setPipVisible(true)}
                         className="absolute bottom-20 right-4 z-20 h-10 px-3 flex items-center gap-1.5 rounded-full active:scale-95 transition"
-                        style={{ background: "rgba(0,206,200,0.30)", backdropFilter: "blur(8px)", border: "1px solid rgba(0,206,200,0.55)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.30)", backdropFilter: "blur(8px)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.55)" }}>
                         <Camera className="w-3.5 h-3.5 text-white" />
                         <span className="text-[10px] font-black text-white">Kamerani ko&apos;rsat</span>
                     </button>
@@ -1724,7 +1724,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                     {isLive && (
                         <button onClick={() => setCaptionOn(o => !o)} title={captionOn ? "Subtitrlarni yashirish" : "Subtitrlarni ko'rsatish"}
                             className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition"
-                            style={{ background: captionOn ? "rgba(0,206,200,0.35)" : "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                            style={{ background: captionOn ? "rgb(var(--nx-accent-rgb) / 0.35)" : "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
                             <Captions className="w-4 h-4 text-white" />
                         </button>
                     )}
@@ -1758,7 +1758,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                         <div className="relative">
                             <button onClick={() => { setQualityOpen(o => !o); setSpeedMenuOpen(false); }} title="Sifat"
                                 className="h-10 px-3 flex items-center gap-1.5 rounded-full active:scale-95 transition"
-                                style={{ background: qualityOpen ? "rgba(0,206,200,0.35)" : "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                                style={{ background: qualityOpen ? "rgb(var(--nx-accent-rgb) / 0.35)" : "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
                                 <Settings className="w-3.5 h-3.5 text-white" />
                                 <span className="text-[10px] font-black text-white">
                                     {isLive
@@ -1768,14 +1768,14 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             </button>
                             {qualityOpen && (
                                 <div className="absolute top-full right-0 mt-2 min-w-[220px] rounded-2xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
-                                    style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(0,206,200,0.30)", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
+                                    style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
                                     {stream?.status === "ENDED" ? (
                                         <>
-                                            <div className="px-4 pt-3 pb-1.5 text-[10px] font-black uppercase" style={{ color: "rgba(0,206,200,0.85)" }}>Tezlik</div>
+                                            <div className="px-4 pt-3 pb-1.5 text-[10px] font-black uppercase" style={{ color: "rgb(var(--nx-accent-rgb) / 0.85)" }}>Tezlik</div>
                                             {[0.5, 0.75, 1, 1.25, 1.5, 2].map(sp => (
                                                 <button key={sp} onClick={() => { setVodSpeed(sp); setQualityOpen(false); }}
                                                     className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold text-white transition"
-                                                    style={{ background: vodSpeed === sp ? "rgba(0,206,200,0.12)" : "transparent" }}>
+                                                    style={{ background: vodSpeed === sp ? "rgb(var(--nx-accent-rgb) / 0.12)" : "transparent" }}>
                                                     <span>{sp === 1 ? "Oddiy" : `${sp}x`}</span>
                                                     {vodSpeed === sp && <Check className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />}
                                                 </button>
@@ -1786,7 +1786,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                         </>
                                     ) : (
                                         <>
-                                            <div className="px-4 pt-3 pb-1.5 text-[10px] font-black uppercase" style={{ color: "rgba(0,206,200,0.85)" }}>Video sifati</div>
+                                            <div className="px-4 pt-3 pb-1.5 text-[10px] font-black uppercase" style={{ color: "rgb(var(--nx-accent-rgb) / 0.85)" }}>Video sifati</div>
                                             {([
                                                 { v: "auto", l: "Avto", hint: "tarmoqqa moslashadi" },
                                                 { v: "1080", l: "1080p", hint: "Full HD" },
@@ -1796,7 +1796,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                             ] as { v: QLevel; l: string; hint: string }[]).map(o => (
                                                 <button key={o.v} onClick={() => { setQuality(o.v); setQualityOpen(false); }}
                                                     className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-white transition"
-                                                    style={{ background: quality === o.v ? "rgba(0,206,200,0.12)" : "transparent" }}>
+                                                    style={{ background: quality === o.v ? "rgb(var(--nx-accent-rgb) / 0.12)" : "transparent" }}>
                                                     <span className="w-14">{o.l}</span>
                                                     <span className="flex-1 text-left text-[10px]" style={{ color: "rgba(150,170,210,0.7)" }}>{o.hint}</span>
                                                     {quality === o.v && <Check className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />}
@@ -1815,7 +1815,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                     </button>
                     <button onClick={() => setChatOpen(o => !o)} title={chatOpen ? "Chatni yashirish (C)" : "Chatni ochish (C)"}
                         className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition hidden md:flex"
-                        style={{ background: chatOpen ? "rgba(0,206,200,0.35)" : "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                        style={{ background: chatOpen ? "rgb(var(--nx-accent-rgb) / 0.35)" : "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
                         {chatOpen ? <MessageSquare className="w-4 h-4 text-white" /> : <MessageSquareOff className="w-4 h-4 text-white" />}
                     </button>
                     <button onClick={toggleFullscreen} title={fullscreen ? "Chiqish (F)" : "To'liq ekran (F)"}
@@ -1846,12 +1846,12 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                                 onMouseLeave={() => setHoverChapter(null)}
                                                 title={`${fmtT(c.sec)} — ${c.label}`}
                                                 className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-3 rounded-sm hover:scale-125 transition-transform z-20"
-                                                style={{ left: `${(c.sec / vodDur) * 100}%`, background: "var(--nx-accent)", boxShadow: "0 0 6px rgba(0,206,200,0.7)" }} />
+                                                style={{ left: `${(c.sec / vodDur) * 100}%`, background: "var(--nx-accent)", boxShadow: "0 0 6px rgb(var(--nx-accent-rgb) / 0.7)" }} />
                                         ))}
                                         {/* Hover tooltip */}
                                         {hoverChapter && (
                                             <div className="absolute -top-8 -translate-x-1/2 px-2 py-1 rounded text-[10px] font-bold text-white whitespace-nowrap z-30 pointer-events-none"
-                                                style={{ left: `${(hoverChapter.sec / vodDur) * 100}%`, background: "rgba(0,0,0,0.85)", border: "1px solid rgba(0,206,200,0.35)" }}>
+                                                style={{ left: `${(hoverChapter.sec / vodDur) * 100}%`, background: "rgba(0,0,0,0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)" }}>
                                                 {hoverChapter.label}
                                             </div>
                                         )}
@@ -1880,7 +1880,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                 </span>
                             )}
                             {stream?.status === "ENDED" && vodSpeed !== 1 && (
-                                <span className="px-2 py-1 rounded-md text-[10px] font-black text-white" style={{ background: "rgba(0,206,200,0.30)" }}>
+                                <span className="px-2 py-1 rounded-md text-[10px] font-black text-white" style={{ background: "rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                     {vodSpeed}x
                                 </span>
                             )}
@@ -1919,7 +1919,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             stream.recordingUrl ? (
                                 analytics && stream.isMine ? (
                                     <div className="absolute top-16 left-4 max-w-sm z-15 p-4 rounded-2xl animate-in fade-in slide-in-from-left-2 duration-300"
-                                        style={{ background: "rgba(8,12,32,0.92)", border: "1px solid rgba(0,206,200,0.35)", boxShadow: "0 12px 40px rgba(0,206,200,0.25)", backdropFilter: "blur(10px)" }}>
+                                        style={{ background: "rgba(8,12,32,0.92)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", boxShadow: "0 12px 40px rgb(var(--nx-accent-rgb) / 0.25)", backdropFilter: "blur(10px)" }}>
                                         <div className="flex items-center gap-2 mb-3">
                                             <BarChart3 className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                             <span className="text-sm font-black text-white">Efir statistikasi</span>
@@ -1952,10 +1952,10 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                         )}
                                         {analytics.topChatters.length > 0 && (
                                             <div className="mb-2">
-                                                <p className="text-[10px] font-black uppercase mb-1.5" style={{ color: "rgba(0,206,200,0.85)" }}>Top chatterlar</p>
+                                                <p className="text-[10px] font-black uppercase mb-1.5" style={{ color: "rgb(var(--nx-accent-rgb) / 0.85)" }}>Top chatterlar</p>
                                                 <div className="space-y-1">
                                                     {analytics.topChatters.slice(0, 3).map((c, i) => (
-                                                        <div key={i} className="flex items-center gap-2 px-2 py-1 rounded" style={{ background: "rgba(0,206,200,0.06)" }}>
+                                                        <div key={i} className="flex items-center gap-2 px-2 py-1 rounded" style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)" }}>
                                                             <span className="text-[9px] font-black w-4" style={{ color: "var(--nx-accent)" }}>{i + 1}</span>
                                                             <img src={avatarOf(c.author)} alt="" className="w-5 h-5 rounded-full object-cover bg-white" />
                                                             <span className="flex-1 text-[11px] font-bold text-white truncate">{c.author?.name || c.author?.username || "..."}</span>
@@ -2055,7 +2055,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             </button>
                             <button onClick={() => setChapterEditOpen(true)}
                                 className="flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-lg text-[9px] font-black transition active:scale-95"
-                                style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.35)", color: "#67E8F9" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", color: "#67E8F9" }}>
                                 <Plus className="w-3 h-3" />Bo&apos;lim
                             </button>
                             <button onClick={() => setModPanelOpen(true)}
@@ -2071,7 +2071,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             <button onClick={toggleFollow} disabled={followBusy}
                                 className="flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black transition active:scale-95 disabled:opacity-60"
                                 style={isFollowing
-                                    ? { background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.35)", color: "var(--nx-accent)" }
+                                    ? { background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", color: "var(--nx-accent)" }
                                     : { background: "linear-gradient(135deg,#EF4444,#F97316)", color: "#fff", boxShadow: "0 4px 16px rgba(239,68,68,0.30)" }}>
                                 {isFollowing ? <><UserCheck className="w-3.5 h-3.5" />Kuzatilyapti</> : <><UserPlus className="w-3.5 h-3.5" />Kuzatish</>}
                             </button>
@@ -2111,13 +2111,13 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 )}
                 {/* Batch BI — Pinned msg banner (sticky above chat) */}
                 {pinnedMsg && (
-                    <div className="px-3 py-2 flex-shrink-0 flex items-start gap-2" style={{ background: "linear-gradient(135deg, rgba(0,206,200,0.12), rgba(43,62,232,0.12))", borderBottom: "1px solid rgba(0,206,200,0.30)" }}>
+                    <div className="px-3 py-2 flex-shrink-0 flex items-start gap-2" style={{ background: "linear-gradient(135deg, rgb(var(--nx-accent-rgb) / 0.12), rgb(var(--nx-accent-rgb) / 0.12))", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                         <Pin className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: "var(--nx-accent)" }} />
                         <p className="flex-1 text-[11px] font-bold min-w-0" style={{ color: "rgba(200,240,240,0.95)" }}>{pinnedMsg}</p>
                         {stream?.isMine && (
                             <button onClick={unpinMessage} title="Unpin"
                                 className="w-5 h-5 flex items-center justify-center rounded-md flex-shrink-0"
-                                style={{ background: "rgba(0,206,200,0.15)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                 <X className="w-2.5 h-2.5" style={{ color: "var(--nx-accent)" }} />
                             </button>
                         )}
@@ -2132,7 +2132,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                         </p>
                     ) : displayedMsgs.map(m => (
                         m.text.startsWith("__nx_system:") ? (
-                            <div key={m.id} className="my-1.5 px-3 py-1.5 rounded-lg flex items-center gap-2" style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.25)" }}>
+                            <div key={m.id} className="my-1.5 px-3 py-1.5 rounded-lg flex items-center gap-2" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                 <Info className="w-3 h-3 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                 <span className="text-[11px] font-bold" style={{ color: "rgba(160,220,215,0.9)" }}>{m.text.slice("__nx_system:".length)}</span>
                             </div>
@@ -2263,7 +2263,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                         {/* Batch FF + CR — Command hint (/ or !) */}
                         {(input.startsWith("/") || input.startsWith("!")) && input.length >= 1 && (
                             <div className="mb-2 p-2 rounded-lg text-[10px] font-bold flex items-center gap-1.5 flex-wrap"
-                                style={{ background: "rgba(0,206,200,0.06)", border: "1px solid rgba(0,206,200,0.20)", color: "rgba(160,220,215,0.85)" }}>
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", color: "rgba(160,220,215,0.85)" }}>
                                 <Terminal className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />
                                 {input.startsWith("!") ? (
                                     <span>{customCmds.length > 0 ? customCmds.slice(0, 5).map(c => `!${c.name}`).join(" · ") : "Streamer'da custom buyruq yo'q"}</span>
@@ -2324,7 +2324,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                     title="Chat playback bilan sinxron"
                                     className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-black transition"
                                     style={chatReplay
-                                        ? { background: "rgba(0,206,200,0.20)", border: "1px solid rgba(0,206,200,0.40)", color: "var(--nx-accent)" }
+                                        ? { background: "rgb(var(--nx-accent-rgb) / 0.20)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.40)", color: "var(--nx-accent)" }
                                         : { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(200,200,220,0.75)" }}>
                                     <MessageCircle className="w-3 h-3" />{chatReplay ? "Replay ON" : "Barcha chat"}
                                 </button>
@@ -2702,7 +2702,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 <>
                     <div className="fixed inset-0 z-[9998]" style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(8px)" }} onClick={() => setChapterEditOpen(false)} />
                     <div className="fixed z-[9999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-sm p-6 rounded-3xl animate-in fade-in zoom-in-95 duration-200"
-                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(0,206,200,0.45)", boxShadow: "0 24px 80px rgba(0,206,200,0.35)" }}>
+                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.45)", boxShadow: "0 24px 80px rgb(var(--nx-accent-rgb) / 0.35)" }}>
                         <div className="flex items-center gap-2 mb-4">
                             <Plus className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                             <h3 className="text-base font-black text-white">Bo&apos;lim belgilash</h3>
@@ -2715,11 +2715,11 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             onKeyDown={e => e.key === "Enter" && saveChapter()}
                             placeholder="masalan: Kirish, Q&A boshlandi..."
                             className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none mb-4"
-                            style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.30)", caretColor: "var(--nx-accent)" }}
+                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", caretColor: "var(--nx-accent)" }}
                             autoFocus />
                         <button onClick={saveChapter} disabled={!chapterDraft.trim()}
                             className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-50"
-                            style={{ background: "linear-gradient(135deg,var(--nx-accent),var(--nx-accent))", boxShadow: "0 4px 20px rgba(0,206,200,0.35)" }}>
+                            style={{ background: "linear-gradient(135deg,var(--nx-accent),var(--nx-accent))", boxShadow: "0 4px 20px rgb(var(--nx-accent-rgb) / 0.35)" }}>
                             <Plus className="w-4 h-4" />Belgilash ({chapters.length + 1}-bo&apos;lim)
                         </button>
                     </div>
@@ -2827,7 +2827,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                         </div>
 
                         {/* Batch V — Live captions (Speech Recognition) */}
-                        <div className="mb-3 p-3 rounded-xl flex items-center justify-between" style={{ background: "rgba(0,206,200,0.06)", border: "1px solid rgba(0,206,200,0.20)" }}>
+                        <div className="mb-3 p-3 rounded-xl flex items-center justify-between" style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <div className="flex-1">
                                 <p className="text-xs font-black text-white flex items-center gap-1.5">
                                     <Captions className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
@@ -2975,7 +2975,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                         </div>
 
                         {/* Batch W — Watermark upload */}
-                        <div className="mb-3 p-3 rounded-xl" style={{ background: "rgba(0,206,200,0.06)", border: "1px solid rgba(0,206,200,0.20)" }}>
+                        <div className="mb-3 p-3 rounded-xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                             <div className="flex items-center gap-2 mb-2">
                                 <ImageIcon className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                 <p className="text-xs font-black text-white">Logo / Watermark</p>
@@ -2995,7 +2995,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                     <input type="file" accept="image/png,image/jpeg,image/svg+xml" className="hidden"
                                         onChange={e => { const f = e.target.files?.[0]; if (f) uploadWatermark(f); }} />
                                     <div className="py-2 rounded-lg text-center text-[10px] font-black text-white"
-                                        style={{ background: "rgba(0,206,200,0.15)", border: "1px dashed rgba(0,206,200,0.40)" }}>
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.40)" }}>
                                         {watermarkBusy ? <Loader2 className="w-3 h-3 inline animate-spin" /> : <><Plus className="w-3 h-3 inline mr-1" />Rasm yuklash (PNG/JPG/SVG)</>}
                                     </div>
                                 </label>
@@ -3012,7 +3012,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
             {/* Share toast */}
             {shareToast && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[10000] px-4 py-2.5 rounded-xl text-xs font-black text-white animate-in fade-in slide-in-from-bottom-2"
-                    style={{ background: "linear-gradient(135deg,var(--nx-accent),var(--nx-accent))", boxShadow: "0 8px 24px rgba(0,206,200,0.35)" }}>
+                    style={{ background: "linear-gradient(135deg,var(--nx-accent),var(--nx-accent))", boxShadow: "0 8px 24px rgb(var(--nx-accent-rgb) / 0.35)" }}>
                     Havola nusxalandi
                 </div>
             )}

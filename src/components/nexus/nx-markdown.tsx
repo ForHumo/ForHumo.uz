@@ -177,7 +177,7 @@ export function NxMarkdown({ text }: { text: string }) {
             }
             blocks.push(
                 <blockquote key={key++} className="my-1 pl-2 py-0.5"
-                    style={{ borderLeft: "3px solid rgba(0,206,200,0.60)", opacity: 0.85 }}>
+                    style={{ borderLeft: "3px solid rgb(var(--nx-accent-rgb) / 0.60)", opacity: 0.85 }}>
                     {quoteLines.map((ql, qi) => (
                         <div key={qi}>{parseInline(ql, `q${key}-${qi}`)}</div>
                     ))}

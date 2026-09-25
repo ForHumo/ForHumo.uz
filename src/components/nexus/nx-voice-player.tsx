@@ -196,7 +196,7 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
 
     const progress = duration > 0 ? current / duration : 0;
     const activeColor = mine ? "#ffffff" : "var(--nx-accent)";
-    const dimColor = mine ? "rgba(255,255,255,0.35)" : "rgba(0,206,200,0.30)";
+    const dimColor = mine ? "rgba(255,255,255,0.35)" : "rgb(var(--nx-accent-rgb) / 0.30)";
 
     return (
         <div className="flex flex-col gap-1 min-w-[220px]">
@@ -206,7 +206,7 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
                 aria-label={playing ? "To'xtatish" : "Eshitish"}
                 className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition active:scale-95"
                 style={{
-                    background: mine ? "rgba(255,255,255,0.18)" : "rgba(0,206,200,0.20)",
+                    background: mine ? "rgba(255,255,255,0.18)" : "rgb(var(--nx-accent-rgb) / 0.20)",
                 }}>
                 {playing
                     ? <Pause className="w-4 h-4" style={{ color: activeColor }} fill={activeColor} />
@@ -265,8 +265,8 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
                 className="min-w-[28px] h-7 px-1.5 rounded-md flex items-center justify-center flex-shrink-0 text-[10px] font-black tabular-nums"
                 style={{
                     background: speedIdx > 0
-                        ? (mine ? "rgba(255,255,255,0.20)" : "rgba(0,206,200,0.15)")
-                        : (mine ? "rgba(255,255,255,0.08)" : "rgba(43,62,232,0.08)"),
+                        ? (mine ? "rgba(255,255,255,0.20)" : "rgb(var(--nx-accent-rgb) / 0.15)")
+                        : (mine ? "rgba(255,255,255,0.08)" : "rgb(var(--nx-accent-rgb) / 0.08)"),
                     color: speedIdx > 0 ? activeColor : (mine ? "rgba(255,255,255,0.75)" : "rgba(140,160,210,0.85)"),
                 }}
             >
@@ -277,8 +277,8 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
                     title={transcript ? "Transkriptni yashirish" : "AI orqali matnga aylantirish"}
                     className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 disabled:opacity-40"
                     style={{
-                        background: transcript ? "rgba(0,206,200,0.20)" : (mine ? "rgba(255,255,255,0.14)" : "rgba(0,206,200,0.10)"),
-                        border: `1px solid ${transcript ? "rgba(0,206,200,0.50)" : (mine ? "rgba(255,255,255,0.20)" : "rgba(0,206,200,0.30)")}`,
+                        background: transcript ? "rgb(var(--nx-accent-rgb) / 0.20)" : (mine ? "rgba(255,255,255,0.14)" : "rgb(var(--nx-accent-rgb) / 0.10)"),
+                        border: `1px solid ${transcript ? "rgb(var(--nx-accent-rgb) / 0.50)" : (mine ? "rgba(255,255,255,0.20)" : "rgb(var(--nx-accent-rgb) / 0.30)")}`,
                     }}>
                     {transcribing
                         ? <Loader2 className="w-3 h-3 animate-spin" style={{ color: activeColor }} />

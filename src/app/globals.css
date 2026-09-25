@@ -236,7 +236,7 @@
   position: absolute; border-radius: 50%;
   width: 6px; height: 6px;
   pointer-events: none;
-  background: rgba(0,206,200,0.50);
+  background: rgb(var(--nx-accent-rgb) / 0.50);
   transform: translate(-50%,-50%);
   animation: nx-ripple-expand 0.55s ease-out forwards;
 }
@@ -333,7 +333,7 @@ html:not(.dark) .es-bg textarea::placeholder { color: var(--es-faint) !important
   --nx-bg:#FBFBFD; --nx-surface:#FFFFFF; --nx-surface-2:#F5F6F8; --nx-elevated:#FFFFFF;
   --nx-border:rgba(12,17,29,.09); --nx-border-2:rgba(12,17,29,.16);
   --nx-text:#0E1320; --nx-text-2:#5B6472; --nx-text-3:#98A0AE;
-  --nx-accent:#2E5BFF; --nx-accent-weak:rgba(46,91,255,.10); --nx-accent-ink:#fff;
+  --nx-accent:#2E5BFF; --nx-accent-rgb:46 91 255; --nx-accent-weak:rgba(46,91,255,.10); --nx-accent-ink:#fff;
   --nx-ok:#16A34A; --nx-warn:#D97706; --nx-danger:#DC2626;
   --nx-shadow:0 1px 2px rgba(16,24,40,.06), 0 6px 20px rgba(16,24,40,.08);
   --nx-r-sm:8px; --nx-r-md:12px; --nx-r-lg:16px; --nx-r-xl:22px; --nx-r-avatar:13px;
@@ -342,7 +342,7 @@ html:not(.dark) .es-bg textarea::placeholder { color: var(--es-faint) !important
   --nx-bg:#0A0C12; --nx-surface:#12151E; --nx-surface-2:#171B26; --nx-elevated:#1B2130;
   --nx-border:rgba(255,255,255,.08); --nx-border-2:rgba(255,255,255,.14);
   --nx-text:#F2F4F8; --nx-text-2:#9AA3B2; --nx-text-3:#626B7A;
-  --nx-accent:#4C77FF; --nx-accent-weak:rgba(76,119,255,.18); --nx-accent-ink:#fff;
+  --nx-accent:#4C77FF; --nx-accent-rgb:76 119 255; --nx-accent-weak:rgba(76,119,255,.18); --nx-accent-ink:#fff;
   --nx-ok:#22C55E; --nx-warn:#F59E0B; --nx-danger:#EF4444;
   --nx-shadow:0 1px 0 rgba(255,255,255,.03), 0 8px 24px rgba(0,0,0,.35);
 }
@@ -352,7 +352,7 @@ html:not(.dark) .es-bg textarea::placeholder { color: var(--es-faint) !important
   background: rgba(11, 20, 45, 0.55);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(43, 62, 232, 0.18);
+  border: 1px solid rgb(var(--nx-accent-rgb) / 0.18);
 }
 
 /* Heavier glass — sidebars, overlays */
@@ -360,17 +360,17 @@ html:not(.dark) .es-bg textarea::placeholder { color: var(--es-faint) !important
   background: rgba(6, 11, 26, 0.88);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(43, 62, 232, 0.22);
+  border: 1px solid rgb(var(--nx-accent-rgb) / 0.22);
 }
 
 /* Blue-to-cyan gradient fill */
 .nx-gradient {
-  background: linear-gradient(135deg, #2B3EE8 0%, #00CEC8 100%);
+  background: linear-gradient(135deg, var(--nx-accent) 0%, var(--nx-accent) 100%);
 }
 
 /* Gradient text */
 .nx-gradient-text {
-  background: linear-gradient(135deg, #2B3EE8 0%, #00CEC8 100%);
+  background: linear-gradient(135deg, var(--nx-accent) 0%, var(--nx-accent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -378,14 +378,14 @@ html:not(.dark) .es-bg textarea::placeholder { color: var(--es-faint) !important
 
 /* Gradient glow shadow */
 .nx-glow {
-  box-shadow: 0 0 32px rgba(43, 62, 232, 0.45), 0 0 80px rgba(0, 206, 200, 0.12);
+  box-shadow: 0 0 32px rgb(var(--nx-accent-rgb) / 0.45), 0 0 80px rgb(var(--nx-accent-rgb) / 0.12);
 }
 
 /* Thin scrollbar — navy-tinted thumb */
 .nx-scrollbar::-webkit-scrollbar          { width: 5px; }
 .nx-scrollbar::-webkit-scrollbar-track    { background: transparent; }
-.nx-scrollbar::-webkit-scrollbar-thumb    { background: rgba(43,62,232,0.25); border-radius: 10px; }
-.nx-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(43,62,232,0.45); }
+.nx-scrollbar::-webkit-scrollbar-thumb    { background: rgb(var(--nx-accent-rgb) / 0.25); border-radius: 10px; }
+.nx-scrollbar::-webkit-scrollbar-thumb:hover { background: rgb(var(--nx-accent-rgb) / 0.45); }
 .nx-hide-scrollbar                        { scrollbar-width: none; -ms-overflow-style: none; }
 .nx-hide-scrollbar::-webkit-scrollbar     { display: none; }
 /* Nexus chaqiruv emoji reaksiyasi — pastdan tepaga uchish + so'nish */

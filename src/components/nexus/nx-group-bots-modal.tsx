@@ -77,15 +77,15 @@ export function NxGroupBotsModal({
         <>
             <div className="fixed inset-0 z-[320] bg-black/60 backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-x-0 bottom-0 z-[321] flex max-h-[85vh] flex-col overflow-hidden rounded-t-3xl md:inset-y-0 md:right-0 md:inset-x-auto md:max-h-full md:w-[440px] md:rounded-none md:rounded-l-3xl"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)" }}
+                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)" }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Bot className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Botlar
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(43,62,232,0.12)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                         <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
@@ -97,7 +97,7 @@ export function NxGroupBotsModal({
                         <p className="py-8 text-center text-xs" style={{ color: "var(--nx-text-3)" }}>Bot qo&apos;shilmagan</p>
                     ) : bots.map(b => (
                         <div key={b.id} className="flex items-center gap-3 rounded-2xl px-3 py-2.5 mb-1"
-                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             <img src={b.agent?.avatarUrl ?? "/logos/forhumo.png"} alt=""
                                 className="w-10 h-10 rounded-full object-cover" />
                             <div className="flex-1 min-w-0">
@@ -110,7 +110,7 @@ export function NxGroupBotsModal({
                                         title={b.autoListen ? "Har xabarni tinglaydi" : "Faqat /command"}
                                         className="w-8 h-8 rounded-full flex items-center justify-center"
                                         style={b.autoListen
-                                            ? { background: "rgba(0,206,200,0.15)", border: "1px solid rgba(0,206,200,0.35)" }
+                                            ? { background: "rgb(var(--nx-accent-rgb) / 0.15)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)" }
                                             : { background: "rgba(140,160,210,0.10)" }}>
                                         <Radio className="w-3.5 h-3.5" style={{ color: b.autoListen ? "var(--nx-accent)" : "rgba(140,160,210,0.7)" }} />
                                     </button>
@@ -126,7 +126,7 @@ export function NxGroupBotsModal({
                 </div>
 
                 {canManage && (
-                    <div className="flex-shrink-0 p-3" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                    <div className="flex-shrink-0 p-3" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                         {!addOpen ? (
                             <button onClick={() => setAddOpen(true)}
                                 className="w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
@@ -138,7 +138,7 @@ export function NxGroupBotsModal({
                                 <input value={q} onChange={e => setQ(e.target.value)}
                                     placeholder="Bot qidiring @handle yoki nomi..."
                                     className="w-full rounded-xl px-3 py-2 text-sm text-[var(--nx-text)] outline-none"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)" }} />
+                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
                                 <div className="max-h-[180px] overflow-y-auto space-y-1" style={{ scrollbarWidth: "none" }}>
                                     {suggestions.map(a => (
                                         <button key={a.id} onClick={() => add(a.id, false)}

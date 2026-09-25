@@ -126,7 +126,7 @@ export function NxTrendingBanner() {
             {/* H-18: Kim kuzatishga arziydi */}
             {visibleSugs.length > 0 && (
                 <div className="mx-4 rounded-2xl overflow-hidden"
-                    style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                    style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <div className="flex items-center gap-2 px-4 pt-3 pb-1">
                         <UserPlus className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                         <span className="text-xs font-black text-[var(--nx-text)]">Kim kuzatishga arziydi</span>
@@ -136,12 +136,12 @@ export function NxTrendingBanner() {
                             const isF = following.has(s.username!);
                             return (
                                 <div key={s.username} className="flex-shrink-0 w-36 rounded-xl p-3 relative"
-                                    style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                     <button onClick={() => dismiss(s.username!)}
                                         className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black"
                                         style={{ background: "rgba(8,14,32,0.7)", color: "rgba(140,160,210,0.60)" }}>×</button>
                                     <Link href={`/nexus/u/${s.username}`} className="block">
-                                        <div className="w-12 h-12 mx-auto rounded-2xl overflow-hidden mb-2" style={{ border: "2px solid rgba(43,62,232,0.30)" }}>
+                                        <div className="w-12 h-12 mx-auto rounded-2xl overflow-hidden mb-2" style={{ border: "2px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                             <img src={avatarOf(s)} alt="" className="w-full h-full object-cover bg-white" />
                                         </div>
                                         <div className="text-center flex items-center justify-center gap-1">
@@ -153,7 +153,7 @@ export function NxTrendingBanner() {
                                     <button onClick={() => toggleFollow(s.username!)}
                                         className="mt-2 w-full py-1.5 rounded-lg text-[10px] font-black flex items-center justify-center gap-1 active:scale-95 transition-transform"
                                         style={isF
-                                            ? { background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.35)", color: "var(--nx-accent)" }
+                                            ? { background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.35)", color: "var(--nx-accent)" }
                                             : { background: "var(--nx-accent)", color: "#fff" }}>
                                         {isF ? <><Check className="w-3 h-3" />Kuzatilmoqda</> : <><UserPlus className="w-3 h-3" />Kuzatish</>}
                                     </button>

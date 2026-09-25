@@ -271,7 +271,7 @@ export function NxGroupCall() {
                         <div className="fixed inset-0 z-[310] bg-black/60 backdrop-blur-sm"
                             onClick={() => setInviteOpen(false)} />
                         <div className="fixed inset-x-0 bottom-0 z-[311] max-h-[70vh] overflow-hidden rounded-t-3xl bg-[#080C20] shadow-2xl md:inset-x-auto md:left-1/2 md:top-1/2 md:w-[440px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-3xl"
-                            style={{ border: "1px solid rgba(43,62,232,0.22)" }}
+                            style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}
                             onClick={e => e.stopPropagation()}>
                             <div className="flex items-center justify-between px-5 pt-5 pb-3">
                                 <h3 className="flex items-center gap-2 text-base font-black text-white">
@@ -279,18 +279,18 @@ export function NxGroupCall() {
                                 </h3>
                                 <button onClick={() => setInviteOpen(false)}
                                     className="flex h-8 w-8 items-center justify-center rounded-full"
-                                    style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                                     <X className="h-4 w-4 text-white" />
                                 </button>
                             </div>
                             <div className="px-4 pb-3">
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none"
-                                        style={{ color: "rgba(43,62,232,0.5)" }} />
+                                        style={{ color: "rgb(var(--nx-accent-rgb) / 0.5)" }} />
                                     <input value={inviteQuery} onChange={e => setInviteQuery(e.target.value)}
                                         placeholder="Ism yoki username..."
                                         className="w-full rounded-xl pl-9 pr-4 py-2.5 text-sm font-semibold text-white outline-none"
-                                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
+                                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                                 </div>
                             </div>
                             <div className="flex-1 overflow-y-auto px-3 pb-5" style={{ maxHeight: "calc(70vh - 130px)", scrollbarWidth: "none" }}>
@@ -337,7 +337,7 @@ export function NxGroupCall() {
                 style={{ background: "rgba(5,8,24,0.80)", backdropFilter: "blur(8px)" }}
                 onClick={() => setGroupCallOpen(false)} />
             <div className="fixed inset-x-0 bottom-0 z-[55] flex flex-col overflow-hidden rounded-t-3xl md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:w-[480px] md:max-h-[86vh] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-3xl"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(43,62,232,0.22)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)", maxHeight: "88vh" }}
+                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)", maxHeight: "88vh" }}
                 onClick={e => e.stopPropagation()}>
 
                 <div className="flex flex-shrink-0 items-center justify-between px-5 pt-5 pb-3">
@@ -351,7 +351,7 @@ export function NxGroupCall() {
                     </div>
                     <button onClick={() => setGroupCallOpen(false)}
                         className="flex h-8 w-8 items-center justify-center rounded-full"
-                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                         <X className="h-4 w-4 text-white" />
                     </button>
                 </div>
@@ -379,9 +379,9 @@ export function NxGroupCall() {
                                 <div className="flex flex-col gap-1.5">
                                     {calls.map(c => (
                                         <div key={c.id} className="flex items-center gap-3 rounded-2xl p-3 transition-colors hover:bg-white/[0.03]"
-                                            style={{ border: "1px solid rgba(43,62,232,0.15)" }}>
+                                            style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
-                                                style={{ background: c.status === "ACTIVE" ? "var(--nx-accent)" : "rgba(43,62,232,0.15)" }}>
+                                                style={{ background: c.status === "ACTIVE" ? "var(--nx-accent)" : "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                                 <Users className="h-5 w-5 text-white" />
                                             </div>
                                             <div className="min-w-0 flex-1">
@@ -416,11 +416,11 @@ export function NxGroupCall() {
                             <input value={title} onChange={e => setTitle(e.target.value)} maxLength={80}
                                 placeholder="masalan: Jamoa yig'ilishi"
                                 className="rounded-xl px-3 py-2.5 text-sm font-semibold text-white outline-none"
-                                style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
+                                style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                             <div className="flex gap-2 pt-2">
                                 <button onClick={() => setView("list")}
                                     className="flex-1 rounded-xl py-2.5 text-sm font-bold text-white"
-                                    style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                                     Bekor
                                 </button>
                                 <button onClick={createCall} disabled={creating}
