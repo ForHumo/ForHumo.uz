@@ -1189,6 +1189,12 @@ export function AiChatPage() {
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img src={m.attachmentUrl} alt="" className="mb-2 max-w-full max-h-64 rounded-lg" />
                                     )}
+                                    {m.attachmentUrl && m.attachmentType !== "image" && (
+                                        <a href={m.attachmentUrl} target="_blank" rel="noopener noreferrer"
+                                            className="mb-2 flex items-center gap-1.5 text-[11px] underline opacity-90">
+                                            <Paperclip className="w-3 h-3 flex-shrink-0" /> Biriktirilgan fayl
+                                        </a>
+                                    )}
                                     {isUser ? m.body : (m.body ? <AiMarkdown>{m.body}</AiMarkdown> : null)}
                                     {/* Streaming caret */}
                                     {!isUser && sending && idx === messages.length - 1 && (

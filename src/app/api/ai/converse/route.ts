@@ -15,7 +15,7 @@ import { NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { aiAvailable, aiChat, aiText, aiJSON, aiVisionJSON } from "@/lib/ai";
+import { aiAvailable, aiChat, aiText, aiJSON, aiVisionJSON, aiAnalyzeFile } from "@/lib/ai";
 import { buildAiSystemPrompt } from "@/lib/ai-context-builder";
 import { extractKnowledgeFromMessage } from "@/lib/user-knowledge";
 import { belisRate } from "@/lib/belis-rate";
@@ -128,6 +128,18 @@ export async function POST(req: Request) {
             aiReply = (visionResult?.reply || "").trim().slice(0, 3000);
             if (!aiReply) {
                 aiReply = await aiText(`Rasm bilan savol: "${userMsg}". Rasm tahlil qilib javob bering.`, { system });
+                aiReply = (aiReply || "").trim().slice(0, 3000);
+            }
+        } else if (attachmentUrl) {
+            // Fayl (PDF) — Gemini hujjatni o'qib javob beradi (document understanding)
+            aiReply = await aiAnalyzeFile(
+                `${userMsg || "Ushbu hujjatni tahlil qiling va asosiy mazmunini o'zbekcha tushuntiring."}\n\n(Yuqoridagi hujjatga asoslanib javob bering.)`,
+                attachmentUrl,
+                { system, temperature: 0.6 },
+            );
+            aiReply = (aiReply || "").trim().slice(0, 3000);
+            if (!aiReply) {
+                aiReply = await aiText(userMsg || "Hujjatni tahlil qiling.", { system });
                 aiReply = (aiReply || "").trim().slice(0, 3000);
             }
         } else {

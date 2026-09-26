@@ -128,6 +128,27 @@ export async function aiVisionJSON<T>(prompt: string, imageUrl: string | null, o
     return parseJson<T>(txt);
 }
 
+// Faylni (PDF/rasm) URL'dan olib Gemini inline formatiga o'tkazadi (document understanding).
+export async function fetchFileInline(url: string, maxBytes = 15_000_000): Promise<{ mime_type: string; data: string } | null> {
+    try {
+        const r = await fetch(url);
+        if (!r.ok) return null;
+        const mime = r.headers.get("content-type") || "application/octet-stream";
+        const buf = Buffer.from(await r.arrayBuffer());
+        if (buf.length > maxBytes) return null;   // juda katta fayl — o'tkazib yuboramiz
+        return { mime_type: mime, data: buf.toString("base64") };
+    } catch { return null; }
+}
+
+// Fayl (PDF/rasm) + matn → matn javob. AI hujjatni o'qib javob beradi.
+// Fayl olinmasa yoki xato bo'lsa — faqat matn bilan javob (fail-safe).
+export async function aiAnalyzeFile(prompt: string, fileUrl: string, opts: GenOpts = {}): Promise<string> {
+    const parts: Part[] = [{ text: prompt }];
+    const file = await fetchFileInline(fileUrl);
+    if (file) parts.push({ inline_data: file });
+    return generate(parts, opts);
+}
+
 /**
  * Gemini bilan audio transkribatsiya. Kirish: OGG/Opus/WAV/MP3 buffer.
  * Til: auto-detect (Gemini o'zi aniqlaydi), o'zbek/rus/ingliz uchun aniq ishlaydi.
