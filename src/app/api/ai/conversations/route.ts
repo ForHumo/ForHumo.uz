@@ -33,7 +33,7 @@ export async function GET(req: Request) {
         take: 100,
         select: {
             id: true, title: true, topic: true, moduleOrigin: true, mode: true,
-            lastMsgAt: true, createdAt: true, archived: true,
+            lastMsgAt: true, createdAt: true, archived: true, shareId: true,
             _count: { select: { messages: true } },
         },
     });
@@ -44,6 +44,7 @@ export async function GET(req: Request) {
             lastMsgAt: r.lastMsgAt.toISOString(),
             createdAt: r.createdAt.toISOString(),
             archived: r.archived,
+            shareId: r.shareId,          // ulashilgan bo'lsa — public read-only URL id
             messageCount: r._count.messages,
         })),
     });

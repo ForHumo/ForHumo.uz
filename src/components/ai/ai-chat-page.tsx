@@ -10,7 +10,8 @@ import {
     Send, Loader2, Plus, MessageSquare, Sparkles, Trash2, LogIn,
     Archive, Menu, X as XIcon, User as UserIcon, Brain, ShieldCheck,
     Mic, MicOff, Paperclip, ImageIcon, Volume2, VolumeX, Share2, Check,
-    Code2, Globe, BookOpen, Mail, Film, Users, Clock, Cpu, ChevronDown, Copy, Download, Home, type LucideIcon,
+    Code2, Globe, BookOpen, Mail, Film, Users, Clock, Cpu, ChevronDown, Copy, Download, Home,
+    Music, Search, CheckSquare, Square, Link2Off, type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { AiStarfield } from "@/components/ai/ai-starfield";
@@ -20,6 +21,7 @@ interface ConvSummary {
     id: string; title: string; topic: string | null; moduleOrigin: string | null;
     mode?: string;
     lastMsgAt: string; createdAt: string; archived: boolean; messageCount: number;
+    shareId?: string | null;   // ulashilgan bo'lsa — public URL id
 }
 interface MsgRow {
     id: string; role: "user" | "ai" | "system"; body: string;
@@ -56,15 +58,29 @@ const T = {
 
 // Humo AI rejimlari — global AI'lar (ChatGPT/Gemini) uslubidagi menu.
 // chat + code TO'LIQ ishlaydi; pic/vid/cowork hozircha "Soon".
-type AiMode = "chat" | "code" | "pic" | "vid" | "cowork";
+type AiMode = "chat" | "code" | "pic" | "vid" | "music" | "cowork";
 const AI_MODES: { id: AiMode; label: string; sub: string; icon: LucideIcon; soon?: boolean }[] = [
     { id: "chat",   label: "Chat Bot",     sub: "Oddiy suhbat",     icon: Sparkles },
     { id: "code",   label: "Gen Code",     sub: "Kod yozib berish", icon: Code2 },
     { id: "pic",    label: "Gen Pic",      sub: "Rasm yaratish",    icon: ImageIcon },
     { id: "vid",    label: "Gen Vid",      sub: "Video yaratish",   icon: Film,      soon: true },
+    { id: "music",  label: "Gen Music",    sub: "Musiqa yaratish",  icon: Music,     soon: true },
     { id: "cowork", label: "Humo CoWork",  sub: "Canvas — birga ishlash", icon: Users },
 ];
 const AI_MODE_MAP = Object.fromEntries(AI_MODES.map(m => [m.id, m])) as Record<AiMode, typeof AI_MODES[number]>;
+
+// Composer "+" menyusi (Gemini/ChatGPT uslubi) — faqat o'zimizniki.
+type PlusItem = { id: string; label: string; icon: LucideIcon; action: "file" | "mode" | "soon"; mode?: AiMode; soon?: boolean };
+const PLUS_ITEMS: PlusItem[] = [
+    { id: "file",   label: "File biriktirish",    icon: Paperclip, action: "file" },
+    { id: "code",   label: "Kod yozish",          icon: Code2,     action: "mode", mode: "code" },
+    { id: "pic",    label: "Rasm yaratish",       icon: ImageIcon, action: "mode", mode: "pic" },
+    { id: "vid",    label: "Video yaratish",      icon: Film,      action: "mode", mode: "vid",  soon: true },
+    { id: "music",  label: "Musiqa yaratish",     icon: Music,     action: "mode", mode: "music", soon: true },
+    { id: "cowork", label: "Humo CoWork",         icon: Users,     action: "mode", mode: "cowork" },
+    { id: "search", label: "Saytlardan qidirish", icon: Search,    action: "soon", soon: true },
+    { id: "think",  label: "Chuqur fikrlash",     icon: Brain,     action: "soon", soon: true },
+];
 
 export function AiChatPage() {
     const { status } = useSession();
@@ -77,12 +93,16 @@ export function AiChatPage() {
     const [loadingThread, setLoadingThread] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);   // mobile
     const [mode, setMode] = useState<AiMode>("chat");        // AI rejimi
-    const [modeMenuOpen, setModeMenuOpen] = useState(false); // mobil rejim-menu drawer
     const [model, setModel] = useState<string>(DEFAULT_MODEL); // tanlangan AI model
     const [modelMenuOpen, setModelMenuOpen] = useState(false); // model tanlash dropdown
     const [canvas, setCanvas] = useState<string>("");          // CoWork Canvas hujjati
     const [canvasView, setCanvasView] = useState<"chat" | "canvas">("chat"); // mobil tab
     const [canvasCopied, setCanvasCopied] = useState(false);
+    // Chat tanlash (bulk operatsiya)
+    const [selectMode, setSelectMode] = useState(false);
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    // Composer "+" menyusi (Gemini/ChatGPT uslubi)
+    const [plusMenuOpen, setPlusMenuOpen] = useState(false);
 
     function copyCanvas() {
         if (!canvas) return;
@@ -224,6 +244,14 @@ export function AiChatPage() {
         } finally { setUploading(false); }
     }
 
+    // Composer "+" menyusi tanlovi
+    function handlePlus(item: PlusItem) {
+        setPlusMenuOpen(false);
+        if (item.action === "file") { fileInputRef.current?.click(); return; }
+        if (item.action === "mode" && item.mode) { switchMode(item.mode); return; }
+        // soon — hozircha ishlamaydi (Saytlardan qidirish / Chuqur fikrlash)
+    }
+
     // KB count — banner ko'rsatish uchun
     useEffect(() => {
         if (status !== "authenticated") return;
@@ -260,7 +288,7 @@ export function AiChatPage() {
 
     // Rejim almashtirish — yangi suhbat (aktiv chatni tozalab) + o'sha rejim tarixi
     function switchMode(m: AiMode) {
-        setModeMenuOpen(false);
+        setSidebarOpen(false);
         if (m === mode) return;
         setMode(m);
         setActiveId(null);
@@ -268,6 +296,38 @@ export function AiChatPage() {
         setInput("");
         setCanvas("");
         setCanvasView("chat");
+        setSelectMode(false);
+        setSelected(new Set());
+    }
+
+    // Chat tanlash rejimi (belgilash + bulk o'chirish)
+    function toggleSelectMode() {
+        setSelectMode(prev => {
+            if (prev) setSelected(new Set());
+            return !prev;
+        });
+    }
+    function toggleSelectOne(id: string) {
+        setSelected(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
+    }
+    function toggleSelectAll() {
+        setSelected(prev => prev.size === convs.length ? new Set() : new Set(convs.map(c => c.id)));
+    }
+    async function deleteSelected() {
+        const ids = Array.from(selected);
+        if (ids.length === 0) return;
+        if (!confirm(`${ids.length} ta suhbat butunlay o'chiriladi. Davom etamizmi?`)) return;
+        await Promise.allSettled(
+            ids.map(id => fetch(`/api/ai/conversations/${id}`, { method: "DELETE" })),
+        );
+        setConvs(prev => prev.filter(c => !selected.has(c.id)));
+        if (activeId && selected.has(activeId)) { setActiveId(null); setMessages([]); }
+        setSelected(new Set());
+        setSelectMode(false);
     }
 
     // Bir suhbatni ochish
@@ -521,6 +581,8 @@ export function AiChatPage() {
         const r = await fetch(`/api/ai/conversations/${id}/share`, { method: "POST" });
         if (!r.ok) return;
         const j = await r.json();
+        // Public havola faol bo'ldi — lokal holatni belgilaymiz (unshare tugmasi chiqadi)
+        if (j.shareId) setConvs(prev => prev.map(c => c.id === id ? { ...c, shareId: j.shareId } : c));
         const full = typeof window !== "undefined" ? `${window.location.origin}${j.url}` : j.url;
         try {
             await navigator.clipboard.writeText(full);
@@ -530,6 +592,13 @@ export function AiChatPage() {
             // fallback: prompt
             window.prompt("Havolani nusxa oling:", full);
         }
+    }
+
+    // Ulashishni bekor qilish — public havola ishlamay qoladi
+    async function unshareConv(id: string) {
+        if (!confirm("Ulashilgan havola o'chiriladi — havola bo'yicha kirganlar endi ko'ra olmaydi. Davom etamizmi?")) return;
+        const r = await fetch(`/api/ai/conversations/${id}/share`, { method: "DELETE" });
+        if (r.ok) setConvs(prev => prev.map(c => c.id === id ? { ...c, shareId: null } : c));
     }
 
     if (status === "loading") {
@@ -590,7 +659,59 @@ export function AiChatPage() {
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                {/* REJIMLAR (chapda — chatlar tepasida) */}
+                <div className="px-2 pt-2 pb-2 border-b flex-shrink-0" style={{ borderColor: T.border }}>
+                    <p className="px-2 pb-1.5 text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Rejimlar</p>
+                    <div className="space-y-0.5">
+                        {AI_MODES.map(m => {
+                            const active = mode === m.id;
+                            return (
+                                <button key={m.id} onClick={() => switchMode(m.id)}
+                                    className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-colors hover:bg-white/[0.04]"
+                                    style={active ? { background: T.soft } : {}}>
+                                    <span className="w-7 h-7 rounded-lg grid place-items-center flex-shrink-0"
+                                        style={{ background: active ? "#ECECEC" : "rgba(255,255,255,0.05)", color: active ? "#0d0d0d" : "var(--muted-foreground)" }}>
+                                        <m.icon className="w-4 h-4" />
+                                    </span>
+                                    <span className="text-[12.5px] font-bold truncate flex-1 text-[var(--foreground)]">{m.label}</span>
+                                    {m.soon && (
+                                        <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0"
+                                            style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>SOON</span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* CHATLAR */}
+                <div className="px-4 pt-2.5 pb-1 flex items-center justify-between flex-shrink-0">
+                    <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Chatlar</p>
+                    {convs.length > 0 && (
+                        <button onClick={toggleSelectMode}
+                            className="text-[10px] font-bold hover:underline" style={{ color: "var(--muted-foreground)" }}>
+                            {selectMode ? "Bekor" : "Tanlash"}
+                        </button>
+                    )}
+                </div>
+
+                {/* Tanlash rejimi — hammasini belgilash + o'chirish */}
+                {selectMode && convs.length > 0 && (
+                    <div className="px-3 pb-2 flex items-center gap-2 flex-shrink-0">
+                        <button onClick={toggleSelectAll}
+                            className="flex items-center gap-1.5 text-[11px] font-bold px-2 py-1 rounded-lg hover:bg-white/[0.05]"
+                            style={{ color: "var(--foreground)" }}>
+                            {selected.size === convs.length ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                            Hammasi ({selected.size})
+                        </button>
+                        <button onClick={deleteSelected} disabled={selected.size === 0}
+                            className="flex items-center gap-1.5 text-[11px] font-bold px-2 py-1 rounded-lg text-red-500 hover:bg-red-500/10 disabled:opacity-30 ml-auto">
+                            <Trash2 className="w-3.5 h-3.5" /> O&apos;chirish
+                        </button>
+                    </div>
+                )}
+
+                <div className="flex-1 overflow-y-auto p-2 pt-0 space-y-1">
                     {loadingConvs && convs.length === 0 ? (
                         <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
                     ) : convs.length === 0 ? (
@@ -600,44 +721,68 @@ export function AiChatPage() {
                     ) : (
                         convs.map(c => {
                             const active = c.id === activeId;
+                            const checked = selected.has(c.id);
                             return (
                                 <div key={c.id} className="group relative">
                                     <button
-                                        onClick={() => { setActiveId(c.id); setSidebarOpen(false); }}
-                                        className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
-                                            active ? "font-black" : "font-medium hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
+                                        onClick={() => {
+                                            if (selectMode) { toggleSelectOne(c.id); return; }
+                                            setActiveId(c.id); setSidebarOpen(false);
+                                        }}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors flex items-start gap-2 ${
+                                            active && !selectMode ? "font-black" : "font-medium hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
                                         }`}
-                                        style={active ? { background: T.soft, color: T.primary } : { color: "var(--foreground)" }}
+                                        style={(active && !selectMode) || (selectMode && checked) ? { background: T.soft, color: T.primary } : { color: "var(--foreground)" }}
                                     >
-                                        <div className="flex items-center gap-2 mb-0.5">
-                                            <MessageSquare className="w-3 h-3 flex-shrink-0" />
-                                            <span className="truncate flex-1">{c.title}</span>
-                                            {c.archived && <Archive className="w-3 h-3 opacity-50 flex-shrink-0" />}
-                                        </div>
-                                        <p className="text-[10px] opacity-60 pl-5">
-                                            {c.moduleOrigin && `${c.moduleOrigin} · `}
-                                            {c.messageCount} xabar
-                                        </p>
+                                        {selectMode && (
+                                            <span className="mt-0.5 flex-shrink-0">
+                                                {checked
+                                                    ? <CheckSquare className="w-4 h-4" style={{ color: T.primary }} />
+                                                    : <Square className="w-4 h-4 opacity-50" />}
+                                            </span>
+                                        )}
+                                        <span className="flex-1 min-w-0">
+                                            <span className="flex items-center gap-2 mb-0.5">
+                                                <MessageSquare className="w-3 h-3 flex-shrink-0" />
+                                                <span className="truncate flex-1">{c.title}</span>
+                                                {c.shareId && <Share2 className="w-3 h-3 flex-shrink-0" style={{ color: "#4ade80" }} />}
+                                                {c.archived && <Archive className="w-3 h-3 opacity-50 flex-shrink-0" />}
+                                            </span>
+                                            <span className="block text-[10px] opacity-60 pl-5">
+                                                {c.moduleOrigin && `${c.moduleOrigin} · `}
+                                                {c.messageCount} xabar
+                                            </span>
+                                        </span>
                                     </button>
-                                    <div className="absolute top-1 right-1 hidden group-hover:flex items-center gap-0.5">
-                                        <button onClick={() => shareConv(c.id)}
-                                            title="Ulashish (havola nusxa)"
-                                            className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">
-                                            {shareCopied === c.id
-                                                ? <Check className="w-3 h-3 text-green-500" />
-                                                : <Share2 className="w-3 h-3" />}
-                                        </button>
-                                        <button onClick={() => archiveConv(c.id, c.archived)}
-                                            title={c.archived ? "Qayta faollashtir" : "Arxivlash"}
-                                            className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">
-                                            <Archive className="w-3 h-3" />
-                                        </button>
-                                        <button onClick={() => deleteConv(c.id)}
-                                            title="O'chirish"
-                                            className="p-1 rounded hover:bg-red-500/10 text-red-500">
-                                            <Trash2 className="w-3 h-3" />
-                                        </button>
-                                    </div>
+                                    {!selectMode && (
+                                        <div className="absolute top-1 right-1 hidden group-hover:flex items-center gap-0.5"
+                                            style={{ background: "rgba(13,13,13,0.85)", borderRadius: 8 }}>
+                                            <button onClick={() => shareConv(c.id)}
+                                                title={c.shareId ? "Havolani qayta nusxalash" : "Ulashish (havola nusxa)"}
+                                                className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">
+                                                {shareCopied === c.id
+                                                    ? <Check className="w-3 h-3 text-green-500" />
+                                                    : <Share2 className="w-3 h-3" style={c.shareId ? { color: "#4ade80" } : undefined} />}
+                                            </button>
+                                            {c.shareId && (
+                                                <button onClick={() => unshareConv(c.id)}
+                                                    title="Ulashishni bekor qilish"
+                                                    className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">
+                                                    <Link2Off className="w-3 h-3" />
+                                                </button>
+                                            )}
+                                            <button onClick={() => archiveConv(c.id, c.archived)}
+                                                title={c.archived ? "Qayta faollashtir" : "Arxivlash"}
+                                                className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">
+                                                <Archive className="w-3 h-3" />
+                                            </button>
+                                            <button onClick={() => deleteConv(c.id)}
+                                                title="O'chirish"
+                                                className="p-1 rounded hover:bg-red-500/10 text-red-500">
+                                                <Trash2 className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })
@@ -754,14 +899,6 @@ export function AiChatPage() {
                         className="w-9 h-9 rounded-lg grid place-items-center hover:brightness-95"
                         style={{ background: ttsEnabled ? T.soft : "transparent", color: ttsEnabled ? T.primary : "var(--muted-foreground)" }}>
                         {ttsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-                    </button>
-
-                    {/* Rejim menu (mobil + cowork'da desktop) */}
-                    <button onClick={() => setModeMenuOpen(true)}
-                        title="Rejimlar" aria-label="Rejimlar"
-                        className={`${mode === "cowork" ? "" : "lg:hidden"} w-9 h-9 rounded-lg grid place-items-center flex-shrink-0`}
-                        style={{ background: T.soft, color: "var(--foreground)" }}>
-                        {(() => { const Ic = AI_MODE_MAP[mode].icon; return <Ic className="w-4 h-4" />; })()}
                     </button>
                 </header>
 
@@ -937,16 +1074,45 @@ export function AiChatPage() {
 
                 {!AI_MODE_MAP[mode].soon && (
                 <form onSubmit={sendMessage} className="border-t p-3 flex gap-2 items-end" style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
-                    {/* Attachment button */}
+                    {/* "+" menyu (fayl / rejimlar / kelajak vositalar) */}
                     <input ref={fileInputRef} type="file" accept="image/*,application/pdf" hidden
                         onChange={e => { const f = e.target.files?.[0]; if (f) uploadAttachment(f); e.target.value = ""; }} />
-                    <button type="button" onClick={() => fileInputRef.current?.click()}
-                        disabled={uploading || !!attachment}
-                        title="Rasm yoki fayl"
-                        className="w-11 h-11 rounded-xl grid place-items-center disabled:opacity-40 hover:brightness-95"
-                        style={{ background: T.soft, color: T.primary }}>
-                        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                    </button>
+                    <div className="relative flex-shrink-0">
+                        <button type="button" onClick={() => setPlusMenuOpen(o => !o)}
+                            disabled={uploading}
+                            title="Ko'proq" aria-label="Ko'proq"
+                            className="w-11 h-11 rounded-xl grid place-items-center disabled:opacity-40 hover:brightness-95 transition-transform"
+                            style={{ background: T.soft, color: T.primary, transform: plusMenuOpen ? "rotate(45deg)" : "none" }}>
+                            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-5 h-5" />}
+                        </button>
+                        {plusMenuOpen && (
+                            <>
+                                <button type="button" className="fixed inset-0 z-40" onClick={() => setPlusMenuOpen(false)} aria-label="Yopish" />
+                                <div className="absolute bottom-full left-0 mb-2 w-60 rounded-2xl overflow-hidden z-50 py-1.5"
+                                    style={{ background: "rgba(20,20,20,0.98)", border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
+                                    {PLUS_ITEMS.map((it, i) => {
+                                        const activeMode = it.action === "mode" && it.mode === mode;
+                                        return (
+                                            <div key={it.id}>
+                                                {(i === 1 || i === 6) && <div className="my-1 h-px" style={{ background: T.border }} />}
+                                                <button type="button" onClick={() => handlePlus(it)}
+                                                    className="w-full flex items-center gap-3 px-3.5 py-2.5 text-left hover:bg-white/[0.05] transition-colors"
+                                                    style={activeMode ? { background: T.soft } : {}}>
+                                                    <it.icon className="w-[18px] h-[18px] flex-shrink-0" style={{ color: "var(--muted-foreground)" }} />
+                                                    <span className="text-[13px] font-semibold flex-1 truncate text-[var(--foreground)]">{it.label}</span>
+                                                    {it.soon && (
+                                                        <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0"
+                                                            style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>SOON</span>
+                                                    )}
+                                                    {activeMode && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--foreground)" }} />}
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </>
+                        )}
+                    </div>
 
                     <input
                         value={input}
@@ -1012,49 +1178,6 @@ export function AiChatPage() {
                 </aside>
             )}
 
-            {/* Mobil — rejim menu overlay */}
-            {modeMenuOpen && (
-                <button className="lg:hidden fixed inset-0 bg-black/50 z-30"
-                    onClick={() => setModeMenuOpen(false)} aria-label="Yopish" />
-            )}
-
-            {/* O'ng — REJIM menyusi (global AI uslubi: Chat/Code/Pic/Vid/CoWork) */}
-            <aside className={`w-60 flex-shrink-0 border-l flex-col
-                ${mode === "cowork" ? "lg:hidden" : "lg:relative lg:z-10 lg:flex"}
-                ${modeMenuOpen ? "fixed inset-y-0 right-0 z-40 flex" : "hidden"}`}
-                style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
-                <div className="h-14 px-4 flex items-center justify-between border-b flex-shrink-0" style={{ borderColor: T.border }}>
-                    <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Rejimlar</p>
-                    <button onClick={() => setModeMenuOpen(false)} className="lg:hidden p-1 -mr-1">
-                        <XIcon className="w-4 h-4" style={{ color: "var(--muted-foreground)" }} />
-                    </button>
-                </div>
-                <div className="p-2 space-y-1 overflow-y-auto">
-                    {AI_MODES.map(m => {
-                        const active = mode === m.id;
-                        return (
-                            <button key={m.id} onClick={() => switchMode(m.id)}
-                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors hover:bg-white/[0.04]"
-                                style={active ? { background: T.soft, border: `1px solid ${T.border}` } : { border: "1px solid transparent" }}>
-                                <span className="w-9 h-9 rounded-xl grid place-items-center flex-shrink-0"
-                                    style={{ background: active ? "#ECECEC" : "rgba(255,255,255,0.05)", color: active ? "#0d0d0d" : "var(--muted-foreground)" }}>
-                                    <m.icon className="w-[18px] h-[18px]" />
-                                </span>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-[13px] font-bold truncate text-[var(--foreground)]">{m.label}</span>
-                                        {m.soon && (
-                                            <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0"
-                                                style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>SOON</span>
-                                        )}
-                                    </div>
-                                    <span className="text-[10.5px] block truncate" style={{ color: "var(--muted-foreground)" }}>{m.sub}</span>
-                                </div>
-                            </button>
-                        );
-                    })}
-                </div>
-            </aside>
         </div>
     );
 }

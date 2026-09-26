@@ -224,6 +224,7 @@ export async function POST(req: Request) {
 
                 push({
                     type: "done",
+                    conversationId: conversation!.id,
                     messages: [
                         { id: userDbMsg.id, role: "user", body: userMsg, createdAt: userDbMsg.createdAt.toISOString() },
                         { id: aiDbMsg.id, role: "ai", body: fullReply, createdAt: aiDbMsg.createdAt.toISOString() },
