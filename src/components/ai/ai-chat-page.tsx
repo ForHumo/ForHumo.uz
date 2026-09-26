@@ -72,7 +72,7 @@ const AI_MODES: { id: AiMode; label: string; sub: string; icon: LucideIcon; soon
 const AI_MODE_MAP = Object.fromEntries(AI_MODES.map(m => [m.id, m])) as Record<AiMode, typeof AI_MODES[number]>;
 
 // Composer "+" menyusi (Gemini/ChatGPT uslubi) — faqat o'zimizniki.
-type PlusItem = { id: string; label: string; icon: LucideIcon; action: "file" | "mode" | "soon"; mode?: AiMode; soon?: boolean };
+type PlusItem = { id: string; label: string; icon: LucideIcon; action: "file" | "mode" | "soon" | "search"; mode?: AiMode; soon?: boolean };
 const PLUS_ITEMS: PlusItem[] = [
     { id: "file",   label: "File biriktirish",    icon: Paperclip, action: "file" },
     { id: "code",   label: "Kod yozish",          icon: Code2,     action: "mode", mode: "code" },
@@ -80,7 +80,7 @@ const PLUS_ITEMS: PlusItem[] = [
     { id: "vid",    label: "Video yaratish",      icon: Film,      action: "mode", mode: "vid",  soon: true },
     { id: "music",  label: "Musiqa yaratish",     icon: Music,     action: "mode", mode: "music", soon: true },
     { id: "cowork", label: "Humo CoWork",         icon: Users,     action: "mode", mode: "cowork" },
-    { id: "search", label: "Saytlardan qidirish", icon: Search,    action: "soon", soon: true },
+    { id: "search", label: "Saytlardan qidirish", icon: Search,    action: "search" },
     { id: "think",  label: "Chuqur fikrlash",     icon: Brain,     action: "soon", soon: true },
 ];
 
@@ -109,8 +109,9 @@ export function AiChatPage() {
     // Chat tanlash (bulk operatsiya)
     const [selectMode, setSelectMode] = useState(false);
     const [selected, setSelected] = useState<Set<string>>(new Set());
-    // Composer "+" menyusi (Gemini/ChatGPT uslubi)
+    // Composer "+" menyusi (Gemini/ChatGPT uslubi) + web-qidiruv (Saytlardan qidirish)
     const [plusMenuOpen, setPlusMenuOpen] = useState(false);
+    const [webSearch, setWebSearch] = useState(false);
     // Sidebar yig'ish (desktop icon-rail) + chat qidiruv
     const [collapsed, setCollapsed] = useState(false);
     const [chatSearch, setChatSearch] = useState("");
@@ -331,7 +332,8 @@ export function AiChatPage() {
         setPlusMenuOpen(false);
         if (item.action === "file") { fileInputRef.current?.click(); return; }
         if (item.action === "mode" && item.mode) { switchMode(item.mode); return; }
-        // soon — hozircha ishlamaydi (Saytlardan qidirish / Chuqur fikrlash)
+        if (item.action === "search") { setWebSearch(v => !v); return; }
+        // soon — hozircha ishlamaydi (Chuqur fikrlash)
     }
 
     // KB count — banner ko'rsatish uchun
@@ -648,7 +650,7 @@ export function AiChatPage() {
                 body: JSON.stringify({
                     message: text, conversationId: activeId ?? undefined,
                     attachmentUrl: att?.url, attachmentType: att?.type,
-                    language: aiLang, mode, model,
+                    language: aiLang, mode, model, webSearch,
                 }),
             });
             const status = await consumeAiStream(r, streamMsgId, controller);
@@ -684,7 +686,7 @@ export function AiChatPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 signal: controller.signal,
-                body: JSON.stringify({ conversationId: activeId, language: aiLang, mode, model, regenerate: true }),
+                body: JSON.stringify({ conversationId: activeId, language: aiLang, mode, model, webSearch, regenerate: true }),
             });
             await consumeAiStream(r, streamMsgId, controller);
         } catch (e) {
@@ -1379,6 +1381,19 @@ export function AiChatPage() {
                     </div>
                 )}
 
+                {/* Web-qidiruv yoniq — indikator chip */}
+                {webSearch && !AI_MODE_MAP[mode].soon && (
+                    <div className="mx-3 mt-2 flex">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
+                            style={{ background: T.soft, color: T.primary, border: `1px solid ${T.border}` }}>
+                            <Search className="w-3 h-3" /> Saytlardan qidirish yoniq
+                            <button type="button" onClick={() => setWebSearch(false)} title="O'chirish" className="ml-0.5 opacity-70 hover:opacity-100">
+                                <XIcon className="w-3 h-3" />
+                            </button>
+                        </span>
+                    </div>
+                )}
+
                 {!AI_MODE_MAP[mode].soon && (
                 <form onSubmit={sendMessage} className="border-t p-3 flex gap-2 items-end" style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                     {/* "+" menyu (fayl / rejimlar / kelajak vositalar) */}
@@ -1398,20 +1413,20 @@ export function AiChatPage() {
                                 <div className="absolute bottom-full left-0 mb-2 w-60 rounded-2xl overflow-hidden z-50 py-1.5"
                                     style={{ background: "rgba(20,20,20,0.98)", border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
                                     {PLUS_ITEMS.map((it, i) => {
-                                        const activeMode = it.action === "mode" && it.mode === mode;
+                                        const active = it.action === "mode" ? it.mode === mode : it.id === "search" ? webSearch : false;
                                         return (
                                             <div key={it.id}>
                                                 {(i === 1 || i === 6) && <div className="my-1 h-px" style={{ background: T.border }} />}
                                                 <button type="button" onClick={() => handlePlus(it)}
                                                     className="w-full flex items-center gap-3 px-3.5 py-2.5 text-left hover:bg-white/[0.05] transition-colors"
-                                                    style={activeMode ? { background: T.soft } : {}}>
-                                                    <it.icon className="w-[18px] h-[18px] flex-shrink-0" style={{ color: "var(--muted-foreground)" }} />
+                                                    style={active ? { background: T.soft } : {}}>
+                                                    <it.icon className="w-[18px] h-[18px] flex-shrink-0" style={{ color: active ? "var(--foreground)" : "var(--muted-foreground)" }} />
                                                     <span className="text-[13px] font-semibold flex-1 truncate text-[var(--foreground)]">{it.label}</span>
                                                     {it.soon && (
                                                         <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0"
                                                             style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>SOON</span>
                                                     )}
-                                                    {activeMode && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--foreground)" }} />}
+                                                    {active && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--foreground)" }} />}
                                                 </button>
                                             </div>
                                         );

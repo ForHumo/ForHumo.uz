@@ -58,6 +58,9 @@ export async function POST(req: Request) {
     // kalit yo'q bo'lsa bepul Gemini'ga tushadi (sayt buzilmaydi).
     let chosen = findModel(typeof body?.model === "string" ? body.model : undefined);
     if (chosen.provider === "openrouter" && !process.env.OPENROUTER_API_KEY) chosen = findModel(undefined);
+    // Web-qidiruv (Saytlardan qidirish) — Gemini Google Search grounding. OpenRouter'da yo'q → Gemini'ga tushamiz.
+    const webSearch = body?.webSearch === true;
+    if (webSearch && chosen.provider !== "gemini") chosen = findModel(undefined);
     const attachmentUrl = typeof body?.attachmentUrl === "string" ? body.attachmentUrl.slice(0, 500) : null;
     const attachmentType = typeof body?.attachmentType === "string" ? body.attachmentType.slice(0, 20) : null;
     const lang = ["uz", "ru", "en"].includes(String(body?.language)) ? String(body.language) as "uz" | "ru" | "en" : "uz";
@@ -146,6 +149,7 @@ export async function POST(req: Request) {
             push({ type: "start", conversationId: conversation!.id });
 
             let fullReply = "";
+            let groundingChunks: { web?: { uri?: string; title?: string } }[] = [];
             try {
                 if (chosen.provider === "openrouter") {
                     // OpenRouter (OpenAI-mos) — OpenAI/Anthropic/DeepSeek/Llama...
@@ -167,6 +171,7 @@ export async function POST(req: Request) {
                             contents,
                             systemInstruction: { parts: [{ text: system }] },
                             generationConfig: { temperature: 0.7 },
+                            ...(webSearch ? { tools: [{ google_search: {} }] } : {}),
                         }),
                     });
                     if (!geminiRes.ok || !geminiRes.body) {
@@ -195,12 +200,24 @@ export async function POST(req: Request) {
                                     fullReply += chunkText;
                                     push({ type: "chunk", text: chunkText });
                                 }
+                                // Web-qidiruv manbalari (grounding) — oxirgi chunk'da keladi
+                                const gm = parsed?.candidates?.[0]?.groundingMetadata;
+                                if (gm?.groundingChunks) groundingChunks = gm.groundingChunks;
                             } catch { /* skip malformed */ }
                         }
                     }
                 }
 
                 fullReply = fullReply.trim().slice(0, 3000);
+                // Web-qidiruv manbalarini javob oxiriga qo'shamiz (markdown havolalar)
+                if (webSearch && groundingChunks.length > 0) {
+                    const links = groundingChunks
+                        .map(c => c?.web)
+                        .filter((w): w is { uri: string; title?: string } => !!w?.uri)
+                        .slice(0, 5)
+                        .map((w, i) => `${i + 1}. [${(w.title || w.uri).slice(0, 70)}](${w.uri})`);
+                    if (links.length > 0) fullReply += `\n\n**Manbalar:**\n${links.join("\n")}`;
+                }
                 if (!fullReply) {
                     push({ type: "error", message: "empty_response" });
                     controller.close();
