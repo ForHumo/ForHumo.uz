@@ -10,10 +10,11 @@ import {
     Send, Loader2, Plus, MessageSquare, Sparkles, Trash2, LogIn,
     Archive, Menu, X as XIcon, User as UserIcon, Brain, ShieldCheck,
     Mic, MicOff, Paperclip, ImageIcon, Volume2, VolumeX, Share2, Check,
-    Code2, Globe, BookOpen, Mail, Film, Users, Clock, type LucideIcon,
+    Code2, Globe, BookOpen, Mail, Film, Users, Clock, Cpu, ChevronDown, type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { AiStarfield } from "@/components/ai/ai-starfield";
+import { AI_MODELS, DEFAULT_MODEL, findModel } from "@/lib/ai-models";
 
 interface ConvSummary {
     id: string; title: string; topic: string | null; moduleOrigin: string | null;
@@ -77,6 +78,20 @@ export function AiChatPage() {
     const [sidebarOpen, setSidebarOpen] = useState(false);   // mobile
     const [mode, setMode] = useState<AiMode>("chat");        // AI rejimi
     const [modeMenuOpen, setModeMenuOpen] = useState(false); // mobil rejim-menu drawer
+    const [model, setModel] = useState<string>(DEFAULT_MODEL); // tanlangan AI model
+    const [modelMenuOpen, setModelMenuOpen] = useState(false); // model tanlash dropdown
+
+    useEffect(() => {
+        try {
+            const m = localStorage.getItem("ai-model");
+            if (m && AI_MODELS.some(x => x.id === m)) setModel(m);
+        } catch { /* ignore */ }
+    }, []);
+    function pickModel(id: string) {
+        setModel(id);
+        setModelMenuOpen(false);
+        try { localStorage.setItem("ai-model", id); } catch { /* ignore */ }
+    }
     const [kbCount, setKbCount] = useState<number | null>(null);   // bilim bazasi kattaligi
     const [kbBannerDismissed, setKbBannerDismissed] = useState(false);
     // Voice input
@@ -335,7 +350,7 @@ export function AiChatPage() {
                 body: JSON.stringify({
                     message: text, conversationId: activeId ?? undefined,
                     attachmentUrl: att?.url, attachmentType: att?.type,
-                    language: aiLang, mode,
+                    language: aiLang, mode, model,
                 }),
             });
             if (!r.ok || !r.body) throw new Error("stream_failed");
@@ -569,8 +584,48 @@ export function AiChatPage() {
                             {AI_MODE_MAP[mode].label}{" · "}{activeId ? (convs.find(c => c.id === activeId)?.title ?? "Suhbat") : "Yangi chat"}
                         </p>
                     </div>
+                    {/* Model tanlash (OpenRouter — top modellar) */}
+                    <div className="relative flex-shrink-0">
+                        <button onClick={() => setModelMenuOpen(o => !o)}
+                            title="AI model"
+                            className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-[11px] font-bold hover:brightness-110"
+                            style={{ background: "var(--card, rgba(0,0,0,0.04))", color: "var(--foreground)" }}>
+                            <Cpu className="w-3.5 h-3.5" style={{ color: "var(--muted-foreground)" }} />
+                            <span className="max-w-[84px] truncate hidden sm:inline">{findModel(model).label}</span>
+                            <ChevronDown className="w-3 h-3" style={{ color: "var(--muted-foreground)" }} />
+                        </button>
+                        {modelMenuOpen && (
+                            <>
+                                <button className="fixed inset-0 z-40" onClick={() => setModelMenuOpen(false)} aria-label="Yopish" />
+                                <div className="absolute right-0 mt-1.5 w-60 rounded-xl overflow-hidden z-50 py-1"
+                                    style={{ background: "rgba(20,20,20,0.98)", border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
+                                    {AI_MODELS.map(m => {
+                                        const active = model === m.id;
+                                        return (
+                                            <button key={m.id} onClick={() => pickModel(m.id)}
+                                                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/[0.05]"
+                                                style={active ? { background: T.soft } : {}}>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-[12px] font-bold truncate text-[var(--foreground)]">{m.label}</span>
+                                                        {m.free && <span className="text-[8px] font-black px-1 py-0.5 rounded flex-shrink-0" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>BEPUL</span>}
+                                                    </div>
+                                                    {m.note && <span className="text-[10px] block truncate" style={{ color: "var(--muted-foreground)" }}>{m.note}</span>}
+                                                </div>
+                                                {active && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--foreground)" }} />}
+                                            </button>
+                                        );
+                                    })}
+                                    <div className="px-3 pt-1.5 pb-1 mt-1 border-t" style={{ borderColor: T.border }}>
+                                        <span className="text-[9px] leading-tight block" style={{ color: "var(--muted-foreground)" }}>Premium modellar OpenRouter kaliti qo'shilganda ishlaydi</span>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
                     {/* Til tanlash */}
-                    <div className="flex items-center gap-0.5 rounded-lg p-0.5" style={{ background: "var(--card, rgba(0,0,0,0.04))" }}>
+                    <div className="hidden sm:flex items-center gap-0.5 rounded-lg p-0.5" style={{ background: "var(--card, rgba(0,0,0,0.04))" }}>
                         {(["uz", "ru", "en"] as const).map(l => (
                             <button key={l} onClick={() => switchLang(l)}
                                 className="px-2 h-7 rounded-md text-[10px] font-black transition-colors"

@@ -18,12 +18,13 @@ import { extractKnowledgeFromMessage } from "@/lib/user-knowledge";
 import { belisRate } from "@/lib/belis-rate";
 import { aiJSON } from "@/lib/ai";
 import { embedAiMessage, findRelevantOldMessages } from "@/lib/ai-memory-search";
+import { findModel } from "@/lib/ai-models";
+import { streamOpenRouter } from "@/lib/ai-openrouter";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
 const MAX_MSG_LEN = 4000;
 const RECENT_MSGS = 12;
 
@@ -51,6 +52,10 @@ export async function POST(req: Request) {
     // AI rejimi — hozir chat va code to'liq ishlaydi (pic/vid/cowork "Soon", chatga kelmaydi).
     const modeRaw = typeof body?.mode === "string" ? body.mode : "chat";
     const mode = modeRaw === "code" ? "code" : "chat";
+    // Model tanlash — Gemini BEPUL (default). OpenRouter modellari OPENROUTER_API_KEY bilan;
+    // kalit yo'q bo'lsa bepul Gemini'ga tushadi (sayt buzilmaydi).
+    let chosen = findModel(typeof body?.model === "string" ? body.model : undefined);
+    if (chosen.provider === "openrouter" && !process.env.OPENROUTER_API_KEY) chosen = findModel(undefined);
     const attachmentUrl = typeof body?.attachmentUrl === "string" ? body.attachmentUrl.slice(0, 500) : null;
     const attachmentType = typeof body?.attachmentType === "string" ? body.attachmentType.slice(0, 20) : null;
     const lang = ["uz", "ru", "en"].includes(String(body?.language)) ? String(body.language) as "uz" | "ru" | "en" : "uz";
@@ -121,54 +126,58 @@ export async function POST(req: Request) {
 
             push({ type: "start", conversationId: conversation!.id });
 
-            // Gemini streaming API
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse&key=${GEMINI_KEY}`;
-            const contents = history.map(m => ({
-                role: m.role === "ai" ? "model" : "user",
-                parts: [{ text: m.body }],
-            }));
-
             let fullReply = "";
             try {
-                const geminiRes = await fetch(url, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents,
-                        systemInstruction: { parts: [{ text: system }] },
-                        generationConfig: { temperature: 0.7 },
-                    }),
-                });
-
-                if (!geminiRes.ok || !geminiRes.body) {
-                    push({ type: "error", message: "ai_failed" });
-                    controller.close();
-                    return;
-                }
-
-                const reader = geminiRes.body.getReader();
-                const decoder = new TextDecoder();
-                let buffer = "";
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    buffer += decoder.decode(value, { stream: true });
-                    // SSE parse — "data: {...}\n\n"
-                    const lines = buffer.split("\n");
-                    buffer = lines.pop() ?? "";
-                    for (const line of lines) {
-                        const trimmed = line.trim();
-                        if (!trimmed.startsWith("data:")) continue;
-                        const jsonStr = trimmed.slice(5).trim();
-                        if (!jsonStr) continue;
-                        try {
-                            const parsed = JSON.parse(jsonStr);
-                            const chunkText = parsed?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                            if (chunkText) {
-                                fullReply += chunkText;
-                                push({ type: "chunk", text: chunkText });
-                            }
-                        } catch { /* skip malformed */ }
+                if (chosen.provider === "openrouter") {
+                    // OpenRouter (OpenAI-mos) — OpenAI/Anthropic/DeepSeek/Llama...
+                    fullReply = await streamOpenRouter(
+                        { model: chosen.id, system, history, temperature: 0.7 },
+                        (delta) => push({ type: "chunk", text: delta }),
+                    );
+                } else {
+                    // Gemini streaming (bepul, to'g'ridan Google)
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${chosen.id}:streamGenerateContent?alt=sse&key=${GEMINI_KEY}`;
+                    const contents = history.map(m => ({
+                        role: m.role === "ai" ? "model" : "user",
+                        parts: [{ text: m.body }],
+                    }));
+                    const geminiRes = await fetch(url, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            contents,
+                            systemInstruction: { parts: [{ text: system }] },
+                            generationConfig: { temperature: 0.7 },
+                        }),
+                    });
+                    if (!geminiRes.ok || !geminiRes.body) {
+                        push({ type: "error", message: "ai_failed" });
+                        controller.close();
+                        return;
+                    }
+                    const reader = geminiRes.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = "";
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split("\n");
+                        buffer = lines.pop() ?? "";
+                        for (const line of lines) {
+                            const trimmed = line.trim();
+                            if (!trimmed.startsWith("data:")) continue;
+                            const jsonStr = trimmed.slice(5).trim();
+                            if (!jsonStr) continue;
+                            try {
+                                const parsed = JSON.parse(jsonStr);
+                                const chunkText = parsed?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                                if (chunkText) {
+                                    fullReply += chunkText;
+                                    push({ type: "chunk", text: chunkText });
+                                }
+                            } catch { /* skip malformed */ }
+                        }
                     }
                 }
 
@@ -185,7 +194,7 @@ export async function POST(req: Request) {
                         conversationId: conversation!.id,
                         role: "ai",
                         body: fullReply,
-                        aiModel: GEMINI_MODEL,
+                        aiModel: chosen.id,
                     },
                 });
                 await prisma.aiConversation.update({
