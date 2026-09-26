@@ -18,7 +18,7 @@ export interface AiModel {
 export const AI_MODELS: AiModel[] = [
     // BEPUL — default (Google to'g'ridan)
     { id: "gemini-2.5-flash-lite", label: "Gemini Flash Lite", provider: "gemini", free: true, note: "Tez, bepul — default" },
-    { id: "gemini-2.0-flash",      label: "Gemini 2.0 Flash",  provider: "gemini", free: true, note: "Bepul, kuchliroq" },
+    { id: "gemini-2.5-flash",      label: "Gemini 2.5 Flash",  provider: "gemini", free: true, note: "Bepul, kuchliroq" },
     // OpenRouter — OPENROUTER_API_KEY kerak
     { id: "deepseek/deepseek-chat",              label: "DeepSeek V3",       provider: "openrouter", free: false, note: "Kod+chat, juda arzon" },
     { id: "deepseek/deepseek-r1",                label: "DeepSeek R1",       provider: "openrouter", free: false, note: "Reasoning" },

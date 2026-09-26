@@ -872,7 +872,7 @@ export function AiChatPage() {
                 {/* Bottom — sozlamalar */}
                 {showLabels ? (
                     <div className="p-2 border-t space-y-1 flex-shrink-0" style={{ borderColor: T.border }}>
-                        <Link href={"/ai/knowledge" as never}
+                        <Link href={"/id/knowledge" as never}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-black/[0.03] dark:hover:bg-white/[0.03]">
                             <ShieldCheck className="w-3.5 h-3.5" style={{ color: T.primary }} />
                             Bilim bazam
@@ -885,7 +885,7 @@ export function AiChatPage() {
                     </div>
                 ) : (
                     <div className="py-2 border-t flex flex-col items-center gap-1 flex-shrink-0" style={{ borderColor: T.border }}>
-                        <Link href={"/ai/knowledge" as never} title="Bilim bazam"
+                        <Link href={"/id/knowledge" as never} title="Bilim bazam"
                             className="w-9 h-9 rounded-lg grid place-items-center hover:bg-white/[0.06]">
                             <ShieldCheck className="w-4 h-4" style={{ color: T.primary }} />
                         </Link>
