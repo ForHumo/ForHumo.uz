@@ -54,6 +54,8 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const prompt = String(body?.prompt ?? "").trim().slice(0, 1000);
     if (prompt.length < 3) return NextResponse.json({ error: "prompt_required" }, { status: 400 });
+    // Suhbat rejimi — Chat Bot ichida rasm so'ralsa suhbat "chat" bo'lib qoladi (pic history'ga ketmaydi)
+    const convMode = ["chat", "code", "pic", "vid", "music", "cowork"].includes(String(body?.mode)) ? String(body.mode) : "pic";
     let conversationId: string | undefined = typeof body?.conversationId === "string" ? body.conversationId : undefined;
 
     // Rasm generatsiya — 1) Cloudflare Flux (sozlangan bo'lsa), 2) Gemini flash-image (fallback)
@@ -108,7 +110,7 @@ export async function POST(req: Request) {
             data: {
                 profileId: me.id,
                 title: prompt.slice(0, 60).replace(/\s+/g, " "),
-                mode: "pic", topic: "pic",
+                mode: convMode, topic: convMode === "pic" ? "pic" : null,
                 lastMsgAt: new Date(),
             },
         });

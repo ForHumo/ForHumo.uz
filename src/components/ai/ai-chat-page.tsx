@@ -30,6 +30,7 @@ interface MsgRow {
     attachmentType?: string | null;
     aiModel?: string | null; createdAt: string;
     followUps?: string[];   // AI'dan tavsiya keyingi savollar
+    generating?: boolean;   // rasm yaratilyapti — shimmer placeholder (faqat client)
 }
 
 // Web Speech API tiplari (browser API — TS deklarasiya)
@@ -83,6 +84,12 @@ const PLUS_ITEMS: PlusItem[] = [
     { id: "think",  label: "Chuqur fikrlash",     icon: Brain,     action: "soon", soon: true },
 ];
 
+// Chat rejimida "rasm yarat" tipidagi so'rovni aniqlash (uz/ru/en) → avto Gen Pic
+const IMAGE_REQUEST_RE = /(rasm|surat|rasmini|suratini)\s*\S*\s*(yarat|chiz|ishlab|yasab|chizib|yaratib)|(yarat|chiz|chizib|yaratib)\w*\s+(bitta\s+)?(rasm|surat)|нарису|создай\s+(изображени|картин|рисун)|сгенерир\w*\s+(изображени|картин)|нарисовать|create\s+(an?\s+|the\s+)?(image|picture|photo|drawing)|generate\s+(an?\s+|the\s+)?(image|picture|photo)|make\s+(an?\s+|me\s+)?(image|picture)|draw\s+(a|an|me|the)/i;
+function looksLikeImageRequest(text: string): boolean {
+    return IMAGE_REQUEST_RE.test(text);
+}
+
 export function AiChatPage() {
     const { status } = useSession();
     const [convs, setConvs] = useState<ConvSummary[]>([]);
@@ -108,9 +115,11 @@ export function AiChatPage() {
     const [collapsed, setCollapsed] = useState(false);
     const [chatSearch, setChatSearch] = useState("");
     const chatSearchRef = useRef<HTMLInputElement>(null);
-    // Xabarni nusxalash + oqimni to'xtatish (Stop)
+    // Xabarni nusxalash + oqimni to'xtatish (Stop) + rasm lightbox
     const [msgCopied, setMsgCopied] = useState<string | null>(null);
     const abortRef = useRef<AbortController | null>(null);
+    const composerInputRef = useRef<HTMLInputElement>(null);
+    const [lightbox, setLightbox] = useState<string | null>(null);
 
     function copyMsg(id: string, text: string) {
         if (!text) return;
@@ -121,6 +130,46 @@ export function AiChatPage() {
     }
     function stopGenerating() {
         abortRef.current?.abort();
+    }
+    // O'z xabaringni tahrirlash — matnni yozish maydoniga qaytaradi (o'zgartirib qayta yuborasiz)
+    function editUserMsg(text: string) {
+        setInput(text);
+        setTimeout(() => composerInputRef.current?.focus(), 30);
+    }
+    // Promptni ulashish — navigator.share, bo'lmasa nusxa
+    async function sharePrompt(id: string, text: string) {
+        if (!text) return;
+        if (typeof navigator !== "undefined" && navigator.share) {
+            try { await navigator.share({ text }); } catch { /* foydalanuvchi bekor qildi */ }
+            return;
+        }
+        copyMsg(id, text);
+    }
+    // Yaratilgan rasmni yuklab olish (foydalanuvchi bosganda)
+    async function downloadImage(url: string) {
+        try {
+            const r = await fetch(url);
+            const blob = await r.blob();
+            const objUrl = URL.createObjectURL(blob);
+            const ext = (blob.type.split("/")[1] || "jpg").replace("jpeg", "jpg").replace("svg+xml", "svg");
+            const a = document.createElement("a");
+            a.href = objUrl; a.download = `humo-ai-${Date.now()}.${ext}`;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
+        } catch {
+            window.open(url, "_blank", "noopener");
+        }
+    }
+    // Yozish maydoniga paste — rasm/fayl bo'lsa biriktiramiz (matn odatdagidek joylashadi)
+    function handlePaste(e: React.ClipboardEvent<HTMLInputElement>) {
+        const files = e.clipboardData?.files;
+        if (files && files.length > 0) {
+            const f = files[0];
+            if (f && (f.type.startsWith("image/") || f.type === "application/pdf")) {
+                e.preventDefault();
+                uploadAttachment(f);
+            }
+        }
     }
 
     function copyCanvas() {
@@ -430,8 +479,10 @@ export function AiChatPage() {
         const useStreaming = !attachmentSnapshot;
 
         try {
-            if (mode === "pic") {
-                await sendImagen(text, tempMsg.id);
+            // Chat Bot rejimida ham "rasm yarat" so'ralsa — avto Gen Pic (ChatGPT/Gemini kabi)
+            const wantsImage = mode === "pic" || (mode === "chat" && !attachmentSnapshot && looksLikeImageRequest(text));
+            if (wantsImage) {
+                await sendImagen(text, tempMsg.id, mode);
             } else if (useStreaming) {
                 await sendStreaming(text, tempMsg.id, attachmentSnapshot);
             } else {
@@ -443,29 +494,29 @@ export function AiChatPage() {
         }
     }
 
-    // Gen Pic — Cloudflare Flux orqali rasm yaratish
-    async function sendImagen(prompt: string, tempId: string) {
+    // Gen Pic — rasm yaratish (Cloudflare Flux yoki Gemini flash-image). convMode = suhbat rejimi.
+    async function sendImagen(prompt: string, tempId: string, convMode: AiMode = "pic") {
         const genId = `gen-${Date.now()}`;
         setMessages(prev => [
             ...prev.map(m => m.id === tempId ? { ...m, body: prompt } : m),
-            { id: genId, role: "ai", body: "Rasm yaratilyapti...", createdAt: new Date().toISOString() },
+            { id: genId, role: "ai", body: "Rasm yaratilyapti...", generating: true, createdAt: new Date().toISOString() },
         ]);
         try {
             const r = await fetch("/api/ai/imagen", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt, conversationId: activeId ?? undefined }),
+                body: JSON.stringify({ prompt, conversationId: activeId ?? undefined, mode: convMode }),
             });
             const j = await r.json();
             if (!r.ok) {
-                setMessages(prev => prev.map(m => m.id === genId ? { ...m, body: j?.error || "Rasm yaratilmadi." } : m));
+                setMessages(prev => prev.map(m => m.id === genId ? { ...m, body: j?.error || "Rasm yaratilmadi.", generating: false } : m));
                 return;
             }
             const aiReal = j.messages?.[1];
-            if (aiReal) setMessages(prev => prev.map(m => m.id === genId ? { ...aiReal, role: "ai" } : m));
+            if (aiReal) setMessages(prev => prev.map(m => m.id === genId ? { ...aiReal, role: "ai", generating: false } : m));
             if (!activeId && j.conversationId) setActiveId(j.conversationId);
         } catch {
-            setMessages(prev => prev.map(m => m.id === genId ? { ...m, body: "Tarmoq xatosi." } : m));
+            setMessages(prev => prev.map(m => m.id === genId ? { ...m, body: "Tarmoq xatosi.", generating: false } : m));
         }
     }
 
@@ -755,6 +806,9 @@ export function AiChatPage() {
         <div className="dark relative min-h-screen flex text-[var(--foreground)]" style={{ background: "transparent" }}>
             {/* Qora cosmic fon + uchib yuruvchi yulduzlar (eski AI'dagi sevimli fon) */}
             <AiStarfield />
+
+            {/* Rasm-generatsiya shimmer animatsiyasi (ChatGPT/Gemini uslubi) */}
+            <style>{`@keyframes aiShimmer{0%{background-position:-468px 0}100%{background-position:468px 0}}.ai-shimmer{background:linear-gradient(90deg,rgba(255,255,255,0.05) 25%,rgba(255,255,255,0.12) 37%,rgba(255,255,255,0.05) 63%);background-size:800px 100%;animation:aiShimmer 1.4s ease-in-out infinite}`}</style>
 
             {/* Mobile sidebar overlay */}
             {sidebarOpen && (
@@ -1197,52 +1251,90 @@ export function AiChatPage() {
                                         border: isUser ? "none" : "1px solid rgba(255,255,255,0.06)",
                                         borderRadius: isUser ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
                                     }}>
-                                    {m.attachmentType === "image" && m.attachmentUrl && (
-                                        // eslint-disable-next-line @next/next/no-img-element
-                                        <img src={m.attachmentUrl} alt="" className="mb-2 max-w-full max-h-64 rounded-lg" />
-                                    )}
-                                    {m.attachmentUrl && m.attachmentType !== "image" && (
-                                        <a href={m.attachmentUrl} target="_blank" rel="noopener noreferrer"
-                                            className="mb-2 flex items-center gap-1.5 text-[11px] underline opacity-90">
-                                            <Paperclip className="w-3 h-3 flex-shrink-0" /> Biriktirilgan fayl
-                                        </a>
-                                    )}
-                                    {isUser ? m.body : (m.body ? <AiMarkdown>{m.body}</AiMarkdown> : null)}
-                                    {/* Streaming caret */}
-                                    {!isUser && sending && idx === messages.length - 1 && (
-                                        <span className="inline-block w-1.5 h-3 ml-0.5 bg-current animate-pulse rounded-sm" />
-                                    )}
-                                    <div className={`text-[10px] mt-1 opacity-60 flex items-center gap-1.5 ${isUser ? "justify-end" : ""}`}>
-                                        <span>
-                                            {new Date(m.createdAt).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })}
-                                            {m.aiModel && ` · ${m.aiModel}`}
-                                        </span>
-                                        {!isUser && m.body && (
-                                            <>
-                                                <button onClick={() => copyMsg(m.id, m.body)}
-                                                    title="Nusxa olish"
-                                                    className="opacity-70 hover:opacity-100 transition-opacity">
-                                                    {msgCopied === m.id
-                                                        ? <Check className="w-3 h-3 text-green-500" />
-                                                        : <Copy className="w-3 h-3" />}
-                                                </button>
-                                                <button onClick={() => speakMessage(m.id, m.body)}
-                                                    title={ttsSpeakingId === m.id ? "To'xtatish" : "Ovoz bilan o'qish"}
-                                                    className="opacity-70 hover:opacity-100 transition-opacity">
-                                                    {ttsSpeakingId === m.id
-                                                        ? <VolumeX className="w-3 h-3" />
-                                                        : <Volume2 className="w-3 h-3" />}
-                                                </button>
-                                                {isLastAi && !sending && (
-                                                    <button onClick={regenerate}
-                                                        title="Qayta generatsiya"
+                                    {m.generating ? (
+                                        <div className="w-56 sm:w-64">
+                                            <div className="ai-shimmer rounded-xl w-full aspect-square" />
+                                            <div className="mt-2 flex items-center gap-1.5 text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+                                                <Loader2 className="w-3 h-3 animate-spin" /> Rasm yaratilyapti...
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {m.attachmentType === "image" && m.attachmentUrl && (
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                <img src={m.attachmentUrl} alt="" onClick={() => setLightbox(m.attachmentUrl!)}
+                                                    className="mb-2 max-w-full max-h-72 rounded-lg cursor-zoom-in" />
+                                            )}
+                                            {m.attachmentUrl && m.attachmentType !== "image" && (
+                                                <a href={m.attachmentUrl} target="_blank" rel="noopener noreferrer"
+                                                    className="mb-2 flex items-center gap-1.5 text-[11px] underline opacity-90">
+                                                    <Paperclip className="w-3 h-3 flex-shrink-0" /> Biriktirilgan fayl
+                                                </a>
+                                            )}
+                                            {isUser ? m.body : (m.body ? <AiMarkdown>{m.body}</AiMarkdown> : null)}
+                                            {/* Streaming caret */}
+                                            {!isUser && sending && idx === messages.length - 1 && (
+                                                <span className="inline-block w-1.5 h-3 ml-0.5 bg-current animate-pulse rounded-sm" />
+                                            )}
+                                            <div className={`text-[10px] mt-1 opacity-60 flex items-center gap-1.5 ${isUser ? "justify-end" : ""}`}>
+                                                <span>
+                                                    {new Date(m.createdAt).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })}
+                                                    {m.aiModel && ` · ${m.aiModel}`}
+                                                </span>
+                                                {!isUser && m.body && (
+                                                    <>
+                                                        <button onClick={() => copyMsg(m.id, m.body)}
+                                                            title="Nusxa olish"
+                                                            className="opacity-70 hover:opacity-100 transition-opacity">
+                                                            {msgCopied === m.id
+                                                                ? <Check className="w-3 h-3 text-green-500" />
+                                                                : <Copy className="w-3 h-3" />}
+                                                        </button>
+                                                        <button onClick={() => speakMessage(m.id, m.body)}
+                                                            title={ttsSpeakingId === m.id ? "To'xtatish" : "Ovoz bilan o'qish"}
+                                                            className="opacity-70 hover:opacity-100 transition-opacity">
+                                                            {ttsSpeakingId === m.id
+                                                                ? <VolumeX className="w-3 h-3" />
+                                                                : <Volume2 className="w-3 h-3" />}
+                                                        </button>
+                                                        {isLastAi && !sending && (
+                                                            <button onClick={regenerate}
+                                                                title="Qayta generatsiya"
+                                                                className="opacity-70 hover:opacity-100 transition-opacity">
+                                                                <RefreshCw className="w-3 h-3" />
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                )}
+                                                {!isUser && m.attachmentType === "image" && m.attachmentUrl && (
+                                                    <button onClick={() => downloadImage(m.attachmentUrl!)}
+                                                        title="Yuklab olish"
                                                         className="opacity-70 hover:opacity-100 transition-opacity">
-                                                        <RefreshCw className="w-3 h-3" />
+                                                        <Download className="w-3 h-3" />
                                                     </button>
                                                 )}
-                                            </>
-                                        )}
-                                    </div>
+                                                {isUser && m.body && m.body !== "(rasm)" && (
+                                                    <>
+                                                        <button onClick={() => copyMsg(m.id, m.body)}
+                                                            title="Nusxa olish"
+                                                            className="opacity-70 hover:opacity-100 transition-opacity">
+                                                            {msgCopied === m.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                                                        </button>
+                                                        <button onClick={() => editUserMsg(m.body)}
+                                                            title="Tahrirlash"
+                                                            className="opacity-70 hover:opacity-100 transition-opacity">
+                                                            <Pencil className="w-3 h-3" />
+                                                        </button>
+                                                        <button onClick={() => sharePrompt(m.id, m.body)}
+                                                            title="Promptni ulashish"
+                                                            className="opacity-70 hover:opacity-100 transition-opacity">
+                                                            <Share2 className="w-3 h-3" />
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                                 {/* Quick replies — faqat oxirgi AI xabari */}
                                 {isLastAi && Array.isArray(m.followUps) && m.followUps.length > 0 && !sending && (
@@ -1330,8 +1422,10 @@ export function AiChatPage() {
                     </div>
 
                     <input
+                        ref={composerInputRef}
                         value={input}
                         onChange={e => setInput(e.target.value.slice(0, 4000))}
+                        onPaste={handlePaste}
                         placeholder={recording ? "Tinglayapman..." : mode === "pic" ? "Rasmni tasvirlab bering... (masalan: quyosh botishi, tog'lar)" : mode === "cowork" ? "Nima yaratamiz? (hujjat/kod)" : mode === "code" ? "Kod so'rang..." : "Humo AI'ga xabar yozing..."}
                         className="flex-1 h-11 px-4 rounded-xl border text-sm focus:outline-none focus:ring-2"
                         style={{ borderColor: recording ? T.primary : T.border, background: "rgba(26,26,26,0.6)", ["--tw-ring-color" as string]: T.primary + "50" }}
@@ -1400,6 +1494,29 @@ export function AiChatPage() {
                         className="flex-1 w-full p-4 bg-transparent text-[13px] leading-relaxed resize-none outline-none font-mono"
                         style={{ color: "var(--foreground)" }} spellCheck={false} />
                 </aside>
+            )}
+
+            {/* Rasm lightbox (to'liq ekran ko'rish + yuklab olish) — ChatGPT uslubi */}
+            {lightbox && (
+                <div className="fixed inset-0 z-[200] flex flex-col" style={{ background: "rgba(0,0,0,0.92)" }}
+                    onClick={() => setLightbox(null)}>
+                    <div className="h-14 px-4 flex items-center justify-end gap-2 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                        <button onClick={() => downloadImage(lightbox)}
+                            className="h-9 px-3 rounded-lg flex items-center gap-1.5 text-sm font-bold"
+                            style={{ background: T.gradient, color: T.onPrimary }}>
+                            <Download className="w-4 h-4" /> Yuklab olish
+                        </button>
+                        <button onClick={() => setLightbox(null)}
+                            className="w-9 h-9 rounded-lg grid place-items-center hover:bg-white/[0.1]" style={{ color: "#fff" }}>
+                            <XIcon className="w-5 h-5" />
+                        </button>
+                    </div>
+                    <div className="flex-1 flex items-center justify-center p-4 overflow-auto" onClick={() => setLightbox(null)}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={lightbox} alt="" onClick={e => e.stopPropagation()}
+                            className="max-w-full max-h-full rounded-xl object-contain" />
+                    </div>
+                </div>
             )}
 
         </div>
