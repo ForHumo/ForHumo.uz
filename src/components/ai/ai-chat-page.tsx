@@ -10,7 +10,7 @@ import {
     Send, Loader2, Plus, MessageSquare, Sparkles, Trash2, LogIn,
     Archive, Menu, X as XIcon, User as UserIcon, Brain, ShieldCheck,
     Mic, MicOff, Paperclip, ImageIcon, Volume2, VolumeX, Share2, Check,
-    Code2, Globe, BookOpen, Mail, Film, Users, Clock, Cpu, ChevronDown, Copy, Download, type LucideIcon,
+    Code2, Globe, BookOpen, Mail, Film, Users, Clock, Cpu, ChevronDown, Copy, Download, Home, type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { AiStarfield } from "@/components/ai/ai-starfield";
@@ -638,6 +638,11 @@ export function AiChatPage() {
                     <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2">
                         <Menu className="w-5 h-5" />
                     </button>
+                    <Link href="/" title="For Humo" aria-label="For Humo'ga qaytish"
+                        className="w-9 h-9 rounded-lg grid place-items-center flex-shrink-0 hover:bg-white/[0.06] transition-colors"
+                        style={{ color: "var(--muted-foreground)" }}>
+                        <Home className="w-[18px] h-[18px]" />
+                    </Link>
                     <span className="w-8 h-8 rounded-lg grid place-items-center flex-shrink-0"
                         style={{ background: T.gradient, color: T.onPrimary }}>
                         {(() => { const Ic = AI_MODE_MAP[mode].icon; return <Ic className="w-4 h-4" />; })()}
