@@ -11,10 +11,11 @@ import {
     Archive, Menu, X as XIcon, User as UserIcon, Brain, ShieldCheck,
     Mic, MicOff, Paperclip, ImageIcon, Volume2, VolumeX, Share2, Check,
     Code2, Globe, BookOpen, Mail, Film, Users, Clock, Cpu, ChevronDown, Copy, Download, Home,
-    Music, Search, CheckSquare, Square, Link2Off, PanelLeftClose, PanelLeftOpen, type LucideIcon,
+    Music, Search, CheckSquare, Square, Link2Off, PanelLeftClose, PanelLeftOpen, RefreshCw, type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { AiStarfield } from "@/components/ai/ai-starfield";
+import { AiMarkdown } from "@/components/ai/ai-markdown";
 import { AI_MODELS, DEFAULT_MODEL, findModel } from "@/lib/ai-models";
 
 interface ConvSummary {
@@ -107,6 +108,20 @@ export function AiChatPage() {
     const [collapsed, setCollapsed] = useState(false);
     const [chatSearch, setChatSearch] = useState("");
     const chatSearchRef = useRef<HTMLInputElement>(null);
+    // Xabarni nusxalash + oqimni to'xtatish (Stop)
+    const [msgCopied, setMsgCopied] = useState<string | null>(null);
+    const abortRef = useRef<AbortController | null>(null);
+
+    function copyMsg(id: string, text: string) {
+        if (!text) return;
+        navigator.clipboard?.writeText(text).then(() => {
+            setMsgCopied(id);
+            setTimeout(() => setMsgCopied(prev => prev === id ? null : prev), 1500);
+        }).catch(() => {});
+    }
+    function stopGenerating() {
+        abortRef.current?.abort();
+    }
 
     function copyCanvas() {
         if (!canvas) return;
@@ -476,34 +491,18 @@ export function AiChatPage() {
         if (ttsEnabled && aiReal?.body && aiReal?.id) speakMessage(aiReal.id, aiReal.body);
     }
 
-    async function sendStreaming(text: string, tempId: string, att: typeof attachment) {
-        // Streaming AI xabari uchun placeholder — chunk'lar keladi
-        const streamMsgId = `stream-${Date.now()}`;
-        setMessages(prev => [
-            ...prev.filter(m => m.id !== tempId),
-            { id: `tmp-user-${Date.now()}`, role: "user", body: text, createdAt: new Date().toISOString() },
-            { id: streamMsgId, role: "ai", body: "", createdAt: new Date().toISOString() },
-        ]);
-
+    // SSE oqimini o'qish (sendStreaming + regenerate uchun umumiy).
+    // "ok" = tugadi, "aborted" = foydalanuvchi to'xtatdi, "error" = server xatosi.
+    async function consumeAiStream(r: Response, streamMsgId: string, controller: AbortController): Promise<"ok" | "aborted" | "error"> {
+        if (!r.ok || !r.body) throw new Error("stream_failed");
+        const reader = r.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let acc = "";
+        let doneData: { messages?: MsgRow[]; followUps?: string[]; conversationId?: string } | null = null;
+        let errored = false;
         try {
-            const r = await fetch("/api/ai/converse-stream", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    message: text, conversationId: activeId ?? undefined,
-                    attachmentUrl: att?.url, attachmentType: att?.type,
-                    language: aiLang, mode, model,
-                }),
-            });
-            if (!r.ok || !r.body) throw new Error("stream_failed");
-
-            const reader = r.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = "";
-            let acc = "";
-            let doneData: { messages?: MsgRow[]; followUps?: string[]; conversationId?: string } | null = null;
-
-            while (true) {
+            outer: while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
                 buffer += decoder.decode(value, { stream: true });
@@ -517,7 +516,6 @@ export function AiChatPage() {
                         if (p.type === "chunk" && p.text) {
                             acc += p.text;
                             if (mode === "cowork") {
-                                // CoWork — ===CANVAS=== dan keyingisi jonli Canvas panelga
                                 const idx = acc.indexOf("===CANVAS===");
                                 if (idx >= 0) {
                                     const note = acc.slice(0, idx).trim() || "Canvas'ga yozyapman...";
@@ -535,34 +533,107 @@ export function AiChatPage() {
                             doneData = p;
                         } else if (p.type === "error") {
                             setMessages(prev => prev.map(m => m.id === streamMsgId ? { ...m, body: p.message || "Xatolik" } : m));
-                            return;
+                            errored = true;
+                            break outer;
                         }
                     } catch { /* skip */ }
                 }
             }
-
-            if (doneData) {
-                const aiReal = doneData.messages?.[1];
-                if (aiReal) {
-                    let body = aiReal.body;
-                    if (mode === "cowork") {
-                        const idx = body.indexOf("===CANVAS===");
-                        if (idx >= 0) {
-                            const doc = body.slice(idx + 12).replace(/^\s*\n/, "").trim();
-                            body = body.slice(0, idx).trim() || "Canvas'ga yozdim.";
-                            setCanvas(doc);
-                            setCanvasView("canvas");
-                        }
-                    }
-                    setMessages(prev => prev.map(m => m.id === streamMsgId ? { ...aiReal, body, role: "ai", followUps: doneData?.followUps } : m));
-                    if (ttsEnabled && body && aiReal.id) speakMessage(aiReal.id, body);
-                }
-                if (!activeId && doneData.conversationId) setActiveId(doneData.conversationId);
-            }
         } catch (e) {
+            const aborted = controller.signal.aborted || (e instanceof DOMException && e.name === "AbortError");
+            if (aborted) return "aborted";
+            throw e;
+        }
+        if (errored) return "error";
+        if (doneData) {
+            const aiReal = doneData.messages?.[1];
+            if (aiReal) {
+                let body = aiReal.body;
+                if (mode === "cowork") {
+                    const idx = body.indexOf("===CANVAS===");
+                    if (idx >= 0) {
+                        const doc = body.slice(idx + 12).replace(/^\s*\n/, "").trim();
+                        body = body.slice(0, idx).trim() || "Canvas'ga yozdim.";
+                        setCanvas(doc);
+                        setCanvasView("canvas");
+                    }
+                }
+                setMessages(prev => prev.map(m => m.id === streamMsgId ? { ...aiReal, body, role: "ai", followUps: doneData?.followUps } : m));
+                if (ttsEnabled && body && aiReal.id) speakMessage(aiReal.id, body);
+            }
+            if (!activeId && doneData.conversationId) setActiveId(doneData.conversationId);
+        }
+        return "ok";
+    }
+
+    async function sendStreaming(text: string, tempId: string, att: typeof attachment) {
+        // Streaming AI xabari uchun placeholder — chunk'lar keladi
+        const streamMsgId = `stream-${Date.now()}`;
+        setMessages(prev => [
+            ...prev.filter(m => m.id !== tempId),
+            { id: `tmp-user-${Date.now()}`, role: "user", body: text, createdAt: new Date().toISOString() },
+            { id: streamMsgId, role: "ai", body: "", createdAt: new Date().toISOString() },
+        ]);
+
+        const controller = new AbortController();
+        abortRef.current = controller;
+        try {
+            const r = await fetch("/api/ai/converse-stream", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                signal: controller.signal,
+                body: JSON.stringify({
+                    message: text, conversationId: activeId ?? undefined,
+                    attachmentUrl: att?.url, attachmentType: att?.type,
+                    language: aiLang, mode, model,
+                }),
+            });
+            const status = await consumeAiStream(r, streamMsgId, controller);
+            if (status === "aborted" && !activeId) loadConvs();
+        } catch (e) {
+            const aborted = controller.signal.aborted || (e instanceof DOMException && e.name === "AbortError");
+            if (aborted) { if (!activeId) loadConvs(); return; }
             console.error("streaming failed:", e);
             // Fallback classic
             await sendClassic(text, streamMsgId, att);
+        } finally {
+            abortRef.current = null;
+        }
+    }
+
+    // Qayta generatsiya — oxirgi AI javobini almashtiradi (yangi user xabari qo'shilmaydi)
+    async function regenerate() {
+        if (sending || !activeId) return;
+        const hasUser = messages.some(m => m.role === "user");
+        if (!hasUser) return;
+        setSending(true);
+        const streamMsgId = `stream-${Date.now()}`;
+        setMessages(prev => {
+            const copy = [...prev];
+            for (let i = copy.length - 1; i >= 0; i--) { if (copy[i].role === "ai") { copy.splice(i, 1); break; } }
+            copy.push({ id: streamMsgId, role: "ai", body: "", createdAt: new Date().toISOString() });
+            return copy;
+        });
+        const controller = new AbortController();
+        abortRef.current = controller;
+        try {
+            const r = await fetch("/api/ai/converse-stream", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                signal: controller.signal,
+                body: JSON.stringify({ conversationId: activeId, language: aiLang, mode, model, regenerate: true }),
+            });
+            await consumeAiStream(r, streamMsgId, controller);
+        } catch (e) {
+            const aborted = controller.signal.aborted || (e instanceof DOMException && e.name === "AbortError");
+            if (!aborted) {
+                console.error("regenerate failed:", e);
+                setMessages(prev => prev.map(m => m.id === streamMsgId ? { ...m, body: "Qayta generatsiya bo'lmadi." } : m));
+            }
+        } finally {
+            abortRef.current = null;
+            setSending(false);
+            loadConvs();
         }
     }
 
@@ -1088,7 +1159,7 @@ export function AiChatPage() {
                         const isLastAi = !isUser && idx === messages.length - 1;
                         return (
                             <div key={m.id} className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
-                                <div className="max-w-[75%] px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words"
+                                <div className={`max-w-[75%] px-3.5 py-2.5 rounded-2xl text-sm break-words ${isUser ? "whitespace-pre-wrap" : ""}`}
                                     style={{
                                         background: isUser ? T.gradient : "rgba(26,26,26,0.78)",
                                         color: isUser ? T.onPrimary : "var(--foreground)",
@@ -1099,7 +1170,7 @@ export function AiChatPage() {
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img src={m.attachmentUrl} alt="" className="mb-2 max-w-full max-h-64 rounded-lg" />
                                     )}
-                                    {m.body}
+                                    {isUser ? m.body : (m.body ? <AiMarkdown>{m.body}</AiMarkdown> : null)}
                                     {/* Streaming caret */}
                                     {!isUser && sending && idx === messages.length - 1 && (
                                         <span className="inline-block w-1.5 h-3 ml-0.5 bg-current animate-pulse rounded-sm" />
@@ -1110,13 +1181,29 @@ export function AiChatPage() {
                                             {m.aiModel && ` · ${m.aiModel}`}
                                         </span>
                                         {!isUser && m.body && (
-                                            <button onClick={() => speakMessage(m.id, m.body)}
-                                                title={ttsSpeakingId === m.id ? "To'xtatish" : "Ovoz bilan o'qish"}
-                                                className="opacity-70 hover:opacity-100 transition-opacity">
-                                                {ttsSpeakingId === m.id
-                                                    ? <VolumeX className="w-3 h-3" />
-                                                    : <Volume2 className="w-3 h-3" />}
-                                            </button>
+                                            <>
+                                                <button onClick={() => copyMsg(m.id, m.body)}
+                                                    title="Nusxa olish"
+                                                    className="opacity-70 hover:opacity-100 transition-opacity">
+                                                    {msgCopied === m.id
+                                                        ? <Check className="w-3 h-3 text-green-500" />
+                                                        : <Copy className="w-3 h-3" />}
+                                                </button>
+                                                <button onClick={() => speakMessage(m.id, m.body)}
+                                                    title={ttsSpeakingId === m.id ? "To'xtatish" : "Ovoz bilan o'qish"}
+                                                    className="opacity-70 hover:opacity-100 transition-opacity">
+                                                    {ttsSpeakingId === m.id
+                                                        ? <VolumeX className="w-3 h-3" />
+                                                        : <Volume2 className="w-3 h-3" />}
+                                                </button>
+                                                {isLastAi && !sending && (
+                                                    <button onClick={regenerate}
+                                                        title="Qayta generatsiya"
+                                                        className="opacity-70 hover:opacity-100 transition-opacity">
+                                                        <RefreshCw className="w-3 h-3" />
+                                                    </button>
+                                                )}
+                                            </>
                                         )}
                                     </div>
                                 </div>
@@ -1227,11 +1314,20 @@ export function AiChatPage() {
                         </button>
                     )}
 
-                    <button type="submit" disabled={sending || (!input.trim() && !attachment)}
-                        className="w-11 h-11 rounded-xl flex items-center justify-center disabled:opacity-50"
-                        style={{ background: T.gradient, color: T.onPrimary }}>
-                        {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    </button>
+                    {sending ? (
+                        <button type="button" onClick={stopGenerating}
+                            title="To'xtatish" aria-label="To'xtatish"
+                            className="w-11 h-11 rounded-xl flex items-center justify-center"
+                            style={{ background: T.gradient, color: T.onPrimary }}>
+                            <span className="w-3 h-3 rounded-sm bg-current" />
+                        </button>
+                    ) : (
+                        <button type="submit" disabled={!input.trim() && !attachment}
+                            className="w-11 h-11 rounded-xl flex items-center justify-center disabled:opacity-50"
+                            style={{ background: T.gradient, color: T.onPrimary }}>
+                            <Send className="w-4 h-4" />
+                        </button>
+                    )}
                 </form>
                 )}
             </main>

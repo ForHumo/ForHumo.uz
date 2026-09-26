@@ -46,8 +46,10 @@ export async function POST(req: Request) {
     } catch { /* fail-open */ }
 
     const body = await req.json().catch(() => ({}));
-    const userMsg = String(body?.message ?? "").trim().slice(0, MAX_MSG_LEN);
-    if (!userMsg) return sseError("message_required", 400);
+    let userMsg = String(body?.message ?? "").trim().slice(0, MAX_MSG_LEN);
+    // Qayta generatsiya — yangi user xabari qo'shilmaydi, oxirgi javob almashtiriladi
+    const regenerate = body?.regenerate === true;
+    if (!regenerate && !userMsg) return sseError("message_required", 400);
     const moduleOrigin = typeof body?.moduleOrigin === "string" ? body.moduleOrigin.slice(0, 20) : undefined;
     // AI rejimi — hozir chat va code to'liq ishlaydi (pic/vid/cowork "Soon", chatga kelmaydi).
     const modeRaw = typeof body?.mode === "string" ? body.mode : "chat";
@@ -79,16 +81,31 @@ export async function POST(req: Request) {
         conversationId = conversation.id;
     }
 
-    // User xabari yozamiz
-    const userDbMsg = await prisma.aiMessage.create({
-        data: {
-            conversationId: conversation.id,
-            role: "user",
-            body: userMsg,
-            attachmentUrl,
-            attachmentType,
-        },
-    });
+    // User xabari — regenerate bo'lsa mavjud oxirgi user xabarini ishlatamiz (yangi qo'shmaymiz)
+    let userDbMsg: Awaited<ReturnType<typeof prisma.aiMessage.create>>;
+    if (regenerate) {
+        const lastUser = await prisma.aiMessage.findFirst({
+            where: { conversationId: conversation.id, role: "user" },
+            orderBy: { createdAt: "desc" },
+        });
+        if (!lastUser) return sseError("nothing_to_regenerate", 400);
+        userMsg = lastUser.body;
+        // o'sha user xabaridan keyingi eski AI javob(lar)ini o'chiramiz
+        await prisma.aiMessage.deleteMany({
+            where: { conversationId: conversation.id, role: "ai", createdAt: { gt: lastUser.createdAt } },
+        });
+        userDbMsg = lastUser;
+    } else {
+        userDbMsg = await prisma.aiMessage.create({
+            data: {
+                conversationId: conversation.id,
+                role: "user",
+                body: userMsg,
+                attachmentUrl,
+                attachmentType,
+            },
+        });
+    }
 
     // History + context
     const priorMsgs = await prisma.aiMessage.findMany({
