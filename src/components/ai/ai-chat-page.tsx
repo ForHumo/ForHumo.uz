@@ -11,7 +11,7 @@ import {
     Archive, Menu, X as XIcon, User as UserIcon, Brain, ShieldCheck,
     Mic, MicOff, Paperclip, ImageIcon, Volume2, VolumeX, Share2, Check,
     Code2, Globe, BookOpen, Mail, Film, Users, Clock, Cpu, ChevronDown, Copy, Download, Home,
-    Music, Search, CheckSquare, Square, Link2Off, PanelLeftClose, PanelLeftOpen, RefreshCw, type LucideIcon,
+    Music, Search, CheckSquare, Square, Link2Off, PanelLeftClose, PanelLeftOpen, RefreshCw, Pencil, type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { AiStarfield } from "@/components/ai/ai-starfield";
@@ -681,6 +681,20 @@ export function AiChatPage() {
         }
     }
 
+    // Chat nomini o'zgartirish (PATCH title)
+    async function renameConv(id: string, current: string) {
+        const name = window.prompt("Chat nomi:", current);
+        if (name === null) return;
+        const trimmed = name.trim().slice(0, 60);
+        if (!trimmed || trimmed === current) return;
+        const r = await fetch(`/api/ai/conversations/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: trimmed }),
+        });
+        if (r.ok) setConvs(prev => prev.map(c => c.id === id ? { ...c, title: trimmed } : c));
+    }
+
     // Ulashishni bekor qilish — public havola ishlamay qoladi
     async function unshareConv(id: string) {
         if (!confirm("Ulashilgan havola o'chiriladi — havola bo'yicha kirganlar endi ko'ra olmaydi. Davom etamizmi?")) return;
@@ -921,6 +935,11 @@ export function AiChatPage() {
                                                     <Link2Off className="w-3 h-3" />
                                                 </button>
                                             )}
+                                            <button onClick={() => renameConv(c.id, c.title)}
+                                                title="Nomini o'zgartirish"
+                                                className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">
+                                                <Pencil className="w-3 h-3" />
+                                            </button>
                                             <button onClick={() => archiveConv(c.id, c.archived)}
                                                 title={c.archived ? "Qayta faollashtir" : "Arxivlash"}
                                                 className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">

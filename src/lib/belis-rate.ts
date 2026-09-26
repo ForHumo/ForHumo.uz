@@ -8,9 +8,9 @@ const MIN = 60_000;
 type BelisRateKind = "bookingCreate" | "aiChat" | "passportUpload";
 
 const RULES: Record<BelisRateKind, [max: number, windowMs: number]> = {
-    bookingCreate:  [5,  60 * MIN],   // 5 ariza / soat / profil
-    aiChat:         [30, 24 * 60 * MIN], // 30 so'rov / kun / profil
-    passportUpload: [10, 60 * MIN],   // 10 rasm / soat / profil
+    bookingCreate:  [5,   60 * MIN],      // 5 ariza / soat / profil
+    aiChat:         [120, 24 * 60 * MIN], // 120 AI so'rov / kun / profil (barcha modul: /ai, Belis, BN, Support...)
+    passportUpload: [10,  60 * MIN],      // 10 rasm / soat / profil
 };
 
 export interface BelisRateResult {
@@ -34,9 +34,11 @@ export async function belisRate(profileId: string, kind: BelisRateKind): Promise
                 });
                 break;
             case "aiChat":
-                // aiUsage.kind = "belis" bilan Belis kanaliga tegishlilarini sanaymiz
-                used = await prisma.aiUsage.count({
-                    where: { profileId, kind: "belis", createdAt: { gt: since } },
+                // Foydalanuvchining haqiqiy AI so'rovlari — oxirgi 24 soatdagi user xabarlari
+                // (barcha AI suhbatlari bo'yicha). Ilgari faqat kind:"belis" sanardi — /ai/chat
+                // amalda cheklanmasdi (mis-wire). Endi real so'rovlarni sanaymiz.
+                used = await prisma.aiMessage.count({
+                    where: { role: "user", createdAt: { gt: since }, conversation: { profileId } },
                 });
                 break;
             case "passportUpload":
