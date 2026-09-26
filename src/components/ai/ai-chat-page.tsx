@@ -60,7 +60,7 @@ type AiMode = "chat" | "code" | "pic" | "vid" | "cowork";
 const AI_MODES: { id: AiMode; label: string; sub: string; icon: LucideIcon; soon?: boolean }[] = [
     { id: "chat",   label: "Chat Bot",     sub: "Oddiy suhbat",     icon: Sparkles },
     { id: "code",   label: "Gen Code",     sub: "Kod yozib berish", icon: Code2 },
-    { id: "pic",    label: "Gen Pic",      sub: "Rasm yaratish",    icon: ImageIcon, soon: true },
+    { id: "pic",    label: "Gen Pic",      sub: "Rasm yaratish",    icon: ImageIcon },
     { id: "vid",    label: "Gen Vid",      sub: "Video yaratish",   icon: Film,      soon: true },
     { id: "cowork", label: "Humo CoWork",  sub: "Canvas — birga ishlash", icon: Users },
 ];
@@ -328,7 +328,9 @@ export function AiChatPage() {
         const useStreaming = !attachmentSnapshot;
 
         try {
-            if (useStreaming) {
+            if (mode === "pic") {
+                await sendImagen(text, tempMsg.id);
+            } else if (useStreaming) {
                 await sendStreaming(text, tempMsg.id, attachmentSnapshot);
             } else {
                 await sendClassic(text, tempMsg.id, attachmentSnapshot);
@@ -336,6 +338,32 @@ export function AiChatPage() {
             loadConvs();
         } finally {
             setSending(false);
+        }
+    }
+
+    // Gen Pic — Cloudflare Flux orqali rasm yaratish
+    async function sendImagen(prompt: string, tempId: string) {
+        const genId = `gen-${Date.now()}`;
+        setMessages(prev => [
+            ...prev.map(m => m.id === tempId ? { ...m, body: prompt } : m),
+            { id: genId, role: "ai", body: "Rasm yaratilyapti...", createdAt: new Date().toISOString() },
+        ]);
+        try {
+            const r = await fetch("/api/ai/imagen", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prompt, conversationId: activeId ?? undefined }),
+            });
+            const j = await r.json();
+            if (!r.ok) {
+                setMessages(prev => prev.map(m => m.id === genId ? { ...m, body: j?.error || "Rasm yaratilmadi." } : m));
+                return;
+            }
+            const aiReal = j.messages?.[1];
+            if (aiReal) setMessages(prev => prev.map(m => m.id === genId ? { ...aiReal, role: "ai" } : m));
+            if (!activeId && j.conversationId) setActiveId(j.conversationId);
+        } catch {
+            setMessages(prev => prev.map(m => m.id === genId ? { ...m, body: "Tarmoq xatosi." } : m));
         }
     }
 
@@ -797,15 +825,20 @@ export function AiChatPage() {
                             </p>
                             <h1 className="text-3xl sm:text-4xl font-light mb-8 tracking-tight"
                                 style={{ background: "linear-gradient(135deg,#ECECEC 20%,#8A8A8A 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                                Bugun nima qilamiz?
+                                {mode === "pic" ? "Qanday rasm yarataylik?" : mode === "cowork" ? "Nima yaratamiz?" : "Bugun nima qilamiz?"}
                             </h1>
                             <div className="grid grid-cols-2 gap-2 max-w-md w-full">
-                                {[
+                                {(mode === "pic" ? [
+                                    { icon: ImageIcon, title: "Manzara", sub: "Tabiat/shahar", p: "Toshkent kunbotishida, iliq ranglar, yuqori sifat" },
+                                    { icon: Users, title: "Portret", sub: "Personaj", p: "kelajak jangchisi portreti, kinematik yorug'lik" },
+                                    { icon: Cpu, title: "Logo", sub: "Brend/ikon", p: "minimalist logo, moviy gradient, texnologiya" },
+                                    { icon: Sparkles, title: "Fantastik", sub: "Xayoliy", p: "kosmosda suzayotgan orol, syurreal, detalli" },
+                                ] : [
                                     { icon: Code2, title: "Kod yoz", sub: "Tushuntirmalar bilan", p: "Menga kod yozib ber: " },
                                     { icon: Globe, title: "Tarjima", sub: "O'zbek ↔ Ingliz", p: "Quyidagi matnni tarjima qil: " },
                                     { icon: BookOpen, title: "Tushuntir", sub: "Sodda tilda", p: "Menga sodda tilda tushuntir: " },
                                     { icon: Mail, title: "Xat yoz", sub: "Rasmiy uslubda", p: "Menga rasmiy xat yozib ber: " },
-                                ].map(c => (
+                                ]).map(c => (
                                     <button key={c.title} onClick={() => setInput(c.p)}
                                         className="text-left p-3.5 rounded-xl border flex flex-col gap-0.5 transition-transform duration-150 hover:-translate-y-0.5"
                                         style={{ background: "rgba(26,26,26,0.55)", borderColor: T.border }}>
@@ -918,7 +951,7 @@ export function AiChatPage() {
                     <input
                         value={input}
                         onChange={e => setInput(e.target.value.slice(0, 4000))}
-                        placeholder={recording ? "Tinglayapman..." : "Humo AI'ga xabar yozing..."}
+                        placeholder={recording ? "Tinglayapman..." : mode === "pic" ? "Rasmni tasvirlab bering... (masalan: quyosh botishi, tog'lar)" : mode === "cowork" ? "Nima yaratamiz? (hujjat/kod)" : mode === "code" ? "Kod so'rang..." : "Humo AI'ga xabar yozing..."}
                         className="flex-1 h-11 px-4 rounded-xl border text-sm focus:outline-none focus:ring-2"
                         style={{ borderColor: recording ? T.primary : T.border, background: "rgba(26,26,26,0.6)", ["--tw-ring-color" as string]: T.primary + "50" }}
                         disabled={sending}
