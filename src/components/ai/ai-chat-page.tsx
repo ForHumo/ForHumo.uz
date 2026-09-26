@@ -72,7 +72,7 @@ const AI_MODES: { id: AiMode; label: string; sub: string; icon: LucideIcon; soon
 const AI_MODE_MAP = Object.fromEntries(AI_MODES.map(m => [m.id, m])) as Record<AiMode, typeof AI_MODES[number]>;
 
 // Composer "+" menyusi (Gemini/ChatGPT uslubi) — faqat o'zimizniki.
-type PlusItem = { id: string; label: string; icon: LucideIcon; action: "file" | "mode" | "soon" | "search"; mode?: AiMode; soon?: boolean };
+type PlusItem = { id: string; label: string; icon: LucideIcon; action: "file" | "mode" | "soon" | "search" | "think"; mode?: AiMode; soon?: boolean };
 const PLUS_ITEMS: PlusItem[] = [
     { id: "file",   label: "File biriktirish",    icon: Paperclip, action: "file" },
     { id: "code",   label: "Kod yozish",          icon: Code2,     action: "mode", mode: "code" },
@@ -81,7 +81,7 @@ const PLUS_ITEMS: PlusItem[] = [
     { id: "music",  label: "Musiqa yaratish",     icon: Music,     action: "mode", mode: "music", soon: true },
     { id: "cowork", label: "Humo CoWork",         icon: Users,     action: "mode", mode: "cowork" },
     { id: "search", label: "Saytlardan qidirish", icon: Search,    action: "search" },
-    { id: "think",  label: "Chuqur fikrlash",     icon: Brain,     action: "soon", soon: true },
+    { id: "think",  label: "Chuqur fikrlash",     icon: Brain,     action: "think" },
 ];
 
 // Chat rejimida "rasm yarat" tipidagi so'rovni aniqlash (uz/ru/en) → avto Gen Pic
@@ -109,9 +109,10 @@ export function AiChatPage() {
     // Chat tanlash (bulk operatsiya)
     const [selectMode, setSelectMode] = useState(false);
     const [selected, setSelected] = useState<Set<string>>(new Set());
-    // Composer "+" menyusi (Gemini/ChatGPT uslubi) + web-qidiruv (Saytlardan qidirish)
+    // Composer "+" menyusi (Gemini/ChatGPT uslubi) + web-qidiruv + chuqur fikrlash
     const [plusMenuOpen, setPlusMenuOpen] = useState(false);
     const [webSearch, setWebSearch] = useState(false);
+    const [deepThink, setDeepThink] = useState(false);
     // Sidebar yig'ish (desktop icon-rail) + chat qidiruv
     const [collapsed, setCollapsed] = useState(false);
     const [chatSearch, setChatSearch] = useState("");
@@ -333,7 +334,7 @@ export function AiChatPage() {
         if (item.action === "file") { fileInputRef.current?.click(); return; }
         if (item.action === "mode" && item.mode) { switchMode(item.mode); return; }
         if (item.action === "search") { setWebSearch(v => !v); return; }
-        // soon — hozircha ishlamaydi (Chuqur fikrlash)
+        if (item.action === "think") { setDeepThink(v => !v); return; }
     }
 
     // KB count — banner ko'rsatish uchun
@@ -650,7 +651,7 @@ export function AiChatPage() {
                 body: JSON.stringify({
                     message: text, conversationId: activeId ?? undefined,
                     attachmentUrl: att?.url, attachmentType: att?.type,
-                    language: aiLang, mode, model, webSearch,
+                    language: aiLang, mode, model, webSearch, deepThink,
                 }),
             });
             const status = await consumeAiStream(r, streamMsgId, controller);
@@ -686,7 +687,7 @@ export function AiChatPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 signal: controller.signal,
-                body: JSON.stringify({ conversationId: activeId, language: aiLang, mode, model, webSearch, regenerate: true }),
+                body: JSON.stringify({ conversationId: activeId, language: aiLang, mode, model, webSearch, deepThink, regenerate: true }),
             });
             await consumeAiStream(r, streamMsgId, controller);
         } catch (e) {
@@ -1381,16 +1382,27 @@ export function AiChatPage() {
                     </div>
                 )}
 
-                {/* Web-qidiruv yoniq — indikator chip */}
-                {webSearch && !AI_MODE_MAP[mode].soon && (
-                    <div className="mx-3 mt-2 flex">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
-                            style={{ background: T.soft, color: T.primary, border: `1px solid ${T.border}` }}>
-                            <Search className="w-3 h-3" /> Saytlardan qidirish yoniq
-                            <button type="button" onClick={() => setWebSearch(false)} title="O'chirish" className="ml-0.5 opacity-70 hover:opacity-100">
-                                <XIcon className="w-3 h-3" />
-                            </button>
-                        </span>
+                {/* Web-qidiruv / chuqur fikrlash yoniq — indikator chiplar */}
+                {(webSearch || deepThink) && !AI_MODE_MAP[mode].soon && (
+                    <div className="mx-3 mt-2 flex flex-wrap gap-1.5">
+                        {webSearch && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
+                                style={{ background: T.soft, color: T.primary, border: `1px solid ${T.border}` }}>
+                                <Search className="w-3 h-3" /> Saytlardan qidirish
+                                <button type="button" onClick={() => setWebSearch(false)} title="O'chirish" className="ml-0.5 opacity-70 hover:opacity-100">
+                                    <XIcon className="w-3 h-3" />
+                                </button>
+                            </span>
+                        )}
+                        {deepThink && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
+                                style={{ background: T.soft, color: T.primary, border: `1px solid ${T.border}` }}>
+                                <Brain className="w-3 h-3" /> Chuqur fikrlash
+                                <button type="button" onClick={() => setDeepThink(false)} title="O'chirish" className="ml-0.5 opacity-70 hover:opacity-100">
+                                    <XIcon className="w-3 h-3" />
+                                </button>
+                            </span>
+                        )}
                     </div>
                 )}
 
@@ -1413,7 +1425,7 @@ export function AiChatPage() {
                                 <div className="absolute bottom-full left-0 mb-2 w-60 rounded-2xl overflow-hidden z-50 py-1.5"
                                     style={{ background: "rgba(20,20,20,0.98)", border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
                                     {PLUS_ITEMS.map((it, i) => {
-                                        const active = it.action === "mode" ? it.mode === mode : it.id === "search" ? webSearch : false;
+                                        const active = it.action === "mode" ? it.mode === mode : it.id === "search" ? webSearch : it.id === "think" ? deepThink : false;
                                         return (
                                             <div key={it.id}>
                                                 {(i === 1 || i === 6) && <div className="my-1 h-px" style={{ background: T.border }} />}

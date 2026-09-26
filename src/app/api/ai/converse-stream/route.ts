@@ -60,7 +60,9 @@ export async function POST(req: Request) {
     if (chosen.provider === "openrouter" && !process.env.OPENROUTER_API_KEY) chosen = findModel(undefined);
     // Web-qidiruv (Saytlardan qidirish) — Gemini Google Search grounding. OpenRouter'da yo'q → Gemini'ga tushamiz.
     const webSearch = body?.webSearch === true;
-    if (webSearch && chosen.provider !== "gemini") chosen = findModel(undefined);
+    // Chuqur fikrlash — Gemini thinking (chuqurroq reasoning). Gemini path'da qo'llanadi.
+    const deepThink = body?.deepThink === true;
+    if ((webSearch || deepThink) && chosen.provider !== "gemini") chosen = findModel(undefined);
     const attachmentUrl = typeof body?.attachmentUrl === "string" ? body.attachmentUrl.slice(0, 500) : null;
     const attachmentType = typeof body?.attachmentType === "string" ? body.attachmentType.slice(0, 20) : null;
     const lang = ["uz", "ru", "en"].includes(String(body?.language)) ? String(body.language) as "uz" | "ru" | "en" : "uz";
@@ -170,7 +172,10 @@ export async function POST(req: Request) {
                         body: JSON.stringify({
                             contents,
                             systemInstruction: { parts: [{ text: system }] },
-                            generationConfig: { temperature: 0.7 },
+                            generationConfig: {
+                                temperature: 0.7,
+                                ...(deepThink ? { thinkingConfig: { thinkingBudget: 2048 } } : {}),
+                            },
                             ...(webSearch ? { tools: [{ google_search: {} }] } : {}),
                         }),
                     });
