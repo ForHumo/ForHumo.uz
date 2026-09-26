@@ -59,6 +59,9 @@ export async function POST(req: Request) {
     const attachmentType = typeof body?.attachmentType === "string" ? body.attachmentType.slice(0, 20) : null;
     const isImage = attachmentType === "image" && !!attachmentUrl;
     const lang = ["uz", "ru", "en"].includes(String(body?.language)) ? String(body.language) as "uz" | "ru" | "en" : "uz";
+    // AI rejimi — yangi suhbat to'g'ri rejim tarixiga tushishi uchun (rasm/PDF ham)
+    const modeRaw = typeof body?.mode === "string" ? body.mode : "";
+    const convMode = ["chat", "code", "pic", "vid", "music", "cowork"].includes(modeRaw) ? modeRaw : undefined;
     const extractKB = body?.extractKnowledge !== false;
     let conversationId: string | undefined = typeof body?.conversationId === "string" ? body.conversationId : undefined;
 
@@ -79,6 +82,7 @@ export async function POST(req: Request) {
                 title,
                 moduleOrigin: moduleOrigin ?? null,
                 topic: moduleOrigin ?? null,
+                ...(convMode ? { mode: convMode } : {}),
                 lastMsgAt: new Date(),
             },
         });

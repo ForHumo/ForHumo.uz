@@ -192,6 +192,8 @@ export function AiChatPage() {
         try { localStorage.setItem("ai-lang", l); } catch { /* ignore */ }
     }
     const bottomRef = useRef<HTMLDivElement>(null);
+    const scrollAreaRef = useRef<HTMLDivElement>(null);
+    const prevMsgCountRef = useRef(0);
 
     // TTS toggle — LocalStorage'da saqlanadi
     useEffect(() => {
@@ -393,8 +395,17 @@ export function AiChatPage() {
         else setMessages([]);
     }, [activeId, loadThread]);
 
+    // Aqlli auto-scroll: yangi xabar (send/ochish) → pastga; oqim davomida faqat
+    // foydalanuvchi pastga yaqin bo'lsa (yuqoriga skroll qilgan bo'lsa yulqib tortmaydi).
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        const el = scrollAreaRef.current;
+        const countChanged = messages.length !== prevMsgCountRef.current;
+        prevMsgCountRef.current = messages.length;
+        if (!el) { bottomRef.current?.scrollIntoView(); return; }
+        const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 160;
+        if (countChanged || nearBottom) {
+            bottomRef.current?.scrollIntoView({ behavior: countChanged ? "auto" : "smooth" });
+        }
     }, [messages]);
 
     async function sendMessage(e?: React.FormEvent) {
@@ -468,6 +479,7 @@ export function AiChatPage() {
                 attachmentUrl: att?.url,
                 attachmentType: att?.type,
                 language: aiLang,
+                mode,
             }),
         });
         const j = await r.json();
@@ -1115,7 +1127,7 @@ export function AiChatPage() {
                     </div>
                 )}
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div ref={scrollAreaRef} className="flex-1 overflow-y-auto p-4 space-y-3">
                     {/* SOON rejimlar (Gen Pic / Gen Vid / Humo CoWork) — chiroyli placeholder */}
                     {AI_MODE_MAP[mode].soon && (
                         <div className="h-full flex flex-col items-center justify-center text-center px-4">
