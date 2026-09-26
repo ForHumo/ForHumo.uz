@@ -10,13 +10,14 @@ import {
     Send, Loader2, Plus, MessageSquare, Sparkles, Trash2, LogIn,
     Archive, Menu, X as XIcon, User as UserIcon, Brain, ShieldCheck,
     Mic, MicOff, Paperclip, ImageIcon, Volume2, VolumeX, Share2, Check,
-    Code2, Globe, BookOpen, Mail,
+    Code2, Globe, BookOpen, Mail, Film, Users, Clock, type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { AiStarfield } from "@/components/ai/ai-starfield";
 
 interface ConvSummary {
     id: string; title: string; topic: string | null; moduleOrigin: string | null;
+    mode?: string;
     lastMsgAt: string; createdAt: string; archived: boolean; messageCount: number;
 }
 interface MsgRow {
@@ -52,6 +53,18 @@ const T = {
     shadow: "0 8px 24px rgba(0,0,0,0.5)",
 };
 
+// Humo AI rejimlari — global AI'lar (ChatGPT/Gemini) uslubidagi menu.
+// chat + code TO'LIQ ishlaydi; pic/vid/cowork hozircha "Soon".
+type AiMode = "chat" | "code" | "pic" | "vid" | "cowork";
+const AI_MODES: { id: AiMode; label: string; sub: string; icon: LucideIcon; soon?: boolean }[] = [
+    { id: "chat",   label: "Chat Bot",     sub: "Oddiy suhbat",     icon: Sparkles },
+    { id: "code",   label: "Gen Code",     sub: "Kod yozib berish", icon: Code2 },
+    { id: "pic",    label: "Gen Pic",      sub: "Rasm yaratish",    icon: ImageIcon, soon: true },
+    { id: "vid",    label: "Gen Vid",      sub: "Video yaratish",   icon: Film,      soon: true },
+    { id: "cowork", label: "Humo CoWork",  sub: "Birga ishlash",    icon: Users,     soon: true },
+];
+const AI_MODE_MAP = Object.fromEntries(AI_MODES.map(m => [m.id, m])) as Record<AiMode, typeof AI_MODES[number]>;
+
 export function AiChatPage() {
     const { status } = useSession();
     const [convs, setConvs] = useState<ConvSummary[]>([]);
@@ -62,6 +75,8 @@ export function AiChatPage() {
     const [loadingConvs, setLoadingConvs] = useState(false);
     const [loadingThread, setLoadingThread] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);   // mobile
+    const [mode, setMode] = useState<AiMode>("chat");        // AI rejimi
+    const [modeMenuOpen, setModeMenuOpen] = useState(false); // mobil rejim-menu drawer
     const [kbCount, setKbCount] = useState<number | null>(null);   // bilim bazasi kattaligi
     const [kbBannerDismissed, setKbBannerDismissed] = useState(false);
     // Voice input
@@ -196,15 +211,26 @@ export function AiChatPage() {
         if (status !== "authenticated") return;
         setLoadingConvs(true);
         try {
-            const r = await fetch("/api/ai/conversations", { cache: "no-store" });
+            // Rejim-bo'yicha tarix — faqat joriy rejim suhbatlari
+            const r = await fetch(`/api/ai/conversations?mode=${mode}`, { cache: "no-store" });
             if (r.ok) {
                 const j = await r.json();
                 setConvs(j.conversations ?? []);
             }
         } finally { setLoadingConvs(false); }
-    }, [status]);
+    }, [status, mode]);
 
     useEffect(() => { loadConvs(); }, [loadConvs]);
+
+    // Rejim almashtirish — yangi suhbat (aktiv chatni tozalab) + o'sha rejim tarixi
+    function switchMode(m: AiMode) {
+        setModeMenuOpen(false);
+        if (m === mode) return;
+        setMode(m);
+        setActiveId(null);
+        setMessages([]);
+        setInput("");
+    }
 
     // Bir suhbatni ochish
     const loadThread = useCallback(async (id: string) => {
@@ -309,7 +335,7 @@ export function AiChatPage() {
                 body: JSON.stringify({
                     message: text, conversationId: activeId ?? undefined,
                     attachmentUrl: att?.url, attachmentType: att?.type,
-                    language: aiLang,
+                    language: aiLang, mode,
                 }),
             });
             if (!r.ok || !r.body) throw new Error("stream_failed");
@@ -533,14 +559,14 @@ export function AiChatPage() {
                     <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2">
                         <Menu className="w-5 h-5" />
                     </button>
-                    <span className="w-8 h-8 rounded-lg grid place-items-center"
+                    <span className="w-8 h-8 rounded-lg grid place-items-center flex-shrink-0"
                         style={{ background: T.gradient, color: T.onPrimary }}>
-                        <Brain className="w-4 h-4" />
+                        {(() => { const Ic = AI_MODE_MAP[mode].icon; return <Ic className="w-4 h-4" />; })()}
                     </span>
                     <div className="min-w-0 flex-1">
                         <p className="text-sm font-black truncate">Humo AI</p>
                         <p className="text-[10px] text-muted-foreground truncate">
-                            {activeId ? (convs.find(c => c.id === activeId)?.title ?? "Suhbat") : "Yangi chat"}
+                            {AI_MODE_MAP[mode].label}{" · "}{activeId ? (convs.find(c => c.id === activeId)?.title ?? "Suhbat") : "Yangi chat"}
                         </p>
                     </div>
                     {/* Til tanlash */}
@@ -563,6 +589,14 @@ export function AiChatPage() {
                         className="w-9 h-9 rounded-lg grid place-items-center hover:brightness-95"
                         style={{ background: ttsEnabled ? T.soft : "transparent", color: ttsEnabled ? T.primary : "var(--muted-foreground)" }}>
                         {ttsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                    </button>
+
+                    {/* Rejim menu (mobil) */}
+                    <button onClick={() => setModeMenuOpen(true)}
+                        title="Rejimlar" aria-label="Rejimlar"
+                        className="lg:hidden w-9 h-9 rounded-lg grid place-items-center flex-shrink-0"
+                        style={{ background: T.soft, color: "var(--foreground)" }}>
+                        {(() => { const Ic = AI_MODE_MAP[mode].icon; return <Ic className="w-4 h-4" />; })()}
                     </button>
                 </header>
 
@@ -599,7 +633,24 @@ export function AiChatPage() {
                 )}
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                    {!activeId && messages.length === 0 && (
+                    {/* SOON rejimlar (Gen Pic / Gen Vid / Humo CoWork) — chiroyli placeholder */}
+                    {AI_MODE_MAP[mode].soon && (
+                        <div className="h-full flex flex-col items-center justify-center text-center px-4">
+                            <span className="w-16 h-16 rounded-2xl grid place-items-center mb-5"
+                                style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${T.border}` }}>
+                                {(() => { const Ic = AI_MODE_MAP[mode].icon; return <Ic className="w-8 h-8" style={{ color: "var(--muted-foreground)" }} />; })()}
+                            </span>
+                            <div className="flex items-center gap-2 mb-2">
+                                <h2 className="text-2xl font-black text-[var(--foreground)]">{AI_MODE_MAP[mode].label}</h2>
+                                <span className="text-[10px] font-black px-2 py-0.5 rounded-full"
+                                    style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>SOON</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground max-w-xs inline-flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5 flex-shrink-0" /> Tez orada — eng yaxshi model bilan ishga tushadi
+                            </p>
+                        </div>
+                    )}
+                    {!AI_MODE_MAP[mode].soon && !activeId && messages.length === 0 && (
                         <div className="h-full flex flex-col items-center justify-center text-center px-4">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src="/logos/humo-ai-white.png" alt="Humo AI" className="w-[74px] h-[74px] mb-6 select-none"
@@ -714,6 +765,7 @@ export function AiChatPage() {
                     </div>
                 )}
 
+                {!AI_MODE_MAP[mode].soon && (
                 <form onSubmit={sendMessage} className="border-t p-3 flex gap-2 items-end" style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                     {/* Attachment button */}
                     <input ref={fileInputRef} type="file" accept="image/*,application/pdf" hidden
@@ -754,7 +806,51 @@ export function AiChatPage() {
                         {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                     </button>
                 </form>
+                )}
             </main>
+
+            {/* Mobil — rejim menu overlay */}
+            {modeMenuOpen && (
+                <button className="lg:hidden fixed inset-0 bg-black/50 z-30"
+                    onClick={() => setModeMenuOpen(false)} aria-label="Yopish" />
+            )}
+
+            {/* O'ng — REJIM menyusi (global AI uslubi: Chat/Code/Pic/Vid/CoWork) */}
+            <aside className={`w-60 flex-shrink-0 border-l flex-col lg:relative lg:z-10 lg:flex
+                ${modeMenuOpen ? "fixed inset-y-0 right-0 z-40 flex" : "hidden"}`}
+                style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                <div className="h-14 px-4 flex items-center justify-between border-b flex-shrink-0" style={{ borderColor: T.border }}>
+                    <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Rejimlar</p>
+                    <button onClick={() => setModeMenuOpen(false)} className="lg:hidden p-1 -mr-1">
+                        <XIcon className="w-4 h-4" style={{ color: "var(--muted-foreground)" }} />
+                    </button>
+                </div>
+                <div className="p-2 space-y-1 overflow-y-auto">
+                    {AI_MODES.map(m => {
+                        const active = mode === m.id;
+                        return (
+                            <button key={m.id} onClick={() => switchMode(m.id)}
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors hover:bg-white/[0.04]"
+                                style={active ? { background: T.soft, border: `1px solid ${T.border}` } : { border: "1px solid transparent" }}>
+                                <span className="w-9 h-9 rounded-xl grid place-items-center flex-shrink-0"
+                                    style={{ background: active ? "#ECECEC" : "rgba(255,255,255,0.05)", color: active ? "#0d0d0d" : "var(--muted-foreground)" }}>
+                                    <m.icon className="w-[18px] h-[18px]" />
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-[13px] font-bold truncate text-[var(--foreground)]">{m.label}</span>
+                                        {m.soon && (
+                                            <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0"
+                                                style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>SOON</span>
+                                        )}
+                                    </div>
+                                    <span className="text-[10.5px] block truncate" style={{ color: "var(--muted-foreground)" }}>{m.sub}</span>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </aside>
         </div>
     );
 }

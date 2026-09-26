@@ -975,6 +975,7 @@ model AiConversation {
   title       String                                        // 60 chars max — birinchi xabardan AI generate qiladi
   topic       String?                                       // AI classifier: "belis"|"pay"|"nexus"|"market"|"bn"|"esport"|"id"|"personal"|"general"
   moduleOrigin String?                                      // qaysi moduldan boshlangan (belis/support/nexus/...)
+  mode        String        @default("chat")                // AI rejimi: "chat"|"code"|"pic"|"vid"|"cowork" (rejim-bo'yicha tarix)
   shareId     String?       @unique                         // agar ulashilgan bo'lsa — 32-hex random (public read-only URL)
   sharedAt    DateTime?
   lastMsgAt   DateTime      @default(now())
@@ -985,6 +986,7 @@ model AiConversation {
   @@index([profileId, lastMsgAt(sort: Desc)])
   @@index([profileId, topic])
   @@index([profileId, archived])
+  @@index([profileId, mode, lastMsgAt(sort: Desc)])
 }
 
 model AiMessage {

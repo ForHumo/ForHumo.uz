@@ -48,6 +48,9 @@ export async function POST(req: Request) {
     const userMsg = String(body?.message ?? "").trim().slice(0, MAX_MSG_LEN);
     if (!userMsg) return sseError("message_required", 400);
     const moduleOrigin = typeof body?.moduleOrigin === "string" ? body.moduleOrigin.slice(0, 20) : undefined;
+    // AI rejimi — hozir chat va code to'liq ishlaydi (pic/vid/cowork "Soon", chatga kelmaydi).
+    const modeRaw = typeof body?.mode === "string" ? body.mode : "chat";
+    const mode = modeRaw === "code" ? "code" : "chat";
     const attachmentUrl = typeof body?.attachmentUrl === "string" ? body.attachmentUrl.slice(0, 500) : null;
     const attachmentType = typeof body?.attachmentType === "string" ? body.attachmentType.slice(0, 20) : null;
     const lang = ["uz", "ru", "en"].includes(String(body?.language)) ? String(body.language) as "uz" | "ru" | "en" : "uz";
@@ -64,6 +67,7 @@ export async function POST(req: Request) {
                 title: userMsg.slice(0, 60).replace(/\s+/g, " "),
                 moduleOrigin: moduleOrigin ?? null,
                 topic: moduleOrigin ?? null,
+                mode,
                 lastMsgAt: new Date(),
             },
         });
@@ -104,7 +108,9 @@ export async function POST(req: Request) {
                 relevant.map((r, i) => `${i + 1}. ${r.body.slice(0, 200)}`).join("\n");
         }
     } catch { /* fail-safe */ }
-    const system = baseSystem + memoryContext;
+    // Gen Code rejimi — dasturchi yordamchisi (toza, ishlaydigan kod)
+    const CODE_SYS = "\n\n=== KOD REJIMI ===\nSiz tajribali dasturchi yordamchisisiz. Foydalanuvchiga TOZA, ISHLAYDIGAN kod yozib bering: kodni har doim ``` bloklarda bering va tilni belgilang (```ts, ```python, h.k.). Avval qisqa (1-2 gap) tushuntirish, keyin kod. Best-practice, xavfsiz, o'qiladigan kod. Kerak bo'lsa foydalanish namunasi qo'shing. Ortiqcha gap yozmang.";
+    const system = baseSystem + memoryContext + (mode === "code" ? CODE_SYS : "");
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({

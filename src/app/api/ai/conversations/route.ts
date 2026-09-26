@@ -19,18 +19,20 @@ export async function GET(req: Request) {
 
     const url = new URL(req.url);
     const topic = url.searchParams.get("topic");
+    const mode = url.searchParams.get("mode");   // "chat"|"code"|... — rejim-bo'yicha tarix
     const archived = url.searchParams.get("archived") === "1";
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = { profileId: me.id, archived };
     if (topic) where.topic = topic;
+    if (mode) where.mode = mode;
 
     const rows = await prisma.aiConversation.findMany({
         where,
         orderBy: { lastMsgAt: "desc" },
         take: 100,
         select: {
-            id: true, title: true, topic: true, moduleOrigin: true,
+            id: true, title: true, topic: true, moduleOrigin: true, mode: true,
             lastMsgAt: true, createdAt: true, archived: true,
             _count: { select: { messages: true } },
         },
@@ -38,7 +40,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
         conversations: rows.map(r => ({
-            id: r.id, title: r.title, topic: r.topic, moduleOrigin: r.moduleOrigin,
+            id: r.id, title: r.title, topic: r.topic, moduleOrigin: r.moduleOrigin, mode: r.mode,
             lastMsgAt: r.lastMsgAt.toISOString(),
             createdAt: r.createdAt.toISOString(),
             archived: r.archived,
