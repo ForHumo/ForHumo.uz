@@ -11,7 +11,7 @@ import {
     Archive, Menu, X as XIcon, User as UserIcon, Brain, ShieldCheck,
     Mic, MicOff, Paperclip, ImageIcon, Volume2, VolumeX, Share2, Check,
     Code2, Globe, BookOpen, Mail, Film, Users, Clock, Cpu, ChevronDown, Copy, Download, Home,
-    Music, Search, CheckSquare, Square, Link2Off, type LucideIcon,
+    Music, Search, CheckSquare, Square, Link2Off, PanelLeftClose, PanelLeftOpen, type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { AiStarfield } from "@/components/ai/ai-starfield";
@@ -103,6 +103,10 @@ export function AiChatPage() {
     const [selected, setSelected] = useState<Set<string>>(new Set());
     // Composer "+" menyusi (Gemini/ChatGPT uslubi)
     const [plusMenuOpen, setPlusMenuOpen] = useState(false);
+    // Sidebar yig'ish (desktop icon-rail) + chat qidiruv
+    const [collapsed, setCollapsed] = useState(false);
+    const [chatSearch, setChatSearch] = useState("");
+    const chatSearchRef = useRef<HTMLInputElement>(null);
 
     function copyCanvas() {
         if (!canvas) return;
@@ -132,6 +136,18 @@ export function AiChatPage() {
         setModel(id);
         setModelMenuOpen(false);
         try { localStorage.setItem("ai-model", id); } catch { /* ignore */ }
+    }
+
+    // Sidebar yig'ilgan holati — LocalStorage
+    useEffect(() => {
+        try { setCollapsed(localStorage.getItem("ai-sidebar-collapsed") === "1"); } catch { /* ignore */ }
+    }, []);
+    function toggleCollapse() {
+        setCollapsed(prev => {
+            const next = !prev;
+            try { localStorage.setItem("ai-sidebar-collapsed", next ? "1" : "0"); } catch { /* ignore */ }
+            return next;
+        });
     }
     const [kbCount, setKbCount] = useState<number | null>(null);   // bilim bazasi kattaligi
     const [kbBannerDismissed, setKbBannerDismissed] = useState(false);
@@ -633,6 +649,11 @@ export function AiChatPage() {
         );
     }
 
+    // Yig'ilgan panelda faqat ikonkalar; mobil drawer ochilsa to'liq ko'rinadi
+    const showLabels = !collapsed || sidebarOpen;
+    const chatQuery = chatSearch.trim().toLowerCase();
+    const shownConvs = chatQuery ? convs.filter(c => c.title.toLowerCase().includes(chatQuery)) : convs;
+
     return (
         <div className="dark relative min-h-screen flex text-[var(--foreground)]" style={{ background: "transparent" }}>
             {/* Qora cosmic fon + uchib yuruvchi yulduzlar (eski AI'dagi sevimli fon) */}
@@ -644,28 +665,41 @@ export function AiChatPage() {
                     onClick={() => setSidebarOpen(false)} aria-label="Yopish" />
             )}
 
-            {/* Sidebar — suhbatlar */}
-            <aside className={`w-72 flex-shrink-0 border-r flex flex-col md:relative md:z-10
+            {/* Sidebar — Humo AI (yig'iladigan: to'liq ↔ icon-rail) */}
+            <aside className={`w-72 ${collapsed ? "md:w-[68px]" : "md:w-72"} flex-shrink-0 border-r flex flex-col md:relative md:z-10 transition-[width] duration-200
                 ${sidebarOpen ? "fixed inset-y-0 left-0 z-40" : "hidden md:flex"}`}
                 style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
-                <div className="p-3 border-b flex items-center gap-2" style={{ borderColor: T.border }}>
-                    <button onClick={newChat}
-                        className="flex-1 flex items-center gap-2 h-10 px-3 rounded-xl text-sm font-black"
-                        style={{ background: T.gradient, color: T.onPrimary, boxShadow: T.shadow }}>
-                        <Plus className="w-4 h-4" /> Yangi chat
-                    </button>
-                    <button onClick={() => setSidebarOpen(false)} className="md:hidden p-2">
-                        <XIcon className="w-5 h-5" />
-                    </button>
+
+                {/* Tepa — Humo AI logo + panelni yig'ish/yopish */}
+                <div className={`h-14 border-b flex items-center flex-shrink-0 ${showLabels ? "px-3 gap-2" : "px-0 justify-center"}`} style={{ borderColor: T.border }}>
+                    {showLabels ? (
+                        <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src="/logos/humo-ai-white.png" alt="Humo AI" className="w-7 h-7 flex-shrink-0 select-none" draggable={false} />
+                            <span className="font-black text-sm flex-1 truncate text-[var(--foreground)]">Humo AI</span>
+                            <button onClick={toggleCollapse} title="Panelni yig'ish" aria-label="Panelni yig'ish"
+                                className="hidden md:grid w-8 h-8 rounded-lg place-items-center hover:bg-white/[0.06]" style={{ color: "var(--muted-foreground)" }}>
+                                <PanelLeftClose className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => setSidebarOpen(false)} className="md:hidden w-8 h-8 grid place-items-center" style={{ color: "var(--muted-foreground)" }}>
+                                <XIcon className="w-5 h-5" />
+                            </button>
+                        </>
+                    ) : (
+                        <button onClick={toggleCollapse} title="Panelni ochish" aria-label="Panelni ochish"
+                            className="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/[0.06]" style={{ color: "var(--muted-foreground)" }}>
+                            <PanelLeftOpen className="w-5 h-5" />
+                        </button>
+                    )}
                 </div>
 
-                {/* REJIMLAR (chapda — chatlar tepasida) */}
-                <div className="px-2 pt-2 pb-2 border-b flex-shrink-0" style={{ borderColor: T.border }}>
-                    <p className="px-2 pb-1.5 text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Rejimlar</p>
-                    <div className="space-y-0.5">
+                {/* REJIMLAR */}
+                <div className={`border-b flex-shrink-0 ${showLabels ? "px-2 pt-2 pb-2" : "px-0 py-2"}`} style={{ borderColor: T.border }}>
+                    {showLabels && <p className="px-2 pb-1.5 text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Rejimlar</p>}
+                    <div className={showLabels ? "space-y-0.5" : "flex flex-col items-center gap-1"}>
                         {AI_MODES.map(m => {
                             const active = mode === m.id;
-                            return (
+                            return showLabels ? (
                                 <button key={m.id} onClick={() => switchMode(m.id)}
                                     className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-colors hover:bg-white/[0.04]"
                                     style={active ? { background: T.soft } : {}}>
@@ -679,24 +713,65 @@ export function AiChatPage() {
                                             style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>SOON</span>
                                     )}
                                 </button>
+                            ) : (
+                                <button key={m.id} onClick={() => switchMode(m.id)} title={m.label + (m.soon ? " (Soon)" : "")}
+                                    className="w-9 h-9 rounded-lg grid place-items-center relative"
+                                    style={{ background: active ? "#ECECEC" : "rgba(255,255,255,0.05)", color: active ? "#0d0d0d" : "var(--muted-foreground)" }}>
+                                    <m.icon className="w-4 h-4" />
+                                    {m.soon && <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full" style={{ background: "var(--muted-foreground)" }} />}
+                                </button>
                             );
                         })}
                     </div>
                 </div>
 
-                {/* CHATLAR */}
-                <div className="px-4 pt-2.5 pb-1 flex items-center justify-between flex-shrink-0">
-                    <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Chatlar</p>
-                    {convs.length > 0 && (
-                        <button onClick={toggleSelectMode}
-                            className="text-[10px] font-bold hover:underline" style={{ color: "var(--muted-foreground)" }}>
-                            {selectMode ? "Bekor" : "Tanlash"}
+                {/* CHATLAR sarlavha + Tanlash (faqat to'liq holatda) */}
+                {showLabels && (
+                    <div className="px-4 pt-2.5 pb-1 flex items-center justify-between flex-shrink-0">
+                        <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Chatlar</p>
+                        {convs.length > 0 && (
+                            <button onClick={toggleSelectMode}
+                                className="text-[10px] font-bold hover:underline" style={{ color: "var(--muted-foreground)" }}>
+                                {selectMode ? "Bekor" : "Tanlash"}
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {/* Yangi chat — ro'yxatning birinchi elementi + qidiruv */}
+                {showLabels ? (
+                    <div className="px-2 pb-1 flex-shrink-0">
+                        <button onClick={newChat}
+                            className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-left transition-colors hover:bg-white/[0.04]">
+                            <span className="w-7 h-7 rounded-lg grid place-items-center flex-shrink-0" style={{ background: T.gradient, color: T.onPrimary }}>
+                                <Plus className="w-4 h-4" />
+                            </span>
+                            <span className="text-[12.5px] font-black flex-1 text-[var(--foreground)]">Yangi chat</span>
                         </button>
-                    )}
-                </div>
+                        <div className="relative mt-1">
+                            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--muted-foreground)" }} />
+                            <input ref={chatSearchRef} value={chatSearch} onChange={e => setChatSearch(e.target.value)}
+                                placeholder="Chat qidirish..."
+                                className="w-full h-8 pl-8 pr-2 rounded-lg text-[12px] border focus:outline-none focus:ring-1"
+                                style={{ borderColor: T.border, background: "rgba(26,26,26,0.6)", color: "var(--foreground)", ["--tw-ring-color" as string]: T.primary + "40" }} />
+                        </div>
+                    </div>
+                ) : (
+                    <div className="py-2 flex flex-col items-center gap-1 flex-shrink-0 border-b" style={{ borderColor: T.border }}>
+                        <button onClick={newChat} title="Yangi chat" aria-label="Yangi chat"
+                            className="w-9 h-9 rounded-lg grid place-items-center" style={{ background: T.gradient, color: T.onPrimary }}>
+                            <Plus className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => { setCollapsed(false); try { localStorage.setItem("ai-sidebar-collapsed", "0"); } catch { /* ignore */ } setTimeout(() => chatSearchRef.current?.focus(), 80); }}
+                            title="Chat qidirish" aria-label="Chat qidirish"
+                            className="w-9 h-9 rounded-lg grid place-items-center hover:bg-white/[0.06]" style={{ color: "var(--muted-foreground)" }}>
+                            <Search className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
 
                 {/* Tanlash rejimi — hammasini belgilash + o'chirish */}
-                {selectMode && convs.length > 0 && (
+                {showLabels && selectMode && convs.length > 0 && (
                     <div className="px-3 pb-2 flex items-center gap-2 flex-shrink-0">
                         <button onClick={toggleSelectAll}
                             className="flex items-center gap-1.5 text-[11px] font-bold px-2 py-1 rounded-lg hover:bg-white/[0.05]"
@@ -711,15 +786,19 @@ export function AiChatPage() {
                     </div>
                 )}
 
-                <div className="flex-1 overflow-y-auto p-2 pt-0 space-y-1">
+                {/* Chat ro'yxati — faqat to'liq holatda ko'rinadi */}
+                {!showLabels ? (
+                    <div className="flex-1" />
+                ) : (
+                    <div className="flex-1 overflow-y-auto p-2 pt-0 space-y-1">
                     {loadingConvs && convs.length === 0 ? (
                         <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
-                    ) : convs.length === 0 ? (
+                    ) : shownConvs.length === 0 ? (
                         <div className="p-6 text-center text-xs text-muted-foreground">
-                            Hali suhbat yo&apos;q.<br />Yangi chat bilan boshlang.
+                            {chatQuery ? "Mos chat topilmadi." : <>Hali suhbat yo&apos;q.<br />Yangi chat bilan boshlang.</>}
                         </div>
                     ) : (
-                        convs.map(c => {
+                        shownConvs.map(c => {
                             const active = c.id === activeId;
                             const checked = selected.has(c.id);
                             return (
@@ -787,21 +866,35 @@ export function AiChatPage() {
                             );
                         })
                     )}
-                </div>
+                    </div>
+                )}
 
                 {/* Bottom — sozlamalar */}
-                <div className="p-2 border-t space-y-1" style={{ borderColor: T.border }}>
-                    <Link href={"/ai/knowledge" as never}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-black/[0.03] dark:hover:bg-white/[0.03]">
-                        <ShieldCheck className="w-3.5 h-3.5" style={{ color: T.primary }} />
-                        Bilim bazam
-                    </Link>
-                    <Link href={"/id" as never}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-black/[0.03] dark:hover:bg-white/[0.03]">
-                        <UserIcon className="w-3.5 h-3.5 opacity-60" />
-                        Profilim
-                    </Link>
-                </div>
+                {showLabels ? (
+                    <div className="p-2 border-t space-y-1 flex-shrink-0" style={{ borderColor: T.border }}>
+                        <Link href={"/ai/knowledge" as never}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-black/[0.03] dark:hover:bg-white/[0.03]">
+                            <ShieldCheck className="w-3.5 h-3.5" style={{ color: T.primary }} />
+                            Bilim bazam
+                        </Link>
+                        <Link href={"/id" as never}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-black/[0.03] dark:hover:bg-white/[0.03]">
+                            <UserIcon className="w-3.5 h-3.5 opacity-60" />
+                            Profilim
+                        </Link>
+                    </div>
+                ) : (
+                    <div className="py-2 border-t flex flex-col items-center gap-1 flex-shrink-0" style={{ borderColor: T.border }}>
+                        <Link href={"/ai/knowledge" as never} title="Bilim bazam"
+                            className="w-9 h-9 rounded-lg grid place-items-center hover:bg-white/[0.06]">
+                            <ShieldCheck className="w-4 h-4" style={{ color: T.primary }} />
+                        </Link>
+                        <Link href={"/id" as never} title="Profilim"
+                            className="w-9 h-9 rounded-lg grid place-items-center hover:bg-white/[0.06]">
+                            <UserIcon className="w-4 h-4 opacity-60" />
+                        </Link>
+                    </div>
+                )}
             </aside>
 
             {/* Main — chat */}
@@ -816,10 +909,8 @@ export function AiChatPage() {
                         style={{ color: "var(--muted-foreground)" }}>
                         <Home className="w-[18px] h-[18px]" />
                     </Link>
-                    <span className="w-8 h-8 rounded-lg grid place-items-center flex-shrink-0"
-                        style={{ background: T.gradient, color: T.onPrimary }}>
-                        {(() => { const Ic = AI_MODE_MAP[mode].icon; return <Ic className="w-4 h-4" />; })()}
-                    </span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/logos/humo-ai-white.png" alt="Humo AI" className="w-8 h-8 flex-shrink-0 select-none" draggable={false} />
                     <div className="min-w-0 flex-1">
                         <p className="text-sm font-black truncate">Humo AI</p>
                         <p className="text-[10px] text-muted-foreground truncate">
