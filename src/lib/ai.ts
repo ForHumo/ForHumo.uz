@@ -150,6 +150,40 @@ export async function aiAnalyzeFile(prompt: string, fileUrl: string, opts: GenOp
 }
 
 /**
+ * Gemini bilan rasm YARATISH (Gen Pic) — gemini-2.5-flash-image ("Nano Banana").
+ * Matn prompt → rasm (base64). Kalit yo'q / xato → null (chaqiruvchi boshqa provayderga tushadi).
+ */
+export async function aiGenerateImage(prompt: string): Promise<{ mime: string; base64: string } | null> {
+    if (!GEMINI_KEY) return null;
+    const model = "gemini-2.5-flash-image";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`;
+    try {
+        const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+            }),
+        });
+        if (!res.ok) {
+            console.error("[aiGenerateImage]", res.status, (await res.text().catch(() => "")).slice(0, 200));
+            return null;
+        }
+        const data = await res.json();
+        const parts = data?.candidates?.[0]?.content?.parts ?? [];
+        for (const p of parts) {
+            const inline = p?.inlineData ?? p?.inline_data;
+            if (inline?.data) return { mime: inline.mimeType || inline.mime_type || "image/png", base64: inline.data };
+        }
+        return null;
+    } catch (e) {
+        console.error("[aiGenerateImage]", e);
+        return null;
+    }
+}
+
+/**
  * Gemini bilan audio transkribatsiya. Kirish: OGG/Opus/WAV/MP3 buffer.
  * Til: auto-detect (Gemini o'zi aniqlaydi), o'zbek/rus/ingliz uchun aniq ishlaydi.
  * Kalit yo'q yoki xato → null (fail-safe).

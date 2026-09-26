@@ -10,6 +10,7 @@ import { put } from "@vercel/blob";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { aiGenerateImage } from "@/lib/ai";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,9 +22,13 @@ const MODEL = "@cf/black-forest-labs/flux-1-schnell";
 const MAX_PER_DAY = 15;              // 15 rasm / kun / profil
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+const CF_READY = !!(CF_ACCOUNT && CF_TOKEN);
+const GEMINI_READY = !!process.env.GEMINI_API_KEY;
+
 export async function POST(req: Request) {
-    if (!CF_ACCOUNT || !CF_TOKEN) {
-        return NextResponse.json({ error: "Gen Pic hali sozlanmagan (Cloudflare Workers AI kaliti)" }, { status: 503 });
+    // Kamida bitta rasm-provayder kerak: Cloudflare Flux YOKI Gemini flash-image
+    if (!CF_READY && !GEMINI_READY) {
+        return NextResponse.json({ error: "Gen Pic hali sozlanmagan (rasm-model kaliti yo'q)" }, { status: 503 });
     }
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
         return NextResponse.json({ error: "storage_not_configured" }, { status: 503 });
@@ -51,34 +56,48 @@ export async function POST(req: Request) {
     if (prompt.length < 3) return NextResponse.json({ error: "prompt_required" }, { status: 400 });
     let conversationId: string | undefined = typeof body?.conversationId === "string" ? body.conversationId : undefined;
 
-    // Cloudflare Flux — base64 rasm
+    // Rasm generatsiya — 1) Cloudflare Flux (sozlangan bo'lsa), 2) Gemini flash-image (fallback)
     let base64 = "";
-    try {
-        const res = await fetch(
-            `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/ai/run/${MODEL}`,
-            {
-                method: "POST",
-                headers: { "Authorization": `Bearer ${CF_TOKEN}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt, steps: 4 }),
-            },
-        );
-        if (!res.ok) {
-            const t = await res.text().catch(() => "");
-            console.error("[imagen] CF error", res.status, t.slice(0, 200));
-            return NextResponse.json({ error: "Rasm yaratilmadi (server band). Birozdan keyin urinib ko'ring." }, { status: 502 });
+    let outMime = "image/jpeg";
+    let usedModel = "";
+
+    if (CF_READY) {
+        try {
+            const res = await fetch(
+                `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/ai/run/${MODEL}`,
+                {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${CF_TOKEN}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt, steps: 4 }),
+                },
+            );
+            if (res.ok) {
+                const data = await res.json();
+                base64 = data?.result?.image ?? "";
+                if (base64) { outMime = "image/jpeg"; usedModel = "flux-1-schnell"; }
+            } else {
+                console.error("[imagen] CF error", res.status, (await res.text().catch(() => "")).slice(0, 200));
+            }
+        } catch (e) {
+            console.error("[imagen] CF network", e);
         }
-        const data = await res.json();
-        base64 = data?.result?.image ?? "";
-        if (!base64) return NextResponse.json({ error: "Rasm bo'sh qaytdi." }, { status: 502 });
-    } catch (e) {
-        console.error("[imagen] network", e);
-        return NextResponse.json({ error: "Tarmoq xatosi." }, { status: 502 });
+    }
+
+    // Fallback: Gemini flash-image ("Nano Banana") — GEMINI_API_KEY mavjud (chat bilan bir xil)
+    if (!base64 && GEMINI_READY) {
+        const img = await aiGenerateImage(prompt);
+        if (img) { base64 = img.base64; outMime = img.mime || "image/png"; usedModel = "gemini-2.5-flash-image"; }
+    }
+
+    if (!base64) {
+        return NextResponse.json({ error: "Rasm yaratilmadi (server band). Birozdan keyin urinib ko'ring." }, { status: 502 });
     }
 
     // base64 → Vercel Blob
     const buf = Buffer.from(base64, "base64");
-    const filename = `ai/gen/${me.id.slice(0, 12)}-${Date.now()}.jpg`;
-    const blob = await put(filename, buf, { access: "public", contentType: "image/jpeg", addRandomSuffix: true });
+    const ext = outMime.includes("png") ? "png" : outMime.includes("webp") ? "webp" : "jpg";
+    const filename = `ai/gen/${me.id.slice(0, 12)}-${Date.now()}.${ext}`;
+    const blob = await put(filename, buf, { access: "public", contentType: outMime, addRandomSuffix: true });
 
     // Suhbat (mode="pic") + xabarlar
     let conv = conversationId
@@ -101,7 +120,7 @@ export async function POST(req: Request) {
     const aiMsg = await prisma.aiMessage.create({
         data: {
             conversationId: conv.id, role: "ai", body: "",
-            attachmentUrl: blob.url, attachmentType: "image", aiModel: "flux-1-schnell",
+            attachmentUrl: blob.url, attachmentType: "image", aiModel: usedModel || "gen-image",
         },
     });
     await prisma.aiConversation.update({ where: { id: conv.id }, data: { lastMsgAt: new Date() } });
