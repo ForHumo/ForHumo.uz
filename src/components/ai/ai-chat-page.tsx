@@ -10,7 +10,7 @@ import {
     Send, Loader2, Plus, MessageSquare, Sparkles, Trash2, LogIn,
     Archive, Menu, X as XIcon, User as UserIcon, Brain, ShieldCheck,
     Mic, MicOff, Paperclip, ImageIcon, Volume2, VolumeX, Share2, Check,
-    Code2, Globe, BookOpen, Mail, Film, Users, Clock, Cpu, ChevronDown, type LucideIcon,
+    Code2, Globe, BookOpen, Mail, Film, Users, Clock, Cpu, ChevronDown, Copy, Download, type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { AiStarfield } from "@/components/ai/ai-starfield";
@@ -62,7 +62,7 @@ const AI_MODES: { id: AiMode; label: string; sub: string; icon: LucideIcon; soon
     { id: "code",   label: "Gen Code",     sub: "Kod yozib berish", icon: Code2 },
     { id: "pic",    label: "Gen Pic",      sub: "Rasm yaratish",    icon: ImageIcon, soon: true },
     { id: "vid",    label: "Gen Vid",      sub: "Video yaratish",   icon: Film,      soon: true },
-    { id: "cowork", label: "Humo CoWork",  sub: "Birga ishlash",    icon: Users,     soon: true },
+    { id: "cowork", label: "Humo CoWork",  sub: "Canvas — birga ishlash", icon: Users },
 ];
 const AI_MODE_MAP = Object.fromEntries(AI_MODES.map(m => [m.id, m])) as Record<AiMode, typeof AI_MODES[number]>;
 
@@ -80,6 +80,27 @@ export function AiChatPage() {
     const [modeMenuOpen, setModeMenuOpen] = useState(false); // mobil rejim-menu drawer
     const [model, setModel] = useState<string>(DEFAULT_MODEL); // tanlangan AI model
     const [modelMenuOpen, setModelMenuOpen] = useState(false); // model tanlash dropdown
+    const [canvas, setCanvas] = useState<string>("");          // CoWork Canvas hujjati
+    const [canvasView, setCanvasView] = useState<"chat" | "canvas">("chat"); // mobil tab
+    const [canvasCopied, setCanvasCopied] = useState(false);
+
+    function copyCanvas() {
+        if (!canvas) return;
+        navigator.clipboard?.writeText(canvas).then(() => {
+            setCanvasCopied(true);
+            setTimeout(() => setCanvasCopied(false), 1500);
+        }).catch(() => {});
+    }
+    function downloadCanvas() {
+        if (!canvas) return;
+        const looksCode = /```|function |const |import |class |def /.test(canvas);
+        const blob = new Blob([canvas], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = looksCode ? "humo-canvas.txt" : "humo-canvas.md";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
 
     useEffect(() => {
         try {
@@ -245,6 +266,8 @@ export function AiChatPage() {
         setActiveId(null);
         setMessages([]);
         setInput("");
+        setCanvas("");
+        setCanvasView("chat");
     }
 
     // Bir suhbatni ochish
@@ -254,10 +277,25 @@ export function AiChatPage() {
             const r = await fetch(`/api/ai/conversations/${id}`, { cache: "no-store" });
             if (r.ok) {
                 const j = await r.json();
-                setMessages(j.messages ?? []);
+                let msgs: MsgRow[] = j.messages ?? [];
+                // CoWork — saqlangan AI xabaridan Canvas'ni ajratib tiklaymiz
+                if (mode === "cowork") {
+                    let lastDoc = "";
+                    msgs = msgs.map(m => {
+                        if (m.role === "ai" && m.body.includes("===CANVAS===")) {
+                            const idx = m.body.indexOf("===CANVAS===");
+                            lastDoc = m.body.slice(idx + 12).replace(/^\s*\n/, "").trim();
+                            return { ...m, body: m.body.slice(0, idx).trim() || "Canvas'ga yozdim." };
+                        }
+                        return m;
+                    });
+                    setCanvas(lastDoc);
+                    if (lastDoc) setCanvasView("canvas");
+                }
+                setMessages(msgs);
             }
         } finally { setLoadingThread(false); }
-    }, []);
+    }, [mode]);
 
     useEffect(() => {
         if (activeId) loadThread(activeId);
@@ -374,7 +412,21 @@ export function AiChatPage() {
                         const p = JSON.parse(line.slice(5).trim());
                         if (p.type === "chunk" && p.text) {
                             acc += p.text;
-                            setMessages(prev => prev.map(m => m.id === streamMsgId ? { ...m, body: acc } : m));
+                            if (mode === "cowork") {
+                                // CoWork — ===CANVAS=== dan keyingisi jonli Canvas panelga
+                                const idx = acc.indexOf("===CANVAS===");
+                                if (idx >= 0) {
+                                    const note = acc.slice(0, idx).trim() || "Canvas'ga yozyapman...";
+                                    const doc = acc.slice(idx + 12).replace(/^\s*\n/, "");
+                                    setMessages(prev => prev.map(m => m.id === streamMsgId ? { ...m, body: note } : m));
+                                    setCanvas(doc);
+                                    setCanvasView("canvas");
+                                } else {
+                                    setMessages(prev => prev.map(m => m.id === streamMsgId ? { ...m, body: acc } : m));
+                                }
+                            } else {
+                                setMessages(prev => prev.map(m => m.id === streamMsgId ? { ...m, body: acc } : m));
+                            }
                         } else if (p.type === "done") {
                             doneData = p;
                         } else if (p.type === "error") {
@@ -388,8 +440,18 @@ export function AiChatPage() {
             if (doneData) {
                 const aiReal = doneData.messages?.[1];
                 if (aiReal) {
-                    setMessages(prev => prev.map(m => m.id === streamMsgId ? { ...aiReal, role: "ai", followUps: doneData?.followUps } : m));
-                    if (ttsEnabled && aiReal.body && aiReal.id) speakMessage(aiReal.id, aiReal.body);
+                    let body = aiReal.body;
+                    if (mode === "cowork") {
+                        const idx = body.indexOf("===CANVAS===");
+                        if (idx >= 0) {
+                            const doc = body.slice(idx + 12).replace(/^\s*\n/, "").trim();
+                            body = body.slice(0, idx).trim() || "Canvas'ga yozdim.";
+                            setCanvas(doc);
+                            setCanvasView("canvas");
+                        }
+                    }
+                    setMessages(prev => prev.map(m => m.id === streamMsgId ? { ...aiReal, body, role: "ai", followUps: doneData?.followUps } : m));
+                    if (ttsEnabled && body && aiReal.id) speakMessage(aiReal.id, body);
                 }
                 if (!activeId && doneData.conversationId) setActiveId(doneData.conversationId);
             }
@@ -405,6 +467,8 @@ export function AiChatPage() {
         setMessages([]);
         setInput("");
         setSidebarOpen(false);
+        setCanvas("");
+        setCanvasView("chat");
     }
 
     async function deleteConv(id: string) {
@@ -584,6 +648,19 @@ export function AiChatPage() {
                             {AI_MODE_MAP[mode].label}{" · "}{activeId ? (convs.find(c => c.id === activeId)?.title ?? "Suhbat") : "Yangi chat"}
                         </p>
                     </div>
+                    {/* CoWork — mobil Chat/Canvas toggle */}
+                    {mode === "cowork" && (
+                        <div className="lg:hidden flex items-center gap-0.5 rounded-lg p-0.5 flex-shrink-0" style={{ background: "var(--card, rgba(0,0,0,0.04))" }}>
+                            {(["chat", "canvas"] as const).map(v => (
+                                <button key={v} onClick={() => setCanvasView(v)}
+                                    className="px-2 h-7 rounded-md text-[10px] font-black transition-colors"
+                                    style={{ background: canvasView === v ? T.gradient : "transparent", color: canvasView === v ? T.onPrimary : "var(--muted-foreground)" }}>
+                                    {v === "chat" ? "Chat" : "Canvas"}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
                     {/* Model tanlash (OpenRouter — top modellar) */}
                     <div className="relative flex-shrink-0">
                         <button onClick={() => setModelMenuOpen(o => !o)}
@@ -646,10 +723,10 @@ export function AiChatPage() {
                         {ttsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
                     </button>
 
-                    {/* Rejim menu (mobil) */}
+                    {/* Rejim menu (mobil + cowork'da desktop) */}
                     <button onClick={() => setModeMenuOpen(true)}
                         title="Rejimlar" aria-label="Rejimlar"
-                        className="lg:hidden w-9 h-9 rounded-lg grid place-items-center flex-shrink-0"
+                        className={`${mode === "cowork" ? "" : "lg:hidden"} w-9 h-9 rounded-lg grid place-items-center flex-shrink-0`}
                         style={{ background: T.soft, color: "var(--foreground)" }}>
                         {(() => { const Ic = AI_MODE_MAP[mode].icon; return <Ic className="w-4 h-4" />; })()}
                     </button>
@@ -864,6 +941,39 @@ export function AiChatPage() {
                 )}
             </main>
 
+            {/* CoWork — CANVAS paneli (Claude Artifacts uslubi). Desktop: yon-yonda; mobil: tab. */}
+            {mode === "cowork" && (
+                <aside className={`flex-col border-l relative z-10 min-w-0 lg:flex lg:flex-1
+                    ${canvasView === "canvas" ? "flex flex-1 fixed inset-0 z-40 lg:static lg:inset-auto" : "hidden"}`}
+                    style={{ borderColor: T.border, background: "rgba(10,10,10,0.96)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                    <div className="h-14 px-4 flex items-center justify-between border-b flex-shrink-0" style={{ borderColor: T.border }}>
+                        <div className="flex items-center gap-2 min-w-0">
+                            <Users className="w-4 h-4 flex-shrink-0" style={{ color: "var(--muted-foreground)" }} />
+                            <span className="text-sm font-black truncate text-[var(--foreground)]">Canvas</span>
+                            {canvas && <span className="text-[10px] flex-shrink-0" style={{ color: "var(--muted-foreground)" }}>{canvas.length} belgi</span>}
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <button onClick={copyCanvas} disabled={!canvas} title="Nusxa"
+                                className="w-8 h-8 rounded-lg grid place-items-center hover:bg-white/[0.06] disabled:opacity-30" style={{ color: "var(--muted-foreground)" }}>
+                                {canvasCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                            </button>
+                            <button onClick={downloadCanvas} disabled={!canvas} title="Yuklab olish"
+                                className="w-8 h-8 rounded-lg grid place-items-center hover:bg-white/[0.06] disabled:opacity-30" style={{ color: "var(--muted-foreground)" }}>
+                                <Download className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => setCanvasView("chat")} title="Chat" aria-label="Chatga qaytish"
+                                className="lg:hidden w-8 h-8 rounded-lg grid place-items-center" style={{ color: "var(--muted-foreground)" }}>
+                                <XIcon className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                    <textarea value={canvas} onChange={e => setCanvas(e.target.value)}
+                        placeholder="Canvas bo'sh. Chatда so'rang — masalan: &quot;Startap uchun biznes-reja yoz&quot; yoki &quot;React login formasi kodini yoz&quot;. AI shu yerга yozadi, siz ham tahrirlashingiz mumkin."
+                        className="flex-1 w-full p-4 bg-transparent text-[13px] leading-relaxed resize-none outline-none font-mono"
+                        style={{ color: "var(--foreground)" }} spellCheck={false} />
+                </aside>
+            )}
+
             {/* Mobil — rejim menu overlay */}
             {modeMenuOpen && (
                 <button className="lg:hidden fixed inset-0 bg-black/50 z-30"
@@ -871,7 +981,8 @@ export function AiChatPage() {
             )}
 
             {/* O'ng — REJIM menyusi (global AI uslubi: Chat/Code/Pic/Vid/CoWork) */}
-            <aside className={`w-60 flex-shrink-0 border-l flex-col lg:relative lg:z-10 lg:flex
+            <aside className={`w-60 flex-shrink-0 border-l flex-col
+                ${mode === "cowork" ? "lg:hidden" : "lg:relative lg:z-10 lg:flex"}
                 ${modeMenuOpen ? "fixed inset-y-0 right-0 z-40 flex" : "hidden"}`}
                 style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                 <div className="h-14 px-4 flex items-center justify-between border-b flex-shrink-0" style={{ borderColor: T.border }}>

@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     const moduleOrigin = typeof body?.moduleOrigin === "string" ? body.moduleOrigin.slice(0, 20) : undefined;
     // AI rejimi — hozir chat va code to'liq ishlaydi (pic/vid/cowork "Soon", chatga kelmaydi).
     const modeRaw = typeof body?.mode === "string" ? body.mode : "chat";
-    const mode = modeRaw === "code" ? "code" : "chat";
+    const mode = modeRaw === "code" ? "code" : modeRaw === "cowork" ? "cowork" : "chat";
     // Model tanlash — Gemini BEPUL (default). OpenRouter modellari OPENROUTER_API_KEY bilan;
     // kalit yo'q bo'lsa bepul Gemini'ga tushadi (sayt buzilmaydi).
     let chosen = findModel(typeof body?.model === "string" ? body.model : undefined);
@@ -115,7 +115,9 @@ export async function POST(req: Request) {
     } catch { /* fail-safe */ }
     // Gen Code rejimi — dasturchi yordamchisi (toza, ishlaydigan kod)
     const CODE_SYS = "\n\n=== KOD REJIMI ===\nSiz tajribali dasturchi yordamchisisiz. Foydalanuvchiga TOZA, ISHLAYDIGAN kod yozib bering: kodni har doim ``` bloklarda bering va tilni belgilang (```ts, ```python, h.k.). Avval qisqa (1-2 gap) tushuntirish, keyin kod. Best-practice, xavfsiz, o'qiladigan kod. Kerak bo'lsa foydalanish namunasi qo'shing. Ortiqcha gap yozmang.";
-    const system = baseSystem + memoryContext + (mode === "code" ? CODE_SYS : "");
+    // CoWork (Canvas) — chat + jonli hujjat/kod panel. Javob 2 qism: izoh, keyin ===CANVAS=== hujjat.
+    const COWORK_SYS = "\n\n=== COWORK (CANVAS) REJIMI ===\nSiz foydalanuvchi bilan BIRGA hujjat/kod/matn yaratasiz (Canvas). Javobingizni ANIQ ikki qismga bo'ling:\n1) Avval qisqa chat izoh (1-2 gap — nima qildingiz yoki o'zgartirdingiz).\n2) Keyin ALOHIDA qatorda AYNAN `===CANVAS===` yozing (o'sha qatorda boshqa hech narsa yo'q), undan keyin to'liq, tayyor, ko'chirsa bo'ladigan hujjat/kod. Canvas qismi BUTUN asar bo'lsin (parcha emas) — foydalanuvchi tahrir so'rasa, har safar TO'LIQ yangilangan versiyani bering. Kod bo'lsa ``` bloklarda, tilni belgilab.";
+    const system = baseSystem + memoryContext + (mode === "code" ? CODE_SYS : mode === "cowork" ? COWORK_SYS : "");
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
