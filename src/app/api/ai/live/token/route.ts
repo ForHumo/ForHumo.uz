@@ -13,7 +13,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Sinovdan o'tgan native-audio (jonli suhbat) modeli.
-export const LIVE_MODEL = "gemini-2.5-flash-native-audio-preview-09-2025";
+// ⚠️ Route faylida faqat maxsus eksportlar ruxsat etiladi — LIVE_MODEL'ni EKSPORT QILMA (lokal const).
+const LIVE_MODEL = "gemini-2.5-flash-native-audio-preview-09-2025";
 
 export async function POST() {
     if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: "live_unavailable" }, { status: 503 });
