@@ -62,13 +62,13 @@ const T = {
 // Humo AI rejimlari — global AI'lar (ChatGPT/Gemini) uslubidagi menu.
 // chat + code TO'LIQ ishlaydi; pic/vid/cowork hozircha "Soon".
 type AiMode = "chat" | "code" | "pic" | "vid" | "music" | "cowork";
-const AI_MODES: { id: AiMode; label: string; sub: string; icon: LucideIcon; soon?: boolean }[] = [
+const AI_MODES: { id: AiMode; label: string; sub: string; icon: LucideIcon; soon?: boolean; neu?: boolean }[] = [
     { id: "chat",   label: "Chat Bot",     sub: "Oddiy suhbat",     icon: Sparkles },
     { id: "code",   label: "Gen Code",     sub: "Kod yozib berish", icon: Code2 },
-    { id: "pic",    label: "Gen Pic",      sub: "Rasm yaratish",    icon: ImageIcon },
+    { id: "pic",    label: "Gen Pic",      sub: "Rasm yaratish",    icon: ImageIcon, neu: true },
     { id: "vid",    label: "Gen Vid",      sub: "Video yaratish",   icon: Film,      soon: true },
     { id: "music",  label: "Gen Music",    sub: "Musiqa yaratish",  icon: Music,     soon: true },
-    { id: "cowork", label: "Humo CoWork",  sub: "Canvas — birga ishlash", icon: Users },
+    { id: "cowork", label: "Humo CoWork",  sub: "Canvas — birga ishlash", icon: Users, neu: true },
 ];
 const AI_MODE_MAP = Object.fromEntries(AI_MODES.map(m => [m.id, m])) as Record<AiMode, typeof AI_MODES[number]>;
 
@@ -930,6 +930,10 @@ export function AiChatPage() {
                                         <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0"
                                             style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>SOON</span>
                                     )}
+                                    {m.neu && (
+                                        <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0"
+                                            style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>NEW</span>
+                                    )}
                                 </button>
                             ) : (
                                 <button key={m.id} onClick={() => switchMode(m.id)} title={m.label + (m.soon ? " (Soon)" : "")}
@@ -937,6 +941,7 @@ export function AiChatPage() {
                                     style={{ background: active ? "#ECECEC" : "rgba(255,255,255,0.05)", color: active ? "#0d0d0d" : "var(--muted-foreground)" }}>
                                     <m.icon className="w-4 h-4" />
                                     {m.soon && <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full" style={{ background: "var(--muted-foreground)" }} />}
+                                    {m.neu && <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full" style={{ background: "#4ade80" }} />}
                                 </button>
                             );
                         })}
@@ -944,7 +949,7 @@ export function AiChatPage() {
                         {showLabels ? (
                             <button onClick={() => setLiveOpen(true)}
                                 className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-colors hover:bg-white/[0.04]">
-                                <span className="w-7 h-7 rounded-lg grid place-items-center flex-shrink-0" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>
+                                <span className="w-7 h-7 rounded-lg grid place-items-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.05)", color: "var(--muted-foreground)" }}>
                                     <AudioLines className="w-4 h-4" />
                                 </span>
                                 <span className="text-[12.5px] font-bold truncate flex-1 text-[var(--foreground)]">Humo Live</span>
@@ -952,8 +957,9 @@ export function AiChatPage() {
                             </button>
                         ) : (
                             <button onClick={() => setLiveOpen(true)} title="Humo Live (ovozli)"
-                                className="w-9 h-9 rounded-lg grid place-items-center" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>
+                                className="w-9 h-9 rounded-lg grid place-items-center relative" style={{ background: "rgba(255,255,255,0.05)", color: "var(--muted-foreground)" }}>
                                 <AudioLines className="w-4 h-4" />
+                                <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full" style={{ background: "#4ade80" }} />
                             </button>
                         )}
                     </div>
@@ -1547,6 +1553,14 @@ export function AiChatPage() {
                             </>
                         )}
                     </div>
+
+                    {/* Humo Live — ovozli suhbat (barcha rejimlarda) */}
+                    <button type="button" onClick={() => setLiveOpen(true)}
+                        title="Humo Live — ovozli suhbat" aria-label="Humo Live"
+                        className="w-11 h-11 rounded-xl grid place-items-center flex-shrink-0 hover:brightness-95"
+                        style={{ background: T.soft, color: T.primary }}>
+                        <AudioLines className="w-4 h-4" />
+                    </button>
 
                     <input
                         ref={composerInputRef}

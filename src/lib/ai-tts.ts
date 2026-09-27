@@ -18,7 +18,8 @@ export function ttsAvailable(): boolean {
 // gemini-3.8-flash-tts: tabiiy o'zbek talaffuzi (sinovdan o'tgan, founder tasdiqlagan).
 // Eski Google Cloud Standard ovozi (yuqorida) robotga o'xshaydi — u faqat Telegram OGG uchun qoladi.
 const GEMINI_TTS_MODEL = "gemini-3.8-flash-tts";
-export const GEMINI_TTS_VOICES = ["Kore", "Puck"] as const;   // tabiiy o'zbek ovozlar
+// Tabiiy o'zbek ovozlar (chat TTS default = Kore) + Humo Live ovozlari (Orus=Umid, Zephyr=Dilnoza) preview uchun.
+export const GEMINI_TTS_VOICES = ["Kore", "Puck", "Orus", "Zephyr", "Charon", "Aoede", "Leda"] as const;
 export type GeminiTtsVoice = typeof GEMINI_TTS_VOICES[number];
 
 // Boshi/oxiriga qisqa fade — audio boshi/oxiridagi "pop/klik" (radio o'chgan ovozi)ni yo'qotadi.
