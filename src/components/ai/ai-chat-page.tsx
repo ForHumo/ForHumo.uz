@@ -11,11 +11,12 @@ import {
     Archive, Menu, X as XIcon, User as UserIcon, Brain, ShieldCheck,
     Mic, MicOff, Paperclip, ImageIcon, Volume2, VolumeX, Share2, Check,
     Code2, Globe, BookOpen, Mail, Film, Users, Clock, Cpu, ChevronDown, Copy, Download, Home,
-    Music, Search, CheckSquare, Square, Link2Off, PanelLeftClose, PanelLeftOpen, RefreshCw, Pencil, type LucideIcon,
+    Music, Search, CheckSquare, Square, Link2Off, PanelLeftClose, PanelLeftOpen, RefreshCw, Pencil, AudioLines, type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { AiStarfield } from "@/components/ai/ai-starfield";
 import { AiMarkdown } from "@/components/ai/ai-markdown";
+import { HumoLive } from "@/components/ai/humo-live";
 import { AI_MODELS, DEFAULT_MODEL, findModel } from "@/lib/ai-models";
 
 interface ConvSummary {
@@ -72,16 +73,17 @@ const AI_MODES: { id: AiMode; label: string; sub: string; icon: LucideIcon; soon
 const AI_MODE_MAP = Object.fromEntries(AI_MODES.map(m => [m.id, m])) as Record<AiMode, typeof AI_MODES[number]>;
 
 // Composer "+" menyusi (Gemini/ChatGPT uslubi) — faqat o'zimizniki.
-type PlusItem = { id: string; label: string; icon: LucideIcon; action: "file" | "mode" | "soon" | "search" | "think"; mode?: AiMode; soon?: boolean };
+type PlusItem = { id: string; label: string; icon: LucideIcon; action: "file" | "mode" | "soon" | "search" | "think" | "live"; mode?: AiMode; soon?: boolean };
 const PLUS_ITEMS: PlusItem[] = [
-    { id: "file",   label: "File biriktirish",    icon: Paperclip, action: "file" },
-    { id: "code",   label: "Kod yozish",          icon: Code2,     action: "mode", mode: "code" },
-    { id: "pic",    label: "Rasm yaratish",       icon: ImageIcon, action: "mode", mode: "pic" },
-    { id: "vid",    label: "Video yaratish",      icon: Film,      action: "mode", mode: "vid",  soon: true },
-    { id: "music",  label: "Musiqa yaratish",     icon: Music,     action: "mode", mode: "music", soon: true },
-    { id: "cowork", label: "Humo CoWork",         icon: Users,     action: "mode", mode: "cowork" },
-    { id: "search", label: "Saytlardan qidirish", icon: Search,    action: "search" },
-    { id: "think",  label: "Chuqur fikrlash",     icon: Brain,     action: "think" },
+    { id: "file",   label: "File biriktirish",    icon: Paperclip,  action: "file" },
+    { id: "live",   label: "Humo Live",           icon: AudioLines, action: "live" },
+    { id: "code",   label: "Kod yozish",          icon: Code2,      action: "mode", mode: "code" },
+    { id: "pic",    label: "Rasm yaratish",       icon: ImageIcon,  action: "mode", mode: "pic" },
+    { id: "vid",    label: "Video yaratish",      icon: Film,       action: "mode", mode: "vid",  soon: true },
+    { id: "music",  label: "Musiqa yaratish",     icon: Music,      action: "mode", mode: "music", soon: true },
+    { id: "cowork", label: "Humo CoWork",         icon: Users,      action: "mode", mode: "cowork" },
+    { id: "search", label: "Saytlardan qidirish", icon: Search,     action: "search" },
+    { id: "think",  label: "Chuqur fikrlash",     icon: Brain,      action: "think" },
 ];
 
 // Chat rejimida "rasm yarat" tipidagi so'rovni aniqlash (uz/ru/en) → avto Gen Pic
@@ -113,6 +115,7 @@ export function AiChatPage() {
     const [plusMenuOpen, setPlusMenuOpen] = useState(false);
     const [webSearch, setWebSearch] = useState(false);
     const [deepThink, setDeepThink] = useState(false);
+    const [liveOpen, setLiveOpen] = useState(false);   // Humo Live (ovozli suhbat) overlay
     // Sidebar yig'ish (desktop icon-rail) + chat qidiruv
     const [collapsed, setCollapsed] = useState(false);
     const [chatSearch, setChatSearch] = useState("");
@@ -381,6 +384,7 @@ export function AiChatPage() {
         if (item.action === "mode" && item.mode) { switchMode(item.mode); return; }
         if (item.action === "search") { setWebSearch(v => !v); return; }
         if (item.action === "think") { setDeepThink(v => !v); return; }
+        if (item.action === "live") { setLiveOpen(true); return; }
     }
 
     // KB count — banner ko'rsatish uchun
@@ -936,6 +940,22 @@ export function AiChatPage() {
                                 </button>
                             );
                         })}
+                        {/* Humo Live — ovozli suhbat (overlay ochadi) */}
+                        {showLabels ? (
+                            <button onClick={() => setLiveOpen(true)}
+                                className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-colors hover:bg-white/[0.04]">
+                                <span className="w-7 h-7 rounded-lg grid place-items-center flex-shrink-0" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>
+                                    <AudioLines className="w-4 h-4" />
+                                </span>
+                                <span className="text-[12.5px] font-bold truncate flex-1 text-[var(--foreground)]">Humo Live</span>
+                                <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>NEW</span>
+                            </button>
+                        ) : (
+                            <button onClick={() => setLiveOpen(true)} title="Humo Live (ovozli)"
+                                className="w-9 h-9 rounded-lg grid place-items-center" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>
+                                <AudioLines className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -1508,7 +1528,7 @@ export function AiChatPage() {
                                         const active = it.action === "mode" ? it.mode === mode : it.id === "search" ? webSearch : it.id === "think" ? deepThink : false;
                                         return (
                                             <div key={it.id}>
-                                                {(i === 1 || i === 6) && <div className="my-1 h-px" style={{ background: T.border }} />}
+                                                {(i === 2 || i === 7) && <div className="my-1 h-px" style={{ background: T.border }} />}
                                                 <button type="button" onClick={() => handlePlus(it)}
                                                     className="w-full flex items-center gap-3 px-3.5 py-2.5 text-left hover:bg-white/[0.05] transition-colors"
                                                     style={active ? { background: T.soft } : {}}>
@@ -1625,6 +1645,9 @@ export function AiChatPage() {
                     </div>
                 </div>
             )}
+
+            {/* Humo Live — real-vaqt ovozli suhbat overlay */}
+            {liveOpen && <HumoLive onClose={() => setLiveOpen(false)} />}
 
         </div>
     );
