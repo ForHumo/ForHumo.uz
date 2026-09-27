@@ -138,20 +138,15 @@ export function HumoLive({ onClose }: { onClose: () => void }) {
     }, []);
 
     const playChunk = useCallback((f32: Float32Array) => {
-        let ctx = playCtxRef.current;
-        if (!ctx) {
-            ctx = new AudioContext({ sampleRate: 24000 });
-            playCtxRef.current = ctx;
-            const an = ctx.createAnalyser(); an.fftSize = 128;
-            an.connect(ctx.destination);
-            playAnalyserRef.current = an;
-        }
-        const an = playAnalyserRef.current!;
+        const ctx = playCtxRef.current;
+        if (!ctx) return;
+        if (ctx.state === "suspended") ctx.resume().catch(() => {});
+        const an = playAnalyserRef.current;
         const buf = ctx.createBuffer(1, f32.length, 24000);
         buf.getChannelData(0).set(f32);
         const src = ctx.createBufferSource();
         src.buffer = buf;
-        src.connect(an);
+        src.connect(an ?? ctx.destination);
         const startAt = Math.max(ctx.currentTime, nextTimeRef.current);
         src.start(startAt);
         nextTimeRef.current = startAt + buf.duration;
@@ -247,6 +242,7 @@ export function HumoLive({ onClose }: { onClose: () => void }) {
         });
         micStreamRef.current = stream;
         const ctx = new AudioContext();
+        if (ctx.state === "suspended") await ctx.resume().catch(() => {});
         capCtxRef.current = ctx;
         const source = ctx.createMediaStreamSource(stream);
         const an = ctx.createAnalyser(); an.fftSize = 128;
@@ -285,6 +281,13 @@ export function HumoLive({ onClose }: { onClose: () => void }) {
     const start = useCallback(async () => {
         setErrorMsg(""); setCaptionUser(""); setCaptionAi(""); lastCompleteRef.current = true;
         setStatus("connecting");
+        // Autoplay siyosati: playback AudioContext'ni GESTURE ichida yaratamiz + resume
+        try {
+            const pc = new AudioContext({ sampleRate: 24000 });
+            await pc.resume().catch(() => {});
+            const an = pc.createAnalyser(); an.fftSize = 128; an.connect(pc.destination);
+            playCtxRef.current = pc; playAnalyserRef.current = an;
+        } catch { /* ignore */ }
         try {
             const r = await fetch("/api/ai/live/token", { method: "POST" });
             if (!r.ok) {
@@ -304,18 +307,16 @@ export function HumoLive({ onClose }: { onClose: () => void }) {
                     outputAudioTranscription: {},
                 },
                 callbacks: {
-                    onopen: () => {
-                        setStatus("live");
-                        startViz();
-                        startMic(session).catch(() => { setErrorMsg("Mikrofonga ruxsat berilmadi."); setStatus("error"); });
-                        try { session.sendClientContent({ turns: "(Suhbat boshlandi — juda qisqa salomlashing va nima yordam kerakligini so'rang.)" }); } catch { /* ignore */ }
-                    },
+                    onopen: () => { setStatus("live"); startViz(); },
                     onmessage: handleMessage,
                     onerror: () => { setErrorMsg("Ulanishda xatolik."); setStatus("error"); },
                     onclose: () => { setStatus(prev => prev === "live" ? "ended" : prev); },
                 },
             });
             sessionRef.current = session;
+            // WS ochilgach (connect resolve bo'ldi, session tayyor) — mikrofon + salom
+            await startMic(session).catch(() => { setErrorMsg("Mikrofonga ruxsat berilmadi."); });
+            try { session.sendClientContent({ turns: "(Suhbat boshlandi — juda qisqa salomlashing va nima yordam kerakligini so'rang.)" }); } catch { /* ignore */ }
         } catch (e) {
             console.error("[HumoLive] start", e);
             setErrorMsg("Ulanib bo'lmadi. Qayta urinib ko'ring.");

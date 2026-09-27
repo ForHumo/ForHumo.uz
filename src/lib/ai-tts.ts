@@ -24,7 +24,7 @@ export type GeminiTtsVoice = typeof GEMINI_TTS_VOICES[number];
 
 // Boshi/oxiriga qisqa fade — audio boshi/oxiridagi "pop/klik" (radio o'chgan ovozi)ni yo'qotadi.
 // 16-bit signed LE PCM. Toq bayt bo'lsa kesamiz (aks holda oxirgi sample buziladi = shovqin).
-function fadePcm(pcmIn: Buffer, rate: number, fadeMs = 18): Buffer {
+function fadePcm(pcmIn: Buffer, rate: number, fadeMs = 35): Buffer {
     let pcm = pcmIn;
     if (pcm.length % 2 !== 0) pcm = pcm.subarray(0, pcm.length - 1);   // toq baytni kes
     const out = Buffer.from(pcm);                                       // nusxa (mutatsiya qilmaymiz)
