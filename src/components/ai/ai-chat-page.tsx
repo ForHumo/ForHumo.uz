@@ -225,9 +225,12 @@ export function AiChatPage() {
     const [attachment, setAttachment] = useState<{ url: string; type: "image" | "file"; name: string } | null>(null);
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    // TTS (voice output)
+    // TTS (voice output) — Gemini TTS (tabiiy o'zbek) + brauzer zaxira
     const [ttsEnabled, setTtsEnabled] = useState(false);
     const [ttsSpeakingId, setTtsSpeakingId] = useState<string | null>(null);
+    const [ttsLoadingId, setTtsLoadingId] = useState<string | null>(null);
+    const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+    const ttsVoiceRef = useRef<"Kore" | "Puck">("Kore");
     const [shareCopied, setShareCopied] = useState<string | null>(null);
     // Til tanlash
     const [aiLang, setAiLang] = useState<"uz" | "ru" | "en">("uz");
@@ -250,25 +253,68 @@ export function AiChatPage() {
     useEffect(() => {
         try { setTtsEnabled(localStorage.getItem("ai-tts-enabled") === "1"); } catch { /* ignore */ }
     }, []);
+    // Sahifadan chiqilganda ovozni to'xtatamiz (audio orqada qolib ketmasin)
+    useEffect(() => {
+        return () => {
+            try { window.speechSynthesis?.cancel(); } catch { /* ignore */ }
+            try { ttsAudioRef.current?.pause(); } catch { /* ignore */ }
+        };
+    }, []);
     function toggleTts() {
         setTtsEnabled(prev => {
             const next = !prev;
             try { localStorage.setItem("ai-tts-enabled", next ? "1" : "0"); } catch { /* ignore */ }
-            if (!next) { window.speechSynthesis?.cancel(); setTtsSpeakingId(null); }
+            if (!next) stopSpeaking();
             return next;
         });
     }
-    function speakMessage(id: string, text: string) {
-        if (typeof window === "undefined" || !window.speechSynthesis) return;
+    // Har qanday o'qishni to'xtatish (Gemini audio + brauzer synth)
+    function stopSpeaking() {
+        try { window.speechSynthesis?.cancel(); } catch { /* ignore */ }
+        const a = ttsAudioRef.current;
+        if (a) { try { a.pause(); a.src = ""; } catch { /* ignore */ } ttsAudioRef.current = null; }
+        setTtsSpeakingId(null);
+        setTtsLoadingId(null);
+    }
+    // Brauzer TTS (bepul zaxira — Gemini ishlamasa)
+    function speakBrowser(id: string, text: string) {
+        if (typeof window === "undefined" || !window.speechSynthesis) { setTtsSpeakingId(null); return; }
         window.speechSynthesis.cancel();
-        if (ttsSpeakingId === id) { setTtsSpeakingId(null); return; }
-        const utter = new SpeechSynthesisUtterance(text);
+        const clean = text.replace(/```[\s\S]*?```/g, " kod bloki ").replace(/[*_`#>|]/g, "");
+        const utter = new SpeechSynthesisUtterance(clean);
         utter.lang = "uz-UZ";
         utter.rate = 1.0;
-        utter.onend = () => setTtsSpeakingId(null);
-        utter.onerror = () => setTtsSpeakingId(null);
+        utter.onend = () => setTtsSpeakingId(prev => prev === id ? null : prev);
+        utter.onerror = () => setTtsSpeakingId(prev => prev === id ? null : prev);
         window.speechSynthesis.speak(utter);
         setTtsSpeakingId(id);
+    }
+    // "Ovoz bilan o'qish" — tabiiy o'zbek Gemini TTS, xato bo'lsa brauzerga tushadi
+    async function speakMessage(id: string, text: string) {
+        if (ttsSpeakingId === id || ttsLoadingId === id) { stopSpeaking(); return; }
+        stopSpeaking();
+        if (!text?.trim()) return;
+        setTtsLoadingId(id);
+        try {
+            const r = await fetch("/api/ai/tts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text, voice: ttsVoiceRef.current }),
+            });
+            if (!r.ok) throw new Error("tts_failed");
+            const blob = await r.blob();
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            ttsAudioRef.current = audio;
+            audio.onended = () => { setTtsSpeakingId(prev => prev === id ? null : prev); URL.revokeObjectURL(url); ttsAudioRef.current = null; };
+            audio.onerror = () => { setTtsSpeakingId(prev => prev === id ? null : prev); URL.revokeObjectURL(url); ttsAudioRef.current = null; };
+            setTtsLoadingId(null);
+            setTtsSpeakingId(id);
+            await audio.play();
+        } catch {
+            setTtsLoadingId(null);
+            speakBrowser(id, text);   // bepul zaxira
+        }
     }
 
     // Web Speech API detektsiya
@@ -1294,11 +1340,13 @@ export function AiChatPage() {
                                                                 : <Copy className="w-3 h-3" />}
                                                         </button>
                                                         <button onClick={() => speakMessage(m.id, m.body)}
-                                                            title={ttsSpeakingId === m.id ? "To'xtatish" : "Ovoz bilan o'qish"}
+                                                            title={ttsLoadingId === m.id ? "Ovoz tayyorlanyapti..." : ttsSpeakingId === m.id ? "To'xtatish" : "Ovoz bilan o'qish (o'zbekcha)"}
                                                             className="opacity-70 hover:opacity-100 transition-opacity">
-                                                            {ttsSpeakingId === m.id
-                                                                ? <VolumeX className="w-3 h-3" />
-                                                                : <Volume2 className="w-3 h-3" />}
+                                                            {ttsLoadingId === m.id
+                                                                ? <Loader2 className="w-3 h-3 animate-spin" />
+                                                                : ttsSpeakingId === m.id
+                                                                    ? <VolumeX className="w-3 h-3" />
+                                                                    : <Volume2 className="w-3 h-3" />}
                                                         </button>
                                                         {isLastAi && !sending && (
                                                             <button onClick={regenerate}

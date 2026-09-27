@@ -14,6 +14,80 @@ export function ttsAvailable(): boolean {
     return !!TTS_KEY;
 }
 
+// ============ Gemini TTS (tabiiy o'zbek ovoz) — chat "Ovoz bilan o'qish" uchun ============
+// gemini-3.8-flash-tts: tabiiy o'zbek talaffuzi (sinovdan o'tgan, founder tasdiqlagan).
+// Eski Google Cloud Standard ovozi (yuqorida) robotga o'xshaydi — u faqat Telegram OGG uchun qoladi.
+const GEMINI_TTS_MODEL = "gemini-3.8-flash-tts";
+export const GEMINI_TTS_VOICES = ["Kore", "Puck"] as const;   // tabiiy o'zbek ovozlar
+export type GeminiTtsVoice = typeof GEMINI_TTS_VOICES[number];
+
+function wavFromPcm(pcm: Buffer, rate = 24000, channels = 1, bits = 16): Buffer {
+    const blockAlign = channels * bits / 8;
+    const h = Buffer.alloc(44);
+    h.write("RIFF", 0);
+    h.writeUInt32LE(36 + pcm.length, 4);
+    h.write("WAVE", 8);
+    h.write("fmt ", 12);
+    h.writeUInt32LE(16, 16);
+    h.writeUInt16LE(1, 20);            // PCM
+    h.writeUInt16LE(channels, 22);
+    h.writeUInt32LE(rate, 24);
+    h.writeUInt32LE(rate * blockAlign, 28);
+    h.writeUInt16LE(blockAlign, 32);
+    h.writeUInt16LE(bits, 34);
+    h.write("data", 36);
+    h.writeUInt32LE(pcm.length, 40);
+    return Buffer.concat([h, pcm]);
+}
+
+/**
+ * Gemini TTS — matnni tabiiy o'zbek ovozida WAV'ga aylantiradi.
+ * @returns WAV Buffer yoki null (kalit yo'q / xato — chaqiruvchi brauzer TTS'ga tushadi).
+ */
+export async function synthesizeGeminiWav(text: string, voice: GeminiTtsVoice = "Kore"): Promise<Buffer | null> {
+    if (!GEMINI_KEY) return null;
+    const clean = text
+        .replace(/```[\s\S]*?```/g, " (kod bloki) ")   // kod bloklarini o'qimaymiz
+        .replace(/<[^>]*>/g, "")
+        .replace(/https?:\/\/\S+/g, "")
+        .replace(/[*_`#>|]/g, "")                        // markdown belgilarini olib tashlaymiz
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 1500);
+    if (!clean) return null;
+    const useVoice = (GEMINI_TTS_VOICES as readonly string[]).includes(voice) ? voice : "Kore";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TTS_MODEL}:generateContent?key=${GEMINI_KEY}`;
+    try {
+        const r = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: clean }] }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: useVoice } } },
+                },
+            }),
+        });
+        if (!r.ok) return null;
+        const data = await r.json();
+        const parts: { inlineData?: { data?: string; mimeType?: string }; inline_data?: { data?: string; mime_type?: string } }[] =
+            data?.candidates?.[0]?.content?.parts ?? [];
+        for (const p of parts) {
+            const inline = p.inlineData ?? p.inline_data;
+            if (inline?.data) {
+                const pcm = Buffer.from(inline.data, "base64");
+                const mime = (inline as { mimeType?: string; mime_type?: string }).mimeType ?? (inline as { mime_type?: string }).mime_type ?? "";
+                const rate = Number(mime.match(/rate=(\d+)/)?.[1] ?? 24000);
+                return wavFromPcm(pcm, rate);
+            }
+        }
+        return null;
+    } catch {
+        return null;
+    }
+}
+
 /**
  * Matnni ovozga aylantiradi. Til bo'yicha ovoz tanlanadi.
  * @returns Buffer (OGG/OPUS) yoki null (kalit yo'q / xato).
