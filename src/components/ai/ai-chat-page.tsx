@@ -850,14 +850,28 @@ export function AiChatPage() {
     const showLabels = !collapsed || sidebarOpen;
     const chatQuery = chatSearch.trim().toLowerCase();
     const shownConvs = chatQuery ? convs.filter(c => c.title.toLowerCase().includes(chatQuery)) : convs;
+    // Rejim-aware "ishlash" holati (javob boshlanguncha ko'rinadigan animatsiya matni)
+    const workingLabel = webSearch ? "Saytlardan qidiryapti" : deepThink ? "Chuqur o'ylayapti"
+        : mode === "code" ? "Kod yozyapti" : mode === "cowork" ? "Canvas tayyorlayapti" : "O'ylayapti";
+    const codeLike = mode === "code" || mode === "cowork";
 
     return (
         <div className="dark relative min-h-screen flex text-[var(--foreground)]" style={{ background: "transparent" }}>
             {/* Qora cosmic fon + uchib yuruvchi yulduzlar (eski AI'dagi sevimli fon) */}
             <AiStarfield />
 
-            {/* Rasm-generatsiya shimmer animatsiyasi (ChatGPT/Gemini uslubi) */}
-            <style>{`@keyframes aiShimmer{0%{background-position:-468px 0}100%{background-position:468px 0}}.ai-shimmer{background:linear-gradient(90deg,rgba(255,255,255,0.05) 25%,rgba(255,255,255,0.12) 37%,rgba(255,255,255,0.05) 63%);background-size:800px 100%;animation:aiShimmer 1.4s ease-in-out infinite}`}</style>
+            {/* AI animatsiyalari: rasm shimmer + rejim "ishlash" nuqtalari + kod chizig'i */}
+            <style>{`
+@keyframes aiShimmer{0%{background-position:-468px 0}100%{background-position:468px 0}}
+.ai-shimmer{background:linear-gradient(90deg,rgba(255,255,255,0.05) 25%,rgba(255,255,255,0.12) 37%,rgba(255,255,255,0.05) 63%);background-size:800px 100%;animation:aiShimmer 1.4s ease-in-out infinite}
+@keyframes aiDot{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+.ai-typing{display:inline-flex;gap:4px;align-items:center}
+.ai-typing i{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;animation:aiDot 1.2s infinite ease-in-out}
+.ai-typing i:nth-child(2){animation-delay:.2s}
+.ai-typing i:nth-child(3){animation-delay:.4s}
+@keyframes aiCodeLine{0%{background-position:-200px 0}100%{background-position:200px 0}}
+.ai-codeline{height:8px;border-radius:4px;background:linear-gradient(90deg,rgba(255,255,255,0.06) 25%,rgba(255,255,255,0.16) 50%,rgba(255,255,255,0.06) 75%);background-size:400px 100%;animation:aiCodeLine 1.1s linear infinite}
+`}</style>
 
             {/* Mobile sidebar overlay */}
             {sidebarOpen && (
@@ -1320,9 +1334,27 @@ export function AiChatPage() {
                                                     <Paperclip className="w-3 h-3 flex-shrink-0" /> Biriktirilgan fayl
                                                 </a>
                                             )}
-                                            {isUser ? m.body : (m.body ? <AiMarkdown>{m.body}</AiMarkdown> : null)}
-                                            {/* Streaming caret */}
-                                            {!isUser && sending && idx === messages.length - 1 && (
+                                            {isUser ? m.body : (
+                                                m.body
+                                                    ? <AiMarkdown>{m.body}</AiMarkdown>
+                                                    : (sending && idx === messages.length - 1 ? (
+                                                        <div className="flex flex-col gap-2 py-0.5" style={{ color: "var(--muted-foreground)" }}>
+                                                            <div className="flex items-center gap-2 text-[13px] font-semibold">
+                                                                <span className="ai-typing"><i /><i /><i /></span>
+                                                                {workingLabel}...
+                                                            </div>
+                                                            {codeLike && (
+                                                                <div className="space-y-1.5 w-44">
+                                                                    <div className="ai-codeline w-full" />
+                                                                    <div className="ai-codeline w-4/5" />
+                                                                    <div className="ai-codeline w-3/5" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : null)
+                                            )}
+                                            {/* Streaming caret — matn kela boshlagach */}
+                                            {!isUser && sending && idx === messages.length - 1 && m.body && (
                                                 <span className="inline-block w-1.5 h-3 ml-0.5 bg-current animate-pulse rounded-sm" />
                                             )}
                                             <div className={`text-[10px] mt-1 opacity-60 flex items-center gap-1.5 ${isUser ? "justify-end" : ""}`}>
