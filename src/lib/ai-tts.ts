@@ -21,6 +21,24 @@ const GEMINI_TTS_MODEL = "gemini-3.8-flash-tts";
 export const GEMINI_TTS_VOICES = ["Kore", "Puck"] as const;   // tabiiy o'zbek ovozlar
 export type GeminiTtsVoice = typeof GEMINI_TTS_VOICES[number];
 
+// Boshi/oxiriga qisqa fade — audio boshi/oxiridagi "pop/klik" (radio o'chgan ovozi)ni yo'qotadi.
+// 16-bit signed LE PCM. Toq bayt bo'lsa kesamiz (aks holda oxirgi sample buziladi = shovqin).
+function fadePcm(pcmIn: Buffer, rate: number, fadeMs = 18): Buffer {
+    let pcm = pcmIn;
+    if (pcm.length % 2 !== 0) pcm = pcm.subarray(0, pcm.length - 1);   // toq baytni kes
+    const out = Buffer.from(pcm);                                       // nusxa (mutatsiya qilmaymiz)
+    const total = Math.floor(out.length / 2);
+    const fade = Math.min(Math.floor((rate * fadeMs) / 1000), Math.floor(total / 2));
+    for (let i = 0; i < fade; i++) {
+        const gain = i / fade;
+        const inIdx = i * 2;
+        out.writeInt16LE(Math.round(out.readInt16LE(inIdx) * gain), inIdx);          // fade-in
+        const outIdx = (total - 1 - i) * 2;
+        out.writeInt16LE(Math.round(out.readInt16LE(outIdx) * gain), outIdx);         // fade-out
+    }
+    return out;
+}
+
 function wavFromPcm(pcm: Buffer, rate = 24000, channels = 1, bits = 16): Buffer {
     const blockAlign = channels * bits / 8;
     const h = Buffer.alloc(44);
@@ -79,7 +97,7 @@ export async function synthesizeGeminiWav(text: string, voice: GeminiTtsVoice = 
                 const pcm = Buffer.from(inline.data, "base64");
                 const mime = (inline as { mimeType?: string; mime_type?: string }).mimeType ?? (inline as { mime_type?: string }).mime_type ?? "";
                 const rate = Number(mime.match(/rate=(\d+)/)?.[1] ?? 24000);
-                return wavFromPcm(pcm, rate);
+                return wavFromPcm(fadePcm(pcm, rate), rate);   // fade — oxiridagi "pop"ni yo'qotadi
             }
         }
         return null;
