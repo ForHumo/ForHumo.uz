@@ -210,7 +210,7 @@ export function HumoLive({ onClose }: { onClose: () => void }) {
 
     return (
         <div className="fixed inset-0 z-[210] flex flex-col items-center justify-between py-10 px-6"
-            style={{ background: "radial-gradient(1200px 600px at 50% 30%, rgba(30,30,40,0.6), #060608 70%)" }}>
+            style={{ background: "radial-gradient(1000px 520px at 50% 26%, #171722, #08080c 72%), #08080c" }}>
             {/* Tepa — sarlavha + yopish */}
             <div className="w-full max-w-md flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -222,23 +222,30 @@ export function HumoLive({ onClose }: { onClose: () => void }) {
                 </button>
             </div>
 
-            {/* Markaz — pulslovchi logo + status */}
-            <div className="flex flex-col items-center gap-6">
-                <div className="relative grid place-items-center">
-                    {(status === "live") && (
+            {/* Markaz — Humo Live ikonasi + jonli halo/animatsiya + status */}
+            <div className="flex flex-col items-center gap-7">
+                <div className="relative grid place-items-center" style={{ width: 224, height: 224 }}>
+                    {/* Jonli halo — gapirganda emanatsiya, tinglaganda yumshoq nafas */}
+                    {status === "live" && (
                         <>
-                            <span className="absolute rounded-full" style={{ width: 180, height: 180, background: "rgba(236,236,236,0.06)", animation: aiSpeaking ? "aiLivePulse 1.2s ease-out infinite" : "none" }} />
-                            <span className="absolute rounded-full" style={{ width: 140, height: 140, background: "rgba(236,236,236,0.08)", animation: aiSpeaking ? "aiLivePulse 1.2s ease-out infinite 0.3s" : "none" }} />
+                            <span className="absolute rounded-full" style={{ width: 210, height: 210, background: "radial-gradient(circle, rgba(255,255,255,0.16), transparent 70%)", animation: aiSpeaking ? "aiLivePulse 1.5s ease-out infinite" : "aiLiveGlow 3.4s ease-in-out infinite" }} />
+                            {aiSpeaking && <span className="absolute rounded-full" style={{ width: 210, height: 210, background: "radial-gradient(circle, rgba(255,255,255,0.11), transparent 70%)", animation: "aiLivePulse 1.5s ease-out infinite 0.6s" }} />}
                         </>
                     )}
-                    <span className="relative w-28 h-28 rounded-full grid place-items-center" style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${T.border}` }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/logos/humo-ai-white.png" alt="Humo AI" className="w-14 h-14 select-none" draggable={false} />
-                    </span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/ai-icons/humo-live.png" alt="Humo Live"
+                        className="relative w-32 h-32 select-none" draggable={false}
+                        style={{
+                            filter: aiSpeaking
+                                ? "drop-shadow(0 0 46px rgba(255,255,255,0.5))"
+                                : status === "live" ? "drop-shadow(0 0 26px rgba(255,255,255,0.22))" : "drop-shadow(0 0 16px rgba(255,255,255,0.1))",
+                            transition: "filter .35s ease",
+                            animation: status === "live" ? (aiSpeaking ? "aiLiveBeat 0.9s ease-in-out infinite" : "aiLiveBreath 3.4s ease-in-out infinite") : "none",
+                        }} />
                 </div>
                 <div className="text-center">
                     <p className="text-lg font-bold text-[var(--foreground)]">{statusText}</p>
-                    {status === "live" && <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>{mmss}</p>}
+                    {status === "live" && <p className="text-sm mt-1 tabular-nums" style={{ color: "var(--muted-foreground)" }}>{mmss}</p>}
                 </div>
             </div>
 
@@ -286,7 +293,12 @@ export function HumoLive({ onClose }: { onClose: () => void }) {
                 )}
             </div>
 
-            <style>{`@keyframes aiLivePulse{0%{transform:scale(0.9);opacity:0.7}100%{transform:scale(1.5);opacity:0}}`}</style>
+            <style>{`
+@keyframes aiLivePulse{0%{transform:scale(0.75);opacity:0.75}100%{transform:scale(1.7);opacity:0}}
+@keyframes aiLiveGlow{0%,100%{opacity:0.45;transform:scale(0.98)}50%{opacity:0.85;transform:scale(1.08)}}
+@keyframes aiLiveBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes aiLiveBeat{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+`}</style>
         </div>
     );
 }
