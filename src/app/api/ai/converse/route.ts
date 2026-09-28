@@ -15,7 +15,7 @@ import { NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { aiAvailable, aiChat, aiText, aiJSON, aiVisionJSON, aiAnalyzeFile } from "@/lib/ai";
+import { aiAvailable, aiChat, aiText, aiJSON, aiAnalyzeMulti } from "@/lib/ai";
 import { buildAiSystemPrompt } from "@/lib/ai-context-builder";
 import { extractKnowledgeFromMessage } from "@/lib/user-knowledge";
 import { belisRate } from "@/lib/belis-rate";
@@ -52,12 +52,20 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => ({}));
     const userMsg = String(body?.message ?? "").trim().slice(0, MAX_MSG_LEN);
-    if (!userMsg) return NextResponse.json({ error: "message_required" }, { status: 400 });
     const moduleOrigin = typeof body?.moduleOrigin === "string" ? body.moduleOrigin.slice(0, 20) : undefined;
     const audioUrl = typeof body?.audioUrl === "string" ? body.audioUrl.slice(0, 500) : null;
     const attachmentUrl = typeof body?.attachmentUrl === "string" ? body.attachmentUrl.slice(0, 500) : null;
     const attachmentType = typeof body?.attachmentType === "string" ? body.attachmentType.slice(0, 20) : null;
-    const isImage = attachmentType === "image" && !!attachmentUrl;
+    // Bir nechta biriktirma (yangi) yoki bitta (eski) — 6 tagacha
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawAtt: any[] = Array.isArray(body?.attachments) ? body.attachments : [];
+    const attachments = rawAtt
+        .filter(a => a && typeof a.url === "string")
+        .slice(0, 6)
+        .map(a => ({ url: String(a.url).slice(0, 500), type: a.type === "image" ? "image" : "file" }));
+    if (attachments.length === 0 && attachmentUrl) attachments.push({ url: attachmentUrl, type: attachmentType === "image" ? "image" : "file" });
+    const hasFiles = attachments.length > 0;
+    if (!userMsg && !hasFiles) return NextResponse.json({ error: "message_required" }, { status: 400 });
     const lang = ["uz", "ru", "en"].includes(String(body?.language)) ? String(body.language) as "uz" | "ru" | "en" : "uz";
     // AI rejimi — yangi suhbat to'g'ri rejim tarixiga tushishi uchun (rasm/PDF ham)
     const modeRaw = typeof body?.mode === "string" ? body.mode : "";
@@ -96,8 +104,9 @@ export async function POST(req: Request) {
             role: "user",
             body: userMsg,
             audioUrl,
-            attachmentUrl,
-            attachmentType: attachmentUrl ? (attachmentType || "file") : (audioUrl ? "audio" : null),
+            attachmentUrl: attachments[0]?.url ?? attachmentUrl,
+            attachmentType: attachments[0]?.type ?? (audioUrl ? "audio" : null),
+            ...(attachments.length > 0 ? { attachments } : {}),
         },
     });
 
@@ -119,31 +128,19 @@ export async function POST(req: Request) {
         language: lang,
     });
 
-    // 4. Gemini chaqiruv — rasm bo'lsa vision, yo'q bo'lsa oddiy chat
+    // 4. Gemini chaqiruv — biriktirma(lar) bo'lsa vision/hujjat, yo'q bo'lsa oddiy chat
     let aiReply: string;
     try {
-        if (isImage && attachmentUrl) {
-            // Multi-modal: rasm tahlil qilish
-            const visionResult = await aiVisionJSON<{ reply: string }>(
-                `${userMsg}\n\nJSON qaytar: { "reply": "javob matn (uz)" }`,
-                attachmentUrl,
-                { system, temperature: 0.6 },
-            );
-            aiReply = (visionResult?.reply || "").trim().slice(0, 3000);
-            if (!aiReply) {
-                aiReply = await aiText(`Rasm bilan savol: "${userMsg}". Rasm tahlil qilib javob bering.`, { system });
-                aiReply = (aiReply || "").trim().slice(0, 3000);
-            }
-        } else if (attachmentUrl) {
-            // Fayl (PDF) — Gemini hujjatni o'qib javob beradi (document understanding)
-            aiReply = await aiAnalyzeFile(
-                `${userMsg || "Ushbu hujjatni tahlil qiling va asosiy mazmunini o'zbekcha tushuntiring."}\n\n(Yuqoridagi hujjatga asoslanib javob bering.)`,
-                attachmentUrl,
-                { system, temperature: 0.6 },
+        if (hasFiles) {
+            // Bir yoki bir nechta rasm/PDF — hammasini birga tahlil qilamiz
+            aiReply = await aiAnalyzeMulti(
+                userMsg || "Ushbu fayl(lar)ni diqqat bilan tahlil qiling. Rasmdagi matn, yorliq, brend nomini AYNAN o'qing va to'liq, aniq ma'lumot bering.",
+                attachments.map(a => a.url),
+                { system, temperature: 0.5 },
             );
             aiReply = (aiReply || "").trim().slice(0, 3000);
             if (!aiReply) {
-                aiReply = await aiText(userMsg || "Hujjatni tahlil qiling.", { system });
+                aiReply = await aiText(userMsg || "Fayllarni tahlil qiling.", { system });
                 aiReply = (aiReply || "").trim().slice(0, 3000);
             }
         } else {
@@ -228,7 +225,7 @@ JSON: { "suggestions": ["savol1?", "savol2?", "savol3?"] }`;
     return NextResponse.json({
         conversationId: conversation.id,
         messages: [
-            { id: userDbMsg.id, role: "user", body: userMsg, createdAt: userDbMsg.createdAt.toISOString() },
+            { id: userDbMsg.id, role: "user", body: userMsg, attachments, createdAt: userDbMsg.createdAt.toISOString() },
             { id: aiDbMsg.id, role: "ai", body: aiReply, createdAt: aiDbMsg.createdAt.toISOString() },
         ],
         followUps,

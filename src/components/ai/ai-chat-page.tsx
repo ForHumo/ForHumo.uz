@@ -29,6 +29,7 @@ interface MsgRow {
     id: string; role: "user" | "ai" | "system"; body: string;
     audioUrl?: string | null; attachmentUrl?: string | null;
     attachmentType?: string | null;
+    attachments?: { url: string; type: string }[] | null;   // bir nechta biriktirma
     aiModel?: string | null; createdAt: string;
     followUps?: string[];   // AI'dan tavsiya keyingi savollar
     generating?: boolean;   // rasm yaratilyapti — shimmer placeholder (faqat client)
@@ -225,7 +226,7 @@ export function AiChatPage() {
     const [voiceSupported, setVoiceSupported] = useState(false);
     const recognitionRef = useRef<SpeechRecognitionType | null>(null);
     // Attachment
-    const [attachment, setAttachment] = useState<{ url: string; type: "image" | "file"; name: string } | null>(null);
+    const [attachments, setAttachments] = useState<{ url: string; type: "image" | "file"; name: string }[]>([]);   // 6 tagacha
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     // TTS (voice output) — Gemini TTS (tabiiy o'zbek) + brauzer zaxira
@@ -363,19 +364,25 @@ export function AiChatPage() {
         }
     }
 
-    async function uploadAttachment(file: File) {
+    async function uploadFiles(files: File[]) {
         if (uploading) return;
+        const room = 6 - attachments.length;
+        const toUpload = files.slice(0, Math.max(0, room));
+        if (toUpload.length === 0) return;
         setUploading(true);
         try {
-            const fd = new FormData();
-            fd.append("file", file);
-            const r = await fetch("/api/ai/upload", { method: "POST", body: fd });
-            if (!r.ok) { setUploading(false); return; }
-            const d = await r.json();
-            const isImage = file.type.startsWith("image/");
-            setAttachment({ url: d.url, type: isImage ? "image" : "file", name: file.name });
+            for (const file of toUpload) {
+                const fd = new FormData();
+                fd.append("file", file);
+                const r = await fetch("/api/ai/upload", { method: "POST", body: fd });
+                if (!r.ok) continue;
+                const d = await r.json();
+                const isImage = file.type.startsWith("image/");
+                setAttachments(prev => prev.length >= 6 ? prev : [...prev, { url: d.url, type: isImage ? "image" : "file", name: file.name }]);
+            }
         } finally { setUploading(false); }
     }
+    const uploadAttachment = (file: File) => uploadFiles([file]);
 
     // Composer "+" menyusi tanlovi
     function handlePlus(item: PlusItem) {
@@ -513,33 +520,32 @@ export function AiChatPage() {
     async function sendMessage(e?: React.FormEvent) {
         e?.preventDefault();
         const text = input.trim();
-        if ((!text && !attachment) || sending) return;
+        if ((!text && attachments.length === 0) || sending) return;
         setSending(true);
         setInput("");
-        const attachmentSnapshot = attachment;
-        setAttachment(null);
+        const attSnapshot = attachments;
+        setAttachments([]);
 
         // Optimistic UI
         const tempMsg: MsgRow = {
-            id: `tmp-${Date.now()}`, role: "user", body: text || "(rasm)",
-            attachmentUrl: attachmentSnapshot?.url ?? null,
-            attachmentType: attachmentSnapshot?.type ?? null,
+            id: `tmp-${Date.now()}`, role: "user", body: text,
+            attachments: attSnapshot.map(a => ({ url: a.url, type: a.type })),
             createdAt: new Date().toISOString(),
         };
         setMessages(prev => [...prev, tempMsg]);
 
-        // Rasm bo'lsa oddiy endpoint (streaming vision qo'llamaymiz), aks holda streaming
-        const useStreaming = !attachmentSnapshot;
+        // Biriktirma bo'lsa oddiy endpoint (streaming vision qo'llamaymiz), aks holda streaming
+        const useStreaming = attSnapshot.length === 0;
 
         try {
             // Chat Bot rejimida ham "rasm yarat" so'ralsa — avto Gen Pic (ChatGPT/Gemini kabi)
-            const wantsImage = mode === "pic" || (mode === "chat" && !attachmentSnapshot && looksLikeImageRequest(text));
+            const wantsImage = mode === "pic" || (mode === "chat" && attSnapshot.length === 0 && looksLikeImageRequest(text));
             if (wantsImage) {
                 await sendImagen(text, tempMsg.id, mode);
             } else if (useStreaming) {
-                await sendStreaming(text, tempMsg.id, attachmentSnapshot);
+                await sendStreaming(text, tempMsg.id, []);
             } else {
-                await sendClassic(text, tempMsg.id, attachmentSnapshot);
+                await sendClassic(text, tempMsg.id, attSnapshot);
             }
             loadConvs();
         } finally {
@@ -573,15 +579,15 @@ export function AiChatPage() {
         }
     }
 
-    async function sendClassic(text: string, tempId: string, att: typeof attachment) {
+    async function sendClassic(text: string, tempId: string, atts: { url: string; type: "image" | "file"; name: string }[]) {
+        const attPayload = atts.map(a => ({ url: a.url, type: a.type }));
         const r = await fetch("/api/ai/converse", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                message: text || "(rasm yubordim, tahlil qiling)",
+                message: text || "(fayl yubordim, tahlil qiling)",
                 conversationId: activeId ?? undefined,
-                attachmentUrl: att?.url,
-                attachmentType: att?.type,
+                attachments: attPayload,
                 language: aiLang,
                 mode,
             }),
@@ -590,7 +596,7 @@ export function AiChatPage() {
         if (!r.ok) {
             setMessages(prev => [
                 ...prev.filter(m => m.id !== tempId),
-                { id: `tmp-user-${Date.now()}`, role: "user", body: text, attachmentUrl: att?.url ?? null, attachmentType: att?.type ?? null, createdAt: new Date().toISOString() },
+                { id: `tmp-user-${Date.now()}`, role: "user", body: text, attachments: attPayload, createdAt: new Date().toISOString() },
                 { id: `err-${Date.now()}`, role: "ai", body: j?.message || j?.error || "Xatolik", createdAt: new Date().toISOString() },
             ]);
             return;
@@ -599,7 +605,7 @@ export function AiChatPage() {
         const followUps: string[] = Array.isArray(j.followUps) ? j.followUps.slice(0, 3) : [];
         setMessages(prev => [
             ...prev.filter(m => m.id !== tempId),
-            { ...userReal, role: "user", attachmentUrl: att?.url ?? null, attachmentType: att?.type ?? null },
+            { ...userReal, role: "user", attachments: attPayload },
             { ...aiReal, role: "ai", followUps },
         ]);
         if (!activeId) setActiveId(j.conversationId);
@@ -682,7 +688,7 @@ export function AiChatPage() {
         return "ok";
     }
 
-    async function sendStreaming(text: string, tempId: string, att: typeof attachment) {
+    async function sendStreaming(text: string, tempId: string, atts: { url: string; type: "image" | "file"; name: string }[]) {
         // Streaming AI xabari uchun placeholder — chunk'lar keladi
         const streamMsgId = `stream-${Date.now()}`;
         setMessages(prev => [
@@ -700,7 +706,6 @@ export function AiChatPage() {
                 signal: controller.signal,
                 body: JSON.stringify({
                     message: text, conversationId: activeId ?? undefined,
-                    attachmentUrl: att?.url, attachmentType: att?.type,
                     language: aiLang, mode, model, webSearch, deepThink,
                 }),
             });
@@ -711,7 +716,7 @@ export function AiChatPage() {
             if (aborted) { if (!activeId) loadConvs(); return; }
             console.error("streaming failed:", e);
             // Fallback classic
-            await sendClassic(text, streamMsgId, att);
+            await sendClassic(text, streamMsgId, atts);
         } finally {
             abortRef.current = null;
         }
@@ -1349,16 +1354,33 @@ export function AiChatPage() {
                                         </div>
                                     ) : (
                                         <>
-                                            {m.attachmentType === "image" && m.attachmentUrl && (
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                <img src={m.attachmentUrl} alt="" onClick={() => setLightbox(m.attachmentUrl!)}
-                                                    className="mb-2 max-w-full max-h-72 rounded-lg cursor-zoom-in" />
-                                            )}
-                                            {m.attachmentUrl && m.attachmentType !== "image" && (
-                                                <a href={m.attachmentUrl} target="_blank" rel="noopener noreferrer"
-                                                    className="mb-2 flex items-center gap-1.5 text-[11px] underline opacity-90">
-                                                    <Paperclip className="w-3 h-3 flex-shrink-0" /> Biriktirilgan fayl
-                                                </a>
+                                            {Array.isArray(m.attachments) && m.attachments.length > 0 ? (
+                                                <div className={`mb-2 grid gap-1.5 ${m.attachments.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                                                    {m.attachments.map((a, ai) => a.type === "image" ? (
+                                                        // eslint-disable-next-line @next/next/no-img-element
+                                                        <img key={ai} src={a.url} alt="" onClick={() => setLightbox(a.url)}
+                                                            className="w-full max-h-56 rounded-lg cursor-zoom-in object-cover" />
+                                                    ) : (
+                                                        <a key={ai} href={a.url} target="_blank" rel="noopener noreferrer"
+                                                            className="flex items-center gap-1.5 text-[11px] underline opacity-90 py-1">
+                                                            <Paperclip className="w-3 h-3 flex-shrink-0" /> Fayl {ai + 1}
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    {m.attachmentType === "image" && m.attachmentUrl && (
+                                                        // eslint-disable-next-line @next/next/no-img-element
+                                                        <img src={m.attachmentUrl} alt="" onClick={() => setLightbox(m.attachmentUrl!)}
+                                                            className="mb-2 max-w-full max-h-72 rounded-lg cursor-zoom-in" />
+                                                    )}
+                                                    {m.attachmentUrl && m.attachmentType !== "image" && (
+                                                        <a href={m.attachmentUrl} target="_blank" rel="noopener noreferrer"
+                                                            className="mb-2 flex items-center gap-1.5 text-[11px] underline opacity-90">
+                                                            <Paperclip className="w-3 h-3 flex-shrink-0" /> Biriktirilgan fayl
+                                                        </a>
+                                                    )}
+                                                </>
                                             )}
                                             {isUser ? m.body : (
                                                 m.body
@@ -1464,27 +1486,32 @@ export function AiChatPage() {
                     <div ref={bottomRef} />
                 </div>
 
-                {/* Attachment preview */}
-                {attachment && (
-                    <div className="mx-3 mt-2 p-2 rounded-xl border flex items-center gap-2"
-                        style={{ borderColor: T.border, background: T.soft }}>
-                        {attachment.type === "image" ? (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img src={attachment.url} alt="" className="w-12 h-12 rounded-lg object-cover" />
-                        ) : (
-                            <span className="w-12 h-12 rounded-lg grid place-items-center" style={{ background: T.gradient, color: T.onPrimary }}>
-                                <Paperclip className="w-4 h-4" />
-                            </span>
+                {/* Biriktirmalar preview — bir nechta (6 tagacha) */}
+                {(attachments.length > 0 || uploading) && (
+                    <div className="mx-3 mt-2 flex flex-wrap gap-2">
+                        {attachments.map((a, i) => (
+                            <div key={i} className="relative">
+                                {a.type === "image" ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={a.url} alt="" className="w-16 h-16 rounded-lg object-cover border" style={{ borderColor: T.border }} />
+                                ) : (
+                                    <div className="w-16 h-16 rounded-lg border flex flex-col items-center justify-center gap-1 px-1" style={{ borderColor: T.border, background: T.soft }}>
+                                        <Paperclip className="w-4 h-4" style={{ color: T.primary }} />
+                                        <span className="text-[8px] truncate w-full text-center" style={{ color: "var(--muted-foreground)" }}>{a.name.slice(0, 12)}</span>
+                                    </div>
+                                )}
+                                <button onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))}
+                                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full grid place-items-center"
+                                    style={{ background: "#0d0d0d", border: `1px solid ${T.border}`, color: "#fff" }}>
+                                    <XIcon className="w-3 h-3" />
+                                </button>
+                            </div>
+                        ))}
+                        {uploading && (
+                            <div className="w-16 h-16 rounded-lg border grid place-items-center" style={{ borderColor: T.border }}>
+                                <Loader2 className="w-4 h-4 animate-spin" style={{ color: T.primary }} />
+                            </div>
                         )}
-                        <div className="flex-1 min-w-0">
-                            <p className="text-xs font-black truncate">{attachment.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{attachment.type === "image" ? "Rasm" : "Fayl"}</p>
-                        </div>
-                        <button onClick={() => setAttachment(null)}
-                            className="w-8 h-8 rounded-lg grid place-items-center hover:brightness-95"
-                            style={{ background: T.soft, color: T.primary }}>
-                            <XIcon className="w-4 h-4" />
-                        </button>
                     </div>
                 )}
 
@@ -1515,8 +1542,8 @@ export function AiChatPage() {
                 {!AI_MODE_MAP[mode].soon && (
                 <form onSubmit={sendMessage} className="border-t p-3 flex gap-2 items-end" style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                     {/* "+" menyu (fayl / rejimlar / kelajak vositalar) */}
-                    <input ref={fileInputRef} type="file" accept="image/*,application/pdf" hidden
-                        onChange={e => { const f = e.target.files?.[0]; if (f) uploadAttachment(f); e.target.value = ""; }} />
+                    <input ref={fileInputRef} type="file" accept="image/*,application/pdf" multiple hidden
+                        onChange={e => { const fs = e.target.files; if (fs && fs.length) uploadFiles(Array.from(fs)); e.target.value = ""; }} />
                     <div className="relative flex-shrink-0">
                         <button type="button" onClick={() => setPlusMenuOpen(o => !o)}
                             disabled={uploading}
@@ -1594,7 +1621,7 @@ export function AiChatPage() {
                             <span className="w-3 h-3 rounded-sm bg-current" />
                         </button>
                     ) : (
-                        <button type="submit" disabled={!input.trim() && !attachment}
+                        <button type="submit" disabled={!input.trim() && attachments.length === 0}
                             className="w-11 h-11 rounded-xl flex items-center justify-center disabled:opacity-50"
                             style={{ background: T.gradient, color: T.onPrimary }}>
                             <Send className="w-4 h-4" />

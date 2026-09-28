@@ -150,6 +150,16 @@ export async function aiAnalyzeFile(prompt: string, fileUrl: string, opts: GenOp
     return generate(parts, opts);
 }
 
+// BIR NECHTA fayl (rasm/PDF) + matn → matn javob. Har fayl inline yuboriladi (max 6).
+export async function aiAnalyzeMulti(prompt: string, fileUrls: string[], opts: GenOpts = {}): Promise<string> {
+    const parts: Part[] = [{ text: prompt }];
+    for (const url of fileUrls.slice(0, 6)) {
+        const file = await fetchFileInline(url);
+        if (file) parts.push({ inline_data: file });
+    }
+    return generate(parts, opts);
+}
+
 /**
  * Gemini bilan rasm YARATISH (Gen Pic) — gemini-2.5-flash-image ("Nano Banana").
  * Matn prompt → rasm (base64). Kalit yo'q / xato → null (chaqiruvchi boshqa provayderga tushadi).

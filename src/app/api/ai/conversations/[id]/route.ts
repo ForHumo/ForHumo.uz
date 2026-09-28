@@ -32,7 +32,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         take: 500,
         select: {
             id: true, role: true, body: true, audioUrl: true, attachmentUrl: true,
-            attachmentType: true, aiModel: true, createdAt: true,
+            attachmentType: true, attachments: true, aiModel: true, createdAt: true,
         },
     });
 
@@ -53,6 +53,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             audioUrl: m.audioUrl,
             attachmentUrl: m.attachmentUrl,
             attachmentType: m.attachmentType,
+            attachments: m.attachments,
             aiModel: m.aiModel,
             createdAt: m.createdAt.toISOString(),
         })),

@@ -996,9 +996,10 @@ model AiMessage {
   role           String                                     // "user" | "ai" | "system"
   body           String                                     // asosiy matn (voice bo'lsa transcript)
   audioUrl       String?                                    // ovozli xabar URL (Vercel Blob)
-  attachmentUrl  String?                                    // rasm/fayl
+  attachmentUrl  String?                                    // (eski) bitta rasm/fayl — orqaga moslik
   attachmentType String?                                    // "image" | "file" | "audio"
-  aiModel        String?                                    // "gemini-2.5-flash-lite" (AI javoblarida)
+  attachments    Json?                                      // bir nechta biriktirma: [{url, type, name?}]
+  aiModel        String?                                    // model (AI javoblarida)
   tokensIn       Int?                                       // xarajat monitoringi
   tokensOut      Int?
   createdAt      DateTime       @default(now())
