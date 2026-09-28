@@ -865,7 +865,7 @@ export function AiChatPage() {
     const codeLike = mode === "code" || mode === "cowork";
 
     return (
-        <div className="dark relative min-h-screen flex text-[var(--foreground)]" style={{ background: "transparent" }}>
+        <div className="dark relative h-full flex text-[var(--foreground)] overflow-hidden" style={{ background: "transparent" }}>
             {/* Qora cosmic fon + uchib yuruvchi yulduzlar (eski AI'dagi sevimli fon) */}
             <AiStarfield />
 
@@ -1148,7 +1148,7 @@ export function AiChatPage() {
             </aside>
 
             {/* Main — chat */}
-            <main className="relative z-10 flex-1 flex flex-col min-w-0">
+            <main className="relative z-10 flex-1 flex flex-col min-w-0 min-h-0">
                 <header className="h-14 border-b flex items-center gap-2 px-4 flex-shrink-0"
                     style={{ borderColor: T.border, background: "rgba(13,13,13,0.6)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                     <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2">
@@ -1275,7 +1275,7 @@ export function AiChatPage() {
                     </div>
                 )}
 
-                <div ref={scrollAreaRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div ref={scrollAreaRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
                     {/* SOON rejimlar (Gen Pic / Gen Vid / Humo CoWork) — chiroyli placeholder */}
                     {AI_MODE_MAP[mode].soon && (
                         <div className="h-full flex flex-col items-center justify-center text-center px-4">
@@ -1483,6 +1483,16 @@ export function AiChatPage() {
                             </div>
                         );
                     })}
+                    {/* "Ishlash" indikatori — oxirgi xabar user bo'lsa (vision/classic yo'li) */}
+                    {sending && messages.length > 0 && messages[messages.length - 1].role === "user" && (
+                        <div className="flex justify-start">
+                            <div className="max-w-[75%] px-3.5 py-2.5" style={{ background: "rgba(26,26,26,0.78)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px 16px 16px 4px" }}>
+                                <div className="flex items-center gap-2 text-[13px] font-semibold" style={{ color: "var(--muted-foreground)" }}>
+                                    <span className="ai-typing"><i /><i /><i /></span> {workingLabel}...
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     <div ref={bottomRef} />
                 </div>
 
