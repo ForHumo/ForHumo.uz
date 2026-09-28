@@ -2,7 +2,8 @@
 // Kalit: GEMINI_API_KEY (Google AI Studio'dan bepul). Model: GEMINI_MODEL (default gemini-2.0-flash)
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+// Kuchli, kam-xato model (rasm/mahsulot aniqlash + chuqur javob uchun). flash-lite juda sayoz edi.
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 const EMBED_MODEL = process.env.GEMINI_EMBED_MODEL || "gemini-embedding-001";
 
 export const EMBED_DIM = 768;   // outputDimensionality (NexusPostEmbedding vector(768) bilan mos)

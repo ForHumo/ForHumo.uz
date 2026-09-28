@@ -16,9 +16,10 @@ export interface AiModel {
 }
 
 export const AI_MODELS: AiModel[] = [
-    // BEPUL — default (Google to'g'ridan)
-    { id: "gemini-2.5-flash-lite", label: "Gemini Flash Lite", provider: "gemini", free: true, note: "Tez, bepul — default" },
-    { id: "gemini-2.5-flash",      label: "Gemini 2.5 Flash",  provider: "gemini", free: true, note: "Bepul, kuchliroq" },
+    // BEPUL — Google to'g'ridan
+    { id: "gemini-3.8-flash",      label: "Gemini 3.8 Flash",  provider: "gemini", free: true, note: "Eng kuchli, bepul — default" },
+    { id: "gemini-2.5-flash-lite", label: "Gemini Flash Lite", provider: "gemini", free: true, note: "Eng tez, bepul" },
+    { id: "gemini-2.5-flash",      label: "Gemini 2.5 Flash",  provider: "gemini", free: true, note: "Bepul, barqaror" },
     // OpenRouter — OPENROUTER_API_KEY kerak
     { id: "deepseek/deepseek-chat",              label: "DeepSeek V3",       provider: "openrouter", free: false, note: "Kod+chat, juda arzon" },
     { id: "deepseek/deepseek-r1",                label: "DeepSeek R1",       provider: "openrouter", free: false, note: "Reasoning" },
@@ -29,7 +30,7 @@ export const AI_MODELS: AiModel[] = [
     { id: "meta-llama/llama-3.3-70b-instruct",   label: "Llama 3.3 70B",     provider: "openrouter", free: false, note: "Meta (ochiq)" },
 ];
 
-export const DEFAULT_MODEL = "gemini-2.5-flash-lite";
+export const DEFAULT_MODEL = "gemini-3.8-flash";
 
 export function findModel(id: string | null | undefined): AiModel {
     return AI_MODELS.find(m => m.id === id) ?? AI_MODELS[0];
