@@ -59,13 +59,70 @@ function wavFromPcm(pcm: Buffer, rate = 24000, channels = 1, bits = 16): Buffer 
     return Buffer.concat([h, pcm]);
 }
 
+// Matnning ustun tilini aniqlaydi (kirill = rus, lotin = o'zbek/ingliz).
+// gemini-3.8-flash-tts style-prompt'ni O'QIB YUBORADI (uslub sifatida qabul qilmaydi) —
+// shuning uchun aksentni prompt bilan boshqarib bo'lmaydi. Buning o'rniga: model o'zbek RAQAMLARINI
+// (1,2,3) rus tilida o'qiydi (один/два), lekin o'zbek SO'ZLARINI to'g'ri o'qiydi. Yechim —
+// o'zbekcha matnda raqamlarni oldindan so'zga aylantiramiz. Rus/ingliz matnda raqamlar model
+// tomonidan tabiiy (grammatik to'g'ri) o'qiladi — tegmaymiz.
+function detectTtsLang(text: string): "uz" | "ru" | "en" {
+    const cyr = (text.match(/[а-яё]/gi) || []).length;
+    const lat = (text.match(/[a-z]/gi) || []).length;
+    if (cyr > lat) return "ru";                          // ustun kirill → rus
+    // Lotin — o'zbek yoki ingliz. O'zbek belgilarini qidiramiz (o'/g' + keng tarqalgan so'zlar).
+    if (/[oʻg]['ʻʼ']/i.test(text) || /\b(va|bilan|uchun|ham|yoki|emas|kerak|qil|deb|shu|bu|men|siz|biz|ning|lar|dan|ga|ni)\b/i.test(text)) return "uz";
+    // Lotin, o'zbek belgisi yo'q — ingliz bo'lishi mumkin (aniq inglizcha so'zlar bo'lsa)
+    if (/\b(the|and|is|are|you|this|of|to|in|for|with|that|have|will)\b/i.test(text)) return "en";
+    return "uz";                                          // default — auditoriyamiz o'zbek
+}
+
+// ---- O'zbekcha raqam → so'z (0 dan 999 milliardgacha) ----
+const UZ_ONES = ["nol", "bir", "ikki", "uch", "to'rt", "besh", "olti", "yetti", "sakkiz", "to'qqiz"];
+const UZ_TENS = ["", "o'n", "yigirma", "o'ttiz", "qirq", "ellik", "oltmish", "yetmish", "sakson", "to'qson"];
+function uzUnder1000(n: number): string {
+    const parts: string[] = [];
+    const h = Math.floor(n / 100), t = Math.floor((n % 100) / 10), o = n % 10;
+    if (h) parts.push(h === 1 ? "yuz" : UZ_ONES[h] + " yuz");   // 100 = "yuz", 200 = "ikki yuz"
+    if (t) parts.push(UZ_TENS[t]);
+    if (o) parts.push(UZ_ONES[o]);
+    return parts.join(" ");
+}
+function uzInt(n: number): string {
+    if (n === 0) return "nol";
+    const scales: [number, string][] = [[1e9, "milliard"], [1e6, "million"], [1e3, "ming"]];
+    const parts: string[] = [];
+    let rem = n;
+    for (const [val, name] of scales) {
+        if (rem >= val) {
+            const cnt = Math.floor(rem / val);
+            rem = rem % val;
+            parts.push(name === "ming" && cnt === 1 ? "ming" : uzUnder1000(cnt) + " " + name);  // 1000 = "ming"
+        }
+    }
+    if (rem > 0) parts.push(uzUnder1000(rem));
+    return parts.join(" ").replace(/\s+/g, " ").trim();
+}
+// Matndagi raqamlarni o'zbekcha so'zga aylantiradi (faqat o'zbekcha matn uchun chaqiriladi).
+function spellUzNumbers(text: string): string {
+    // 1. Minglik ajratgichlarni yig'amiz: "45 000" / "45,000" → "45000" (faqat 3 xonali guruh oldidan)
+    let t = text.replace(/(\d)[  ,](?=\d{3}(?:\D|$))/g, "$1");
+    t = t.replace(/(\d)[  ,](?=\d{3}(?:\D|$))/g, "$1");           // zanjirli guruhlar (masalan 1 234 567)
+    // 2. Kasrlar: "3.5" / "3,5" → "uch nuqta besh"
+    t = t.replace(/(\d+)[.,](\d+)/g, (_, a: string, b: string) =>
+        `${uzInt(Number(a))} nuqta ${[...b].map(d => UZ_ONES[Number(d)]).join(" ")}`);
+    // 3. Qolgan butun sonlar (12 xonagacha; undan kattasini raqamligicha qoldiramiz)
+    t = t.replace(/\d+/g, m => (m.length <= 12 ? uzInt(Number(m)) : m));
+    return t;
+}
+
 /**
- * Gemini TTS — matnni tabiiy o'zbek ovozida WAV'ga aylantiradi.
+ * Gemini TTS — matnni tabiiy ovozda WAV'ga aylantiradi.
+ * O'zbekcha matnda raqamlar so'zga aylantiriladi (aks holda model ularni rus tilida o'qiydi).
  * @returns WAV Buffer yoki null (kalit yo'q / xato — chaqiruvchi brauzer TTS'ga tushadi).
  */
 export async function synthesizeGeminiWav(text: string, voice: GeminiTtsVoice = "Kore"): Promise<Buffer | null> {
     if (!GEMINI_KEY) return null;
-    const clean = text
+    let clean = text
         .replace(/```[\s\S]*?```/g, " (kod bloki) ")   // kod bloklarini o'qimaymiz
         .replace(/<[^>]*>/g, "")
         .replace(/https?:\/\/\S+/g, "")
@@ -74,14 +131,17 @@ export async function synthesizeGeminiWav(text: string, voice: GeminiTtsVoice = 
         .trim()
         .slice(0, 1500);
     if (!clean) return null;
+    // O'zbekcha bo'lsa — raqamlarni so'zga aylantiramiz (один/два bug'ini yo'qotadi)
+    if (detectTtsLang(clean) === "uz") clean = spellUzNumbers(clean);
     const useVoice = (GEMINI_TTS_VOICES as readonly string[]).includes(voice) ? voice : "Kore";
+    const speakText = clean;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TTS_MODEL}:generateContent?key=${GEMINI_KEY}`;
     try {
         const r = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: clean }] }],
+                contents: [{ parts: [{ text: speakText }] }],
                 generationConfig: {
                     responseModalities: ["AUDIO"],
                     speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: useVoice } } },
