@@ -590,6 +590,7 @@ export function AiChatPage() {
                 attachments: attPayload,
                 language: aiLang,
                 mode,
+                webSearch,
             }),
         });
         const j = await r.json();

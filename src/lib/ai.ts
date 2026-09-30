@@ -34,7 +34,7 @@ export async function aiEmbed(text: string): Promise<number[] | null> {
 
 type Part = { text: string } | { inline_data: { mime_type: string; data: string } };
 
-interface GenOpts { system?: string; json?: boolean; temperature?: number }
+interface GenOpts { system?: string; json?: boolean; temperature?: number; search?: boolean }
 
 type Content = { role?: "user" | "model"; parts: Part[] };
 
@@ -45,9 +45,12 @@ async function callGemini(contents: Content[], opts: GenOpts = {}): Promise<stri
         contents,
         generationConfig: {
             temperature: opts.temperature ?? 0.7,
-            ...(opts.json ? { responseMimeType: "application/json" } : {}),
+            // ⚠️ google_search grounding JSON bilan birlashmaydi — search bo'lsa json'ni o'tkazamiz
+            ...(opts.json && !opts.search ? { responseMimeType: "application/json" } : {}),
         },
     };
+    // Web-qidiruv grounding (Saytlardan qidirish) — dolzarb/faktik ma'lumot uchun
+    if (opts.search) body.tools = [{ google_search: {} }];
     if (opts.system) body.systemInstruction = { parts: [{ text: opts.system }] };
 
     // 503/429 (vaqtinchalik yuklama) — qisqa kutib qayta urinish

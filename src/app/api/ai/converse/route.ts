@@ -70,6 +70,7 @@ export async function POST(req: Request) {
     // AI rejimi — yangi suhbat to'g'ri rejim tarixiga tushishi uchun (rasm/PDF ham)
     const modeRaw = typeof body?.mode === "string" ? body.mode : "";
     const convMode = ["chat", "code", "pic", "vid", "music", "cowork"].includes(modeRaw) ? modeRaw : undefined;
+    const webSearch = body?.webSearch === true;   // Saytlardan qidirish — grounding (rasm/fayl uchun ham)
     const extractKB = body?.extractKnowledge !== false;
     let conversationId: string | undefined = typeof body?.conversationId === "string" ? body.conversationId : undefined;
 
@@ -132,11 +133,11 @@ export async function POST(req: Request) {
     let aiReply: string;
     try {
         if (hasFiles) {
-            // Bir yoki bir nechta rasm/PDF — hammasini birga tahlil qilamiz
+            // Bir yoki bir nechta rasm/PDF — hammasini birga tahlil qilamiz (web-qidiruv yoqilsa grounding bilan)
             aiReply = await aiAnalyzeMulti(
                 userMsg || "Ushbu fayl(lar)ni diqqat bilan tahlil qiling. Rasmdagi matn, yorliq, brend nomini AYNAN o'qing va to'liq, aniq ma'lumot bering.",
                 attachments.map(a => a.url),
-                { system, temperature: 0.5 },
+                { system, temperature: 0.5, search: webSearch },
             );
             aiReply = (aiReply || "").trim().slice(0, 3000);
             if (!aiReply) {
@@ -149,7 +150,7 @@ export async function POST(req: Request) {
                     role: m.role === "ai" ? "model" as const : "user" as const,
                     text: m.body,
                 })),
-                { system, temperature: 0.7 },
+                { system, temperature: 0.7, search: webSearch },
             );
             aiReply = (aiReply || "").trim().slice(0, 3000);
         }
