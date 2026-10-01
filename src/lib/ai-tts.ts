@@ -69,11 +69,12 @@ function detectTtsLang(text: string): "uz" | "ru" | "en" {
     const cyr = (text.match(/[а-яё]/gi) || []).length;
     const lat = (text.match(/[a-z]/gi) || []).length;
     if (cyr > lat) return "ru";                          // ustun kirill → rus
-    // Lotin — o'zbek yoki ingliz. O'zbek belgilarini qidiramiz (o'/g' + keng tarqalgan so'zlar).
-    if (/[oʻg]['ʻʼ']/i.test(text) || /\b(va|bilan|uchun|ham|yoki|emas|kerak|qil|deb|shu|bu|men|siz|biz|ning|lar|dan|ga|ni)\b/i.test(text)) return "uz";
-    // Lotin, o'zbek belgisi yo'q — ingliz bo'lishi mumkin (aniq inglizcha so'zlar bo'lsa)
-    if (/\b(the|and|is|are|you|this|of|to|in|for|with|that|have|will)\b/i.test(text)) return "en";
-    return "uz";                                          // default — auditoriyamiz o'zbek
+    // Lotin — o'zbek yoki ingliz. Har biriga signal sanaymiz (o'zbekka ko'r-ko'rona moyillik yo'q).
+    const uzHits = (text.match(/[oʻg]['ʻʼ]/gi) || []).length
+        + (text.match(/\b(va|bilan|uchun|ham|yoki|emas|kerak|bo['ʻ]|qil|deb|shu|bu|men|siz|biz|ning|lar|dan|ga|ni|o['ʻ]z|yangi|narx|so['ʻ]m)\b/gi) || []).length;
+    const enHits = (text.match(/\b(the|and|is|are|you|this|of|to|in|for|with|that|have|will|it|on|be|as|at|or|we|can|your|a|an|not|but|from|our)\b/gi) || []).length;
+    if (enHits > uzHits) return "en";                    // inglizcha signal ustun → ingliz
+    return "uz";                                          // aks holda o'zbek (auditoriya default)
 }
 
 // ---- O'zbekcha raqam → so'z (0 dan 999 milliardgacha) ----
