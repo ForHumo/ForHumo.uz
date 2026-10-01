@@ -191,6 +191,37 @@ const DICT: Record<string, Record<AiLang, string>> = {
     },
     "kb.start": { uz: "Boshlash →", ru: "Начать →", en: "Get started →" },
     "kb.later": { uz: "Keyinroq",   ru: "Позже",    en: "Later" },
+
+    // Humo Live (ovozli suhbat overlay)
+    "live.voice.full":   { uz: "To'liq, mustahkam ohang", ru: "Полный, уверенный тон", en: "Full, confident tone" },
+    "live.voice.bright": { uz: "Yorug', yengil ohang",    ru: "Светлый, лёгкий тон",   en: "Bright, light tone" },
+    "live.st.connecting":{ uz: "Ulanmoqda...",    ru: "Подключение...",   en: "Connecting..." },
+    "live.st.speaking":  { uz: "Humo gapiryapti...", ru: "Humo говорит...", en: "Humo is speaking..." },
+    "live.st.micOff":    { uz: "Mikrofon o'chiq", ru: "Микрофон выключен", en: "Mic is off" },
+    "live.st.listening": { uz: "Tinglayapman...",  ru: "Слушаю...",        en: "Listening..." },
+    "live.st.ended":     { uz: "Suhbat tugadi",    ru: "Разговор завершён", en: "Call ended" },
+    "live.st.ready":     { uz: "Boshlashga tayyor", ru: "Готов к началу",  en: "Ready to start" },
+    "live.youPrefix":    { uz: "Siz: ",            ru: "Вы: ",             en: "You: " },
+    "live.preview":      { uz: "Eshitib ko'rish",  ru: "Прослушать",       en: "Preview" },
+    "live.screenShare":  { uz: "Ekranni ulashish", ru: "Поделиться экраном", en: "Share screen" },
+    "live.screenStop":   { uz: "Ekranni to'xtatish", ru: "Остановить экран", en: "Stop screen" },
+    "live.start":        { uz: "Suhbatni boshlash", ru: "Начать разговор",  en: "Start the call" },
+    "live.camOn":        { uz: "Kamerani yoqish",  ru: "Включить камеру",  en: "Turn on camera" },
+    "live.camOff":       { uz: "Kamerani o'chirish", ru: "Выключить камеру", en: "Turn off camera" },
+    "live.micOn":        { uz: "Mikrofonni yoqish", ru: "Включить микрофон", en: "Turn on mic" },
+    "live.micOff":       { uz: "Mikrofonni o'chirish", ru: "Выключить микрофон", en: "Turn off mic" },
+    "live.end":          { uz: "Tugatish",         ru: "Завершить",        en: "End" },
+    "live.camSwitch":    { uz: "Kamerani almashtirish", ru: "Переключить камеру", en: "Switch camera" },
+    "live.hint":         {
+        uz: "Tugmani bosing va gaplashing (istalgan tilda). Mikrofonga ruxsat bering.",
+        ru: "Нажмите кнопку и говорите (на любом языке). Разрешите доступ к микрофону.",
+        en: "Press the button and speak (in any language). Allow microphone access.",
+    },
+    "live.err.auth":     { uz: "Iltimos, avval kiring.", ru: "Пожалуйста, сначала войдите.", en: "Please sign in first." },
+    "live.err.unavail":  { uz: "Live hozircha ishlamayapti.", ru: "Live пока недоступен.", en: "Live isn't available right now." },
+    "live.err.conn":     { uz: "Ulanishda xatolik.", ru: "Ошибка подключения.", en: "Connection error." },
+    "live.err.mic":      { uz: "Mikrofonga ruxsat berilmadi.", ru: "Доступ к микрофону не разрешён.", en: "Microphone access denied." },
+    "live.err.failed":   { uz: "Ulanib bo'lmadi. Qayta urinib ko'ring.", ru: "Не удалось подключиться. Попробуйте снова.", en: "Couldn't connect. Try again." },
 };
 
 export function aiT(lang: AiLang, key: string): string {

@@ -897,7 +897,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
             )}
 
             {/* Sidebar — Humo AI (yig'iladigan: to'liq ↔ icon-rail) */}
-            <aside className={`w-72 ${collapsed ? "md:w-[68px]" : "md:w-72"} flex-shrink-0 border-r flex flex-col md:relative md:z-10 transition-[width] duration-200
+            <aside className={`w-[86vw] max-w-72 ${collapsed ? "md:w-[68px]" : "md:w-72"} flex-shrink-0 border-r flex flex-col md:relative md:z-10 transition-[width] duration-200
                 ${sidebarOpen ? "fixed inset-y-0 left-0 z-40" : "hidden md:flex"}`}
                 style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
 
@@ -1709,7 +1709,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
             )}
 
             {/* Humo Live — real-vaqt ovozli suhbat overlay */}
-            {liveOpen && <HumoLive onClose={() => setLiveOpen(false)} />}
+            {liveOpen && <HumoLive onClose={() => setLiveOpen(false)} lang={aiLang} />}
 
         </div>
     );

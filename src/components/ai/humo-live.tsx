@@ -11,10 +11,11 @@ import {
     X as XIcon, Mic, MicOff, PhoneOff, AudioLines, Loader2, Play, Square,
     Monitor, MonitorOff, Video, VideoOff, SwitchCamera,
 } from "lucide-react";
+import { aiT, type AiLang } from "@/lib/ai-i18n";
 
 const LIVE_VOICES = [
-    { id: "Orus", name: "Umid", sub: "To'liq, mustahkam ohang" },
-    { id: "Zephyr", name: "Dilnoza", sub: "Yorug', yengil ohang" },
+    { id: "Orus", name: "Umid", subKey: "live.voice.full" },
+    { id: "Zephyr", name: "Dilnoza", subKey: "live.voice.bright" },
 ];
 const PREVIEW_TEXT = "Assalomu alaykum, men Humo AI. Sizga qanday yordam bera olaman?";
 const LIVE_SYS =
@@ -63,7 +64,8 @@ function base64ToFloat32(b64: string): Float32Array {
     return f32;
 }
 
-export function HumoLive({ onClose }: { onClose: () => void }) {
+export function HumoLive({ onClose, lang = "uz" }: { onClose: () => void; lang?: AiLang }) {
+    const t = useCallback((k: string) => aiT(lang, k), [lang]);
     const [status, setStatus] = useState<LiveStatus>("idle");
     const [voice, setVoice] = useState("Orus");
     const [muted, setMuted] = useState(false);
@@ -295,7 +297,7 @@ export function HumoLive({ onClose }: { onClose: () => void }) {
             const r = await fetch("/api/ai/live/token", { method: "POST" });
             if (!r.ok) {
                 const j = await r.json().catch(() => ({}));
-                setErrorMsg(j?.error === "auth_required" ? "Iltimos, avval kiring." : "Live hozircha ishlamayapti.");
+                setErrorMsg(j?.error === "auth_required" ? t("live.err.auth") : t("live.err.unavail"));
                 setStatus("error"); return;
             }
             const { token, model } = await r.json();
@@ -312,17 +314,17 @@ export function HumoLive({ onClose }: { onClose: () => void }) {
                 callbacks: {
                     onopen: () => { setStatus("live"); startViz(); },
                     onmessage: handleMessage,
-                    onerror: () => { setErrorMsg("Ulanishda xatolik."); setStatus("error"); },
+                    onerror: () => { setErrorMsg(t("live.err.conn")); setStatus("error"); },
                     onclose: () => { setStatus(prev => prev === "live" ? "ended" : prev); },
                 },
             });
             sessionRef.current = session;
             // WS ochilgach (connect resolve bo'ldi, session tayyor) — mikrofon + salom
-            await startMic(session).catch(() => { setErrorMsg("Mikrofonga ruxsat berilmadi."); });
+            await startMic(session).catch(() => { setErrorMsg(t("live.err.mic")); });
             try { session.sendClientContent({ turns: "(Suhbat boshlandi — juda qisqa salomlashing va nima yordam kerakligini so'rang.)" }); } catch { /* ignore */ }
         } catch (e) {
             console.error("[HumoLive] start", e);
-            setErrorMsg("Ulanib bo'lmadi. Qayta urinib ko'ring.");
+            setErrorMsg(t("live.err.failed"));
             setStatus("error");
         }
     }, [voice, handleMessage, startMic, startViz]);
@@ -363,15 +365,15 @@ export function HumoLive({ onClose }: { onClose: () => void }) {
     useEffect(() => () => { cleanup(); previewAudioRef.current?.pause(); }, [cleanup]);
 
     const mmss = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
-    const statusText = status === "connecting" ? "Ulanmoqda..."
-        : status === "live" ? (aiSpeaking ? "Humo gapiryapti..." : muted ? "Mikrofon o'chiq" : "Tinglayapman...")
-        : status === "ended" ? "Suhbat tugadi" : status === "error" ? errorMsg : "Boshlashga tayyor";
+    const statusText = status === "connecting" ? t("live.st.connecting")
+        : status === "live" ? (aiSpeaking ? t("live.st.speaking") : muted ? t("live.st.micOff") : t("live.st.listening"))
+        : status === "ended" ? t("live.st.ended") : status === "error" ? errorMsg : t("live.st.ready");
     const inCall = status === "live" || status === "connecting";
 
     const ctrlBtn = "w-14 h-14 rounded-full grid place-items-center transition-colors flex-shrink-0";
 
     return (
-        <div className="fixed inset-0 z-[210] flex flex-col items-center justify-between py-10 px-6"
+        <div className="fixed inset-0 z-[210] flex flex-col items-center justify-between gap-4 py-6 px-4 sm:py-10 sm:px-6 overflow-y-auto"
             style={{ background: "radial-gradient(1000px 520px at 50% 26%, #171722, #08080c 72%), #08080c" }}>
             {/* Tepa */}
             <div className="w-full max-w-3xl flex items-center justify-between">
@@ -385,9 +387,9 @@ export function HumoLive({ onClose }: { onClose: () => void }) {
             </div>
 
             {/* Markaz — logo + jonli to'lqin + status + karaoke matn */}
-            <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
-                <div className="relative grid place-items-center" style={{ width: 300, height: 300 }}>
-                    <canvas ref={canvasRef} width={300} height={300} className="absolute inset-0" style={{ opacity: status === "live" ? 1 : 0, transition: "opacity .4s" }} />
+            <div className="flex flex-col items-center gap-4 sm:gap-6 w-full max-w-2xl">
+                <div className="relative grid place-items-center" style={{ width: "min(300px, 72vw)", height: "min(300px, 72vw)" }}>
+                    <canvas ref={canvasRef} width={300} height={300} className="absolute inset-0 w-full h-full" style={{ opacity: status === "live" ? 1 : 0, transition: "opacity .4s" }} />
                     {status === "live" && !aiSpeaking && (
                         <span className="absolute rounded-full" style={{ width: 200, height: 200, background: "radial-gradient(circle, rgba(255,255,255,0.10), transparent 70%)", animation: "aiLiveGlow 3.4s ease-in-out infinite" }} />
                     )}
@@ -407,7 +409,7 @@ export function HumoLive({ onClose }: { onClose: () => void }) {
                 {/* Karaoke matn */}
                 {status === "live" && (captionUser || captionAi) && (
                     <div className="w-full text-center space-y-1.5 px-2">
-                        {captionUser && <p className="text-sm" style={{ color: "var(--muted-foreground)" }}><span className="opacity-60">Siz: </span>{captionUser}</p>}
+                        {captionUser && <p className="text-sm" style={{ color: "var(--muted-foreground)" }}><span className="opacity-60">{t("live.youPrefix")}</span>{captionUser}</p>}
                         {captionAi && <p className="text-base font-medium text-[var(--foreground)]">{captionAi}</p>}
                     </div>
                 )}
@@ -428,10 +430,10 @@ export function HumoLive({ onClose }: { onClose: () => void }) {
                                         style={active ? { background: "#ECECEC", color: "#0d0d0d" } : { background: "rgba(255,255,255,0.05)", color: "var(--foreground)", border: "1px solid rgba(255,255,255,0.09)" }}>
                                         <div className="text-left">
                                             <span className="block text-sm font-black leading-tight">{v.name}</span>
-                                            <span className="block text-[10px] opacity-70 leading-tight">{v.sub}</span>
+                                            <span className="block text-[10px] opacity-70 leading-tight">{t(v.subKey)}</span>
                                         </div>
                                         <button onClick={(e) => { e.stopPropagation(); previewVoice(v.id); }}
-                                            title="Eshitib ko'rish"
+                                            title={t("live.preview")}
                                             className="w-7 h-7 rounded-full grid place-items-center flex-shrink-0"
                                             style={active ? { background: "rgba(0,0,0,0.12)" } : { background: "rgba(255,255,255,0.1)" }}>
                                             {previewing === v.id ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
@@ -441,50 +443,50 @@ export function HumoLive({ onClose }: { onClose: () => void }) {
                             })}
                         </div>
                         {/* Ekran | Start | Kamera */}
-                        <div className="flex items-center gap-5">
-                            <button onClick={() => startVideoSource("screen")} title="Ekranni ulashish"
+                        <div className="flex items-center gap-4 sm:gap-5">
+                            <button onClick={() => startVideoSource("screen")} title={t("live.screenShare")}
                                 className={ctrlBtn} style={{ background: videoMode === "screen" ? "#ECECEC" : "rgba(255,255,255,0.08)", color: videoMode === "screen" ? "#0d0d0d" : "#fff" }}>
                                 <Monitor className="w-6 h-6" />
                             </button>
                             <button onClick={start}
                                 className="w-[72px] h-[72px] rounded-full grid place-items-center hover:brightness-95 transition-all"
-                                style={{ background: "#ECECEC", color: "#0d0d0d" }} title="Suhbatni boshlash">
+                                style={{ background: "#ECECEC", color: "#0d0d0d" }} title={t("live.start")}>
                                 <AudioLines className="w-8 h-8" />
                             </button>
-                            <button onClick={() => startVideoSource("cam")} title="Kamerani yoqish"
+                            <button onClick={() => startVideoSource("cam")} title={t("live.camOn")}
                                 className={ctrlBtn} style={{ background: videoMode === "cam" ? "#ECECEC" : "rgba(255,255,255,0.08)", color: videoMode === "cam" ? "#0d0d0d" : "#fff" }}>
                                 <Video className="w-6 h-6" />
                             </button>
                         </div>
-                        <p className="text-[11px] text-center" style={{ color: "var(--muted-foreground)" }}>
-                            Tugmani bosing va gaplashing (istalgan tilda). Mikrofonga ruxsat bering.
+                        <p className="text-[11px] text-center px-2" style={{ color: "var(--muted-foreground)" }}>
+                            {t("live.hint")}
                         </p>
                     </>
                 ) : (
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-center flex-wrap gap-3 sm:gap-4">
                         {/* Ekran */}
-                        <button onClick={() => videoMode === "screen" ? stopVideo() : startVideoSource("screen")} title={videoMode === "screen" ? "Ekranni to'xtatish" : "Ekranni ulashish"}
+                        <button onClick={() => videoMode === "screen" ? stopVideo() : startVideoSource("screen")} title={videoMode === "screen" ? t("live.screenStop") : t("live.screenShare")}
                             className={ctrlBtn} style={{ background: videoMode === "screen" ? "#ECECEC" : "rgba(255,255,255,0.08)", color: videoMode === "screen" ? "#0d0d0d" : "#fff" }}>
                             {videoMode === "screen" ? <MonitorOff className="w-6 h-6" /> : <Monitor className="w-6 h-6" />}
                         </button>
                         {/* Mikrofon */}
-                        <button onClick={() => setMuted(m => !m)} disabled={status !== "live"} title={muted ? "Mikrofonni yoqish" : "Mikrofonni o'chirish"}
+                        <button onClick={() => setMuted(m => !m)} disabled={status !== "live"} title={muted ? t("live.micOn") : t("live.micOff")}
                             className={ctrlBtn} style={{ background: muted ? "#EF4444" : "rgba(255,255,255,0.08)", color: "#fff" }}>
                             {muted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
                         </button>
                         {/* Tugatish */}
-                        <button onClick={end} title="Tugatish"
+                        <button onClick={end} title={t("live.end")}
                             className="w-[72px] h-[72px] rounded-full grid place-items-center hover:brightness-105" style={{ background: "#EF4444", color: "#fff" }}>
                             {status === "connecting" ? <Loader2 className="w-8 h-8 animate-spin" /> : <PhoneOff className="w-8 h-8" />}
                         </button>
                         {/* Kamera */}
-                        <button onClick={() => videoMode === "cam" ? stopVideo() : startVideoSource("cam")} title={videoMode === "cam" ? "Kamerani o'chirish" : "Kamerani yoqish"}
+                        <button onClick={() => videoMode === "cam" ? stopVideo() : startVideoSource("cam")} title={videoMode === "cam" ? t("live.camOff") : t("live.camOn")}
                             className={ctrlBtn} style={{ background: videoMode === "cam" ? "#ECECEC" : "rgba(255,255,255,0.08)", color: videoMode === "cam" ? "#0d0d0d" : "#fff" }}>
                             {videoMode === "cam" ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
                         </button>
                         {/* Kamera almashtirish */}
                         {videoMode === "cam" && (
-                            <button onClick={switchCamera} title="Kamerani almashtirish"
+                            <button onClick={switchCamera} title={t("live.camSwitch")}
                                 className={ctrlBtn} style={{ background: "rgba(255,255,255,0.08)", color: "#fff" }}>
                                 <SwitchCamera className="w-6 h-6" />
                             </button>
