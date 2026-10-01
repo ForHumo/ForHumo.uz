@@ -18,7 +18,7 @@ import { AiStarfield } from "@/components/ai/ai-starfield";
 import { AiMarkdown } from "@/components/ai/ai-markdown";
 import { HumoLive } from "@/components/ai/humo-live";
 import { AI_MODELS, DEFAULT_MODEL, findModel } from "@/lib/ai-models";
-import { aiT, aiLangFromLocale, type AiLang } from "@/lib/ai-i18n";
+import { aiT, aiTn, aiLangFromLocale, type AiLang } from "@/lib/ai-i18n";
 
 interface ConvSummary {
     id: string; title: string; topic: string | null; moduleOrigin: string | null;
@@ -244,6 +244,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
     // Til tanlash — dastlabki til route locale'dan (forhumo.uz/ru/ai → ru), keyin saqlangan tanlov ustun.
     const [aiLang, setAiLang] = useState<AiLang>(() => aiLangFromLocale(locale));
     const t = useCallback((key: string) => aiT(aiLang, key), [aiLang]);
+    const tn = useCallback((key: string, n: number) => aiTn(aiLang, key, n), [aiLang]);
 
     useEffect(() => {
         try {
@@ -468,7 +469,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
     async function deleteSelected() {
         const ids = Array.from(selected);
         if (ids.length === 0) return;
-        if (!confirm(`${ids.length} ta suhbat butunlay o'chiriladi. Davom etamizmi?`)) return;
+        if (!confirm(tn("confirm.deleteN", ids.length))) return;
         await Promise.allSettled(
             ids.map(id => fetch(`/api/ai/conversations/${id}`, { method: "DELETE" })),
         );
@@ -775,7 +776,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
     }
 
     async function deleteConv(id: string) {
-        if (!confirm("Bu suhbatni butunlay o'chirasizmi?")) return;
+        if (!confirm(t("confirm.deleteChat"))) return;
         const r = await fetch(`/api/ai/conversations/${id}`, { method: "DELETE" });
         if (r.ok) {
             setConvs(prev => prev.filter(c => c.id !== id));
@@ -805,13 +806,13 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
             setTimeout(() => setShareCopied(prev => prev === id ? null : prev), 2500);
         } catch {
             // fallback: prompt
-            window.prompt("Havolani nusxa oling:", full);
+            window.prompt(t("prompt.copyLink"), full);
         }
     }
 
     // Chat nomini o'zgartirish (PATCH title)
     async function renameConv(id: string, current: string) {
-        const name = window.prompt("Chat nomi:", current);
+        const name = window.prompt(t("prompt.chatName"), current);
         if (name === null) return;
         const trimmed = name.trim().slice(0, 60);
         if (!trimmed || trimmed === current) return;
@@ -825,7 +826,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
 
     // Ulashishni bekor qilish — public havola ishlamay qoladi
     async function unshareConv(id: string) {
-        if (!confirm("Ulashilgan havola o'chiriladi — havola bo'yicha kirganlar endi ko'ra olmaydi. Davom etamizmi?")) return;
+        if (!confirm(t("confirm.unshare"))) return;
         const r = await fetch(`/api/ai/conversations/${id}/share`, { method: "DELETE" });
         if (r.ok) setConvs(prev => prev.map(c => c.id === id ? { ...c, shareId: null } : c));
     }
@@ -850,12 +851,12 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                     </span>
                     <h1 className="text-xl font-black mb-2">Humo AI</h1>
                     <p className="text-sm text-muted-foreground mb-4">
-                        Chat tarixingizni saqlash va sizni yaxshi tanish uchun kiring.
+                        {t("auth.signinDesc")}
                     </p>
                     <button onClick={() => signIn("google")}
                         className="w-full h-11 rounded-xl text-white text-sm font-bold flex items-center justify-center gap-2"
                         style={{ background: T.gradient }}>
-                        <LogIn className="w-4 h-4" /> Google bilan kirish
+                        <LogIn className="w-4 h-4" /> {t("auth.google")}
                     </button>
                 </div>
             </div>
@@ -867,8 +868,8 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
     const chatQuery = chatSearch.trim().toLowerCase();
     const shownConvs = chatQuery ? convs.filter(c => c.title.toLowerCase().includes(chatQuery)) : convs;
     // Rejim-aware "ishlash" holati (javob boshlanguncha ko'rinadigan animatsiya matni)
-    const workingLabel = webSearch ? "Saytlardan qidiryapti" : deepThink ? "Chuqur o'ylayapti"
-        : mode === "code" ? "Kod yozyapti" : mode === "cowork" ? "Canvas tayyorlayapti" : "O'ylayapti";
+    const workingLabel = webSearch ? t("work.search") : deepThink ? t("work.think")
+        : mode === "code" ? t("work.code") : mode === "cowork" ? t("work.cowork") : t("work.default");
     const codeLike = mode === "code" || mode === "cowork";
 
     return (
@@ -892,7 +893,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
             {/* Mobile sidebar overlay */}
             {sidebarOpen && (
                 <button className="md:hidden fixed inset-0 bg-black/50 z-30"
-                    onClick={() => setSidebarOpen(false)} aria-label="Yopish" />
+                    onClick={() => setSidebarOpen(false)} aria-label={t("common.close")} />
             )}
 
             {/* Sidebar — Humo AI (yig'iladigan: to'liq ↔ icon-rail) */}
@@ -907,7 +908,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src="/logos/humo-ai-white.png" alt="Humo AI" className="w-7 h-7 flex-shrink-0 select-none" draggable={false} />
                             <span className="font-black text-sm flex-1 truncate text-[var(--foreground)]">Humo AI</span>
-                            <button onClick={toggleCollapse} title="Panelni yig'ish" aria-label="Panelni yig'ish"
+                            <button onClick={toggleCollapse} title={t("sidebar.collapse")} aria-label={t("sidebar.collapse")}
                                 className="hidden md:grid w-8 h-8 rounded-lg place-items-center hover:bg-white/[0.06]" style={{ color: "var(--muted-foreground)" }}>
                                 <PanelLeftClose className="w-4 h-4" />
                             </button>
@@ -916,7 +917,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                             </button>
                         </>
                     ) : (
-                        <button onClick={toggleCollapse} title="Panelni ochish" aria-label="Panelni ochish"
+                        <button onClick={toggleCollapse} title={t("sidebar.expand")} aria-label={t("sidebar.expand")}
                             className="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/[0.06]" style={{ color: "var(--muted-foreground)" }}>
                             <PanelLeftOpen className="w-5 h-5" />
                         </button>
@@ -925,7 +926,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
 
                 {/* REJIMLAR */}
                 <div className={`border-b flex-shrink-0 ${showLabels ? "px-2 pt-2 pb-2" : "px-0 py-2"}`} style={{ borderColor: T.border }}>
-                    {showLabels && <p className="px-2 pb-1.5 text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Rejimlar</p>}
+                    {showLabels && <p className="px-2 pb-1.5 text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>{t("sidebar.modes")}</p>}
                     <div className={showLabels ? "space-y-0.5" : "flex flex-col items-center gap-1"}>
                         {AI_MODES.map(m => {
                             const active = mode === m.id;
@@ -948,7 +949,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                     )}
                                 </button>
                             ) : (
-                                <button key={m.id} onClick={() => switchMode(m.id)} title={m.label + (m.soon ? " (Soon)" : "")}
+                                <button key={m.id} onClick={() => switchMode(m.id)} title={m.label + (m.soon ? ` (${t("badge.soon")})` : "")}
                                     className="w-9 h-9 rounded-lg grid place-items-center relative"
                                     style={{ background: active ? "#ECECEC" : "rgba(255,255,255,0.05)", color: active ? "#0d0d0d" : "var(--muted-foreground)" }}>
                                     <m.icon className="w-4 h-4" />
@@ -965,10 +966,10 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                     <AudioLines className="w-4 h-4" />
                                 </span>
                                 <span className="text-[12.5px] font-bold truncate flex-1 text-[var(--foreground)]">Humo Live</span>
-                                <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>NEW</span>
+                                <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0 uppercase" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>{t("badge.new")}</span>
                             </button>
                         ) : (
-                            <button onClick={() => setLiveOpen(true)} title="Humo Live (ovozli)"
+                            <button onClick={() => setLiveOpen(true)} title={t("live.voiceTooltip")}
                                 className="w-9 h-9 rounded-lg grid place-items-center relative" style={{ background: "rgba(255,255,255,0.05)", color: "var(--muted-foreground)" }}>
                                 <AudioLines className="w-4 h-4" />
                                 <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full" style={{ background: "#4ade80" }} />
@@ -980,11 +981,11 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                 {/* CHATLAR sarlavha + Tanlash (faqat to'liq holatda) */}
                 {showLabels && (
                     <div className="px-4 pt-2.5 pb-1 flex items-center justify-between flex-shrink-0">
-                        <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Chatlar</p>
+                        <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>{t("sidebar.chats")}</p>
                         {convs.length > 0 && (
                             <button onClick={toggleSelectMode}
                                 className="text-[10px] font-bold hover:underline" style={{ color: "var(--muted-foreground)" }}>
-                                {selectMode ? "Bekor" : "Tanlash"}
+                                {selectMode ? t("common.cancel") : t("common.select")}
                             </button>
                         )}
                     </div>
@@ -998,24 +999,24 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                             <span className="w-7 h-7 rounded-lg grid place-items-center flex-shrink-0" style={{ background: T.gradient, color: T.onPrimary }}>
                                 <Plus className="w-4 h-4" />
                             </span>
-                            <span className="text-[12.5px] font-black flex-1 text-[var(--foreground)]">Yangi chat</span>
+                            <span className="text-[12.5px] font-black flex-1 text-[var(--foreground)]">{t("sidebar.newChat")}</span>
                         </button>
                         <div className="relative mt-1">
                             <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--muted-foreground)" }} />
                             <input ref={chatSearchRef} value={chatSearch} onChange={e => setChatSearch(e.target.value)}
-                                placeholder="Chat qidirish..."
+                                placeholder={t("sidebar.searchChat")}
                                 className="w-full h-8 pl-8 pr-2 rounded-lg text-[12px] border focus:outline-none focus:ring-1"
                                 style={{ borderColor: T.border, background: "rgba(26,26,26,0.6)", color: "var(--foreground)", ["--tw-ring-color" as string]: T.primary + "40" }} />
                         </div>
                     </div>
                 ) : (
                     <div className="py-2 flex flex-col items-center gap-1 flex-shrink-0 border-b" style={{ borderColor: T.border }}>
-                        <button onClick={newChat} title="Yangi chat" aria-label="Yangi chat"
+                        <button onClick={newChat} title={t("sidebar.newChat")} aria-label={t("sidebar.newChat")}
                             className="w-9 h-9 rounded-lg grid place-items-center" style={{ background: T.gradient, color: T.onPrimary }}>
                             <Plus className="w-4 h-4" />
                         </button>
                         <button onClick={() => { setCollapsed(false); try { localStorage.setItem("ai-sidebar-collapsed", "0"); } catch { /* ignore */ } setTimeout(() => chatSearchRef.current?.focus(), 80); }}
-                            title="Chat qidirish" aria-label="Chat qidirish"
+                            title={t("sidebar.searchChat")} aria-label={t("sidebar.searchChat")}
                             className="w-9 h-9 rounded-lg grid place-items-center hover:bg-white/[0.06]" style={{ color: "var(--muted-foreground)" }}>
                             <Search className="w-4 h-4" />
                         </button>
@@ -1029,11 +1030,11 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                             className="flex items-center gap-1.5 text-[11px] font-bold px-2 py-1 rounded-lg hover:bg-white/[0.05]"
                             style={{ color: "var(--foreground)" }}>
                             {selected.size === convs.length ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
-                            Hammasi ({selected.size})
+                            {t("sidebar.selectAll")} ({selected.size})
                         </button>
                         <button onClick={deleteSelected} disabled={selected.size === 0}
                             className="flex items-center gap-1.5 text-[11px] font-bold px-2 py-1 rounded-lg text-red-500 hover:bg-red-500/10 disabled:opacity-30 ml-auto">
-                            <Trash2 className="w-3.5 h-3.5" /> O&apos;chirish
+                            <Trash2 className="w-3.5 h-3.5" /> {t("common.delete")}
                         </button>
                     </div>
                 )}
@@ -1047,7 +1048,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
                     ) : shownConvs.length === 0 ? (
                         <div className="p-6 text-center text-xs text-muted-foreground">
-                            {chatQuery ? "Mos chat topilmadi." : <>Hali suhbat yo&apos;q.<br />Yangi chat bilan boshlang.</>}
+                            {chatQuery ? t("sidebar.noMatch") : <>{t("sidebar.empty1")}<br />{t("sidebar.empty2")}</>}
                         </div>
                     ) : (
                         shownConvs.map(c => {
@@ -1081,7 +1082,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                             </span>
                                             <span className="block text-[10px] opacity-60 pl-5">
                                                 {c.moduleOrigin && `${c.moduleOrigin} · `}
-                                                {c.messageCount} xabar
+                                                {c.messageCount} {t("chat.msgWord")}
                                             </span>
                                         </span>
                                     </button>
@@ -1089,7 +1090,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                         <div className="absolute top-1 right-1 hidden group-hover:flex items-center gap-0.5"
                                             style={{ background: "rgba(13,13,13,0.85)", borderRadius: 8 }}>
                                             <button onClick={() => shareConv(c.id)}
-                                                title={c.shareId ? "Havolani qayta nusxalash" : "Ulashish (havola nusxa)"}
+                                                title={c.shareId ? t("item.reshare") : t("item.share")}
                                                 className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">
                                                 {shareCopied === c.id
                                                     ? <Check className="w-3 h-3 text-green-500" />
@@ -1097,23 +1098,23 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                             </button>
                                             {c.shareId && (
                                                 <button onClick={() => unshareConv(c.id)}
-                                                    title="Ulashishni bekor qilish"
+                                                    title={t("item.unshare")}
                                                     className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">
                                                     <Link2Off className="w-3 h-3" />
                                                 </button>
                                             )}
                                             <button onClick={() => renameConv(c.id, c.title)}
-                                                title="Nomini o'zgartirish"
+                                                title={t("item.rename")}
                                                 className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">
                                                 <Pencil className="w-3 h-3" />
                                             </button>
                                             <button onClick={() => archiveConv(c.id, c.archived)}
-                                                title={c.archived ? "Qayta faollashtir" : "Arxivlash"}
+                                                title={c.archived ? t("item.unarchive") : t("item.archive")}
                                                 className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">
                                                 <Archive className="w-3 h-3" />
                                             </button>
                                             <button onClick={() => deleteConv(c.id)}
-                                                title="O'chirish"
+                                                title={t("common.delete")}
                                                 className="p-1 rounded hover:bg-red-500/10 text-red-500">
                                                 <Trash2 className="w-3 h-3" />
                                             </button>
@@ -1132,21 +1133,21 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         <Link href={"/id/knowledge" as never}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-black/[0.03] dark:hover:bg-white/[0.03]">
                             <ShieldCheck className="w-3.5 h-3.5" style={{ color: T.primary }} />
-                            Bilim bazam
+                            {t("sidebar.knowledge")}
                         </Link>
                         <Link href={"/id" as never}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-black/[0.03] dark:hover:bg-white/[0.03]">
                             <UserIcon className="w-3.5 h-3.5 opacity-60" />
-                            Profilim
+                            {t("sidebar.profile")}
                         </Link>
                     </div>
                 ) : (
                     <div className="py-2 border-t flex flex-col items-center gap-1 flex-shrink-0" style={{ borderColor: T.border }}>
-                        <Link href={"/id/knowledge" as never} title="Bilim bazam"
+                        <Link href={"/id/knowledge" as never} title={t("sidebar.knowledge")}
                             className="w-9 h-9 rounded-lg grid place-items-center hover:bg-white/[0.06]">
                             <ShieldCheck className="w-4 h-4" style={{ color: T.primary }} />
                         </Link>
-                        <Link href={"/id" as never} title="Profilim"
+                        <Link href={"/id" as never} title={t("sidebar.profile")}
                             className="w-9 h-9 rounded-lg grid place-items-center hover:bg-white/[0.06]">
                             <UserIcon className="w-4 h-4 opacity-60" />
                         </Link>
@@ -1161,7 +1162,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                     <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2">
                         <Menu className="w-5 h-5" />
                     </button>
-                    <Link href="/" title="For Humo" aria-label="For Humo'ga qaytish"
+                    <Link href="/" title="For Humo" aria-label={t("header.home")}
                         className="w-9 h-9 rounded-lg grid place-items-center flex-shrink-0 hover:bg-white/[0.06] transition-colors"
                         style={{ color: "var(--muted-foreground)" }}>
                         <Home className="w-[18px] h-[18px]" />
@@ -1171,7 +1172,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                     <div className="min-w-0 flex-1">
                         <p className="text-sm font-black truncate">Humo AI</p>
                         <p className="text-[10px] text-muted-foreground truncate">
-                            {AI_MODE_MAP[mode].label}{" · "}{activeId ? (convs.find(c => c.id === activeId)?.title ?? "Suhbat") : "Yangi chat"}
+                            {AI_MODE_MAP[mode].label}{" · "}{activeId ? (convs.find(c => c.id === activeId)?.title ?? t("header.conv")) : t("sidebar.newChat")}
                         </p>
                     </div>
                     {/* CoWork — mobil Chat/Canvas toggle */}
@@ -1190,7 +1191,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                     {/* Model tanlash (OpenRouter — top modellar) */}
                     <div className="relative flex-shrink-0">
                         <button onClick={() => setModelMenuOpen(o => !o)}
-                            title="AI model"
+                            title={t("model.title")}
                             className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-[11px] font-bold hover:brightness-110"
                             style={{ background: "var(--card, rgba(0,0,0,0.04))", color: "var(--foreground)" }}>
                             <Cpu className="w-3.5 h-3.5" style={{ color: "var(--muted-foreground)" }} />
@@ -1199,7 +1200,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         </button>
                         {modelMenuOpen && (
                             <>
-                                <button className="fixed inset-0 z-40" onClick={() => setModelMenuOpen(false)} aria-label="Yopish" />
+                                <button className="fixed inset-0 z-40" onClick={() => setModelMenuOpen(false)} aria-label={t("common.close")} />
                                 <div className="absolute right-0 mt-1.5 w-60 rounded-xl overflow-hidden z-50 py-1"
                                     style={{ background: "rgba(20,20,20,0.98)", border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
                                     {AI_MODELS.map(m => {
@@ -1248,7 +1249,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
 
                     {/* TTS toggle */}
                     <button onClick={toggleTts}
-                        title={ttsEnabled ? "Ovoz o'chiq" : "Ovoz yoqish"}
+                        title={ttsEnabled ? t("tts.toggleOff") : t("tts.toggleOn")}
                         className="w-9 h-9 rounded-lg grid place-items-center hover:brightness-95"
                         style={{ background: ttsEnabled ? T.soft : "transparent", color: ttsEnabled ? T.primary : "var(--muted-foreground)" }}>
                         {ttsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
@@ -1265,22 +1266,20 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         </span>
                         <div className="flex-1 min-w-0">
                             <p className="text-[12.5px] font-black" style={{ color: T.primary }}>
-                                Sizni yaxshiroq tanish uchun 1 daqiqa
+                                {t("kb.title")}
                             </p>
                             <p className="text-[11px] text-muted-foreground mt-0.5">
-                                {kbCount === 0
-                                    ? "AI hozircha siz haqingizda hech narsa bilmaydi. Bir necha savolga javob bering — tavsiyalar aniqroq bo'ladi."
-                                    : `Hozir ${kbCount} ta ma'lumot. Yana bir necha savol javob bering — AI aniqroq javob beradi.`}
+                                {kbCount === 0 ? t("kb.desc0") : tn("kb.descN", kbCount ?? 0)}
                             </p>
                             <div className="flex items-center gap-2 mt-2">
                                 <Link href={"/id/discover" as never}
                                     className="h-8 px-3 rounded-lg text-[11px] font-black flex items-center gap-1"
                                     style={{ background: T.gradient, color: T.onPrimary }}>
-                                    Boshlash →
+                                    {t("kb.start")}
                                 </Link>
                                 <button onClick={dismissKbBanner}
                                     className="text-[11px] text-muted-foreground hover:underline">
-                                    Keyinroq
+                                    {t("kb.later")}
                                 </button>
                             </div>
                         </div>
@@ -1311,23 +1310,23 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                             <img src="/logos/humo-ai-white.png" alt="Humo AI" className="w-[74px] h-[74px] mb-6 select-none"
                                 style={{ animation: "aiLogoFloat 4s ease-in-out infinite" }} draggable={false} />
                             <p className="text-[13px] mb-2" style={{ color: "var(--muted-foreground)" }}>
-                                Humo AI&apos;ga xush kelibsiz
+                                {t("empty.welcome")}
                             </p>
                             <h1 className="text-3xl sm:text-4xl font-light mb-8 tracking-tight"
                                 style={{ background: "linear-gradient(135deg,#ECECEC 20%,#8A8A8A 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                                {mode === "pic" ? "Qanday rasm yarataylik?" : mode === "cowork" ? "Nima yaratamiz?" : "Bugun nima qilamiz?"}
+                                {mode === "pic" ? t("empty.titlePic") : mode === "cowork" ? t("empty.titleCowork") : t("empty.titleChat")}
                             </h1>
                             <div className="grid grid-cols-2 gap-2 max-w-md w-full">
                                 {(mode === "pic" ? [
-                                    { icon: ImageIcon, title: "Manzara", sub: "Tabiat/shahar", p: "Toshkent kunbotishida, iliq ranglar, yuqori sifat" },
-                                    { icon: Users, title: "Portret", sub: "Personaj", p: "kelajak jangchisi portreti, kinematik yorug'lik" },
-                                    { icon: Cpu, title: "Logo", sub: "Brend/ikon", p: "minimalist logo, moviy gradient, texnologiya" },
-                                    { icon: Sparkles, title: "Fantastik", sub: "Xayoliy", p: "kosmosda suzayotgan orol, syurreal, detalli" },
+                                    { icon: ImageIcon, title: t("sugg.pic.landscape.t"), sub: t("sugg.pic.landscape.s"), p: t("sugg.pic.landscape.p") },
+                                    { icon: Users,     title: t("sugg.pic.portrait.t"),  sub: t("sugg.pic.portrait.s"),  p: t("sugg.pic.portrait.p") },
+                                    { icon: Cpu,       title: t("sugg.pic.logo.t"),      sub: t("sugg.pic.logo.s"),      p: t("sugg.pic.logo.p") },
+                                    { icon: Sparkles,  title: t("sugg.pic.fantasy.t"),   sub: t("sugg.pic.fantasy.s"),   p: t("sugg.pic.fantasy.p") },
                                 ] : [
-                                    { icon: Code2, title: "Kod yoz", sub: "Tushuntirmalar bilan", p: "Menga kod yozib ber: " },
-                                    { icon: Globe, title: "Tarjima", sub: "O'zbek ↔ Ingliz", p: "Quyidagi matnni tarjima qil: " },
-                                    { icon: BookOpen, title: "Tushuntir", sub: "Sodda tilda", p: "Menga sodda tilda tushuntir: " },
-                                    { icon: Mail, title: "Xat yoz", sub: "Rasmiy uslubda", p: "Menga rasmiy xat yozib ber: " },
+                                    { icon: Code2,    title: t("sugg.chat.code.t"),      sub: t("sugg.chat.code.s"),      p: t("sugg.chat.code.p") },
+                                    { icon: Globe,    title: t("sugg.chat.translate.t"), sub: t("sugg.chat.translate.s"), p: t("sugg.chat.translate.p") },
+                                    { icon: BookOpen, title: t("sugg.chat.explain.t"),   sub: t("sugg.chat.explain.s"),   p: t("sugg.chat.explain.p") },
+                                    { icon: Mail,     title: t("sugg.chat.letter.t"),    sub: t("sugg.chat.letter.s"),    p: t("sugg.chat.letter.p") },
                                 ]).map(c => (
                                     <button key={c.title} onClick={() => setInput(c.p)}
                                         className="text-left p-3.5 rounded-xl border flex flex-col gap-0.5 transition-transform duration-150 hover:-translate-y-0.5"
@@ -1361,7 +1360,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                         <div className="w-56 sm:w-64">
                                             <div className="ai-shimmer rounded-xl w-full aspect-square" />
                                             <div className="mt-2 flex items-center gap-1.5 text-[11px]" style={{ color: "var(--muted-foreground)" }}>
-                                                <Loader2 className="w-3 h-3 animate-spin" /> Rasm yaratilyapti...
+                                                <Loader2 className="w-3 h-3 animate-spin" /> {t("msg.imageGenerating")}
                                             </div>
                                         </div>
                                     ) : (
@@ -1375,7 +1374,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                                     ) : (
                                                         <a key={ai} href={a.url} target="_blank" rel="noopener noreferrer"
                                                             className="flex items-center gap-1.5 text-[11px] underline opacity-90 py-1">
-                                                            <Paperclip className="w-3 h-3 flex-shrink-0" /> Fayl {ai + 1}
+                                                            <Paperclip className="w-3 h-3 flex-shrink-0" /> {t("msg.file")} {ai + 1}
                                                         </a>
                                                     ))}
                                                 </div>
@@ -1389,7 +1388,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                                     {m.attachmentUrl && m.attachmentType !== "image" && (
                                                         <a href={m.attachmentUrl} target="_blank" rel="noopener noreferrer"
                                                             className="mb-2 flex items-center gap-1.5 text-[11px] underline opacity-90">
-                                                            <Paperclip className="w-3 h-3 flex-shrink-0" /> Biriktirilgan fayl
+                                                            <Paperclip className="w-3 h-3 flex-shrink-0" /> {t("msg.attachedFile")}
                                                         </a>
                                                     )}
                                                 </>
@@ -1425,14 +1424,14 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                                 {!isUser && m.body && (
                                                     <>
                                                         <button onClick={() => copyMsg(m.id, m.body)}
-                                                            title="Nusxa olish"
+                                                            title={t("common.copy")}
                                                             className="opacity-70 hover:opacity-100 transition-opacity">
                                                             {msgCopied === m.id
                                                                 ? <Check className="w-3 h-3 text-green-500" />
                                                                 : <Copy className="w-3 h-3" />}
                                                         </button>
                                                         <button onClick={() => speakMessage(m.id, m.body)}
-                                                            title={ttsLoadingId === m.id ? "Ovoz tayyorlanyapti..." : ttsSpeakingId === m.id ? "To'xtatish" : "Ovoz bilan o'qish (o'zbekcha)"}
+                                                            title={ttsLoadingId === m.id ? t("tts.loading") : ttsSpeakingId === m.id ? t("tts.stop") : t("tts.read")}
                                                             className="opacity-70 hover:opacity-100 transition-opacity">
                                                             {ttsLoadingId === m.id
                                                                 ? <Loader2 className="w-3 h-3 animate-spin" />
@@ -1442,7 +1441,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                                         </button>
                                                         {isLastAi && !sending && (
                                                             <button onClick={regenerate}
-                                                                title="Qayta generatsiya"
+                                                                title={t("msg.regenerate")}
                                                                 className="opacity-70 hover:opacity-100 transition-opacity">
                                                                 <RefreshCw className="w-3 h-3" />
                                                             </button>
@@ -1451,7 +1450,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                                 )}
                                                 {!isUser && m.attachmentType === "image" && m.attachmentUrl && (
                                                     <button onClick={() => downloadImage(m.attachmentUrl!)}
-                                                        title="Yuklab olish"
+                                                        title={t("common.download")}
                                                         className="opacity-70 hover:opacity-100 transition-opacity">
                                                         <Download className="w-3 h-3" />
                                                     </button>
@@ -1459,17 +1458,17 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                                 {isUser && m.body && m.body !== "(rasm)" && (
                                                     <>
                                                         <button onClick={() => copyMsg(m.id, m.body)}
-                                                            title="Nusxa olish"
+                                                            title={t("common.copy")}
                                                             className="opacity-70 hover:opacity-100 transition-opacity">
                                                             {msgCopied === m.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                                                         </button>
                                                         <button onClick={() => editUserMsg(m.body)}
-                                                            title="Tahrirlash"
+                                                            title={t("common.edit")}
                                                             className="opacity-70 hover:opacity-100 transition-opacity">
                                                             <Pencil className="w-3 h-3" />
                                                         </button>
                                                         <button onClick={() => sharePrompt(m.id, m.body)}
-                                                            title="Promptni ulashish"
+                                                            title={t("msg.sharePrompt")}
                                                             className="opacity-70 hover:opacity-100 transition-opacity">
                                                             <Share2 className="w-3 h-3" />
                                                         </button>
@@ -1543,8 +1542,8 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         {webSearch && (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
                                 style={{ background: T.soft, color: T.primary, border: `1px solid ${T.border}` }}>
-                                <Search className="w-3 h-3" /> Saytlardan qidirish
-                                <button type="button" onClick={() => setWebSearch(false)} title="O'chirish" className="ml-0.5 opacity-70 hover:opacity-100">
+                                <Search className="w-3 h-3" /> {t("plus.search")}
+                                <button type="button" onClick={() => setWebSearch(false)} title={t("common.delete")} className="ml-0.5 opacity-70 hover:opacity-100">
                                     <XIcon className="w-3 h-3" />
                                 </button>
                             </span>
@@ -1552,8 +1551,8 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         {deepThink && (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
                                 style={{ background: T.soft, color: T.primary, border: `1px solid ${T.border}` }}>
-                                <Brain className="w-3 h-3" /> Chuqur fikrlash
-                                <button type="button" onClick={() => setDeepThink(false)} title="O'chirish" className="ml-0.5 opacity-70 hover:opacity-100">
+                                <Brain className="w-3 h-3" /> {t("plus.think")}
+                                <button type="button" onClick={() => setDeepThink(false)} title={t("common.delete")} className="ml-0.5 opacity-70 hover:opacity-100">
                                     <XIcon className="w-3 h-3" />
                                 </button>
                             </span>
@@ -1569,14 +1568,14 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                     <div className="relative flex-shrink-0">
                         <button type="button" onClick={() => setPlusMenuOpen(o => !o)}
                             disabled={uploading}
-                            title="Ko'proq" aria-label="Ko'proq"
+                            title={t("composer.more")} aria-label={t("composer.more")}
                             className="w-11 h-11 rounded-xl grid place-items-center disabled:opacity-40 hover:brightness-95 transition-transform"
                             style={{ background: T.soft, color: T.primary, transform: plusMenuOpen ? "rotate(45deg)" : "none" }}>
                             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-5 h-5" />}
                         </button>
                         {plusMenuOpen && (
                             <>
-                                <button type="button" className="fixed inset-0 z-40" onClick={() => setPlusMenuOpen(false)} aria-label="Yopish" />
+                                <button type="button" className="fixed inset-0 z-40" onClick={() => setPlusMenuOpen(false)} aria-label={t("common.close")} />
                                 <div className="absolute bottom-full left-0 mb-2 w-60 rounded-2xl overflow-hidden z-50 py-1.5"
                                     style={{ background: "rgba(20,20,20,0.98)", border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
                                     {PLUS_ITEMS.map((it, i) => {
@@ -1588,10 +1587,10 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                                     className="w-full flex items-center gap-3 px-3.5 py-2.5 text-left hover:bg-white/[0.05] transition-colors"
                                                     style={active ? { background: T.soft } : {}}>
                                                     <it.icon className="w-[18px] h-[18px] flex-shrink-0" style={{ color: active ? "var(--foreground)" : "var(--muted-foreground)" }} />
-                                                    <span className="text-[13px] font-semibold flex-1 truncate text-[var(--foreground)]">{it.label}</span>
+                                                    <span className="text-[13px] font-semibold flex-1 truncate text-[var(--foreground)]">{t("plus." + it.id)}</span>
                                                     {it.soon && (
-                                                        <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0"
-                                                            style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>SOON</span>
+                                                        <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0 uppercase"
+                                                            style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>{t("badge.soon")}</span>
                                                     )}
                                                     {active && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--foreground)" }} />}
                                                 </button>
@@ -1605,7 +1604,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
 
                     {/* Humo Live — ovozli suhbat (barcha rejimlarda) */}
                     <button type="button" onClick={() => setLiveOpen(true)}
-                        title="Humo Live — ovozli suhbat" aria-label="Humo Live"
+                        title={t("composer.liveTooltip")} aria-label="Humo Live"
                         className="w-11 h-11 rounded-xl grid place-items-center flex-shrink-0 hover:brightness-95"
                         style={{ background: T.soft, color: T.primary }}>
                         <AudioLines className="w-4 h-4" />
@@ -1616,7 +1615,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         value={input}
                         onChange={e => setInput(e.target.value.slice(0, 4000))}
                         onPaste={handlePaste}
-                        placeholder={recording ? "Tinglayapman..." : mode === "pic" ? "Rasmni tasvirlab bering... (masalan: quyosh botishi, tog'lar)" : mode === "cowork" ? "Nima yaratamiz? (hujjat/kod)" : mode === "code" ? "Kod so'rang..." : "Humo AI'ga xabar yozing..."}
+                        placeholder={recording ? t("ph.listening") : mode === "pic" ? t("ph.pic") : mode === "cowork" ? t("ph.cowork") : mode === "code" ? t("ph.code") : t("ph.chat")}
                         className="flex-1 h-11 px-4 rounded-xl border text-sm focus:outline-none focus:ring-2"
                         style={{ borderColor: recording ? T.primary : T.border, background: "rgba(26,26,26,0.6)", ["--tw-ring-color" as string]: T.primary + "50" }}
                         disabled={sending}
@@ -1625,7 +1624,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                     {/* Voice input */}
                     {voiceSupported && (
                         <button type="button" onClick={toggleVoice}
-                            title={recording ? "To'xtatish" : "Ovoz bilan"}
+                            title={recording ? t("tts.stop") : t("voice.start")}
                             className="w-11 h-11 rounded-xl grid place-items-center"
                             style={{
                                 background: recording ? "#EF4444" : T.soft,
@@ -1637,7 +1636,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
 
                     {sending ? (
                         <button type="button" onClick={stopGenerating}
-                            title="To'xtatish" aria-label="To'xtatish"
+                            title={t("tts.stop")} aria-label={t("tts.stop")}
                             className="w-11 h-11 rounded-xl flex items-center justify-center"
                             style={{ background: T.gradient, color: T.onPrimary }}>
                             <span className="w-3 h-3 rounded-sm bg-current" />
@@ -1662,25 +1661,25 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         <div className="flex items-center gap-2 min-w-0">
                             <Users className="w-4 h-4 flex-shrink-0" style={{ color: "var(--muted-foreground)" }} />
                             <span className="text-sm font-black truncate text-[var(--foreground)]">Canvas</span>
-                            {canvas && <span className="text-[10px] flex-shrink-0" style={{ color: "var(--muted-foreground)" }}>{canvas.length} belgi</span>}
+                            {canvas && <span className="text-[10px] flex-shrink-0" style={{ color: "var(--muted-foreground)" }}>{canvas.length} {t("canvas.charsWord")}</span>}
                         </div>
                         <div className="flex items-center gap-1">
-                            <button onClick={copyCanvas} disabled={!canvas} title="Nusxa"
+                            <button onClick={copyCanvas} disabled={!canvas} title={t("canvas.copy")}
                                 className="w-8 h-8 rounded-lg grid place-items-center hover:bg-white/[0.06] disabled:opacity-30" style={{ color: "var(--muted-foreground)" }}>
                                 {canvasCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                             </button>
-                            <button onClick={downloadCanvas} disabled={!canvas} title="Yuklab olish"
+                            <button onClick={downloadCanvas} disabled={!canvas} title={t("common.download")}
                                 className="w-8 h-8 rounded-lg grid place-items-center hover:bg-white/[0.06] disabled:opacity-30" style={{ color: "var(--muted-foreground)" }}>
                                 <Download className="w-4 h-4" />
                             </button>
-                            <button onClick={() => setCanvasView("chat")} title="Chat" aria-label="Chatga qaytish"
+                            <button onClick={() => setCanvasView("chat")} title={t("canvas.backToChat")} aria-label={t("canvas.backToChat")}
                                 className="lg:hidden w-8 h-8 rounded-lg grid place-items-center" style={{ color: "var(--muted-foreground)" }}>
                                 <XIcon className="w-4 h-4" />
                             </button>
                         </div>
                     </div>
                     <textarea value={canvas} onChange={e => setCanvas(e.target.value)}
-                        placeholder="Canvas bo'sh. Chatда so'rang — masalan: &quot;Startap uchun biznes-reja yoz&quot; yoki &quot;React login formasi kodini yoz&quot;. AI shu yerга yozadi, siz ham tahrirlashingiz mumkin."
+                        placeholder={t("canvas.placeholder")}
                         className="flex-1 w-full p-4 bg-transparent text-[13px] leading-relaxed resize-none outline-none font-mono"
                         style={{ color: "var(--foreground)" }} spellCheck={false} />
                 </aside>
@@ -1694,7 +1693,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         <button onClick={() => downloadImage(lightbox)}
                             className="h-9 px-3 rounded-lg flex items-center gap-1.5 text-sm font-bold"
                             style={{ background: T.gradient, color: T.onPrimary }}>
-                            <Download className="w-4 h-4" /> Yuklab olish
+                            <Download className="w-4 h-4" /> {t("common.download")}
                         </button>
                         <button onClick={() => setLightbox(null)}
                             className="w-9 h-9 rounded-lg grid place-items-center hover:bg-white/[0.1]" style={{ color: "#fff" }}>
