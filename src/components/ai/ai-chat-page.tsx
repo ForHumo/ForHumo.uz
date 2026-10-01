@@ -18,6 +18,7 @@ import { AiStarfield } from "@/components/ai/ai-starfield";
 import { AiMarkdown } from "@/components/ai/ai-markdown";
 import { HumoLive } from "@/components/ai/humo-live";
 import { AI_MODELS, DEFAULT_MODEL, findModel } from "@/lib/ai-models";
+import { aiT, aiLangFromLocale, type AiLang } from "@/lib/ai-i18n";
 
 interface ConvSummary {
     id: string; title: string; topic: string | null; moduleOrigin: string | null;
@@ -93,7 +94,7 @@ function looksLikeImageRequest(text: string): boolean {
     return IMAGE_REQUEST_RE.test(text);
 }
 
-export function AiChatPage() {
+export function AiChatPage({ locale, orAvailable = false }: { locale?: string; orAvailable?: boolean } = {}) {
     const { status } = useSession();
     const [convs, setConvs] = useState<ConvSummary[]>([]);
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -202,7 +203,11 @@ export function AiChatPage() {
             if (m && AI_MODELS.some(x => x.id === m)) setModel(m);
         } catch { /* ignore */ }
     }, []);
+    // Model ishlaydimi: Gemini (bepul, kalit bor) doim; OpenRouter faqat kalit qo'shilganda.
+    const modelWorks = useCallback((prov: string) => prov === "gemini" || orAvailable, [orAvailable]);
     function pickModel(id: string) {
+        const m = AI_MODELS.find(x => x.id === id);
+        if (m && !modelWorks(m.provider)) return;   // ishlamaydigan model (Tez orada) — tanlanmaydi
         setModel(id);
         setModelMenuOpen(false);
         try { localStorage.setItem("ai-model", id); } catch { /* ignore */ }
@@ -236,16 +241,17 @@ export function AiChatPage() {
     const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
     const ttsVoiceRef = useRef<"Kore" | "Puck">("Kore");
     const [shareCopied, setShareCopied] = useState<string | null>(null);
-    // Til tanlash
-    const [aiLang, setAiLang] = useState<"uz" | "ru" | "en">("uz");
+    // Til tanlash — dastlabki til route locale'dan (forhumo.uz/ru/ai → ru), keyin saqlangan tanlov ustun.
+    const [aiLang, setAiLang] = useState<AiLang>(() => aiLangFromLocale(locale));
+    const t = useCallback((key: string) => aiT(aiLang, key), [aiLang]);
 
     useEffect(() => {
         try {
             const l = localStorage.getItem("ai-lang");
-            if (l === "uz" || l === "ru" || l === "en") setAiLang(l);
+            if (l === "uz" || l === "ru" || l === "en") setAiLang(l);   // foydalanuvchi oldin tanlagan bo'lsa — ustun
         } catch { /* ignore */ }
     }, []);
-    function switchLang(l: "uz" | "ru" | "en") {
+    function switchLang(l: AiLang) {
         setAiLang(l);
         try { localStorage.setItem("ai-lang", l); } catch { /* ignore */ }
     }
@@ -933,12 +939,12 @@ export function AiChatPage() {
                                     </span>
                                     <span className="text-[12.5px] font-bold truncate flex-1 text-[var(--foreground)]">{m.label}</span>
                                     {m.soon && (
-                                        <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0"
-                                            style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>SOON</span>
+                                        <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0 uppercase"
+                                            style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>{t("badge.soon")}</span>
                                     )}
                                     {m.neu && (
-                                        <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0"
-                                            style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>NEW</span>
+                                        <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0 uppercase"
+                                            style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>{t("badge.new")}</span>
                                     )}
                                 </button>
                             ) : (
@@ -1198,23 +1204,28 @@ export function AiChatPage() {
                                     style={{ background: "rgba(20,20,20,0.98)", border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
                                     {AI_MODELS.map(m => {
                                         const active = model === m.id;
+                                        const works = modelWorks(m.provider);
                                         return (
-                                            <button key={m.id} onClick={() => pickModel(m.id)}
-                                                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/[0.05]"
-                                                style={active ? { background: T.soft } : {}}>
+                                            <button key={m.id} onClick={() => pickModel(m.id)} disabled={!works}
+                                                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/[0.05] disabled:cursor-not-allowed"
+                                                style={{ ...(active ? { background: T.soft } : {}), opacity: works ? 1 : 0.55 }}>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-1.5">
                                                         <span className="text-[12px] font-bold truncate text-[var(--foreground)]">{m.label}</span>
-                                                        {m.free && <span className="text-[8px] font-black px-1 py-0.5 rounded flex-shrink-0" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>BEPUL</span>}
+                                                        {works ? (
+                                                            <span className="text-[8px] font-black px-1 py-0.5 rounded flex-shrink-0" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>{t("badge.new")}</span>
+                                                        ) : (
+                                                            <span className="text-[8px] font-black px-1 py-0.5 rounded flex-shrink-0" style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>{t("badge.soon")}</span>
+                                                        )}
                                                     </div>
-                                                    {m.note && <span className="text-[10px] block truncate" style={{ color: "var(--muted-foreground)" }}>{m.note}</span>}
+                                                    <span className="text-[10px] block truncate" style={{ color: "var(--muted-foreground)" }}>{works ? (m.note ?? "") : t("model.soonHint")}</span>
                                                 </div>
-                                                {active && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--foreground)" }} />}
+                                                {active && works && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--foreground)" }} />}
                                             </button>
                                         );
                                     })}
                                     <div className="px-3 pt-1.5 pb-1 mt-1 border-t" style={{ borderColor: T.border }}>
-                                        <span className="text-[9px] leading-tight block" style={{ color: "var(--muted-foreground)" }}>Premium modellar OpenRouter kaliti qo'shilganda ishlaydi</span>
+                                        <span className="text-[9px] leading-tight block" style={{ color: "var(--muted-foreground)" }}>{t("model.premiumNote")}</span>
                                     </div>
                                 </div>
                             </>
@@ -1286,11 +1297,11 @@ export function AiChatPage() {
                             </span>
                             <div className="flex items-center gap-2 mb-2">
                                 <h2 className="text-2xl font-black text-[var(--foreground)]">{AI_MODE_MAP[mode].label}</h2>
-                                <span className="text-[10px] font-black px-2 py-0.5 rounded-full"
-                                    style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>SOON</span>
+                                <span className="text-[10px] font-black px-2 py-0.5 rounded-full uppercase"
+                                    style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>{t("badge.soon")}</span>
                             </div>
                             <p className="text-sm text-muted-foreground max-w-xs inline-flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5 flex-shrink-0" /> Tez orada — eng yaxshi model bilan ishga tushadi
+                                <Clock className="w-3.5 h-3.5 flex-shrink-0" /> {t("mode.soonTitleHint")}
                             </p>
                         </div>
                     )}

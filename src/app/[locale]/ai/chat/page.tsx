@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
 import { AiChatPage } from "@/components/ai/ai-chat-page";
+import { openRouterAvailable } from "@/lib/ai-models";
 
 export const metadata: Metadata = {
     title: "Humo AI · Chat",
@@ -10,5 +11,5 @@ export const metadata: Metadata = {
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     setRequestLocale(locale);
-    return <AiChatPage />;
+    return <AiChatPage locale={locale} orAvailable={openRouterAvailable()} />;
 }

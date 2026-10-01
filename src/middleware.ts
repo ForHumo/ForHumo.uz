@@ -50,7 +50,22 @@ export default function middleware(req: NextRequest) {
         return NextResponse.rewrite(url);
     }
 
-    // Asosiy domen — standart next-intl rewrite
+    // Asosiy domen — ilk kirishda qurilma tiliga qarab locale tanlaymiz.
+    // Qoida: qurilma rus → ru, o'zbek → uz, boshqa tillar (xitoy/yapon/arab/ispan...) → en.
+    // Faqat locale prefiks YO'Q va NEXT_LOCALE cookie YO'Q bo'lsa (ya'ni haqiqatan ilk kirish).
+    const path = req.nextUrl.pathname;
+    const hasLocale = /^\/(uz|ru|en)(\/|$)/.test(path);
+    const hasCookie = req.cookies.has("NEXT_LOCALE");
+    if (!hasLocale && !hasCookie) {
+        const al = (req.headers.get("accept-language") || "").toLowerCase();
+        const primary = (al.split(",")[0] || "").trim().split("-")[0];   // "ru-RU,.." → "ru"
+        const target = primary === "ru" ? "ru" : (primary === "uz" || primary === "") ? "uz" : "en";
+        const url = req.nextUrl.clone();
+        url.pathname = `/${target}${path === "/" ? "" : path}`;
+        return NextResponse.redirect(url);
+    }
+
+    // Standart next-intl rewrite (cookie/prefiks bor holatlar)
     return intlMiddleware(req);
 }
 
