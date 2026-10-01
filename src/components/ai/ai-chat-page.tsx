@@ -1561,7 +1561,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                 )}
 
                 {!AI_MODE_MAP[mode].soon && (
-                <form onSubmit={sendMessage} className="border-t p-3 flex gap-2 items-end" style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                <form onSubmit={sendMessage} className="border-t p-2 sm:p-3 flex gap-1.5 sm:gap-2 items-end" style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                     {/* "+" menyu (fayl / rejimlar / kelajak vositalar) */}
                     <input ref={fileInputRef} type="file" accept="image/*,application/pdf" multiple hidden
                         onChange={e => { const fs = e.target.files; if (fs && fs.length) uploadFiles(Array.from(fs)); e.target.value = ""; }} />
@@ -1569,7 +1569,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         <button type="button" onClick={() => setPlusMenuOpen(o => !o)}
                             disabled={uploading}
                             title={t("composer.more")} aria-label={t("composer.more")}
-                            className="w-11 h-11 rounded-xl grid place-items-center disabled:opacity-40 hover:brightness-95 transition-transform"
+                            className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl grid place-items-center disabled:opacity-40 hover:brightness-95 transition-transform"
                             style={{ background: T.soft, color: T.primary, transform: plusMenuOpen ? "rotate(45deg)" : "none" }}>
                             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-5 h-5" />}
                         </button>
@@ -1605,49 +1605,50 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                     {/* Humo Live — ovozli suhbat (barcha rejimlarda) */}
                     <button type="button" onClick={() => setLiveOpen(true)}
                         title={t("composer.liveTooltip")} aria-label="Humo Live"
-                        className="w-11 h-11 rounded-xl grid place-items-center flex-shrink-0 hover:brightness-95"
+                        className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl grid place-items-center flex-shrink-0 hover:brightness-95"
                         style={{ background: T.soft, color: T.primary }}>
                         <AudioLines className="w-4 h-4" />
                     </button>
 
-                    <input
-                        ref={composerInputRef}
-                        value={input}
-                        onChange={e => setInput(e.target.value.slice(0, 4000))}
-                        onPaste={handlePaste}
-                        placeholder={recording ? t("ph.listening") : mode === "pic" ? t("ph.pic") : mode === "cowork" ? t("ph.cowork") : mode === "code" ? t("ph.code") : t("ph.chat")}
-                        className="flex-1 h-11 px-4 rounded-xl border text-sm focus:outline-none focus:ring-2"
-                        style={{ borderColor: recording ? T.primary : T.border, background: "rgba(26,26,26,0.6)", ["--tw-ring-color" as string]: T.primary + "50" }}
-                        disabled={sending}
-                    />
+                    {/* Matn + mikrofon + jo'natish — bitta "pill" (jo'natish hech qachon ekrandan chiqmaydi) */}
+                    <div className="flex-1 min-w-0 flex items-center gap-1 rounded-2xl border pr-1 focus-within:ring-1"
+                        style={{ borderColor: recording ? T.primary : T.border, background: "rgba(26,26,26,0.6)", ["--tw-ring-color" as string]: T.primary + "55" }}>
+                        <input
+                            ref={composerInputRef}
+                            value={input}
+                            onChange={e => setInput(e.target.value.slice(0, 4000))}
+                            onPaste={handlePaste}
+                            placeholder={recording ? t("ph.listening") : mode === "pic" ? t("ph.pic") : mode === "cowork" ? t("ph.cowork") : mode === "code" ? t("ph.code") : t("ph.chat")}
+                            className="flex-1 min-w-0 h-11 px-3.5 bg-transparent text-sm focus:outline-none rounded-2xl"
+                            style={{ color: "var(--foreground)" }}
+                            disabled={sending}
+                        />
 
-                    {/* Voice input */}
-                    {voiceSupported && (
-                        <button type="button" onClick={toggleVoice}
-                            title={recording ? t("tts.stop") : t("voice.start")}
-                            className="w-11 h-11 rounded-xl grid place-items-center"
-                            style={{
-                                background: recording ? "#EF4444" : T.soft,
-                                color: recording ? "#fff" : T.primary,
-                            }}>
-                            {recording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                        </button>
-                    )}
+                        {/* Voice input */}
+                        {voiceSupported && !sending && (
+                            <button type="button" onClick={toggleVoice}
+                                title={recording ? t("tts.stop") : t("voice.start")}
+                                className="w-9 h-9 rounded-xl grid place-items-center flex-shrink-0"
+                                style={{ background: recording ? "#EF4444" : "transparent", color: recording ? "#fff" : T.primary }}>
+                                {recording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                            </button>
+                        )}
 
-                    {sending ? (
-                        <button type="button" onClick={stopGenerating}
-                            title={t("tts.stop")} aria-label={t("tts.stop")}
-                            className="w-11 h-11 rounded-xl flex items-center justify-center"
-                            style={{ background: T.gradient, color: T.onPrimary }}>
-                            <span className="w-3 h-3 rounded-sm bg-current" />
-                        </button>
-                    ) : (
-                        <button type="submit" disabled={!input.trim() && attachments.length === 0}
-                            className="w-11 h-11 rounded-xl flex items-center justify-center disabled:opacity-50"
-                            style={{ background: T.gradient, color: T.onPrimary }}>
-                            <Send className="w-4 h-4" />
-                        </button>
-                    )}
+                        {sending ? (
+                            <button type="button" onClick={stopGenerating}
+                                title={t("tts.stop")} aria-label={t("tts.stop")}
+                                className="w-9 h-9 rounded-xl grid place-items-center flex-shrink-0"
+                                style={{ background: T.gradient, color: T.onPrimary }}>
+                                <span className="w-3 h-3 rounded-sm bg-current" />
+                            </button>
+                        ) : (
+                            <button type="submit" disabled={!input.trim() && attachments.length === 0}
+                                className="w-9 h-9 rounded-xl grid place-items-center flex-shrink-0 disabled:opacity-40 transition-opacity"
+                                style={{ background: T.gradient, color: T.onPrimary }}>
+                                <Send className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
                 </form>
                 )}
             </main>
