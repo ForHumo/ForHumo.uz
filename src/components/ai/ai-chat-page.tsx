@@ -95,7 +95,8 @@ function looksLikeImageRequest(text: string): boolean {
 }
 
 export function AiChatPage({ locale, orAvailable = false }: { locale?: string; orAvailable?: boolean } = {}) {
-    const { status } = useSession();
+    const { data: session, status } = useSession();
+    const myAvatar = session?.user?.image ?? null;
     const [convs, setConvs] = useState<ConvSummary[]>([]);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [messages, setMessages] = useState<MsgRow[]>([]);
@@ -1137,7 +1138,10 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         </Link>
                         <Link href={"/id" as never}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-black/[0.03] dark:hover:bg-white/[0.03]">
-                            <UserIcon className="w-3.5 h-3.5 opacity-60" />
+                            {myAvatar
+                                // eslint-disable-next-line @next/next/no-img-element
+                                ? <img src={myAvatar} alt="" className="w-5 h-5 rounded-md object-cover flex-shrink-0" />
+                                : <UserIcon className="w-3.5 h-3.5 opacity-60" />}
                             {t("sidebar.profile")}
                         </Link>
                     </div>
@@ -1149,7 +1153,10 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         </Link>
                         <Link href={"/id" as never} title={t("sidebar.profile")}
                             className="w-9 h-9 rounded-lg grid place-items-center hover:bg-white/[0.06]">
-                            <UserIcon className="w-4 h-4 opacity-60" />
+                            {myAvatar
+                                // eslint-disable-next-line @next/next/no-img-element
+                                ? <img src={myAvatar} alt="" className="w-6 h-6 rounded-md object-cover" />
+                                : <UserIcon className="w-4 h-4 opacity-60" />}
                         </Link>
                     </div>
                 )}
@@ -1219,7 +1226,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                                             <span className="text-[8px] font-black px-1 py-0.5 rounded flex-shrink-0" style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>{t("badge.soon")}</span>
                                                         )}
                                                     </div>
-                                                    <span className="text-[10px] block truncate" style={{ color: "var(--muted-foreground)" }}>{works ? (m.note ?? "") : t("model.soonHint")}</span>
+                                                    <span className="text-[10px] block truncate" style={{ color: "var(--muted-foreground)" }}>{works ? t("model.note." + m.id) : t("model.soonHint")}</span>
                                                 </div>
                                                 {active && works && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--foreground)" }} />}
                                             </button>

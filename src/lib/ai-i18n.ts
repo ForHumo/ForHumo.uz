@@ -19,6 +19,17 @@ const DICT: Record<string, Record<AiLang, string>> = {
         en: "Premium models activate once an OpenRouter key is added",
     },
     "model.soonHint": { uz: "Hozircha mavjud emas", ru: "Пока недоступно", en: "Not available yet" },
+    // Model tavsiflari (ai-models.ts note'lari — dropdownda ko'rinadi, tilga moslanadi)
+    "model.note.gemini-3.8-flash":      { uz: "Eng kuchli, bepul — default", ru: "Самая мощная, бесплатно — по умолчанию", en: "Most capable, free — default" },
+    "model.note.gemini-2.5-flash-lite": { uz: "Eng tez, bepul",   ru: "Самая быстрая, бесплатно", en: "Fastest, free" },
+    "model.note.gemini-2.5-flash":      { uz: "Bepul, barqaror",  ru: "Бесплатно, стабильно",    en: "Free, stable" },
+    "model.note.deepseek/deepseek-chat":            { uz: "Kod+chat, juda arzon", ru: "Код+чат, очень дёшево", en: "Code+chat, very cheap" },
+    "model.note.deepseek/deepseek-r1":              { uz: "Reasoning",          ru: "Рассуждения",   en: "Reasoning" },
+    "model.note.openai/gpt-4o-mini":                { uz: "OpenAI",             ru: "OpenAI",        en: "OpenAI" },
+    "model.note.openai/gpt-4o":                     { uz: "OpenAI (qimmat)",    ru: "OpenAI (дорого)", en: "OpenAI (pricey)" },
+    "model.note.anthropic/claude-3.5-haiku":        { uz: "Anthropic, tez",     ru: "Anthropic, быстро", en: "Anthropic, fast" },
+    "model.note.anthropic/claude-3.7-sonnet":       { uz: "Anthropic (kuchli)", ru: "Anthropic (мощно)", en: "Anthropic (powerful)" },
+    "model.note.meta-llama/llama-3.3-70b-instruct": { uz: "Meta (ochiq)",       ru: "Meta (открытая)", en: "Meta (open)" },
 
     // Rejim sublari (label'lar brend nomi sifatida o'zgarmaydi: Chat Bot, Gen Code, ...)
     "mode.chat.sub":   { uz: "Oddiy suhbat",            ru: "Обычный чат",              en: "Everyday chat" },
@@ -93,7 +104,7 @@ const DICT: Record<string, Record<AiLang, string>> = {
     "sidebar.noMatch":   { uz: "Mos chat topilmadi.", ru: "Чаты не найдены.", en: "No matching chats." },
     "sidebar.empty1":    { uz: "Hali suhbat yo'q.",   ru: "Пока нет чатов.",  en: "No chats yet." },
     "sidebar.empty2":    { uz: "Yangi chat bilan boshlang.", ru: "Начните с нового чата.", en: "Start a new chat." },
-    "sidebar.knowledge": { uz: "Bilim bazam",     ru: "Моя база знаний",  en: "My knowledge base" },
+    "sidebar.knowledge": { uz: "Bilim to'plamim", ru: "Моя база знаний",  en: "My knowledge base" },
     "sidebar.profile":   { uz: "Profilim",        ru: "Мой профиль",      en: "My profile" },
     "sidebar.selectAll": { uz: "Hammasi",         ru: "Все",              en: "All" },
     "chat.msgWord":      { uz: "xabar",           ru: "сообщ.",           en: "messages" },
