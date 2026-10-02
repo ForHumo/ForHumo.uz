@@ -137,6 +137,9 @@ function looksLikeImageRequest(text: string): boolean {
     return IMAGE_REQUEST_RE.test(text);
 }
 
+// Chat TTS ovozlari (GEMINI_TTS_VOICES bilan mos — server tekshiradi)
+const TTS_VOICES = ["Kore", "Puck", "Orus", "Zephyr", "Charon", "Aoede", "Leda"] as const;
+
 // AI ichidagi Profil / Bilim paneli uchun turlar
 type KbFact = { id: string; category: string; key: string; value: string; sensitive?: boolean };
 type KbData = { categories: string[]; grouped: Record<string, KbFact[]>; total: number };
@@ -293,7 +296,9 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
     const [ttsSpeakingId, setTtsSpeakingId] = useState<string | null>(null);
     const [ttsLoadingId, setTtsLoadingId] = useState<string | null>(null);
     const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
-    const ttsVoiceRef = useRef<"Kore" | "Puck">("Kore");
+    const [ttsVoice, setTtsVoice] = useState<string>("Kore");   // TTS ovozi (sozlamalardan)
+    useEffect(() => { try { const v = localStorage.getItem("ai-tts-voice"); if (v) setTtsVoice(v); } catch { /* ignore */ } }, []);
+    function pickTtsVoice(v: string) { setTtsVoice(v); try { localStorage.setItem("ai-tts-voice", v); } catch { /* ignore */ } }
     const [shareCopied, setShareCopied] = useState<string | null>(null);
     // Til tanlash — dastlabki til route locale'dan (forhumo.uz/ru/ai → ru), keyin saqlangan tanlov ustun.
     const [aiLang, setAiLang] = useState<AiLang>(() => aiLangFromLocale(locale));
@@ -369,6 +374,35 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
         await Promise.all(ids.map(id => fetch(`/api/ai/conversations/${id}`, { method: "DELETE" }).catch(() => {})));
         setConvs([]); setActiveId(null); setMessages([]);
     }
+    // "AI meni eslab qolsin" — yangi suhbatlardan fakt saqlashni boshqaradi (extractKnowledge)
+    const [rememberMe, setRememberMe] = useState(true);
+    useEffect(() => { try { setRememberMe(localStorage.getItem("ai-remember") !== "0"); } catch { /* ignore */ } }, []);
+    function toggleRemember() {
+        setRememberMe(p => { const n = !p; try { localStorage.setItem("ai-remember", n ? "1" : "0"); } catch { /* ignore */ } return n; });
+    }
+    // Suhbatlarni JSON faylga eksport (har suhbat + xabarlari)
+    const [exporting, setExporting] = useState(false);
+    async function exportChats() {
+        if (convs.length === 0 || exporting) return;
+        setExporting(true);
+        try {
+            const full = await Promise.all(convs.slice(0, 200).map(c =>
+                fetch(`/api/ai/conversations/${c.id}`, { cache: "no-store" }).then(r => r.ok ? r.json() : null).catch(() => null)
+            ));
+            const chats = full.filter(Boolean).map((d: { conversation?: { title?: string; createdAt?: string }; messages?: { role: string; body: string; createdAt: string }[] }) => ({
+                title: d.conversation?.title ?? "",
+                createdAt: d.conversation?.createdAt ?? "",
+                messages: (d.messages ?? []).map(m => ({ role: m.role, body: m.body, createdAt: m.createdAt })),
+            }));
+            const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), chats }, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = `humo-ai-chats-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch { /* ignore */ }
+        finally { setExporting(false); }
+    }
     async function deleteFact(id: string) {
         try { await fetch(`/api/ai/knowledge?id=${id}`, { method: "DELETE" }); } catch { /* ignore */ }
         try {
@@ -436,7 +470,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
             const r = await fetch("/api/ai/tts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text, voice: ttsVoiceRef.current }),
+                body: JSON.stringify({ text, voice: ttsVoice }),
             });
             if (!r.ok) throw new Error("tts_failed");
             const blob = await r.blob();
@@ -724,6 +758,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                 language: aiLang,
                 mode,
                 webSearch,
+                extractKnowledge: rememberMe,
             }),
         });
         const j = await r.json();
@@ -841,6 +876,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                 body: JSON.stringify({
                     message: text, conversationId: activeId ?? undefined,
                     language: aiLang, mode, model, webSearch, deepThink,
+                    extractKnowledge: rememberMe,
                 }),
             });
             const status = await consumeAiStream(r, streamMsgId, controller);
@@ -876,7 +912,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 signal: controller.signal,
-                body: JSON.stringify({ conversationId: activeId, language: aiLang, mode, model, webSearch, deepThink, regenerate: true }),
+                body: JSON.stringify({ conversationId: activeId, language: aiLang, mode, model, webSearch, deepThink, regenerate: true, extractKnowledge: rememberMe }),
             });
             await consumeAiStream(r, streamMsgId, controller);
         } catch (e) {
@@ -1920,10 +1956,58 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                                 </button>
                                             </div>
                                         ))}
+                                        {/* TTS ovozi */}
+                                        <div className="py-2">
+                                            <span className="text-[13px] block mb-2">{t("set.ttsVoice")}</span>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {TTS_VOICES.map(v => (
+                                                    <button key={v} onClick={() => pickTtsVoice(v)} className="px-2.5 h-7 rounded-lg text-[11px] font-bold"
+                                                        style={{ background: ttsVoice === v ? T.primary : "var(--ai-raise)", color: ttsVoice === v ? T.onPrimary : "hsl(var(--muted-foreground))" }}>
+                                                        {v}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* AI */}
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: "hsl(var(--muted-foreground))" }}>{t("set.aiSec")}</p>
+                                        <span className="text-[12px] block mb-2" style={{ color: "hsl(var(--muted-foreground))" }}>{t("set.model")}</span>
+                                        <div className="space-y-1">
+                                            {AI_MODELS.map(m => { const works = modelWorks(m.provider); return (
+                                                <button key={m.id} onClick={() => works && pickModel(m.id)} disabled={!works}
+                                                    className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-left disabled:cursor-not-allowed"
+                                                    style={{ background: model === m.id ? "var(--ai-raise)" : "transparent", opacity: works ? 1 : 0.5 }}>
+                                                    <span className="text-[12px] font-bold truncate">{m.label}</span>
+                                                    {model === m.id && works
+                                                        ? <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: T.primary }} />
+                                                        : !works ? <span className="text-[8px] font-black px-1 py-0.5 rounded uppercase flex-shrink-0" style={{ background: "var(--ai-raise)", color: "hsl(var(--muted-foreground))" }}>{t("badge.soon")}</span> : null}
+                                                </button>
+                                            ); })}
+                                        </div>
+                                    </div>
+                                    {/* Shaxsiylashtirish */}
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-wider mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{t("set.personal")}</p>
+                                        <div className="flex items-center justify-between gap-3 py-2.5">
+                                            <span className="text-[13px] min-w-0">{t("set.remember")}</span>
+                                            <button onClick={toggleRemember} role="switch" aria-checked={rememberMe}
+                                                className="w-10 h-6 rounded-full p-0.5 transition-colors flex-shrink-0"
+                                                style={{ background: rememberMe ? T.primary : "var(--ai-raise)" }}>
+                                                <span className="block w-5 h-5 rounded-full transition-transform" style={{ background: rememberMe ? T.onPrimary : "hsl(var(--muted-foreground))", transform: rememberMe ? "translateX(16px)" : "translateX(0)" }} />
+                                            </button>
+                                        </div>
+                                        <p className="text-[11px] mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{t("set.rememberHint")}</p>
+                                        <button onClick={() => openPanel("knowledge")} className="w-full text-left flex items-center gap-2 py-2.5 text-[13px] hover:underline">
+                                            <ShieldCheck className="w-4 h-4 flex-shrink-0" style={{ color: T.primary }} /> {t("sidebar.knowledge")}
+                                        </button>
                                     </div>
                                     {/* Ma'lumotlar */}
                                     <div>
                                         <p className="text-[10px] font-black uppercase tracking-wider mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{t("set.data")}</p>
+                                        <button onClick={exportChats} disabled={exporting || convs.length === 0} className="w-full text-left flex items-center gap-2 py-2.5 text-[13px] hover:underline disabled:opacity-40">
+                                            {exporting ? <Loader2 className="w-4 h-4 flex-shrink-0 animate-spin" /> : <Download className="w-4 h-4 flex-shrink-0" style={{ color: T.primary }} />} {t("set.export")}
+                                        </button>
                                         <button onClick={deleteAllChats} className="w-full text-left flex items-center gap-2 py-2.5 text-[13px] text-red-500 hover:underline">
                                             <Trash2 className="w-4 h-4 flex-shrink-0" /> {t("set.deleteChats")}
                                         </button>
@@ -1931,10 +2015,20 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                             <ShieldCheck className="w-4 h-4 flex-shrink-0" /> {t("set.eraseKb")}
                                         </button>
                                     </div>
-                                    {/* Chiqish */}
-                                    <button onClick={() => signOut()} className="w-full h-10 rounded-xl flex items-center justify-center gap-1.5 text-[13px] font-bold" style={{ background: "var(--ai-raise)", color: "hsl(var(--foreground))" }}>
-                                        <LogOut className="w-4 h-4" /> {t("set.signOut")}
-                                    </button>
+                                    {/* Hisob */}
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-wider mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{t("set.account")}</p>
+                                        <button onClick={() => openPanel("profile")} className="w-full text-left flex items-center gap-2 py-2.5 text-[13px] hover:underline">
+                                            {myAvatar
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                ? <img src={myAvatar} alt="" className="w-5 h-5 rounded-md object-cover flex-shrink-0" />
+                                                : <UserIcon className="w-4 h-4 flex-shrink-0" style={{ color: T.primary }} />}
+                                            {t("sidebar.profile")}
+                                        </button>
+                                        <button onClick={() => signOut()} className="w-full h-10 mt-2 rounded-xl flex items-center justify-center gap-1.5 text-[13px] font-bold" style={{ background: "var(--ai-raise)", color: "hsl(var(--foreground))" }}>
+                                            <LogOut className="w-4 h-4" /> {t("set.signOut")}
+                                        </button>
+                                    </div>
                                 </div>
                             ) : panel === "profile" ? (
                                 profileData ? (

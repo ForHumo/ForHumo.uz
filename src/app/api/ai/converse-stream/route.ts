@@ -62,6 +62,7 @@ export async function POST(req: Request) {
     const webSearch = body?.webSearch === true;
     // Chuqur fikrlash — Gemini thinking (chuqurroq reasoning). Gemini path'da qo'llanadi.
     const deepThink = body?.deepThink === true;
+    const extractKB = body?.extractKnowledge !== false;   // "AI meni eslab qolsin" (default yoqilgan)
     if ((webSearch || deepThink) && chosen.provider !== "gemini") chosen = findModel(undefined);
     const attachmentUrl = typeof body?.attachmentUrl === "string" ? body.attachmentUrl.slice(0, 500) : null;
     const attachmentType = typeof body?.attachmentType === "string" ? body.attachmentType.slice(0, 20) : null;
@@ -275,12 +276,12 @@ export async function POST(req: Request) {
                 // Fon rejim — knowledge extraction + embedding + usage log
                 after(async () => {
                     await Promise.all([
-                        extractKnowledgeFromMessage({
+                        extractKB ? extractKnowledgeFromMessage({
                             profileId: me.id,
                             userMessage: userMsg,
                             aiReply: fullReply,
                             conversationContext: history.map(h => `${h.role}: ${h.body}`).join("\n"),
-                        }),
+                        }) : Promise.resolve(null),
                         embedAiMessage(userDbMsg.id, userMsg),
                         embedAiMessage(aiDbMsg.id, fullReply),
                     ]);
