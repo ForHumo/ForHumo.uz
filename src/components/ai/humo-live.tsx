@@ -25,6 +25,8 @@ const LIVE_SYS =
     "ochiq ayting: 'Google'ning Gemini modellari asosida qurilganman' — lekin isingiz baribir Humo AI. " +
     "Foydalanuvchi qaysi tilda gapirsa, AYNAN o'sha tilda javob bering (o'zbek, rus, ingliz va h.k.). " +
     "Tabiiy, iliq, samimiy va qisqa suhbatdosh ohangda gapiring — robotdek emas. " +
+    "Dolzarb ma'lumot (ob-havo, yangiliklar, valyuta kursi, narx, bugungi voqealar va h.k.) so'ralsa — " +
+    "Google qidiruv vositangizdan foydalanib ANIQ va yangilangan javob bering, taxmin qilmang. " +
     "Agar kamera yoki ekran ko'rsatilsa, ko'rgan narsangizni hisobga oling.";
 
 type LiveStatus = "idle" | "connecting" | "live" | "ended" | "error";
@@ -310,6 +312,7 @@ export function HumoLive({ onClose, lang = "uz" }: { onClose: () => void; lang?:
                     speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
                     inputAudioTranscription: {},
                     outputAudioTranscription: {},
+                    tools: [{ googleSearch: {} }],   // dolzarb ma'lumot (ob-havo/yangilik/kurs) uchun web-qidiruv
                 },
                 callbacks: {
                     onopen: () => { setStatus("live"); startViz(); },
