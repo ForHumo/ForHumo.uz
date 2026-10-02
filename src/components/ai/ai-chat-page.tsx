@@ -5,13 +5,13 @@
 // Har xabar DB'da saqlanadi, AI foydalanuvchini eslab qoladi.
 
 import { useState, useEffect, useRef, useCallback, type CSSProperties } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import {
     Send, Loader2, Plus, MessageSquare, Sparkles, Trash2, LogIn,
     Archive, Menu, X as XIcon, User as UserIcon, Brain, ShieldCheck,
     Mic, MicOff, Paperclip, ImageIcon, Volume2, VolumeX, Share2, Check,
     Code2, Globe, BookOpen, Mail, Film, Users, Clock, Cpu, ChevronDown, Copy, Download, Home,
-    Music, Search, CheckSquare, Square, Link2Off, PanelLeftClose, PanelLeftOpen, RefreshCw, Pencil, AudioLines, Sun, Moon, type LucideIcon,
+    Music, Search, CheckSquare, Square, Link2Off, PanelLeftClose, PanelLeftOpen, RefreshCw, Pencil, AudioLines, Sun, Moon, Settings as SettingsIcon, LogOut, type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { AiStarfield } from "@/components/ai/ai-starfield";
@@ -311,24 +311,28 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
         try { localStorage.setItem("ai-lang", l); } catch { /* ignore */ }
     }
 
-    // Tungi/tongi (dark/light) rejim — saqlangan tanlov yoki qurilma OS temasi
-    const [theme, setTheme] = useState<"light" | "dark">("dark");
+    // Tungi/tongi (dark/light) rejim — "system"|"light"|"dark" (default system = qurilma OS temasi)
+    const [themePref, setThemePref] = useState<"system" | "light" | "dark">("system");
+    const [sysDark, setSysDark] = useState(true);
     useEffect(() => {
         try {
             const s = localStorage.getItem("ai-theme");
-            if (s === "light" || s === "dark") { setTheme(s); return; }
-            const prefersLight = window.matchMedia?.("(prefers-color-scheme: light)").matches;
-            setTheme(prefersLight ? "light" : "dark");
+            if (s === "light" || s === "dark" || s === "system") setThemePref(s);
+        } catch { /* ignore */ }
+        try {
+            const mq = window.matchMedia("(prefers-color-scheme: dark)");
+            setSysDark(mq.matches);
+            const h = (e: MediaQueryListEvent) => setSysDark(e.matches);
+            mq.addEventListener?.("change", h);
+            return () => mq.removeEventListener?.("change", h);
         } catch { /* ignore */ }
     }, []);
-    function toggleTheme() {
-        setTheme(p => {
-            const n = p === "dark" ? "light" : "dark";
-            try { localStorage.setItem("ai-theme", n); } catch { /* ignore */ }
-            return n;
-        });
+    const dark = themePref === "dark" || (themePref === "system" && sysDark);
+    function pickTheme(pref: "system" | "light" | "dark") {
+        setThemePref(pref);
+        try { localStorage.setItem("ai-theme", pref); } catch { /* ignore */ }
     }
-    const dark = theme === "dark";
+    function toggleTheme() { pickTheme(dark ? "light" : "dark"); }
     const T = dark ? T_DARK : T_LIGHT;
     const aiVars = (dark ? AI_VARS_DARK : AI_VARS_LIGHT) as CSSProperties;
     // Logo temaga mos: dark → oq logo, light → qora logo
@@ -336,13 +340,20 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
     // Foydalanuvchi ismi (salomlashuvda ko'rsatiladi) — faqat birinchi so'z
     const firstName = (session?.user?.name || "").trim().split(/\s+/)[0] || "";
 
-    // AI ichidagi Profil / Bilim paneli (AI'dan chiqmaydi — overlay)
-    const [panel, setPanel] = useState<null | "profile" | "knowledge">(null);
+    // AI ichidagi Profil / Bilim / Sozlamalar paneli (AI'dan chiqmaydi — overlay)
+    const [panel, setPanel] = useState<null | "profile" | "knowledge" | "settings">(null);
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
     const [kbData, setKbData] = useState<KbData | null>(null);
     const [panelLoading, setPanelLoading] = useState(false);
-    function openPanel(which: "profile" | "knowledge") {
+    // Mikrofon bilan kiritish yoqilganmi (sozlamalardan boshqariladi)
+    const [voiceInputEnabled, setVoiceInputEnabled] = useState(true);
+    useEffect(() => { try { setVoiceInputEnabled(localStorage.getItem("ai-voice-input") !== "0"); } catch { /* ignore */ } }, []);
+    function toggleVoiceInput() {
+        setVoiceInputEnabled(p => { const n = !p; try { localStorage.setItem("ai-voice-input", n ? "1" : "0"); } catch { /* ignore */ } return n; });
+    }
+    function openPanel(which: "profile" | "knowledge" | "settings") {
         setPanel(which); setSidebarOpen(false);
+        if (which === "settings") return;   // sozlamalar lokal holatdan — fetch kerak emas
         setPanelLoading(true);
         const url = which === "profile" ? "/api/user/profile" : "/api/ai/knowledge";
         fetch(url, { cache: "no-store" })
@@ -350,6 +361,13 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
             .then(d => { if (which === "profile") setProfileData(d); else setKbData(d); })
             .catch(() => {})
             .finally(() => setPanelLoading(false));
+    }
+    async function deleteAllChats() {
+        if (convs.length === 0) return;
+        if (!confirm(t("set.deleteChatsConfirm"))) return;
+        const ids = convs.map(c => c.id);
+        await Promise.all(ids.map(id => fetch(`/api/ai/conversations/${id}`, { method: "DELETE" }).catch(() => {})));
+        setConvs([]); setActiveId(null); setMessages([]);
     }
     async function deleteFact(id: string) {
         try { await fetch(`/api/ai/knowledge?id=${id}`, { method: "DELETE" }); } catch { /* ignore */ }
@@ -1365,8 +1383,16 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                     <button onClick={toggleTheme}
                         title={dark ? t("theme.light") : t("theme.dark")} aria-label={dark ? t("theme.light") : t("theme.dark")}
                         className="w-9 h-9 rounded-lg grid place-items-center hover:brightness-95"
-                        style={{ background: "transparent", color: "var(--muted-foreground)" }}>
+                        style={{ background: "transparent", color: "hsl(var(--muted-foreground))" }}>
                         {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                    </button>
+
+                    {/* Sozlamalar (gear) */}
+                    <button onClick={() => openPanel("settings")}
+                        title={t("set.title")} aria-label={t("set.title")}
+                        className="w-9 h-9 rounded-lg grid place-items-center hover:brightness-95"
+                        style={{ background: "transparent", color: "hsl(var(--muted-foreground))" }}>
+                        <SettingsIcon className="w-4 h-4" />
                     </button>
 
                     {/* TTS toggle */}
@@ -1747,7 +1773,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         />
 
                         {/* Voice input */}
-                        {voiceSupported && !sending && (
+                        {voiceSupported && voiceInputEnabled && !sending && (
                             <button type="button" onClick={toggleVoice}
                                 title={recording ? t("tts.stop") : t("voice.start")}
                                 className="w-9 h-9 rounded-xl grid place-items-center flex-shrink-0"
@@ -1839,10 +1865,12 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                     <div className="relative w-full max-w-md h-full flex flex-col" style={{ background: "var(--ai-menu)", borderLeft: `1px solid ${T.border}`, boxShadow: T.shadow }}>
                         <div className="h-14 px-4 flex items-center justify-between border-b flex-shrink-0" style={{ borderColor: T.border }}>
                             <div className="flex items-center gap-2">
-                                {panel === "profile"
-                                    ? <UserIcon className="w-4 h-4" style={{ color: T.primary }} />
-                                    : <ShieldCheck className="w-4 h-4" style={{ color: T.primary }} />}
-                                <span className="font-black text-sm">{panel === "profile" ? t("sidebar.profile") : t("sidebar.knowledge")}</span>
+                                {panel === "settings"
+                                    ? <SettingsIcon className="w-4 h-4" style={{ color: T.primary }} />
+                                    : panel === "profile"
+                                        ? <UserIcon className="w-4 h-4" style={{ color: T.primary }} />
+                                        : <ShieldCheck className="w-4 h-4" style={{ color: T.primary }} />}
+                                <span className="font-black text-sm">{panel === "settings" ? t("set.title") : panel === "profile" ? t("sidebar.profile") : t("sidebar.knowledge")}</span>
                             </div>
                             <button onClick={() => setPanel(null)} className="w-8 h-8 rounded-lg grid place-items-center hover:bg-[var(--ai-hover)]" style={{ color: "hsl(var(--muted-foreground))" }}>
                                 <XIcon className="w-5 h-5" />
@@ -1851,6 +1879,63 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         <div className="flex-1 overflow-y-auto p-4">
                             {panelLoading ? (
                                 <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: T.primary }} /></div>
+                            ) : panel === "settings" ? (
+                                <div className="space-y-6">
+                                    {/* Umumiy */}
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: "hsl(var(--muted-foreground))" }}>{t("set.general")}</p>
+                                        <div className="flex items-center justify-between gap-3 py-2">
+                                            <span className="text-[13px]">{t("set.theme")}</span>
+                                            <div className="flex items-center gap-0.5 rounded-lg p-0.5" style={{ background: "var(--ai-raise)" }}>
+                                                {(["system", "light", "dark"] as const).map(p => (
+                                                    <button key={p} onClick={() => pickTheme(p)} className="px-2.5 h-7 rounded-md text-[11px] font-bold"
+                                                        style={{ background: themePref === p ? T.primary : "transparent", color: themePref === p ? T.onPrimary : "hsl(var(--muted-foreground))" }}>
+                                                        {p === "system" ? t("set.themeSystem") : p === "light" ? t("set.themeLight") : t("set.themeDark")}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-3 py-2">
+                                            <span className="text-[13px]">{t("set.language")}</span>
+                                            <div className="flex items-center gap-0.5 rounded-lg p-0.5" style={{ background: "var(--ai-raise)" }}>
+                                                {(["uz", "ru", "en"] as const).map(l => (
+                                                    <button key={l} onClick={() => switchLang(l)} className="px-2.5 h-7 rounded-md text-[11px] font-black uppercase"
+                                                        style={{ background: aiLang === l ? T.primary : "transparent", color: aiLang === l ? T.onPrimary : "hsl(var(--muted-foreground))" }}>
+                                                        {l}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* Ovoz */}
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-wider mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{t("set.voiceSec")}</p>
+                                        {([[t("set.ttsRead"), ttsEnabled, toggleTts], [t("set.voiceInput"), voiceInputEnabled, toggleVoiceInput]] as [string, boolean, () => void][]).map(([label, on, fn]) => (
+                                            <div key={label} className="flex items-center justify-between gap-3 py-2.5">
+                                                <span className="text-[13px]">{label}</span>
+                                                <button onClick={fn} role="switch" aria-checked={on}
+                                                    className="w-10 h-6 rounded-full p-0.5 transition-colors flex-shrink-0"
+                                                    style={{ background: on ? T.primary : "var(--ai-raise)" }}>
+                                                    <span className="block w-5 h-5 rounded-full transition-transform" style={{ background: on ? T.onPrimary : "hsl(var(--muted-foreground))", transform: on ? "translateX(16px)" : "translateX(0)" }} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {/* Ma'lumotlar */}
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-wider mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{t("set.data")}</p>
+                                        <button onClick={deleteAllChats} className="w-full text-left flex items-center gap-2 py-2.5 text-[13px] text-red-500 hover:underline">
+                                            <Trash2 className="w-4 h-4 flex-shrink-0" /> {t("set.deleteChats")}
+                                        </button>
+                                        <button onClick={eraseAllKb} className="w-full text-left flex items-center gap-2 py-2.5 text-[13px] text-red-500 hover:underline">
+                                            <ShieldCheck className="w-4 h-4 flex-shrink-0" /> {t("set.eraseKb")}
+                                        </button>
+                                    </div>
+                                    {/* Chiqish */}
+                                    <button onClick={() => signOut()} className="w-full h-10 rounded-xl flex items-center justify-center gap-1.5 text-[13px] font-bold" style={{ background: "var(--ai-raise)", color: "hsl(var(--foreground))" }}>
+                                        <LogOut className="w-4 h-4" /> {t("set.signOut")}
+                                    </button>
+                                </div>
                             ) : panel === "profile" ? (
                                 profileData ? (
                                     <div className="space-y-1">

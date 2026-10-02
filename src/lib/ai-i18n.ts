@@ -15,6 +15,23 @@ const DICT: Record<string, Record<AiLang, string>> = {
     "model.title":       { uz: "AI model", ru: "ИИ-модель", en: "AI model" },
     "theme.light": { uz: "Tongi rejim", ru: "Светлая тема", en: "Light mode" },
     "theme.dark":  { uz: "Tungi rejim", ru: "Тёмная тема",  en: "Dark mode" },
+
+    // Sozlamalar paneli
+    "set.title":    { uz: "Sozlamalar", ru: "Настройки", en: "Settings" },
+    "set.general":  { uz: "Umumiy",     ru: "Общие",     en: "General" },
+    "set.theme":    { uz: "Mavzu",      ru: "Тема",      en: "Appearance" },
+    "set.themeSystem": { uz: "Tizim",   ru: "Системная", en: "System" },
+    "set.themeLight":  { uz: "Yorug'",  ru: "Светлая",   en: "Light" },
+    "set.themeDark":   { uz: "Tungi",   ru: "Тёмная",    en: "Dark" },
+    "set.language": { uz: "Til",        ru: "Язык",      en: "Language" },
+    "set.voiceSec": { uz: "Ovoz",       ru: "Голос",     en: "Voice" },
+    "set.ttsRead":  { uz: "Javobni ovozda o'qish", ru: "Озвучивать ответы", en: "Read answers aloud" },
+    "set.voiceInput": { uz: "Mikrofon bilan kiritish", ru: "Голосовой ввод", en: "Voice input" },
+    "set.data":     { uz: "Ma'lumotlar", ru: "Данные",   en: "Data" },
+    "set.deleteChats":        { uz: "Barcha suhbatni o'chirish", ru: "Удалить все чаты", en: "Delete all chats" },
+    "set.deleteChatsConfirm": { uz: "Barcha suhbatlaringiz butunlay o'chiriladi. Davom etamizmi?", ru: "Все ваши чаты будут удалены навсегда. Продолжить?", en: "All your chats will be permanently deleted. Continue?" },
+    "set.eraseKb":  { uz: "Bilim to'plamini o'chirish", ru: "Очистить базу знаний", en: "Erase knowledge base" },
+    "set.signOut":  { uz: "Chiqish",    ru: "Выйти",     en: "Sign out" },
     "model.premiumNote": {
         uz: "Premium modellar OpenRouter kaliti qo'shilganda ishlaydi",
         ru: "Премиум-модели заработают после добавления ключа OpenRouter",
