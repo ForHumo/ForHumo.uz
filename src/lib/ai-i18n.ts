@@ -13,6 +13,8 @@ const DICT: Record<string, Record<AiLang, string>> = {
 
     // Model tanlagich
     "model.title":       { uz: "AI model", ru: "ИИ-модель", en: "AI model" },
+    "theme.light": { uz: "Tongi rejim", ru: "Светлая тема", en: "Light mode" },
+    "theme.dark":  { uz: "Tungi rejim", ru: "Тёмная тема",  en: "Dark mode" },
     "model.premiumNote": {
         uz: "Premium modellar OpenRouter kaliti qo'shilganda ishlaydi",
         ru: "Премиум-модели заработают после добавления ключа OpenRouter",

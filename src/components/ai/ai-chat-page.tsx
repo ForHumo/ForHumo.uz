@@ -4,14 +4,14 @@
 // Chap: suhbatlar ro'yxati (mavzular). O'ng: chat oynasi.
 // Har xabar DB'da saqlanadi, AI foydalanuvchini eslab qoladi.
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, type CSSProperties } from "react";
 import { useSession, signIn } from "next-auth/react";
 import {
     Send, Loader2, Plus, MessageSquare, Sparkles, Trash2, LogIn,
     Archive, Menu, X as XIcon, User as UserIcon, Brain, ShieldCheck,
     Mic, MicOff, Paperclip, ImageIcon, Volume2, VolumeX, Share2, Check,
     Code2, Globe, BookOpen, Mail, Film, Users, Clock, Cpu, ChevronDown, Copy, Download, Home,
-    Music, Search, CheckSquare, Square, Link2Off, PanelLeftClose, PanelLeftOpen, RefreshCw, Pencil, AudioLines, type LucideIcon,
+    Music, Search, CheckSquare, Square, Link2Off, PanelLeftClose, PanelLeftOpen, RefreshCw, Pencil, AudioLines, Sun, Moon, type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { AiStarfield } from "@/components/ai/ai-starfield";
@@ -52,13 +52,56 @@ interface SpeechRecognitionType {
 
 // Humo AI — eski monoxrom qora tema (ChatGPT uslubi). Violet-fuchsia EMAS.
 // Eski ai-static palitrasi: bg #0d0d0d, matn #ebebeb, primary/CTA light #ECECEC + dark matn.
-const T = {
+// Humo AI monoxrom palitra — dark (sof qora) va light (sof oq), ikkalasi ham rangsiz.
+const T_DARK = {
     primary: "#ECECEC",
-    soft: "rgba(255,255,255,0.06)",
+    soft: "rgba(255, 255, 255, 0.06)",
     onPrimary: "#0d0d0d",
-    border: "rgba(255,255,255,0.09)",
+    border: "rgba(255, 255, 255, 0.09)",
     gradient: "#ECECEC",
-    shadow: "0 8px 24px rgba(0,0,0,0.5)",
+    shadow: "0 8px 24px rgba(0, 0, 0, 0.5)",
+};
+const T_LIGHT = {
+    primary: "#1a1a1a",
+    soft: "rgba(0, 0, 0, 0.05)",
+    onPrimary: "#ffffff",
+    border: "rgba(0, 0, 0, 0.1)",
+    gradient: "#1a1a1a",
+    shadow: "0 8px 24px rgba(0, 0, 0, 0.12)",
+};
+// AI-ichki yuza tokenlari (root style'ga qo'yiladi, bolalar var(--ai-*) bilan oladi)
+const AI_VARS_DARK: Record<string, string> = {
+    "--ai-bg": "#0a0a0a",
+    "--ai-surface": "rgba(13, 13, 13, 0.82)",
+    "--ai-field": "rgba(26, 26, 26, 0.6)",
+    "--ai-bubble": "rgba(26, 26, 26, 0.78)",
+    "--ai-menu": "rgba(20, 20, 20, 0.98)",
+    "--ai-canvas": "rgba(10, 10, 10, 0.96)",
+    "--ai-raise": "rgba(255, 255, 255, 0.06)",
+    "--ai-hover": "rgba(255, 255, 255, 0.06)",
+    "--ai-title-grad": "linear-gradient(135deg, #ECECEC 20%, #8A8A8A 100%)",
+    // Global tema HSL-uchliklari — AI-subtree uchun monoxrom qilib override (text-muted-foreground, bg-card va h.k.)
+    "--foreground": "0 0% 92%",
+    "--muted-foreground": "0 0% 60%",
+    "--card": "0 0% 8%",
+    "--background": "0 0% 4%",
+    "--border": "0 0% 20%",
+};
+const AI_VARS_LIGHT: Record<string, string> = {
+    "--ai-bg": "#ffffff",
+    "--ai-surface": "rgba(255, 255, 255, 0.88)",
+    "--ai-field": "rgba(0, 0, 0, 0.045)",
+    "--ai-bubble": "rgba(0, 0, 0, 0.05)",
+    "--ai-menu": "rgba(255, 255, 255, 0.98)",
+    "--ai-canvas": "rgba(250, 250, 250, 0.98)",
+    "--ai-raise": "rgba(0, 0, 0, 0.05)",
+    "--ai-hover": "rgba(0, 0, 0, 0.05)",
+    "--ai-title-grad": "linear-gradient(135deg, #1a1a1a 20%, #777 100%)",
+    "--foreground": "0 0% 13%",
+    "--muted-foreground": "0 0% 38%",
+    "--card": "0 0% 100%",
+    "--background": "0 0% 100%",
+    "--border": "0 0% 85%",
 };
 
 // Humo AI rejimlari — global AI'lar (ChatGPT/Gemini) uslubidagi menu.
@@ -257,6 +300,27 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
         setAiLang(l);
         try { localStorage.setItem("ai-lang", l); } catch { /* ignore */ }
     }
+
+    // Tungi/tongi (dark/light) rejim — saqlangan tanlov yoki qurilma OS temasi
+    const [theme, setTheme] = useState<"light" | "dark">("dark");
+    useEffect(() => {
+        try {
+            const s = localStorage.getItem("ai-theme");
+            if (s === "light" || s === "dark") { setTheme(s); return; }
+            const prefersLight = window.matchMedia?.("(prefers-color-scheme: light)").matches;
+            setTheme(prefersLight ? "light" : "dark");
+        } catch { /* ignore */ }
+    }, []);
+    function toggleTheme() {
+        setTheme(p => {
+            const n = p === "dark" ? "light" : "dark";
+            try { localStorage.setItem("ai-theme", n); } catch { /* ignore */ }
+            return n;
+        });
+    }
+    const dark = theme === "dark";
+    const T = dark ? T_DARK : T_LIGHT;
+    const aiVars = (dark ? AI_VARS_DARK : AI_VARS_LIGHT) as CSSProperties;
     const bottomRef = useRef<HTMLDivElement>(null);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const prevMsgCountRef = useRef(0);
@@ -834,8 +898,8 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
 
     if (status === "loading") {
         return (
-            <div className="dark relative min-h-screen flex items-center justify-center text-[var(--foreground)]" style={{ background: "transparent" }}>
-                <AiStarfield />
+            <div className={`${dark ? "dark " : ""}relative min-h-screen flex items-center justify-center text-[var(--foreground)]`} style={{ ...aiVars, background: "transparent", color: "hsl(var(--foreground))" }}>
+                <AiStarfield dark={dark} />
                 <Loader2 className="relative z-10 w-6 h-6 animate-spin" style={{ color: T.primary }} />
             </div>
         );
@@ -843,9 +907,9 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
 
     if (status === "unauthenticated") {
         return (
-            <div className="dark relative min-h-screen flex items-center justify-center px-4 text-[var(--foreground)]" style={{ background: "transparent" }}>
-                <AiStarfield />
-                <div className="relative z-10 max-w-sm w-full text-center rounded-3xl p-8 border" style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+            <div className={`${dark ? "dark " : ""}relative min-h-screen flex items-center justify-center px-4 text-[var(--foreground)]`} style={{ ...aiVars, background: "transparent", color: "hsl(var(--foreground))" }}>
+                <AiStarfield dark={dark} />
+                <div className="relative z-10 max-w-sm w-full text-center rounded-3xl p-8 border" style={{ borderColor: T.border, background: "var(--ai-surface)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                     <span className="w-14 h-14 rounded-2xl grid place-items-center mx-auto mb-4"
                         style={{ background: T.gradient, color: T.onPrimary }}>
                         <Brain className="w-7 h-7" />
@@ -874,21 +938,21 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
     const codeLike = mode === "code" || mode === "cowork";
 
     return (
-        <div className="dark relative h-full flex text-[var(--foreground)] overflow-hidden" style={{ background: "transparent" }}>
+        <div className={`${dark ? "dark " : ""}relative h-full flex text-[var(--foreground)] overflow-hidden`} style={{ ...aiVars, background: "transparent", color: "hsl(var(--foreground))" }}>
             {/* Qora cosmic fon + uchib yuruvchi yulduzlar (eski AI'dagi sevimli fon) */}
-            <AiStarfield />
+            <AiStarfield dark={dark} />
 
             {/* AI animatsiyalari: rasm shimmer + rejim "ishlash" nuqtalari + kod chizig'i */}
             <style>{`
 @keyframes aiShimmer{0%{background-position:-468px 0}100%{background-position:468px 0}}
-.ai-shimmer{background:linear-gradient(90deg,rgba(255,255,255,0.05) 25%,rgba(255,255,255,0.12) 37%,rgba(255,255,255,0.05) 63%);background-size:800px 100%;animation:aiShimmer 1.4s ease-in-out infinite}
+.ai-shimmer{background:linear-gradient(90deg,var(--ai-raise) 25%,rgba(255,255,255,0.12) 37%,var(--ai-raise) 63%);background-size:800px 100%;animation:aiShimmer 1.4s ease-in-out infinite}
 @keyframes aiDot{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
 .ai-typing{display:inline-flex;gap:4px;align-items:center}
 .ai-typing i{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;animation:aiDot 1.2s infinite ease-in-out}
 .ai-typing i:nth-child(2){animation-delay:.2s}
 .ai-typing i:nth-child(3){animation-delay:.4s}
 @keyframes aiCodeLine{0%{background-position:-200px 0}100%{background-position:200px 0}}
-.ai-codeline{height:8px;border-radius:4px;background:linear-gradient(90deg,rgba(255,255,255,0.06) 25%,rgba(255,255,255,0.16) 50%,rgba(255,255,255,0.06) 75%);background-size:400px 100%;animation:aiCodeLine 1.1s linear infinite}
+.ai-codeline{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--ai-raise) 25%,rgba(255,255,255,0.16) 50%,var(--ai-raise) 75%);background-size:400px 100%;animation:aiCodeLine 1.1s linear infinite}
 `}</style>
 
             {/* Mobile sidebar overlay */}
@@ -900,7 +964,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
             {/* Sidebar — Humo AI (yig'iladigan: to'liq ↔ icon-rail) */}
             <aside className={`w-[86vw] max-w-72 ${collapsed ? "md:w-[68px]" : "md:w-72"} flex-shrink-0 border-r flex flex-col md:relative md:z-10 transition-[width] duration-200
                 ${sidebarOpen ? "fixed inset-y-0 left-0 z-40" : "hidden md:flex"}`}
-                style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                style={{ borderColor: T.border, background: "var(--ai-surface)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
 
                 {/* Tepa — Humo AI logo + panelni yig'ish/yopish */}
                 <div className={`h-14 border-b flex items-center flex-shrink-0 ${showLabels ? "px-3 gap-2" : "px-0 justify-center"}`} style={{ borderColor: T.border }}>
@@ -910,7 +974,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                             <img src="/logos/humo-ai-white.png" alt="Humo AI" className="w-7 h-7 flex-shrink-0 select-none" draggable={false} />
                             <span className="font-black text-sm flex-1 truncate text-[var(--foreground)]">Humo AI</span>
                             <button onClick={toggleCollapse} title={t("sidebar.collapse")} aria-label={t("sidebar.collapse")}
-                                className="hidden md:grid w-8 h-8 rounded-lg place-items-center hover:bg-white/[0.06]" style={{ color: "var(--muted-foreground)" }}>
+                                className="hidden md:grid w-8 h-8 rounded-lg place-items-center hover:bg-[var(--ai-hover)]" style={{ color: "var(--muted-foreground)" }}>
                                 <PanelLeftClose className="w-4 h-4" />
                             </button>
                             <button onClick={() => setSidebarOpen(false)} className="md:hidden w-8 h-8 grid place-items-center" style={{ color: "var(--muted-foreground)" }}>
@@ -919,7 +983,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         </>
                     ) : (
                         <button onClick={toggleCollapse} title={t("sidebar.expand")} aria-label={t("sidebar.expand")}
-                            className="w-10 h-10 grid place-items-center rounded-lg hover:bg-white/[0.06]" style={{ color: "var(--muted-foreground)" }}>
+                            className="w-10 h-10 grid place-items-center rounded-lg hover:bg-[var(--ai-hover)]" style={{ color: "var(--muted-foreground)" }}>
                             <PanelLeftOpen className="w-5 h-5" />
                         </button>
                     )}
@@ -933,16 +997,16 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                             const active = mode === m.id;
                             return showLabels ? (
                                 <button key={m.id} onClick={() => switchMode(m.id)}
-                                    className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-colors hover:bg-white/[0.04]"
+                                    className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-colors hover:bg-[var(--ai-hover)]"
                                     style={active ? { background: T.soft } : {}}>
                                     <span className="w-7 h-7 rounded-lg grid place-items-center flex-shrink-0"
-                                        style={{ background: active ? "#ECECEC" : "rgba(255,255,255,0.05)", color: active ? "#0d0d0d" : "var(--muted-foreground)" }}>
+                                        style={{ background: active ? T.primary : "var(--ai-raise)", color: active ? T.onPrimary : "var(--muted-foreground)" }}>
                                         <m.icon className="w-4 h-4" />
                                     </span>
                                     <span className="text-[12.5px] font-bold truncate flex-1 text-[var(--foreground)]">{m.label}</span>
                                     {m.soon && (
                                         <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0 uppercase"
-                                            style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>{t("badge.soon")}</span>
+                                            style={{ background: "var(--ai-raise)", color: "var(--muted-foreground)" }}>{t("badge.soon")}</span>
                                     )}
                                     {m.neu && (
                                         <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0 uppercase"
@@ -952,7 +1016,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                             ) : (
                                 <button key={m.id} onClick={() => switchMode(m.id)} title={m.label + (m.soon ? ` (${t("badge.soon")})` : "")}
                                     className="w-9 h-9 rounded-lg grid place-items-center relative"
-                                    style={{ background: active ? "#ECECEC" : "rgba(255,255,255,0.05)", color: active ? "#0d0d0d" : "var(--muted-foreground)" }}>
+                                    style={{ background: active ? "#ECECEC" : "var(--ai-raise)", color: active ? "#0d0d0d" : "var(--muted-foreground)" }}>
                                     <m.icon className="w-4 h-4" />
                                     {m.soon && <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full" style={{ background: "var(--muted-foreground)" }} />}
                                     {m.neu && <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full" style={{ background: "#4ade80" }} />}
@@ -962,8 +1026,8 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         {/* Humo Live — ovozli suhbat (overlay ochadi) */}
                         {showLabels ? (
                             <button onClick={() => setLiveOpen(true)}
-                                className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-colors hover:bg-white/[0.04]">
-                                <span className="w-7 h-7 rounded-lg grid place-items-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.05)", color: "var(--muted-foreground)" }}>
+                                className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-colors hover:bg-[var(--ai-hover)]">
+                                <span className="w-7 h-7 rounded-lg grid place-items-center flex-shrink-0" style={{ background: "var(--ai-raise)", color: "var(--muted-foreground)" }}>
                                     <AudioLines className="w-4 h-4" />
                                 </span>
                                 <span className="text-[12.5px] font-bold truncate flex-1 text-[var(--foreground)]">Humo Live</span>
@@ -971,7 +1035,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                             </button>
                         ) : (
                             <button onClick={() => setLiveOpen(true)} title={t("live.voiceTooltip")}
-                                className="w-9 h-9 rounded-lg grid place-items-center relative" style={{ background: "rgba(255,255,255,0.05)", color: "var(--muted-foreground)" }}>
+                                className="w-9 h-9 rounded-lg grid place-items-center relative" style={{ background: "var(--ai-raise)", color: "var(--muted-foreground)" }}>
                                 <AudioLines className="w-4 h-4" />
                                 <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full" style={{ background: "#4ade80" }} />
                             </button>
@@ -996,7 +1060,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                 {showLabels ? (
                     <div className="px-2 pb-1 flex-shrink-0">
                         <button onClick={newChat}
-                            className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-left transition-colors hover:bg-white/[0.04]">
+                            className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-left transition-colors hover:bg-[var(--ai-hover)]">
                             <span className="w-7 h-7 rounded-lg grid place-items-center flex-shrink-0" style={{ background: T.gradient, color: T.onPrimary }}>
                                 <Plus className="w-4 h-4" />
                             </span>
@@ -1007,7 +1071,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                             <input ref={chatSearchRef} value={chatSearch} onChange={e => setChatSearch(e.target.value)}
                                 placeholder={t("sidebar.searchChat")}
                                 className="w-full h-8 pl-8 pr-2 rounded-lg text-[12px] border focus:outline-none focus:ring-1"
-                                style={{ borderColor: T.border, background: "rgba(26,26,26,0.6)", color: "var(--foreground)", ["--tw-ring-color" as string]: T.primary + "40" }} />
+                                style={{ borderColor: T.border, background: "var(--ai-field)", color: "var(--foreground)", ["--tw-ring-color" as string]: T.primary + "40" }} />
                         </div>
                     </div>
                 ) : (
@@ -1018,7 +1082,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         </button>
                         <button onClick={() => { setCollapsed(false); try { localStorage.setItem("ai-sidebar-collapsed", "0"); } catch { /* ignore */ } setTimeout(() => chatSearchRef.current?.focus(), 80); }}
                             title={t("sidebar.searchChat")} aria-label={t("sidebar.searchChat")}
-                            className="w-9 h-9 rounded-lg grid place-items-center hover:bg-white/[0.06]" style={{ color: "var(--muted-foreground)" }}>
+                            className="w-9 h-9 rounded-lg grid place-items-center hover:bg-[var(--ai-hover)]" style={{ color: "var(--muted-foreground)" }}>
                             <Search className="w-4 h-4" />
                         </button>
                     </div>
@@ -1028,7 +1092,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                 {showLabels && selectMode && convs.length > 0 && (
                     <div className="px-3 pb-2 flex items-center gap-2 flex-shrink-0">
                         <button onClick={toggleSelectAll}
-                            className="flex items-center gap-1.5 text-[11px] font-bold px-2 py-1 rounded-lg hover:bg-white/[0.05]"
+                            className="flex items-center gap-1.5 text-[11px] font-bold px-2 py-1 rounded-lg hover:bg-[var(--ai-hover)]"
                             style={{ color: "var(--foreground)" }}>
                             {selected.size === convs.length ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
                             {t("sidebar.selectAll")} ({selected.size})
@@ -1063,7 +1127,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                             setActiveId(c.id); setSidebarOpen(false);
                                         }}
                                         className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors flex items-start gap-2 ${
-                                            active && !selectMode ? "font-black" : "font-medium hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
+                                            active && !selectMode ? "font-black" : "font-medium hover:bg-[var(--ai-hover)]"
                                         }`}
                                         style={(active && !selectMode) || (selectMode && checked) ? { background: T.soft, color: T.primary } : { color: "var(--foreground)" }}
                                     >
@@ -1089,10 +1153,10 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                     </button>
                                     {!selectMode && (
                                         <div className="absolute top-1 right-1 hidden group-hover:flex items-center gap-0.5"
-                                            style={{ background: "rgba(13,13,13,0.85)", borderRadius: 8 }}>
+                                            style={{ background: "var(--ai-menu)", borderRadius: 8 }}>
                                             <button onClick={() => shareConv(c.id)}
                                                 title={c.shareId ? t("item.reshare") : t("item.share")}
-                                                className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">
+                                                className="p-1 rounded hover:bg-[var(--ai-hover)]">
                                                 {shareCopied === c.id
                                                     ? <Check className="w-3 h-3 text-green-500" />
                                                     : <Share2 className="w-3 h-3" style={c.shareId ? { color: "#4ade80" } : undefined} />}
@@ -1100,18 +1164,18 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                             {c.shareId && (
                                                 <button onClick={() => unshareConv(c.id)}
                                                     title={t("item.unshare")}
-                                                    className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">
+                                                    className="p-1 rounded hover:bg-[var(--ai-hover)]">
                                                     <Link2Off className="w-3 h-3" />
                                                 </button>
                                             )}
                                             <button onClick={() => renameConv(c.id, c.title)}
                                                 title={t("item.rename")}
-                                                className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">
+                                                className="p-1 rounded hover:bg-[var(--ai-hover)]">
                                                 <Pencil className="w-3 h-3" />
                                             </button>
                                             <button onClick={() => archiveConv(c.id, c.archived)}
                                                 title={c.archived ? t("item.unarchive") : t("item.archive")}
-                                                className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">
+                                                className="p-1 rounded hover:bg-[var(--ai-hover)]">
                                                 <Archive className="w-3 h-3" />
                                             </button>
                                             <button onClick={() => deleteConv(c.id)}
@@ -1132,12 +1196,12 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                 {showLabels ? (
                     <div className="p-2 border-t space-y-1 flex-shrink-0" style={{ borderColor: T.border }}>
                         <Link href={"/id/knowledge" as never}
-                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-black/[0.03] dark:hover:bg-white/[0.03]">
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-[var(--ai-hover)]">
                             <ShieldCheck className="w-3.5 h-3.5" style={{ color: T.primary }} />
                             {t("sidebar.knowledge")}
                         </Link>
                         <Link href={"/id" as never}
-                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-black/[0.03] dark:hover:bg-white/[0.03]">
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-[var(--ai-hover)]">
                             {myAvatar
                                 // eslint-disable-next-line @next/next/no-img-element
                                 ? <img src={myAvatar} alt="" className="w-5 h-5 rounded-md object-cover flex-shrink-0" />
@@ -1148,11 +1212,11 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                 ) : (
                     <div className="py-2 border-t flex flex-col items-center gap-1 flex-shrink-0" style={{ borderColor: T.border }}>
                         <Link href={"/id/knowledge" as never} title={t("sidebar.knowledge")}
-                            className="w-9 h-9 rounded-lg grid place-items-center hover:bg-white/[0.06]">
+                            className="w-9 h-9 rounded-lg grid place-items-center hover:bg-[var(--ai-hover)]">
                             <ShieldCheck className="w-4 h-4" style={{ color: T.primary }} />
                         </Link>
                         <Link href={"/id" as never} title={t("sidebar.profile")}
-                            className="w-9 h-9 rounded-lg grid place-items-center hover:bg-white/[0.06]">
+                            className="w-9 h-9 rounded-lg grid place-items-center hover:bg-[var(--ai-hover)]">
                             {myAvatar
                                 // eslint-disable-next-line @next/next/no-img-element
                                 ? <img src={myAvatar} alt="" className="w-6 h-6 rounded-md object-cover" />
@@ -1165,12 +1229,12 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
             {/* Main — chat */}
             <main className="relative z-10 flex-1 flex flex-col min-w-0 min-h-0">
                 <header className="h-14 border-b flex items-center gap-2 px-4 flex-shrink-0"
-                    style={{ borderColor: T.border, background: "rgba(13,13,13,0.6)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                    style={{ borderColor: T.border, background: "var(--ai-surface)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                     <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2">
                         <Menu className="w-5 h-5" />
                     </button>
                     <Link href="/" title="For Humo" aria-label={t("header.home")}
-                        className="w-9 h-9 rounded-lg grid place-items-center flex-shrink-0 hover:bg-white/[0.06] transition-colors"
+                        className="w-9 h-9 rounded-lg grid place-items-center flex-shrink-0 hover:bg-[var(--ai-hover)] transition-colors"
                         style={{ color: "var(--muted-foreground)" }}>
                         <Home className="w-[18px] h-[18px]" />
                     </Link>
@@ -1209,13 +1273,13 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                             <>
                                 <button className="fixed inset-0 z-40" onClick={() => setModelMenuOpen(false)} aria-label={t("common.close")} />
                                 <div className="absolute right-0 mt-1.5 w-60 rounded-xl overflow-hidden z-50 py-1"
-                                    style={{ background: "rgba(20,20,20,0.98)", border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
+                                    style={{ background: "var(--ai-menu)", border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
                                     {AI_MODELS.map(m => {
                                         const active = model === m.id;
                                         const works = modelWorks(m.provider);
                                         return (
                                             <button key={m.id} onClick={() => pickModel(m.id)} disabled={!works}
-                                                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/[0.05] disabled:cursor-not-allowed"
+                                                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-[var(--ai-hover)] disabled:cursor-not-allowed"
                                                 style={{ ...(active ? { background: T.soft } : {}), opacity: works ? 1 : 0.55 }}>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-1.5">
@@ -1223,7 +1287,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                                         {works ? (
                                                             <span className="text-[8px] font-black px-1 py-0.5 rounded flex-shrink-0" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>{t("badge.new")}</span>
                                                         ) : (
-                                                            <span className="text-[8px] font-black px-1 py-0.5 rounded flex-shrink-0" style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>{t("badge.soon")}</span>
+                                                            <span className="text-[8px] font-black px-1 py-0.5 rounded flex-shrink-0" style={{ background: "var(--ai-raise)", color: "var(--muted-foreground)" }}>{t("badge.soon")}</span>
                                                         )}
                                                     </div>
                                                     <span className="text-[10px] block truncate" style={{ color: "var(--muted-foreground)" }}>{works ? t("model.note." + m.id) : t("model.soonHint")}</span>
@@ -1253,6 +1317,14 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                             </button>
                         ))}
                     </div>
+
+                    {/* Tungi/tongi (dark/light) toggle */}
+                    <button onClick={toggleTheme}
+                        title={dark ? t("theme.light") : t("theme.dark")} aria-label={dark ? t("theme.light") : t("theme.dark")}
+                        className="w-9 h-9 rounded-lg grid place-items-center hover:brightness-95"
+                        style={{ background: "transparent", color: "var(--muted-foreground)" }}>
+                        {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                    </button>
 
                     {/* TTS toggle */}
                     <button onClick={toggleTts}
@@ -1298,13 +1370,13 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                     {AI_MODE_MAP[mode].soon && (
                         <div className="h-full flex flex-col items-center justify-center text-center px-4">
                             <span className="w-16 h-16 rounded-2xl grid place-items-center mb-5"
-                                style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${T.border}` }}>
+                                style={{ background: "var(--ai-raise)", border: `1px solid ${T.border}` }}>
                                 {(() => { const Ic = AI_MODE_MAP[mode].icon; return <Ic className="w-8 h-8" style={{ color: "var(--muted-foreground)" }} />; })()}
                             </span>
                             <div className="flex items-center gap-2 mb-2">
                                 <h2 className="text-2xl font-black text-[var(--foreground)]">{AI_MODE_MAP[mode].label}</h2>
                                 <span className="text-[10px] font-black px-2 py-0.5 rounded-full uppercase"
-                                    style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>{t("badge.soon")}</span>
+                                    style={{ background: "var(--ai-raise)", color: "var(--muted-foreground)" }}>{t("badge.soon")}</span>
                             </div>
                             <p className="text-sm text-muted-foreground max-w-xs inline-flex items-center gap-1.5">
                                 <Clock className="w-3.5 h-3.5 flex-shrink-0" /> {t("mode.soonTitleHint")}
@@ -1320,7 +1392,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                 {t("empty.welcome")}
                             </p>
                             <h1 className="text-3xl sm:text-4xl font-light mb-8 tracking-tight"
-                                style={{ background: "linear-gradient(135deg,#ECECEC 20%,#8A8A8A 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                                style={{ background: "var(--ai-title-grad)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
                                 {mode === "pic" ? t("empty.titlePic") : mode === "cowork" ? t("empty.titleCowork") : t("empty.titleChat")}
                             </h1>
                             <div className="grid grid-cols-2 gap-2 max-w-md w-full">
@@ -1337,7 +1409,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                 ]).map(c => (
                                     <button key={c.title} onClick={() => setInput(c.p)}
                                         className="text-left p-3.5 rounded-xl border flex flex-col gap-0.5 transition-transform duration-150 hover:-translate-y-0.5"
-                                        style={{ background: "rgba(26,26,26,0.55)", borderColor: T.border }}>
+                                        style={{ background: "var(--ai-bubble)", borderColor: T.border }}>
                                         <c.icon className="w-[22px] h-[22px] mb-1.5" style={{ color: "var(--muted-foreground)" }} />
                                         <span className="text-[12.5px] font-semibold text-[var(--foreground)]">{c.title}</span>
                                         <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>{c.sub}</span>
@@ -1358,9 +1430,9 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                             <div key={m.id} className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
                                 <div className={`max-w-[75%] px-3.5 py-2.5 rounded-2xl text-sm break-words ${isUser ? "whitespace-pre-wrap" : ""}`}
                                     style={{
-                                        background: isUser ? T.gradient : "rgba(26,26,26,0.78)",
+                                        background: isUser ? T.gradient : "var(--ai-bubble)",
                                         color: isUser ? T.onPrimary : "var(--foreground)",
-                                        border: isUser ? "none" : "1px solid rgba(255,255,255,0.06)",
+                                        border: isUser ? "none" : "1px solid var(--ai-raise)",
                                         borderRadius: isUser ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
                                     }}>
                                     {m.generating ? (
@@ -1504,7 +1576,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                     {/* "Ishlash" indikatori — oxirgi xabar user bo'lsa (vision/classic yo'li) */}
                     {sending && messages.length > 0 && messages[messages.length - 1].role === "user" && (
                         <div className="flex justify-start">
-                            <div className="max-w-[75%] px-3.5 py-2.5" style={{ background: "rgba(26,26,26,0.78)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px 16px 16px 4px" }}>
+                            <div className="max-w-[75%] px-3.5 py-2.5" style={{ background: "var(--ai-bubble)", border: "1px solid var(--ai-raise)", borderRadius: "16px 16px 16px 4px" }}>
                                 <div className="flex items-center gap-2 text-[13px] font-semibold" style={{ color: "var(--muted-foreground)" }}>
                                     <span className="ai-typing"><i /><i /><i /></span> {workingLabel}...
                                 </div>
@@ -1568,7 +1640,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                 )}
 
                 {!AI_MODE_MAP[mode].soon && (
-                <form onSubmit={sendMessage} className="border-t p-2 sm:p-3 flex gap-1.5 sm:gap-2 items-end" style={{ borderColor: T.border, background: "rgba(13,13,13,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                <form onSubmit={sendMessage} className="border-t p-2 sm:p-3 flex gap-1.5 sm:gap-2 items-end" style={{ borderColor: T.border, background: "var(--ai-surface)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                     {/* "+" menyu (fayl / rejimlar / kelajak vositalar) */}
                     <input ref={fileInputRef} type="file" accept="image/*,application/pdf" multiple hidden
                         onChange={e => { const fs = e.target.files; if (fs && fs.length) uploadFiles(Array.from(fs)); e.target.value = ""; }} />
@@ -1584,20 +1656,20 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                             <>
                                 <button type="button" className="fixed inset-0 z-40" onClick={() => setPlusMenuOpen(false)} aria-label={t("common.close")} />
                                 <div className="absolute bottom-full left-0 mb-2 w-60 rounded-2xl overflow-hidden z-50 py-1.5"
-                                    style={{ background: "rgba(20,20,20,0.98)", border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
+                                    style={{ background: "var(--ai-menu)", border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
                                     {PLUS_ITEMS.map((it, i) => {
                                         const active = it.action === "mode" ? it.mode === mode : it.id === "search" ? webSearch : it.id === "think" ? deepThink : false;
                                         return (
                                             <div key={it.id}>
                                                 {(i === 2 || i === 7) && <div className="my-1 h-px" style={{ background: T.border }} />}
                                                 <button type="button" onClick={() => handlePlus(it)}
-                                                    className="w-full flex items-center gap-3 px-3.5 py-2.5 text-left hover:bg-white/[0.05] transition-colors"
+                                                    className="w-full flex items-center gap-3 px-3.5 py-2.5 text-left hover:bg-[var(--ai-hover)] transition-colors"
                                                     style={active ? { background: T.soft } : {}}>
                                                     <it.icon className="w-[18px] h-[18px] flex-shrink-0" style={{ color: active ? "var(--foreground)" : "var(--muted-foreground)" }} />
                                                     <span className="text-[13px] font-semibold flex-1 truncate text-[var(--foreground)]">{t("plus." + it.id)}</span>
                                                     {it.soon && (
                                                         <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0 uppercase"
-                                                            style={{ background: "rgba(255,255,255,0.09)", color: "var(--muted-foreground)" }}>{t("badge.soon")}</span>
+                                                            style={{ background: "var(--ai-raise)", color: "var(--muted-foreground)" }}>{t("badge.soon")}</span>
                                                     )}
                                                     {active && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--foreground)" }} />}
                                                 </button>
@@ -1619,7 +1691,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
 
                     {/* Matn + mikrofon + jo'natish — bitta "pill" (jo'natish hech qachon ekrandan chiqmaydi) */}
                     <div className="flex-1 min-w-0 flex items-center gap-1 rounded-2xl border pr-1 focus-within:ring-1"
-                        style={{ borderColor: recording ? T.primary : T.border, background: "rgba(26,26,26,0.6)", ["--tw-ring-color" as string]: T.primary + "55" }}>
+                        style={{ borderColor: recording ? T.primary : T.border, background: "var(--ai-field)", ["--tw-ring-color" as string]: T.primary + "55" }}>
                         <input
                             ref={composerInputRef}
                             value={input}
@@ -1664,7 +1736,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
             {mode === "cowork" && (
                 <aside className={`flex-col border-l relative z-10 min-w-0 lg:flex lg:flex-1
                     ${canvasView === "canvas" ? "flex flex-1 fixed inset-0 z-40 lg:static lg:inset-auto" : "hidden"}`}
-                    style={{ borderColor: T.border, background: "rgba(10,10,10,0.96)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                    style={{ borderColor: T.border, background: "var(--ai-canvas)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                     <div className="h-14 px-4 flex items-center justify-between border-b flex-shrink-0" style={{ borderColor: T.border }}>
                         <div className="flex items-center gap-2 min-w-0">
                             <Users className="w-4 h-4 flex-shrink-0" style={{ color: "var(--muted-foreground)" }} />
@@ -1673,11 +1745,11 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         </div>
                         <div className="flex items-center gap-1">
                             <button onClick={copyCanvas} disabled={!canvas} title={t("canvas.copy")}
-                                className="w-8 h-8 rounded-lg grid place-items-center hover:bg-white/[0.06] disabled:opacity-30" style={{ color: "var(--muted-foreground)" }}>
+                                className="w-8 h-8 rounded-lg grid place-items-center hover:bg-[var(--ai-hover)] disabled:opacity-30" style={{ color: "var(--muted-foreground)" }}>
                                 {canvasCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                             </button>
                             <button onClick={downloadCanvas} disabled={!canvas} title={t("common.download")}
-                                className="w-8 h-8 rounded-lg grid place-items-center hover:bg-white/[0.06] disabled:opacity-30" style={{ color: "var(--muted-foreground)" }}>
+                                className="w-8 h-8 rounded-lg grid place-items-center hover:bg-[var(--ai-hover)] disabled:opacity-30" style={{ color: "var(--muted-foreground)" }}>
                                 <Download className="w-4 h-4" />
                             </button>
                             <button onClick={() => setCanvasView("chat")} title={t("canvas.backToChat")} aria-label={t("canvas.backToChat")}

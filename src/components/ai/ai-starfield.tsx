@@ -9,7 +9,7 @@ import { useEffect, useRef } from "react";
 
 interface Pt { x: number; y: number; vx: number; vy: number; r: number; o: number }
 
-export function AiStarfield() {
+export function AiStarfield({ dark = true }: { dark?: boolean } = {}) {
     const ref = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
@@ -19,7 +19,7 @@ export function AiStarfield() {
         if (!cx) return;
 
         let W = 0, H = 0, pts: Pt[] = [], raf = 0;
-        const RGB = "255,255,255"; // oq yulduzlar (qora cosmic fon ustida)
+        const RGB = dark ? "255,255,255" : "40,40,50"; // dark: oq yulduz; light: to'q yulduz
 
         const resize = () => {
             W = cv.width = window.innerWidth;
@@ -72,13 +72,13 @@ export function AiStarfield() {
             cancelAnimationFrame(raf);
             window.removeEventListener("resize", resize);
         };
-    }, []);
+    }, [dark]);
 
     return (
         <div
             aria-hidden
             className="fixed inset-0 z-0 pointer-events-none"
-            style={{ background: "#0d0d0d" }}
+            style={{ background: dark ? "#0a0a0a" : "#f6f6f7" }}
         >
             <canvas ref={ref} className="absolute inset-0 h-full w-full" />
         </div>
