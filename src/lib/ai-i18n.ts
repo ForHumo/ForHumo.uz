@@ -126,6 +126,7 @@ const DICT: Record<string, Record<AiLang, string>> = {
 
     // empty state
     "empty.welcome":     { uz: "Humo AI'ga xush kelibsiz", ru: "Добро пожаловать в Humo AI", en: "Welcome to Humo AI" },
+    "empty.greet":       { uz: "Assalomu alaykum, {name}!", ru: "Здравствуйте, {name}!", en: "Hi, {name}!" },
     "empty.titlePic":    { uz: "Qanday rasm yarataylik?",  ru: "Какое изображение создадим?", en: "What image shall we create?" },
     "empty.titleCowork": { uz: "Nima yaratamiz?",          ru: "Что создадим?",              en: "What shall we create?" },
     "empty.titleChat":   { uz: "Bugun nima qilamiz?",      ru: "Чем займёмся сегодня?",      en: "What shall we do today?" },

@@ -321,6 +321,10 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
     const dark = theme === "dark";
     const T = dark ? T_DARK : T_LIGHT;
     const aiVars = (dark ? AI_VARS_DARK : AI_VARS_LIGHT) as CSSProperties;
+    // Logo temaga mos: dark → oq logo, light → qora logo
+    const logoSrc = dark ? "/logos/humo-ai-white.png" : "/logos/humo-ai-black.png";
+    // Foydalanuvchi ismi (salomlashuvda ko'rsatiladi) — faqat birinchi so'z
+    const firstName = (session?.user?.name || "").trim().split(/\s+/)[0] || "";
     const bottomRef = useRef<HTMLDivElement>(null);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const prevMsgCountRef = useRef(0);
@@ -971,7 +975,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                     {showLabels ? (
                         <>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src="/logos/humo-ai-white.png" alt="Humo AI" className="w-7 h-7 flex-shrink-0 select-none" draggable={false} />
+                            <img src={logoSrc} alt="Humo AI" className="w-7 h-7 flex-shrink-0 select-none" draggable={false} />
                             <span className="font-black text-sm flex-1 truncate text-[var(--foreground)]">Humo AI</span>
                             <button onClick={toggleCollapse} title={t("sidebar.collapse")} aria-label={t("sidebar.collapse")}
                                 className="hidden md:grid w-8 h-8 rounded-lg place-items-center hover:bg-[var(--ai-hover)]" style={{ color: "var(--muted-foreground)" }}>
@@ -1239,7 +1243,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                         <Home className="w-[18px] h-[18px]" />
                     </Link>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/logos/humo-ai-white.png" alt="Humo AI" className="w-8 h-8 flex-shrink-0 select-none" draggable={false} />
+                    <img src={logoSrc} alt="Humo AI" className="w-8 h-8 flex-shrink-0 select-none" draggable={false} />
                     <div className="min-w-0 flex-1">
                         <p className="text-sm font-black truncate">Humo AI</p>
                         <p className="text-[10px] text-muted-foreground truncate">
@@ -1386,10 +1390,10 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                     {!AI_MODE_MAP[mode].soon && !activeId && messages.length === 0 && (
                         <div className="h-full flex flex-col items-center justify-center text-center px-4">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src="/logos/humo-ai-white.png" alt="Humo AI" className="w-[74px] h-[74px] mb-6 select-none"
+                            <img src={logoSrc} alt="Humo AI" className="w-[74px] h-[74px] mb-6 select-none"
                                 style={{ animation: "aiLogoFloat 4s ease-in-out infinite" }} draggable={false} />
-                            <p className="text-[13px] mb-2" style={{ color: "var(--muted-foreground)" }}>
-                                {t("empty.welcome")}
+                            <p className="text-[13px] mb-2" style={{ color: "hsl(var(--muted-foreground))" }}>
+                                {firstName ? t("empty.greet").replace("{name}", firstName) : t("empty.welcome")}
                             </p>
                             <h1 className="text-3xl sm:text-4xl font-light mb-8 tracking-tight"
                                 style={{ background: "var(--ai-title-grad)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
