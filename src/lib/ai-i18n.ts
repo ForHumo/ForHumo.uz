@@ -107,6 +107,29 @@ const DICT: Record<string, Record<AiLang, string>> = {
     "sidebar.empty1":    { uz: "Hali suhbat yo'q.",   ru: "Пока нет чатов.",  en: "No chats yet." },
     "sidebar.empty2":    { uz: "Yangi chat bilan boshlang.", ru: "Начните с нового чата.", en: "Start a new chat." },
     "sidebar.knowledge": { uz: "Bilim to'plamim", ru: "Моя база знаний",  en: "My knowledge base" },
+
+    // Profil paneli (AI ichida)
+    "pp.humoId":   { uz: "Humo ID",       ru: "Humo ID",        en: "Humo ID" },
+    "pp.email":    { uz: "Email",         ru: "Эл. почта",      en: "Email" },
+    "pp.level":    { uz: "Daraja",        ru: "Уровень",        en: "Level" },
+    "pp.location": { uz: "Joylashuv",     ru: "Местоположение", en: "Location" },
+    "pp.bio":      { uz: "Bio",           ru: "О себе",         en: "Bio" },
+    "pp.since":    { uz: "A'zo bo'lgan",  ru: "С нами с",       en: "Member since" },
+    "pp.verified": { uz: "Tasdiqlangan",  ru: "Подтверждён",    en: "Verified" },
+    "pp.founder":  { uz: "Asoschi",       ru: "Основатель",     en: "Founder" },
+    "pp.editFull": { uz: "For Humo'da to'liq tahrirlash", ru: "Полностью изменить в For Humo", en: "Edit fully in For Humo" },
+    "pp.empty":    { uz: "Profil ma'lumoti topilmadi.", ru: "Профиль не найден.", en: "Profile not found." },
+
+    // Bilim to'plami paneli (AI ichida)
+    "kbp.subtitle": {
+        uz: "AI siz haqingizda eslab qolgan ma'lumotlar. Istalgan paytda o'chira olasiz.",
+        ru: "Что ИИ запомнил о вас. Вы можете удалить в любой момент.",
+        en: "What the AI has remembered about you. You can delete anytime.",
+    },
+    "kbp.empty":        { uz: "Hali hech narsa eslab qolinmagan.", ru: "Пока ничего не запомнено.", en: "Nothing remembered yet." },
+    "kbp.eraseAll":     { uz: "Hammasini o'chirish", ru: "Удалить всё", en: "Erase all" },
+    "kbp.eraseConfirm": { uz: "Barcha eslab qolingan ma'lumotlar o'chiriladi. Davom etamizmi?", ru: "Все запомненные данные будут удалены. Продолжить?", en: "All remembered data will be erased. Continue?" },
+    "kbp.count":        { uz: "{n} ta ma'lumot", ru: "{n} фактов", en: "{n} facts" },
     "sidebar.profile":   { uz: "Profilim",        ru: "Мой профиль",      en: "My profile" },
     "sidebar.selectAll": { uz: "Hammasi",         ru: "Все",              en: "All" },
     "chat.msgWord":      { uz: "xabar",           ru: "сообщ.",           en: "messages" },

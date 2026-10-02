@@ -137,6 +137,16 @@ function looksLikeImageRequest(text: string): boolean {
     return IMAGE_REQUEST_RE.test(text);
 }
 
+// AI ichidagi Profil / Bilim paneli uchun turlar
+type KbFact = { id: string; category: string; key: string; value: string; sensitive?: boolean };
+type KbData = { categories: string[]; grouped: Record<string, KbFact[]>; total: number };
+type ProfileData = {
+    name?: string | null; username?: string | null; humoId?: string | null; email?: string | null;
+    image?: string | null; level?: number | null; city?: string | null; country?: string | null;
+    bio?: string | null; location?: string | null; emailVerified?: boolean | null; isFounder?: boolean | null;
+    createdAt?: string | null;
+};
+
 export function AiChatPage({ locale, orAvailable = false }: { locale?: string; orAvailable?: boolean } = {}) {
     const { data: session, status } = useSession();
     const myAvatar = session?.user?.image ?? null;
@@ -325,6 +335,35 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
     const logoSrc = dark ? "/logos/humo-ai-white.png" : "/logos/humo-ai-black.png";
     // Foydalanuvchi ismi (salomlashuvda ko'rsatiladi) — faqat birinchi so'z
     const firstName = (session?.user?.name || "").trim().split(/\s+/)[0] || "";
+
+    // AI ichidagi Profil / Bilim paneli (AI'dan chiqmaydi — overlay)
+    const [panel, setPanel] = useState<null | "profile" | "knowledge">(null);
+    const [profileData, setProfileData] = useState<ProfileData | null>(null);
+    const [kbData, setKbData] = useState<KbData | null>(null);
+    const [panelLoading, setPanelLoading] = useState(false);
+    function openPanel(which: "profile" | "knowledge") {
+        setPanel(which); setSidebarOpen(false);
+        setPanelLoading(true);
+        const url = which === "profile" ? "/api/user/profile" : "/api/ai/knowledge";
+        fetch(url, { cache: "no-store" })
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (which === "profile") setProfileData(d); else setKbData(d); })
+            .catch(() => {})
+            .finally(() => setPanelLoading(false));
+    }
+    async function deleteFact(id: string) {
+        try { await fetch(`/api/ai/knowledge?id=${id}`, { method: "DELETE" }); } catch { /* ignore */ }
+        try {
+            const d = await fetch("/api/ai/knowledge", { cache: "no-store" }).then(r => r.json());
+            setKbData(d); setKbCount(d.total ?? 0);
+        } catch { /* ignore */ }
+    }
+    async function eraseAllKb() {
+        if (!confirm(t("kbp.eraseConfirm"))) return;
+        try { await fetch("/api/ai/knowledge?all=1", { method: "DELETE" }); } catch { /* ignore */ }
+        setKbData(prev => prev ? { ...prev, grouped: {}, total: 0 } : prev);
+        setKbCount(0);
+    }
     const bottomRef = useRef<HTMLDivElement>(null);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const prevMsgCountRef = useRef(0);
@@ -1199,33 +1238,33 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                 {/* Bottom — sozlamalar */}
                 {showLabels ? (
                     <div className="p-2 border-t space-y-1 flex-shrink-0" style={{ borderColor: T.border }}>
-                        <Link href={"/id/knowledge" as never}
-                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-[var(--ai-hover)]">
+                        <button type="button" onClick={() => openPanel("knowledge")}
+                            className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-[var(--ai-hover)]">
                             <ShieldCheck className="w-3.5 h-3.5" style={{ color: T.primary }} />
                             {t("sidebar.knowledge")}
-                        </Link>
-                        <Link href={"/id" as never}
-                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-[var(--ai-hover)]">
+                        </button>
+                        <button type="button" onClick={() => openPanel("profile")}
+                            className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-[var(--ai-hover)]">
                             {myAvatar
                                 // eslint-disable-next-line @next/next/no-img-element
                                 ? <img src={myAvatar} alt="" className="w-5 h-5 rounded-md object-cover flex-shrink-0" />
                                 : <UserIcon className="w-3.5 h-3.5 opacity-60" />}
                             {t("sidebar.profile")}
-                        </Link>
+                        </button>
                     </div>
                 ) : (
                     <div className="py-2 border-t flex flex-col items-center gap-1 flex-shrink-0" style={{ borderColor: T.border }}>
-                        <Link href={"/id/knowledge" as never} title={t("sidebar.knowledge")}
+                        <button type="button" onClick={() => openPanel("knowledge")} title={t("sidebar.knowledge")}
                             className="w-9 h-9 rounded-lg grid place-items-center hover:bg-[var(--ai-hover)]">
                             <ShieldCheck className="w-4 h-4" style={{ color: T.primary }} />
-                        </Link>
-                        <Link href={"/id" as never} title={t("sidebar.profile")}
+                        </button>
+                        <button type="button" onClick={() => openPanel("profile")} title={t("sidebar.profile")}
                             className="w-9 h-9 rounded-lg grid place-items-center hover:bg-[var(--ai-hover)]">
                             {myAvatar
                                 // eslint-disable-next-line @next/next/no-img-element
                                 ? <img src={myAvatar} alt="" className="w-6 h-6 rounded-md object-cover" />
                                 : <UserIcon className="w-4 h-4 opacity-60" />}
-                        </Link>
+                        </button>
                     </div>
                 )}
             </aside>
@@ -1793,6 +1832,103 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
             )}
 
             {/* Humo Live — real-vaqt ovozli suhbat overlay */}
+            {/* Profil / Bilim paneli — AI ichida (o'ng slide-over, AI'dan chiqmaydi) */}
+            {panel && (
+                <div className="fixed inset-0 z-[150] flex justify-end">
+                    <button className="absolute inset-0" style={{ background: "rgba(0,0,0,0.5)" }} onClick={() => setPanel(null)} aria-label={t("common.close")} />
+                    <div className="relative w-full max-w-md h-full flex flex-col" style={{ background: "var(--ai-menu)", borderLeft: `1px solid ${T.border}`, boxShadow: T.shadow }}>
+                        <div className="h-14 px-4 flex items-center justify-between border-b flex-shrink-0" style={{ borderColor: T.border }}>
+                            <div className="flex items-center gap-2">
+                                {panel === "profile"
+                                    ? <UserIcon className="w-4 h-4" style={{ color: T.primary }} />
+                                    : <ShieldCheck className="w-4 h-4" style={{ color: T.primary }} />}
+                                <span className="font-black text-sm">{panel === "profile" ? t("sidebar.profile") : t("sidebar.knowledge")}</span>
+                            </div>
+                            <button onClick={() => setPanel(null)} className="w-8 h-8 rounded-lg grid place-items-center hover:bg-[var(--ai-hover)]" style={{ color: "hsl(var(--muted-foreground))" }}>
+                                <XIcon className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4">
+                            {panelLoading ? (
+                                <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: T.primary }} /></div>
+                            ) : panel === "profile" ? (
+                                profileData ? (
+                                    <div className="space-y-1">
+                                        <div className="flex flex-col items-center text-center gap-2 pb-4">
+                                            {profileData.image
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                ? <img src={profileData.image} alt="" className="w-20 h-20 rounded-2xl object-cover" />
+                                                : <span className="w-20 h-20 rounded-2xl grid place-items-center" style={{ background: "var(--ai-raise)" }}><UserIcon className="w-9 h-9" style={{ color: "hsl(var(--muted-foreground))" }} /></span>}
+                                            <div>
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    <span className="font-black text-lg">{profileData.name || firstName || "—"}</span>
+                                                    {(profileData.isFounder || profileData.emailVerified) && <Check className="w-4 h-4" style={{ color: "#4ade80" }} />}
+                                                </div>
+                                                {profileData.username && <span className="text-[13px]" style={{ color: "hsl(var(--muted-foreground))" }}>@{profileData.username}</span>}
+                                            </div>
+                                            {profileData.isFounder && <span className="text-[10px] font-black px-2 py-0.5 rounded-full uppercase" style={{ background: "var(--ai-raise)", color: T.primary }}>{t("pp.founder")}</span>}
+                                        </div>
+                                        {([
+                                            [t("pp.humoId"), profileData.humoId],
+                                            [t("pp.email"), profileData.email],
+                                            [t("pp.level"), profileData.level != null ? `${profileData.level}` : null],
+                                            [t("pp.location"), [profileData.city, profileData.country].filter(Boolean).join(", ") || null],
+                                            [t("pp.bio"), profileData.bio],
+                                            [t("pp.since"), profileData.createdAt ? new Date(profileData.createdAt).toLocaleDateString(aiLang) : null],
+                                        ] as [string, string | null | undefined][]).filter(([, v]) => v).map(([label, value]) => (
+                                            <div key={label} className="flex items-start justify-between gap-3 py-2.5 border-b" style={{ borderColor: T.border }}>
+                                                <span className="text-[12px] flex-shrink-0" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</span>
+                                                <span className="text-[13px] font-medium text-right break-words min-w-0">{value}</span>
+                                            </div>
+                                        ))}
+                                        <Link href={"/id/edit" as never} className="mt-4 h-10 rounded-xl flex items-center justify-center gap-1.5 text-[12px] font-bold" style={{ background: "var(--ai-raise)", color: "hsl(var(--foreground))" }}>
+                                            <Pencil className="w-3.5 h-3.5" /> {t("pp.editFull")}
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    <p className="text-center text-sm py-12" style={{ color: "hsl(var(--muted-foreground))" }}>{t("pp.empty")}</p>
+                                )
+                            ) : (
+                                kbData ? (
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[12px] font-bold" style={{ color: "hsl(var(--muted-foreground))" }}>{tn("kbp.count", kbData.total)}</span>
+                                            {kbData.total > 0 && (
+                                                <button onClick={eraseAllKb} className="text-[11px] font-bold text-red-500 hover:underline flex items-center gap-1">
+                                                    <Trash2 className="w-3 h-3" /> {t("kbp.eraseAll")}
+                                                </button>
+                                            )}
+                                        </div>
+                                        <p className="text-[11px]" style={{ color: "hsl(var(--muted-foreground))" }}>{t("kbp.subtitle")}</p>
+                                        {kbData.total === 0 ? (
+                                            <p className="text-center text-sm py-8" style={{ color: "hsl(var(--muted-foreground))" }}>{t("kbp.empty")}</p>
+                                        ) : (
+                                            kbData.categories.filter(cat => (kbData.grouped[cat]?.length ?? 0) > 0).map(cat => (
+                                                <div key={cat}>
+                                                    <p className="text-[10px] font-black uppercase tracking-wider mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>{cat}</p>
+                                                    <div className="space-y-1.5">
+                                                        {kbData.grouped[cat].map(f => (
+                                                            <div key={f.id} className="flex items-start justify-between gap-2 p-2.5 rounded-lg" style={{ background: "var(--ai-bubble)" }}>
+                                                                <span className="text-[13px] min-w-0 break-words">{f.value}</span>
+                                                                <button onClick={() => deleteFact(f.id)} className="p-1 rounded hover:bg-red-500/10 text-red-500 flex-shrink-0" title={t("common.delete")}>
+                                                                    <XIcon className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-center text-sm py-12" style={{ color: "hsl(var(--muted-foreground))" }}>{t("kbp.empty")}</p>
+                                )
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {liveOpen && <HumoLive onClose={() => setLiveOpen(false)} lang={aiLang} />}
 
         </div>
