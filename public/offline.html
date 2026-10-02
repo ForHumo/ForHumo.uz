@@ -16,12 +16,13 @@
             max-width: 340px; text-align: center;
         }
         .icon {
-            width: 64px; height: 64px; border-radius: 16px;
-            background: rgba(245, 179, 1, 0.15);
+            width: 120px; height: 120px; border-radius: 28px;
+            background: #fff;
             display: inline-flex; align-items: center; justify-content: center;
-            margin-bottom: 20px;
-            color: #F5B301;
+            margin-bottom: 20px; overflow: hidden;
+            box-shadow: 0 12px 36px rgba(245, 179, 1, 0.18);
         }
+        .icon img { width: 108px; height: 108px; object-fit: contain; }
         h1 { font-size: 22px; font-weight: 900; margin: 0 0 8px; letter-spacing: -0.02em; }
         p { font-size: 14px; line-height: 1.5; color: #B8B8B8; margin: 0 0 24px; }
         button {
@@ -37,9 +38,7 @@
 <body>
     <div class="box">
         <div class="icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="9" x2="12" y2="2"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/><line x1="23" y1="22" x2="1" y2="2"/>
-            </svg>
+            <img src="/mascot/ummi.webp" alt="Ummi" />
         </div>
         <h1>Internet yo'q</h1>
         <p>Ulanish tiklangach yana urinib ko'ring. Ilgari ochgan sahifalar hozircha ochiq.</p>
