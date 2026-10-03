@@ -48,4 +48,10 @@ Ummi — For Humo super-app'ining **ko'k qush personaji va yagona AI yuzi**. U s
 - Shaxsiy ma'lumotni faqat kerakligicha, ruxsat bilan ishlatadi.
 
 ## 7. Shrift bilan bog'liqlik
-Ummi gaplari **"yoqimtoy" (rounded/do'stona) display shrift**da beriladi (O'zbek harflarini — oʻ, gʻ, ʼ — qo'llashi shart). Ilovaning asosiy matni odatdagi o'qishli shriftda qoladi. Tanlangan shrift: _[font sahifasidan keyin yoziladi]_.
+Ummi gaplari **"yoqimtoy" (rounded/do'stona) display shrift**da beriladi. Tanlangan shrift: **Fredoka** (O'zbek harflarini — oʻ, gʻ, ʼ — qo'llaydi). Faqat Ummi ovozi uchun; ilovaning asosiy matni odatdagi o'qishli shriftda qoladi.
+
+## 8. Audio ovoz (yo'nalish)
+- **Xarakter:** yosh, iliq, yorqin — **bola ovozi EMAS** (Ummi to'lov/jiddiy amallarni bajaradi; bolacha ovoz ishonchni buzadi). Shaxsiyat bilan mos: iliq, bosimsiz.
+- **Gender:** madaniy/brend qarori (founder). Standart iliq ayol ovozi keng yoqadi; erkak/neytral ham mumkin.
+- **Uzbek aksenti:** Uzbek — TTS uchun kam resursli; toza Uzbek ovoz cheklangan → sifat eshitib tekshiriladi. Variantlar: (1) multilingual AI TTS (arzon, hozir test), (2) Uzbek ovoz aktyori + rozilik bilan klon (autentik, keyin), (3) gibrid.
+- **Litsenziya:** AI TTS chiqgan audio provayder shartlari bo'yicha ishlatiladi (royalty yo'q, faqat API xarajati); aktyor = shartnoma; klon = rozilik shart.
