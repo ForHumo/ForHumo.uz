@@ -8,12 +8,10 @@ export default function NotFound() {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-[70vh] p-4 text-center gap-5">
-            {/* Ummi mascot — oq kartada (rasm foni oq, kartaga qo'shilib ketadi) */}
-            <div className="w-40 h-40 rounded-[28px] bg-white grid place-items-center overflow-hidden"
-                style={{ boxShadow: "0 14px 44px rgba(29,119,222,0.20)" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/mascot/ummi.webp" alt="Ummi" className="w-36 h-36 object-contain select-none" draggable={false} />
-            </div>
+            {/* Ummi mascot — shaffof fon, to'g'ridan (istalgan fonda ishlaydi) */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/mascot/ummi.webp" alt="Ummi" className="w-44 h-44 object-contain select-none"
+                draggable={false} style={{ filter: "drop-shadow(0 12px 28px rgba(29,119,222,0.22))" }} />
             <div>
                 <h2 className="text-5xl font-black mb-1">404</h2>
                 <p className="text-muted-foreground">{t("under_dev")}</p>
