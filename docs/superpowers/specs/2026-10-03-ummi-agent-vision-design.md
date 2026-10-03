@@ -68,7 +68,21 @@ Eski reja = **L1-L2**. Dots/Muse darajasi = **L4** (yillar narida). **Birinchi r
 
 1. **HOZIR:** shu vizyonni yozib qotirish (bu hujjat). ✅
 2. **KEYIN ($100 dizayn paketi bilan):** Ummi'ning to'liq vizual tizimi + animatsiya (Rive — ilova mascotlari uchun eng mos; yoki keyin 3D). Hozirgi CSS-animatsiya 404/offline'da test sifatida turibdi.
-3. **SO'NG:** L1 bo'lagini qurish — mavjud Humo AI ichida "taklif beruvchi Ummi" (eng kichik real qadam, pulsiz).
+3. **SO'NG:** L1 bo'lagini qurish — "taklif beruvchi Ummi" va quyidagi onboarding (eng kichik real qadam, pulsiz).
+
+## 8a. Birinchi real yuza — Ummi-yo'lboshchi onboarding (L0–L1)
+
+**Vazifa:** yangi foydalanuvchiga super-app bo'yicha bazaviy tushuncha berish; Ummi — yo'lboshchi. Bu Yo'nalish 2 (yo'lboshchi)ning birinchi, kichik ko'rinishi va L0→L1 ga ko'prik. Super-app ko'p modulli bo'lgani uchun "discovery" muammosini yechadi.
+
+**Ijro qoidasi (muhim — aks holda foydasiz bo'ladi):**
+- **Qisqa + o'tkazib yuborsa bo'ladigan (skip) + kontekstual.** Boshida uzun slayd/karusel EMAS.
+- Ummi har modulga **birinchi kirganda, o'sha joyda** qisqa ko'rsatma beradi; bo'sh holatlar ham o'rgatadi.
+
+**Ovoz va uslub (founder taklifi):**
+- Matn Ummi nomidan beriladi — `Ummi: ...` yoki speech-bubble, birinchi shaxs, do'stona ohang.
+- Ummi gaplari uchun **"yoqimtoy" (rounded/do'stona) display shrift** — LEKIN faqat Ummi ovozi uchun. Ilovaning asosiy matni odatdagi o'qishli shriftda qoladi (rounded shrift uzun matnda o'qishni qiyinlashtiradi, noprofessional ko'rinadi). Shrift O'zbek harflarini (oʻ, gʻ, ʼ) to'liq qo'llashi shart.
+
+**Pozalar (pack'dan):** salom (qo'l silkish — yaratiladi), ishora (barmoq — yaratiladi), Ummi-16 ("?"), Ummi-17 (lampochka/taklif), Ummi-21 (bayram/tamom), Ummi-3 (hero).
 
 ## 9. Ochiq savollar (keyin hal qilinadi)
 
