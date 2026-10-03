@@ -1,0 +1,81 @@
+# Ummi — For Humo AI personaji va agent vizyoni
+
+**Sana:** 2026-10-03
+**Holat:** Strategik vizyon (kelishilgan). Dizayn va qurilish keyinroq — pastdagi "Qamrov intizomi"ga qarang.
+**Qaror qabul qiluvchi:** Founder (Abduvohid). Tahlil: Claude.
+
+---
+
+## 1. Maqsad
+
+Ummi — For Humo super-app'ining **yagona AI personaji va yuzi**. U bezak (u yer-bu yerda chiqib turadigan animator) **emas** — foydalanuvchi uchun aniq ish bajaradigan **agentning tanasi**.
+
+## 2. Nega aynan hozir (raqobat manzarasi, 2026-10)
+
+2026-yil sentabrda jiddiy o'yinchilar bir xil modelga keldi: **"momiq/do'stona yuz = mustaqil agentning tanasi"**. Bu endi sanoat standarti, bezak emas.
+
+| Kompaniya | Personaj | Aslida nima qiladi |
+|---|---|---|
+| Meta | **Jolly** | "Muse" agenti — ilovalarda user uchun ish bajaradi; Connect'da "markaziy nuqta" |
+| OpenAI | **Dots** (2026-09-29) | ChatGPT ichida 24/7 fonda ishlaydigan agentlar; har biri bulut-kompyuter + 4000 ilova (GPT-6 Astra) |
+| Microsoft | **Mico** | Copilot'ning ovozli yuzi |
+| Grok (xAI) | **Ani / Rudi** | **Chetda** — o'yin-kulgi/hamroh (18+). Biz bu yo'lni NUSXALAMAYMIZ |
+
+Yumshoq yuzning vazifasi — AI'dan qo'rquvni ("AI-doomerism") kamaytirish, ishonch berish. Mascotli brendlar bozor ulushini oshirishda ~37% ustun (marketing tadqiqoti).
+
+## 3. Ummi — ta'rif va vazifa
+
+> **Ummi = For Humo'ning yagona ishonchli yuzi va orkestratori.** U foydalanuvchini o'rganadi, har joyda unga mos eng yaxshi takliflarni beradi, va **ruxsat/buyruq berilganda** ishni o'zi bajaradi — to'lov, sotib olish, rasmiylashtirish, yaratish kabi.
+
+Bu founder'ning eski rejasining davomi: *AI userni to'liq o'rganadi → har joyda mos takliflar → user ruxsat berganda mustaqil bajaradi.*
+
+## 4. Halol pozitsiya (qayerda yutamiz, qayerda yo'q)
+
+- ❌ **Model/infra kuchida Meta/OpenAI bilan raqobat — imkonsiz.** Ularda frontier modellar va milliardlab dollar bor. "Bizning AI aqlliroq" — yutqaziladigan jang.
+- ✅ **Native integratsiya + mahalliy ishonchda yutamiz.** Dots/Muse 4000 ta **begona** ilovaga plagin orqali ulanishga majbur (ruxsat, ishonch, tartibsizlik). For Humo o'z modullariga **ega** — Ummi Market/BN/eSport/to'lovda ishlashi uchun hech qanday integratsiya kerak emas. Native, to'liq ishonch, to'liq ma'lumot, ona tilda.
+- **Yutiladigan jang:** "internetdagi hamma narsani qiladigan agent" emas — **"O'zbek kundalik hayotining hammasini (ovqat, to'lov, o'yin, xarid, xabar) bir joyda, ona tilda, ishonch bilan bajaradigan yagona yuz."**
+
+## 5. Arxitektura
+
+**Pattern:** multi-agent orchestration (orkestrator + mutaxassis sub-agentlar).
+
+- **Yuzda — faqat Ummi.** User doim faqat Ummi bilan gaplashadi. Bitta tanish, ishonchli yuz.
+- **Orqada — ko'rinmas mutaxassis agentlar** (Market-agent, BN-agent, eSport-agent, To'lov-agent...). Har biri o'z sohasini chuqur biladi va kuzatib boradi. **Ular yuzsiz** — foydalanuvchiga ko'rinmaydi.
+- **Oqim:** user Ummi'ga buyruq beradi → Ummi vazifani bo'laklaydi, ko'rinmas mutaxassislardan ma'lumot yig'adi/topshiradi → mutaxassislar o'z bo'limida ishlaydi va hisobot qaytaradi → Ummi tahlil qiladi va **yakuniy qarorni** chiqaradi.
+- **Barcha qaytmas qarorlar (to'lov, sotib olish, rasmiylashtirish) FAQAT Ummi'da**, bitta nazorat nuqtasida, qat'iy gated (limit + tasdiq + undo + audit).
+
+> ⚠️ Brend qoidasi: har modulga **alohida ko'rinadigan mascot BERILMAYDI** (brend parchalanishi — 6 mascot = 0 mascot). Mutaxassis agentlar — texnik, yuzsiz. Keyinchalik ayrim modulga alohida personaj *ataylab brend kengaytmasi* sifatida qo'shilishi mumkin, lekin agent-mexanizmi sifatida emas.
+
+## 6. Avtonomiya zinapoyasi
+
+| Daraja | Ummi nima qiladi | Pul |
+|---|---|---|
+| **L0** | Yuz — javob beradi, yo'l ko'rsatadi | yo'q |
+| **L1** | Userni o'rganadi → shaxsiy taklif beradi (hamma modulda) | yo'q |
+| **L2** | Harakatni tayyorlaydi, user bir bosishda tasdiqlaydi | tasdiq bilan |
+| **L3** | Kam xavfli, qaytariladigan ishni o'zi bajaradi (user limiti ichida) | hali gated |
+| **L4** | To'liq delegatsiya — qat'iy byudjet/qoida + audit + darhol undo | avtonom, cheklangan |
+
+Eski reja = **L1-L2**. Dots/Muse darajasi = **L4** (yillar narida). **Birinchi real qadam = L1.**
+
+## 7. Qamrov intizomi (YAGNI — nima HOZIR EMAS)
+
+- To'liq agent-to'dasi (bir-biriga hisobot beradigan swarm) — **hozir emas.** Bu 2-3 yillik shimoliy yulduz. Katta laboratoriyalar ham swarm'ni "mo'rt va qimmat" deydi.
+- **Mustaqil pul harakati (L3-L4 to'lov) — eng oxirida va eng qattiq nazorat bilan.** Sabab: xavfsizlik (bug/prompt-injection hisobni bo'shatishi mumkin), ishonch (yangi user qo'rqadi), huquqiy (MChJ bor, bank/e-imzo yo'q). Sanoat ham bu yerda qoqildi ("safety setbacks"). Industry hard-line: AI mustaqil pul ko'chirmaydi — avval "tayyorlaydi → user tasdiqlaydi".
+- Dizayn/animatsiya — founder $100 dizayn paketini olgach boshlanadi (parked).
+
+## 8. Yaqin muddat ketma-ketligi
+
+1. **HOZIR:** shu vizyonni yozib qotirish (bu hujjat). ✅
+2. **KEYIN ($100 dizayn paketi bilan):** Ummi'ning to'liq vizual tizimi + animatsiya (Rive — ilova mascotlari uchun eng mos; yoki keyin 3D). Hozirgi CSS-animatsiya 404/offline'da test sifatida turibdi.
+3. **SO'NG:** L1 bo'lagini qurish — mavjud Humo AI ichida "taklif beruvchi Ummi" (eng kichik real qadam, pulsiz).
+
+## 9. Ochiq savollar (keyin hal qilinadi)
+
+- L1 qaysi moduldan boshlanadi (Humo AI chat ichidami yoki butun app bo'ylab)?
+- Mutaxassis agentlar texnik ravishda qanday quriladi (model, tool-calling, xotira) — $100 dizayndan keyin, alohida texnik spec.
+- Ummi'ning "userni o'rganishi" — qaysi ma'lumot, qanday ruxsat, qanday maxfiylik chegarasi (anti-spam va ishonch qoidalariga mos).
+
+---
+
+*Aloqador: Humo AI dizayni (sof qora monoxrom), Humo AI roadmap, anti-spam qoida.*
