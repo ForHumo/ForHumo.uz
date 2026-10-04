@@ -98,6 +98,12 @@ export function HumoLive({ onClose, lang = "uz" }: { onClose: () => void; lang?:
     const videoElRef = useRef<HTMLVideoElement | null>(null);
     const frameTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const lastCompleteRef = useRef(true);
+    // Transkript jamlash (suhbat tarixiga saqlash uchun)
+    const curUserRef = useRef("");
+    const curAiRef = useRef("");
+    const transcriptRef = useRef<{ role: string; body: string }[]>([]);
+    const savedRef = useRef(false);
+    const saveRef = useRef<() => Promise<void>>(async () => {});
 
     useEffect(() => { mutedRef.current = muted; }, [muted]);
     useEffect(() => { aiSpeakingRef.current = aiSpeaking; }, [aiSpeaking]);
@@ -273,11 +279,18 @@ export function HumoLive({ onClose, lang = "uz" }: { onClose: () => void; lang?:
         // Transkripsiya (karaoke) — yangi user gapi kelsa ikkalasini tozalaymiz
         const it = sc?.inputTranscription?.text;
         if (it) {
-            if (lastCompleteRef.current) { setCaptionUser(""); setCaptionAi(""); lastCompleteRef.current = false; }
+            if (lastCompleteRef.current) {
+                // oldingi turn tugadi — tarixga yig'amiz, so'ng yangisi uchun tozalaymiz
+                if (curUserRef.current.trim()) transcriptRef.current.push({ role: "user", body: curUserRef.current.trim() });
+                if (curAiRef.current.trim()) transcriptRef.current.push({ role: "ai", body: curAiRef.current.trim() });
+                curUserRef.current = ""; curAiRef.current = "";
+                setCaptionUser(""); setCaptionAi(""); lastCompleteRef.current = false;
+            }
+            curUserRef.current += it;
             setCaptionUser(prev => prev + it);
         }
         const ot = sc?.outputTranscription?.text;
-        if (ot) setCaptionAi(prev => prev + ot);
+        if (ot) { curAiRef.current += ot; setCaptionAi(prev => prev + ot); }
         for (const p of (sc?.modelTurn?.parts ?? [])) {
             const d = p.inlineData?.data;
             if (d) playChunk(base64ToFloat32(d));
@@ -287,6 +300,7 @@ export function HumoLive({ onClose, lang = "uz" }: { onClose: () => void; lang?:
 
     const start = useCallback(async () => {
         setErrorMsg(""); setCaptionUser(""); setCaptionAi(""); lastCompleteRef.current = true;
+        curUserRef.current = ""; curAiRef.current = ""; transcriptRef.current = []; savedRef.current = false;
         setStatus("connecting");
         // Autoplay siyosati: playback AudioContext'ni GESTURE ichida yaratamiz + resume
         try {
@@ -332,7 +346,26 @@ export function HumoLive({ onClose, lang = "uz" }: { onClose: () => void; lang?:
         }
     }, [voice, handleMessage, startMic, startViz]);
 
-    const end = useCallback(() => { cleanup(); setStatus("ended"); }, [cleanup]);
+    // Suhbatni tarixga saqlash (idempotent — bir marta). Oxirgi turnni ham yig'adi.
+    const saveIfNeeded = useCallback(async () => {
+        if (savedRef.current) return;
+        if (curUserRef.current.trim()) transcriptRef.current.push({ role: "user", body: curUserRef.current.trim() });
+        if (curAiRef.current.trim()) transcriptRef.current.push({ role: "ai", body: curAiRef.current.trim() });
+        curUserRef.current = ""; curAiRef.current = "";
+        const turns = transcriptRef.current;
+        const hasUser = turns.some(m => m.role === "user" && m.body.trim());
+        if (turns.length === 0 || !hasUser) { savedRef.current = true; return; }   // bo'sh/salom-only — saqlamaymiz
+        savedRef.current = true;
+        try {
+            await fetch("/api/ai/live/save", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ turns, lang }),
+            });
+        } catch { /* ignore */ }
+    }, [lang]);
+    useEffect(() => { saveRef.current = saveIfNeeded; }, [saveIfNeeded]);
+
+    const end = useCallback(() => { cleanup(); setStatus("ended"); void saveIfNeeded(); }, [cleanup, saveIfNeeded]);
 
     // Ovoz preview (play bosilganda — tanlash jim)
     const previewVoice = useCallback(async (voiceId: string) => {
@@ -365,7 +398,7 @@ export function HumoLive({ onClose, lang = "uz" }: { onClose: () => void; lang?:
         return () => clearInterval(id);
     }, [status]);
 
-    useEffect(() => () => { cleanup(); previewAudioRef.current?.pause(); }, [cleanup]);
+    useEffect(() => () => { cleanup(); previewAudioRef.current?.pause(); void saveRef.current(); }, [cleanup]);
 
     const mmss = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
     const statusText = status === "connecting" ? t("live.st.connecting")
@@ -384,7 +417,7 @@ export function HumoLive({ onClose, lang = "uz" }: { onClose: () => void; lang?:
                     <AudioLines className="w-5 h-5" style={{ color: "#ECECEC" }} />
                     <span className="font-black text-[var(--foreground)]">Humo Live</span>
                 </div>
-                <button onClick={() => { cleanup(); onClose(); }} className="w-9 h-9 grid place-items-center rounded-lg hover:bg-white/[0.08]" style={{ color: "var(--muted-foreground)" }}>
+                <button onClick={async () => { cleanup(); await saveIfNeeded(); onClose(); }} className="w-9 h-9 grid place-items-center rounded-lg hover:bg-white/[0.08]" style={{ color: "var(--muted-foreground)" }}>
                     <XIcon className="w-5 h-5" />
                 </button>
             </div>

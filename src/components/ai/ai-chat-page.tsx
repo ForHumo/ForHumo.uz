@@ -2108,7 +2108,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                 </div>
             )}
 
-            {liveOpen && <HumoLive onClose={() => setLiveOpen(false)} lang={aiLang} />}
+            {liveOpen && <HumoLive onClose={() => { setLiveOpen(false); loadConvs(); }} lang={aiLang} />}
 
         </div>
     );
