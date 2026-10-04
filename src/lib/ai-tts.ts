@@ -22,6 +22,40 @@ const GEMINI_TTS_MODEL = "gemini-3.8-flash-tts";
 export const GEMINI_TTS_VOICES = ["Kore", "Puck", "Orus", "Zephyr", "Charon", "Aoede", "Leda"] as const;
 export type GeminiTtsVoice = typeof GEMINI_TTS_VOICES[number];
 
+// Oxirgi "nafas/fchch" artefaktini kesadi. Gemini TTS audio oxirida past-energiyali nafas/shovqin
+// qo'shadi — faqat fade YETMAYDI (u jim emas). Nutq energiyasi tugagan nuqtani topib, 50ms margin
+// qoldirib qolgan dumni olib tashlaymiz. BARCHA AI TTS shu orqali o'tadi (chat TTS, kelajakda Ummi ovozi).
+function trimTrailingArtifact(pcmIn: Buffer, rate: number): Buffer {
+    let p = pcmIn;
+    if (p.length % 2 !== 0) p = p.subarray(0, p.length - 1);
+    const total = Math.floor(p.length / 2);
+    if (total < rate * 0.3) return p;                       // juda qisqa — tegmaymiz
+    const win = Math.max(1, Math.floor(rate * 0.02));       // 20ms oyna
+    const nWin = Math.ceil(total / win);
+    const env = new Array<number>(nWin);
+    let peak = 0;
+    for (let w = 0; w < nWin; w++) {
+        let sum = 0, cnt = 0; const s = w * win, e = Math.min(s + win, total);
+        for (let i = s; i < e; i++) { const v = p.readInt16LE(i * 2); sum += v * v; cnt++; }
+        const r = cnt ? Math.sqrt(sum / cnt) : 0; env[w] = r; if (r > peak) peak = r;
+    }
+    if (peak <= 0) return p;
+    const thr = Math.max(peak * 0.02, 150);                 // jimlik chegarasi
+    // Oxirgi tovushli oyna (artefaktning oxiri bo'lishi mumkin)
+    let last = nWin - 1; while (last >= 0 && env[last] < thr) last--;
+    if (last < 0) return p;
+    // Oxirgi portlashdan oldingi jimlik oralig'i
+    let k = last; while (k >= 0 && env[k] >= thr) k--;      // k = portlashdan oldingi oxirgi jim oyna
+    let g = k; while (g >= 0 && env[g] < thr) g--;          // g = haqiqiy nutqning oxirgi tovushli oynasi
+    const gapWin = k - g;                                   // nutq va portlash orasidagi jimlik (oyna)
+    const burstMs = (last - k) * 20;                        // oxirgi portlash davomiyligi
+    let cutWin: number;
+    if (k >= 0 && g >= 0 && gapWin >= 7 && burstMs <= 800) cutWin = g + 1;   // artefakt → nutqdan keyin kes
+    else cutWin = last + 1;                                 // artefakt yo'q — faqat oxirgi jimlikni kes
+    const cut = Math.min(total, cutWin * win + Math.floor(rate * 0.03));     // +30ms margin
+    return cut < Math.floor(rate * 0.3) ? p : p.subarray(0, cut * 2);
+}
+
 // Boshi/oxiriga qisqa fade — audio boshi/oxiridagi "pop/klik" (radio o'chgan ovozi)ni yo'qotadi.
 // 16-bit signed LE PCM. Toq bayt bo'lsa kesamiz (aks holda oxirgi sample buziladi = shovqin).
 function fadePcm(pcmIn: Buffer, rate: number, fadeMs = 35): Buffer {
@@ -159,7 +193,8 @@ export async function synthesizeGeminiWav(text: string, voice: GeminiTtsVoice = 
                 const pcm = Buffer.from(inline.data, "base64");
                 const mime = (inline as { mimeType?: string; mime_type?: string }).mimeType ?? (inline as { mime_type?: string }).mime_type ?? "";
                 const rate = Number(mime.match(/rate=(\d+)/)?.[1] ?? 24000);
-                return wavFromPcm(fadePcm(pcm, rate), rate);   // fade — oxiridagi "pop"ni yo'qotadi
+                const clean = trimTrailingArtifact(pcm, rate);           // oxiridagi nafas/"fchch"ni kes
+                return wavFromPcm(fadePcm(clean, rate, 55), rate);       // + fade (pop/klik)
             }
         }
         return null;
