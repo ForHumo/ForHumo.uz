@@ -6,7 +6,7 @@
 // Kalit brauzerda EMAS: /api/ai/live/token ephemeral token, @google/genai v1alpha.
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { GoogleGenAI, Modality, type Session, type LiveServerMessage } from "@google/genai";
+import { GoogleGenAI, Modality, Type, type Session, type LiveServerMessage, type FunctionCall, type FunctionDeclaration } from "@google/genai";
 import {
     X as XIcon, Mic, MicOff, PhoneOff, AudioLines, Loader2, Play, Square,
     Monitor, MonitorOff, Video, VideoOff, SwitchCamera,
@@ -65,6 +65,28 @@ function base64ToFloat32(b64: string): Float32Array {
     for (let i = 0; i < int16.length; i++) f32[i] = int16[i] / 32768;
     return f32;
 }
+
+// Kalendar tool — Ummi ovozda tadbir yaratadi/o'qiydi (mini-ilova = Ummi qobiliyati, modullararo POC).
+const CALENDAR_FN: FunctionDeclaration[] = [
+    {
+        name: "set_calendar_event",
+        description: "Foydalanuvchi kalendariga tadbir/uchrashuv/eslatma qo'shadi. datetime'ni hozirgi vaqtdan hisoblab ISO 8601 formatida ber.",
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                title: { type: Type.STRING, description: "Tadbir nomi" },
+                datetime: { type: Type.STRING, description: "Boshlanish vaqti, ISO 8601 (masalan 2026-10-06T15:00:00)" },
+                location: { type: Type.STRING, description: "Joy (ixtiyoriy)" },
+            },
+            required: ["title", "datetime"],
+        },
+    },
+    {
+        name: "list_calendar_events",
+        description: "Foydalanuvchining kelasi tadbirlarini o'qiydi (kalendarda nima borligini aytish uchun).",
+        parameters: { type: Type.OBJECT, properties: {} },
+    },
+];
 
 export function HumoLive({ onClose, lang = "uz" }: { onClose: () => void; lang?: AiLang }) {
     const t = useCallback((k: string) => aiT(lang, k), [lang]);
@@ -273,8 +295,36 @@ export function HumoLive({ onClose, lang = "uz" }: { onClose: () => void; lang?:
         source.connect(proc); proc.connect(sink); sink.connect(ctx.destination);
     }, []);
 
+    // Kalendar tool chaqiruvlarini bajaradi (Ummi uchrashuv belgilaydi / o'qiydi)
+    const runTools = useCallback(async (calls: FunctionCall[]) => {
+        const functionResponses: { id?: string; name?: string; response: Record<string, unknown> }[] = [];
+        for (const call of calls) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const args = (call.args ?? {}) as any;
+            let response: Record<string, unknown> = { ok: false };
+            try {
+                if (call.name === "set_calendar_event") {
+                    const r = await fetch("/api/ai/calendar", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ title: args.title, startsAt: args.datetime, location: args.location, source: "live" }),
+                    });
+                    response = r.ok ? { ok: true } : { ok: false, error: "failed" };
+                } else if (call.name === "list_calendar_events") {
+                    const r = await fetch("/api/ai/calendar", { cache: "no-store" });
+                    const j = await r.json().catch(() => ({ events: [] }));
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    response = { ok: true, events: ((j.events ?? []) as any[]).slice(0, 20).map((e) => ({ title: e.title, startsAt: e.startsAt, location: e.location })) };
+                }
+            } catch { response = { ok: false, error: "exception" }; }
+            functionResponses.push({ id: call.id, name: call.name, response });
+        }
+        try { sessionRef.current?.sendToolResponse({ functionResponses }); } catch { /* ignore */ }
+    }, []);
+
     const handleMessage = useCallback((msg: LiveServerMessage) => {
         const sc = msg.serverContent;
+        const tc = msg.toolCall;
+        if (tc?.functionCalls?.length) { void runTools(tc.functionCalls); }
         if (sc?.interrupted) { flushPlayback(); setCaptionAi(""); }
         // Transkripsiya (karaoke) — yangi user gapi kelsa ikkalasini tozalaymiz
         const it = sc?.inputTranscription?.text;
@@ -296,7 +346,7 @@ export function HumoLive({ onClose, lang = "uz" }: { onClose: () => void; lang?:
             if (d) playChunk(base64ToFloat32(d));
         }
         if (sc?.turnComplete) lastCompleteRef.current = true;
-    }, [flushPlayback, playChunk]);
+    }, [flushPlayback, playChunk, runTools]);
 
     const start = useCallback(async () => {
         setErrorMsg(""); setCaptionUser(""); setCaptionAi(""); lastCompleteRef.current = true;
@@ -322,11 +372,15 @@ export function HumoLive({ onClose, lang = "uz" }: { onClose: () => void; lang?:
                 model,
                 config: {
                     responseModalities: [Modality.AUDIO],
-                    systemInstruction: LIVE_SYS,
+                    systemInstruction: LIVE_SYS
+                        + `\n\nHOZIRGI VAQT: ${new Date().toISOString()} (Asia/Tashkent). `
+                        + "KALENDAR: foydalanuvchi uchrashuv/eslatma/tadbir belgilashni so'rasa set_calendar_event'ni chaqir "
+                        + "(datetime'ni hozirgi vaqtdan ISO 8601'da hisobla). Kalendarida nima borligini so'rasa list_calendar_events'ni chaqir. "
+                        + "Tadbir qo'shilgach qisqa tasdiqla.",
                     speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
                     inputAudioTranscription: {},
                     outputAudioTranscription: {},
-                    tools: [{ googleSearch: {} }],   // dolzarb ma'lumot (ob-havo/yangilik/kurs) uchun web-qidiruv
+                    tools: [{ googleSearch: {} }, { functionDeclarations: CALENDAR_FN }],   // web-qidiruv + kalendar (Ummi qobiliyati)
                 },
                 callbacks: {
                     onopen: () => { setStatus("live"); startViz(); },
