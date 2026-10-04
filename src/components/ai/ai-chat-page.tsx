@@ -10,13 +10,14 @@ import {
     Send, Loader2, Plus, MessageSquare, Sparkles, Trash2, LogIn,
     Archive, Menu, X as XIcon, User as UserIcon, Brain, ShieldCheck,
     Mic, MicOff, Paperclip, ImageIcon, Volume2, VolumeX, Share2, Check,
-    Code2, Globe, BookOpen, Mail, Film, Users, Clock, Cpu, ChevronDown, Copy, Download, Home,
+    Code2, Globe, BookOpen, Mail, Film, Users, Clock, Cpu, ChevronDown, Copy, Download, Home, Calendar as CalendarIcon,
     Music, Search, CheckSquare, Square, Link2Off, PanelLeftClose, PanelLeftOpen, RefreshCw, Pencil, AudioLines, Sun, Moon, Settings as SettingsIcon, LogOut, type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { AiStarfield } from "@/components/ai/ai-starfield";
 import { AiMarkdown } from "@/components/ai/ai-markdown";
 import { HumoLive } from "@/components/ai/humo-live";
+import { AiCalendarPanel } from "@/components/ai/ai-calendar-panel";
 import { AI_MODELS, DEFAULT_MODEL, findModel } from "@/lib/ai-models";
 import { aiT, aiTn, aiLangFromLocale, type AiLang } from "@/lib/ai-i18n";
 
@@ -347,6 +348,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
 
     // AI ichidagi Profil / Bilim / Sozlamalar paneli (AI'dan chiqmaydi — overlay)
     const [panel, setPanel] = useState<null | "profile" | "knowledge" | "settings">(null);
+    const [calOpen, setCalOpen] = useState(false);   // Kalendar mini-ilova paneli (Ummi qobiliyati)
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
     const [kbData, setKbData] = useState<KbData | null>(null);
     const [panelLoading, setPanelLoading] = useState(false);
@@ -1292,6 +1294,11 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                 {/* Bottom — sozlamalar */}
                 {showLabels ? (
                     <div className="p-2 border-t space-y-1 flex-shrink-0" style={{ borderColor: T.border }}>
+                        <button type="button" onClick={() => setCalOpen(true)}
+                            className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-[var(--ai-hover)]">
+                            <CalendarIcon className="w-3.5 h-3.5" style={{ color: T.primary }} />
+                            {t("sidebar.calendar")}
+                        </button>
                         <button type="button" onClick={() => openPanel("knowledge")}
                             className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium hover:bg-[var(--ai-hover)]">
                             <ShieldCheck className="w-3.5 h-3.5" style={{ color: T.primary }} />
@@ -1308,6 +1315,10 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                     </div>
                 ) : (
                     <div className="py-2 border-t flex flex-col items-center gap-1 flex-shrink-0" style={{ borderColor: T.border }}>
+                        <button type="button" onClick={() => setCalOpen(true)} title={t("sidebar.calendar")}
+                            className="w-9 h-9 rounded-lg grid place-items-center hover:bg-[var(--ai-hover)]">
+                            <CalendarIcon className="w-4 h-4" style={{ color: T.primary }} />
+                        </button>
                         <button type="button" onClick={() => openPanel("knowledge")} title={t("sidebar.knowledge")}
                             className="w-9 h-9 rounded-lg grid place-items-center hover:bg-[var(--ai-hover)]">
                             <ShieldCheck className="w-4 h-4" style={{ color: T.primary }} />
@@ -2109,6 +2120,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
             )}
 
             {liveOpen && <HumoLive onClose={() => { setLiveOpen(false); loadConvs(); }} lang={aiLang} />}
+            {calOpen && <AiCalendarPanel lang={aiLang} dark={dark} onClose={() => setCalOpen(false)} />}
 
         </div>
     );

@@ -1009,6 +1009,25 @@ model AiMessage {
   @@index([conversationId, createdAt])
 }
 
+// AI Kalendar — tadbirlar (Ummi o'qiydi/yozadi). Mini-ilova = Ummi qobiliyati (modullararo agent POC).
+model AiEvent {
+  id          String    @id @default(cuid())
+  profileId   String                                         // owner (faqat o'zi)
+  title       String                                         // tadbir nomi
+  startsAt    DateTime                                       // boshlanish
+  endsAt      DateTime?                                      // tugash (ixtiyoriy)
+  location    String?                                        // joy (matn; keyin xarita/geocode — v2 yo'l-vaqt)
+  note        String?                                        // izoh
+  allDay      Boolean   @default(false)
+  source      String    @default("user")                    // "user"|"live"|"chat"|"nexus"|... (kim yaratdi)
+  sourceRef   String?                                        // manba id (modullararo bog'lanish, masalan Nexus message)
+  remindAt    DateTime?                                      // eslatma vaqti (keyin push/notify)
+  done        Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@index([profileId, startsAt])
+}
+
 // Foydalanuvchi bilim bazasi — For Humo ekotizimi uni yaxshi tanishi uchun.
 // Har fakt shifrlangan (AES-GCM purpose="knowledge"), faqat egaga ko'rinadi.
 // Manba (source) transparency uchun — foydalanuvchi qayerdan olinganini ko'radi.

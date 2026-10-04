@@ -40,6 +40,16 @@ const DICT: Record<string, Record<AiLang, string>> = {
     "set.deleteChatsConfirm": { uz: "Barcha suhbatlaringiz butunlay o'chiriladi. Davom etamizmi?", ru: "Все ваши чаты будут удалены навсегда. Продолжить?", en: "All your chats will be permanently deleted. Continue?" },
     "set.eraseKb":  { uz: "Bilim to'plamini o'chirish", ru: "Очистить базу знаний", en: "Erase knowledge base" },
     "set.signOut":  { uz: "Chiqish",    ru: "Выйти",     en: "Sign out" },
+
+    // Kalendar (mini-ilova — Ummi qobiliyati)
+    "sidebar.calendar": { uz: "Kalendar", ru: "Календарь", en: "Calendar" },
+    "cal.title":   { uz: "Kalendar", ru: "Календарь", en: "Calendar" },
+    "cal.titlePh": { uz: "Tadbir nomi", ru: "Название события", en: "Event title" },
+    "cal.where":   { uz: "Joy (ixtiyoriy)", ru: "Место (необязательно)", en: "Place (optional)" },
+    "cal.save":    { uz: "Qo'shish", ru: "Добавить", en: "Add" },
+    "cal.empty":   { uz: "Hozircha tadbir yo'q. Birinchisini qo'shing yoki Humo Live'da ayting.", ru: "Пока нет событий. Добавьте первое или скажите в Humo Live.", en: "No events yet. Add one or say it in Humo Live." },
+    "cal.deleteConfirm": { uz: "Tadbir o'chirilsinmi?", ru: "Удалить событие?", en: "Delete this event?" },
+    "cal.fromLive": { uz: "Live", ru: "Live", en: "Live" },
     "model.premiumNote": {
         uz: "Premium modellar OpenRouter kaliti qo'shilganda ishlaydi",
         ru: "Премиум-модели заработают после добавления ключа OpenRouter",
