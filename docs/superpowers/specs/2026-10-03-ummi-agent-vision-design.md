@@ -84,6 +84,22 @@ Eski reja = **L1-L2**. Dots/Muse darajasi = **L4** (yillar narida). **Birinchi r
 
 **Pozalar (pack'dan):** salom (qo'l silkish — yaratiladi), ishora (barmoq — yaratiladi), Ummi-16 ("?"), Ummi-17 (lampochka/taklif), Ummi-21 (bayram/tamom), Ummi-3 (hero).
 
+## 8b. Mini-ilovalar = Ummi qobiliyatlari (2026-10-05, founder qarori)
+
+**Prinsip:** mini-ilovalar (Kalendar, Sheet...) Google nusxasi EMAS — ular Ummi o'qib/yozadigan **ma'lumot + harakat qatlamlari** (capabilities). Sodda bo'ladi; maqsad — Ummi'ga tuzilgan ma'lumot berish, Google bilan xususiyat-jangi emas. "Google'ni ilovada yutib bo'lmaydi; biz bog'liqlikда yutamiz."
+
+**Sehr = modullararo fikrlash** (Ummi ma'lumotga EGA). Founder misoli: Nexus chatда uchrashuv belgilanadi → Kalendarга tushadi → keyin Humo Live'да user "eslatma qo'y" deganда Ummi: *"o'sha kuni falon joyда falon bilan uchrashuvingiz bor (Nexus'да belgilangan), yo'l uzoq — ulgurmasligingiz mumkin"*. Google buni O'zbekistonда qila olmaydi (uning Kalendari Nexus/BN/joylashuvni bilmaydi).
+
+**Qoida — bittadan (YAGNI):** hammasi birvarakayiga EMAS. Bitta patternni ("Ummi modul ma'lumotini o'qiydi va yozadi") mukammal qilib, keyin kengaytiramiz.
+
+**BIRINCHI = Kalendar (proof-of-concept):**
+- **v1 (sodda):** tadbir yaratish (Ummi Live/chatда "ertaga soat 3da uchrashuv" → kalendar), o'qish, eslatma. Modullararo: Nexus chatда aytilgan uchrashuvni Ummi ko'radi va eslatadi.
+- **v2 (shimoliy yulduz):** yo'l-vaqt / joy xabardorligi (xarita) → "ulgurmaysiz" ogohlantirishi. v1'да VA'DA QILINMAYDI.
+
+**Excel/Sheets (sotuvchilar):** DEPRIORITIZED — to'liq Excel ulkan ish; sotuvchilarga oddiy jadval yoki BN'ning o'z vositalari yetadi. Aniq ehtiyoj paydo bo'lsa, yengil "sheet" keyin.
+
+**Texnik asos:** bog'liqlik uchun Ummi'ga **modullararo yagona retrieval** (Nexus/Kalendar/BN/Pay ma'lumotini o'qish) qatlami kerak — bu L2-L3 agent qurilishining o'zagi, arzimas emas. Maxfiylik: proaktiv o'qish **ruxsat/ishonch modeli** bilan (anti-spam qoidasi). Har mini-ilova orkestrator chaqiradigan "capability" sifatida ro'yxatdan o'tadi (4-bo'lim).
+
 ## 9. Ochiq savollar (keyin hal qilinadi)
 
 - L1 qaysi moduldan boshlanadi (Humo AI chat ichidami yoki butun app bo'ylab)?
