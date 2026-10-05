@@ -8,7 +8,7 @@ import { minAmount, roundMoney, convert, formatMoney } from "@/lib/money";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { after } from "next/server";
 import { triggerPayAgentDM } from "@/lib/pay-agent-trigger";
-import { notifyTelegramSimple } from "@/lib/telegram-notify";
+import { notifyTelegramRich } from "@/lib/telegram-notify";
 
 // POST /api/pay/transfer — username bo'yicha pul yuborish.
 // Yuboruvchi o'z valyutasida tanlaydi; qabul qiluvchi o'z valyutasida (kerak bo'lsa konvert) oladi.
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     const { toUsername, amount, note } = await req.json();
     if (!toUsername?.trim()) return NextResponse.json({ error: "Username kiritilmagan" }, { status: 400 });
 
-    const sender = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, username: true, country: true } });
+    const sender = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, name: true, username: true, country: true } });
     if (!sender) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
     const cleanUsername = toUsername.replace(/^@/, "").trim();
@@ -69,13 +69,16 @@ export async function POST(req: Request) {
         fromUsername: sender.username, note: desc,
     }));
 
-    // Qabul qiluvchiga Telegram bildirishnoma ("pul oldingiz")
-    after(() => void notifyTelegramSimple(
-        receiver.id,
-        "Pul oldingiz",
-        `@${sender.username ?? "Foydalanuvchi"} dan ${formatMoney(recvAmount, rCur)}` + (desc ? ` — ${desc}` : ""),
-        { preferBot: "pay", url: "/pay" },
-    ).catch(() => { /* jim */ }));
+    // Qabul qiluvchiga Telegram bildirishnoma ("pul oldingiz") — Ummi rasmi + yuboruvchi profili + izoh
+    after(() => void notifyTelegramRich(receiver.id, {
+        title: "Pul oldingiz",
+        body: formatMoney(recvAmount, rCur),
+        actor: { name: sender.name, username: sender.username },
+        note: desc,
+        imageUrl: "https://www.forhumo.uz/notif/pay.png",
+        url: "/pay",
+        preferBot: "pay",
+    }).catch(() => { /* jim */ }));
 
     return NextResponse.json({
         balance: result, currency: sCur,

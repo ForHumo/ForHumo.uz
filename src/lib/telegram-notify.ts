@@ -8,7 +8,7 @@
 // To'liq fail-safe — hech qachon throw qilmaydi (chaqiruvchini buzmaydi).
 
 import { prisma } from "@/lib/prisma";
-import { sendMessage, type BotKey } from "@/lib/telegram-bots";
+import { sendMessage, sendPhoto, type BotKey } from "@/lib/telegram-bots";
 
 /** profileId → bog'langan Telegram user id (yo'q bo'lsa null). */
 export async function getLinkedTelegramId(profileId: string): Promise<string | null> {
@@ -34,6 +34,7 @@ interface NotifyOpts {
     parseMode?: "HTML" | "MarkdownV2";
     replyMarkup?: object;               // Masalan Mini App ochish tugmasi
     disableWebPreview?: boolean;
+    imageUrl?: string;                  // Berilsa — sendPhoto (rasm + caption)
 }
 
 const HUB: BotKey = "humo_id";   // @ForHumo_IDBot — link orqali start bosilgan, kafolatlangan kanal
@@ -53,13 +54,16 @@ export async function notifyTelegram(profileId: string, text: string, opts: Noti
     let blocked = false;
     for (const bot of order) {
         try {
-            const res = await sendMessage(bot, {
-                chatId: tgId,
-                text,
-                parseMode: opts.parseMode ?? "HTML",
-                replyMarkup: opts.replyMarkup,
-                disableWebPreview: opts.disableWebPreview ?? true,
-            });
+            const res = opts.imageUrl
+                ? await sendPhoto(bot, {
+                    chatId: tgId, photoUrl: opts.imageUrl, caption: text,
+                    parseMode: opts.parseMode ?? "HTML", replyMarkup: opts.replyMarkup,
+                })
+                : await sendMessage(bot, {
+                    chatId: tgId, text,
+                    parseMode: opts.parseMode ?? "HTML", replyMarkup: opts.replyMarkup,
+                    disableWebPreview: opts.disableWebPreview ?? true,
+                });
             if (res.ok) return { sent: true };
             // 403 = foydalanuvchi bu botni start bosmagan yoki bloklagan → keyingisiga o'tamiz
             if (res.error_code === 403) { blocked = true; continue; }
@@ -98,4 +102,35 @@ export async function notifyTelegramSimple(
     const url = opts.url ? fullUrl(opts.url) : undefined;
     const replyMarkup = url ? { inline_keyboard: [[{ text: "Ochish", url }]] } : undefined;
     return notifyTelegram(profileId, text, { preferBot: opts.preferBot, replyMarkup, parseMode: "HTML" });
+}
+
+/** Boyitilgan bildirishnoma: ism + bosiladigan @username (→ Nexus ommaviy profil) +
+ *  izoh (blockquote/sitata) + ixtiyoriy Ummi rasmi + "Ochish" tugma.
+ *  Dinamik qismlar ichkarida escape qilinadi (xavfsiz). */
+export async function notifyTelegramRich(profileId: string, opts: {
+    title: string;
+    body?: string | null;
+    actor?: { name?: string | null; username?: string | null } | null;
+    note?: string | null;
+    imageUrl?: string | null;
+    url?: string | null;
+    preferBot?: BotKey;
+}): Promise<NotifyResult> {
+    const lines: string[] = [`<b>${escHtml(opts.title)}</b>`];
+    if (opts.body) lines.push(escHtml(opts.body));
+    if (opts.actor && (opts.actor.name || opts.actor.username)) {
+        const nm = opts.actor.name ? escHtml(opts.actor.name) : "";
+        const un = opts.actor.username
+            ? `<a href="https://www.forhumo.uz/nexus/u/${encodeURIComponent(opts.actor.username)}">@${escHtml(opts.actor.username)}</a>`
+            : "";
+        lines.push([nm, un].filter(Boolean).join(" · "));
+    }
+    if (opts.note) lines.push(`<blockquote>${escHtml(opts.note)}</blockquote>`);
+    const text = lines.join("\n");
+    const url = opts.url ? fullUrl(opts.url) : undefined;
+    const replyMarkup = url ? { inline_keyboard: [[{ text: "Ochish", url }]] } : undefined;
+    return notifyTelegram(profileId, text, {
+        preferBot: opts.preferBot, replyMarkup,
+        imageUrl: opts.imageUrl ?? undefined, parseMode: "HTML",
+    });
 }

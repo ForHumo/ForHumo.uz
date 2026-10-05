@@ -190,6 +190,23 @@ export async function sendMessage(bot: BotKey, params: {
     });
 }
 
+/** Rasm + caption yuborish (URL bo'yicha). Bildirishnomalar uchun (Ummi rasmi). */
+export async function sendPhoto(bot: BotKey, params: {
+    chatId: number | string;
+    photoUrl: string;
+    caption?: string;
+    parseMode?: "HTML" | "MarkdownV2";
+    replyMarkup?: object;
+}): Promise<TgResponse<{ message_id: number }>> {
+    return tgCall<{ message_id: number }>(bot, "sendPhoto", {
+        chat_id: params.chatId,
+        photo: params.photoUrl,
+        caption: params.caption,
+        parse_mode: params.parseMode,
+        reply_markup: params.replyMarkup,
+    });
+}
+
 /** Chat action (typing) — Humo AI uchun ham qayta ishlatiladi. */
 export async function sendChatAction(bot: BotKey, chatId: number | string, action: "typing" | "upload_photo" | "record_voice" | "upload_voice" = "typing"): Promise<TgResponse<boolean>> {
     return tgCall(bot, "sendChatAction", { chat_id: chatId, action });

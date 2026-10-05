@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { notifyTelegramSimple } from "@/lib/telegram-notify";
+import { notifyTelegramRich } from "@/lib/telegram-notify";
 
 type NotifType =
     | "REVIEW_LIKE" | "PRODUCT_REVIEW" | "BRAND_REVIEW"
@@ -32,6 +32,10 @@ export async function notify(profileId: string, n: NotifInput) {
     }
     // Buyurtma/sotuv bildirishnomalari Telegram'ga ham (ORDER_* — sharh/savol shovqini emas)
     if (n.type.startsWith("ORDER")) {
-        void notifyTelegramSimple(profileId, n.title, n.body, { preferBot: "market", url: n.link }).catch(() => { /* jim */ });
+        void notifyTelegramRich(profileId, {
+            title: n.title, body: n.body,
+            imageUrl: "https://www.forhumo.uz/notif/order.png",
+            url: n.link, preferBot: "market",
+        }).catch(() => { /* jim */ });
     }
 }
