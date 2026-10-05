@@ -1,11 +1,22 @@
 "use client";
 
 // Humo ID → Telegram bog'lash kartochkasi.
-// Foydalanuvchi tugmani bosadi → 6-belgi kod olinadi → bot deep-link ochiladi →
-// bot avto-tekshiradi va bog'laydi. Muvaffaqiyatli bo'lsa "Bog'langan" holat.
+// Bir bosishda: kod olinadi → @ForHumo_IDBot deep-link ochiladi (kod avto-yuboriladi) →
+// bot avto-bog'laydi va "ulandi + ortga qaytish" xabarini beradi. Karta avto-tekshiradi
+// (foydalanuvchi qaytganda o'zi "Bog'langan" holatига o'tadi).
 
-import { useCallback, useEffect, useState } from "react";
-import { Copy, ExternalLink, Loader2, Check, X, Send } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Copy, ExternalLink, Loader2, Check, X } from "lucide-react";
+
+// Original Telegram logotipi (ko'k doira + oq samolyot)
+function TelegramIcon({ className }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+            <circle cx="12" cy="12" r="12" fill="#229ED9" />
+            <path fill="#fff" d="M5.49 11.78 16.4 7.57c.5-.18.95.12.78.89l-1.86 8.78c-.13.6-.49.75-1 .47l-2.76-2.03-1.33 1.28c-.15.15-.27.27-.55.27l.2-2.82 5.12-4.63c.22-.2-.05-.31-.34-.11l-6.33 3.98-2.73-.85c-.59-.19-.6-.59.13-.88z" />
+        </svg>
+    );
+}
 
 interface StatusResp {
     linked: boolean;
@@ -16,8 +27,6 @@ interface CodeResp {
     expiresAt: string;
     botUsername: string;
     deepLink: string;
-    bnBot: string;
-    bnDeepLink: string;
 }
 
 export function TelegramLinkCard() {
@@ -25,30 +34,64 @@ export function TelegramLinkCard() {
     const [code, setCode] = useState<CodeResp | null>(null);
     const [loading, setLoading] = useState(true);
     const [issuing, setIssuing] = useState(false);
+    const [opened, setOpened] = useState(false);
     const [copied, setCopied] = useState(false);
     const [unlinking, setUnlinking] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const pollRef = useRef<number | null>(null);
 
     const load = useCallback(async () => {
-        setLoading(true);
         try {
             const r = await fetch("/api/user/telegram/status", { cache: "no-store" });
-            if (r.ok) setStatus(await r.json());
+            if (r.ok) {
+                const j: StatusResp = await r.json();
+                setStatus(j);
+                return j.linked;
+            }
         } catch { /* noop */ }
-        finally { setLoading(false); }
+        return false;
     }, []);
 
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        void (async () => { await load(); setLoading(false); })();
+    }, [load]);
 
-    const issue = useCallback(async () => {
+    // Deep-link ochilgandan keyin avto-tekshirish (3 soniyada, ~2.5 daqiqa)
+    useEffect(() => {
+        if (!opened) return;
+        let ticks = 0;
+        pollRef.current = window.setInterval(async () => {
+            ticks++;
+            const linked = await load();
+            if (linked || ticks > 50) {
+                if (pollRef.current) window.clearInterval(pollRef.current);
+                pollRef.current = null;
+                if (linked) { setOpened(false); setCode(null); }
+            }
+        }, 3000);
+        return () => { if (pollRef.current) window.clearInterval(pollRef.current); };
+    }, [opened, load]);
+
+    // Bir bosishda: kod ol → Telegram'da @ForHumo_IDBot'ni och (popup-bloker'ga qarshi
+    // oynani darhol ochib, keyin manzilini qo'yamiz)
+    const connect = useCallback(async () => {
         setIssuing(true);
         setError(null);
+        const win = window.open("", "_blank");
         try {
             const r = await fetch("/api/user/telegram/link-code", { method: "POST" });
             const j = await r.json();
-            if (r.ok) setCode(j);
-            else setError(j.error ?? "xato");
+            if (r.ok) {
+                setCode(j);
+                setOpened(true);
+                if (win) win.location.href = j.deepLink;
+                else window.location.href = j.deepLink;
+            } else {
+                if (win) win.close();
+                setError(j.error ?? "xato");
+            }
         } catch {
+            if (win) win.close();
             setError("tarmoq xato");
         } finally { setIssuing(false); }
     }, []);
@@ -66,17 +109,9 @@ export function TelegramLinkCard() {
         try {
             await fetch("/api/user/telegram/status", { method: "DELETE" });
             await load();
+            setOpened(false); setCode(null);
         } finally { setUnlinking(false); }
     }, [load]);
-
-    // Kod muddati o'tsa avtomatik ekrandan olib tashlaymiz
-    useEffect(() => {
-        if (!code) return;
-        const ms = new Date(code.expiresAt).getTime() - Date.now();
-        if (ms <= 0) { setCode(null); return; }
-        const t = window.setTimeout(() => setCode(null), ms);
-        return () => window.clearTimeout(t);
-    }, [code]);
 
     if (loading) {
         return (
@@ -95,7 +130,9 @@ export function TelegramLinkCard() {
                         <Check className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm">Telegram bog'langan</div>
+                        <div className="font-medium text-sm flex items-center gap-1.5">
+                            <TelegramIcon className="w-4 h-4" /> Telegram bog'langan
+                        </div>
                         <div className="text-xs text-muted-foreground mt-0.5 truncate">
                             {status.identity.username ? `@${status.identity.username} · ` : ""}
                             ID {status.identity.providerId}
@@ -111,8 +148,8 @@ export function TelegramLinkCard() {
                     </button>
                 </div>
                 <div className="text-xs text-muted-foreground">
-                    Endi For Humo botlari sizni taniydi va muhim bildirishnomalar (buyurtma, to'lov,
-                    yutuq va h.k.) Telegram'ga ham keladi. Har bir modul boti o'z Mini App'ини ochadi.
+                    Muhim bildirishnomalar (buyurtma, to'lov, yutuq) Telegram'ga ham keladi.
+                    Har bir modul boti o'z Mini App'ини ochadi.
                 </div>
             </div>
         );
@@ -121,8 +158,8 @@ export function TelegramLinkCard() {
     return (
         <div className="rounded-xl border border-border/50 p-4 space-y-3">
             <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-sky-500/15 text-sky-600 flex items-center justify-center">
-                    <Send className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-lg bg-[#229ED9]/10 flex items-center justify-center">
+                    <TelegramIcon className="w-6 h-6" />
                 </div>
                 <div className="flex-1">
                     <div className="font-medium text-sm">Telegram'ga bog'lash</div>
@@ -132,77 +169,61 @@ export function TelegramLinkCard() {
                 </div>
             </div>
 
-            {!code ? (
+            <ul className="text-xs text-muted-foreground space-y-1 pl-4 list-disc">
+                <li>Muhim bildirishnomalar Telegram'ga ham keladi (buyurtma, to'lov, yutuq)</li>
+                <li>Har bir bot o'z Mini App'ини Telegram ichida ochadi</li>
+                <li>@ForHumo_AIBot — barcha modul haqida AI savol-javob</li>
+            </ul>
+
+            {!opened ? (
                 <>
-                    <ul className="text-xs text-muted-foreground space-y-1 pl-4 list-disc">
-                        <li>Muhim bildirishnomalar Telegram'ga ham keladi (buyurtma, to'lov, yutuq)</li>
-                        <li>Har bir bot o'z Mini App'ини Telegram ichida ochadi</li>
-                        <li>@ForHumo_AIBot — barcha modul haqida AI savol-javob</li>
-                    </ul>
                     <button
-                        onClick={issue}
+                        onClick={connect}
                         disabled={issuing}
-                        className="w-full py-2 rounded-lg bg-sky-600 text-white text-sm font-medium disabled:opacity-50 hover:bg-sky-700 flex items-center justify-center gap-1.5"
+                        className="w-full py-2.5 rounded-lg bg-[#229ED9] text-white text-sm font-medium disabled:opacity-50 hover:bg-[#1c8dc2] flex items-center justify-center gap-2"
                     >
-                        {issuing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                        Bog'lash uchun kod olish
+                        {issuing ? <Loader2 className="w-4 h-4 animate-spin" /> : <TelegramIcon className="w-4 h-4" />}
+                        Telegram'ga bog'lash
                     </button>
                     {error && <div className="text-xs text-rose-600">{error}</div>}
                 </>
             ) : (
-                <>
-                    <div className="rounded-lg border border-dashed border-sky-500/40 bg-sky-500/5 p-3">
-                        <div className="text-xs text-muted-foreground mb-1">Sizning kod (10 daqiqa amal qiladi):</div>
-                        <div className="flex items-center gap-2">
-                            <code className="flex-1 text-2xl font-mono font-bold text-center py-2 tracking-widest">
-                                {code.code}
-                            </code>
-                            <button
-                                onClick={copyCode}
-                                className="p-2 rounded border border-border hover:bg-muted"
-                                title="Nusxa"
+                <div className="space-y-2.5">
+                    <div className="rounded-lg border border-[#229ED9]/30 bg-[#229ED9]/5 p-3 text-xs text-muted-foreground flex items-start gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin text-[#229ED9] mt-0.5 flex-shrink-0" />
+                        <span>
+                            Telegram ochildi. Botда <b>«Ishga tushirish / Start»</b> tugmasini bosing —
+                            avtomatik bog'lanadi. Keyin shu sahifaga qaytsangiz, o'zi yangilanadi.
+                        </span>
+                    </div>
+
+                    {code && (
+                        <div className="text-[11px] text-muted-foreground space-y-1.5">
+                            <div className="flex items-center gap-2">
+                                <span>Ochilmadimi? Kod:</span>
+                                <code className="font-mono font-bold tracking-widest text-foreground">{code.code}</code>
+                                <button onClick={copyCode} className="p-1 rounded border border-border hover:bg-muted" title="Nusxa">
+                                    {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                                </button>
+                            </div>
+                            <a
+                                href={code.deepLink}
+                                target="_blank"
+                                rel="noopener"
+                                className="inline-flex items-center gap-1 text-[#229ED9] hover:underline"
                             >
-                                {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                            </button>
+                                @{code.botUsername}'ni qo'lda ochish <ExternalLink className="w-3 h-3" />
+                            </a>
                         </div>
-                    </div>
-
-                    <div className="space-y-2 text-xs text-muted-foreground">
-                        Botni oching va kod'ni yuboring:
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                        <a
-                            href={code.deepLink}
-                            target="_blank"
-                            rel="noopener"
-                            className="text-center py-2 rounded-lg border border-border hover:bg-muted text-xs flex items-center justify-center gap-1"
-                        >
-                            @{code.botUsername}
-                            <ExternalLink className="w-3 h-3" />
-                        </a>
-                        <a
-                            href={code.bnDeepLink}
-                            target="_blank"
-                            rel="noopener"
-                            className="text-center py-2 rounded-lg border border-border hover:bg-muted text-xs flex items-center justify-center gap-1"
-                        >
-                            @{code.bnBot}
-                            <ExternalLink className="w-3 h-3" />
-                        </a>
-                    </div>
-
-                    <div className="text-[11px] text-muted-foreground">
-                        Yoki bot chatida qo'lda yozing: <code>/link {code.code}</code>
-                    </div>
+                    )}
 
                     <button
                         onClick={() => { void load(); }}
-                        className="w-full py-1.5 rounded text-xs text-sky-600 hover:underline"
+                        className="w-full py-1.5 rounded text-xs text-[#229ED9] hover:underline"
                     >
                         Bog'landimi tekshirish
                     </button>
-                </>
+                </div>
             )}
         </div>
     );

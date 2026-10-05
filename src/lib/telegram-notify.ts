@@ -36,7 +36,7 @@ interface NotifyOpts {
     disableWebPreview?: boolean;
 }
 
-const HUB: BotKey = "forhumo";
+const HUB: BotKey = "humo_id";   // @ForHumo_IDBot — link orqali start bosilgan, kafolatlangan kanal
 
 /**
  * Bog'langan Humo ID'ga Telegram xabar yuboradi. preferBot → bloklansa HUB fallback.

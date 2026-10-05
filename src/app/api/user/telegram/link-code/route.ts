@@ -23,7 +23,7 @@ async function issue() {
     if (!profile) return NextResponse.json({ error: "profile_not_found" }, { status: 404 });
 
     const { code, expiresAt } = await createLinkCode(profile.id);
-    const botUsername = BOTS.forhumo.username;   // Hub — bildirishnoma shu orqali kafolatlanadi
+    const botUsername = BOTS.humo_id.username;   // @ForHumo_IDBot — identity/bog'lash boti
     return NextResponse.json({
         code,
         expiresAt: expiresAt.toISOString(),

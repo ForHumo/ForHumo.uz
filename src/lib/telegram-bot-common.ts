@@ -53,8 +53,11 @@ export async function tryHandleLinkCommand(opts: {
 
     const startMatch = text.match(/^\/start\s+link_([A-Z0-9]{6,8})$/i);
     const linkMatch = text.match(/^\/link\s+([A-Z0-9]{6,8})$/i);
+    // Yalang'och kod (foydalanuvchi faqat kodni tashlasa) — kod alifbosiga qat'iy mos bo'lsa
+    const bareMatch = text.match(/^([ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6})$/);
     if (startMatch) code = startMatch[1];
     else if (linkMatch) code = linkMatch[1];
+    else if (bareMatch) code = bareMatch[1];
     if (!code) return false;
 
     const result = await claimLinkCode(code, opts.telegramUserId, opts.telegramUsername, null, opts.bot);
@@ -79,24 +82,21 @@ export async function tryHandleLinkCommand(opts: {
 
 function linkedSuccessText(lang: Lang, name: string, humoId: string | null): string {
     if (lang === "ru") {
-        return `<b>Готово!</b> Ваш Telegram привязан к Humo ID.\n\n` +
+        return `<b>Telegram подключён!</b>\n\n` +
             `Приветствую, <b>${escapeHtml(name)}</b>!${humoId ? ` (${humoId})` : ""}\n\n` +
-            `Теперь оба бота (@ForHumo_AIBot и @bozornarxidabot) знают, что это вы. ` +
-            `Можно спрашивать о своих заказах, кошельке, продуктах и т.д.` +
-            forHumoEcosystemBlock(lang);
+            `Теперь важные уведомления (заказы, оплаты, достижения) будут приходить сюда. ` +
+            `Можете вернуться на сайт: <a href="${FOR_HUMO_URL}/id">forhumo.uz/id</a>`;
     }
     if (lang === "en") {
-        return `<b>Done!</b> Your Telegram is linked to Humo ID.\n\n` +
+        return `<b>Telegram connected!</b>\n\n` +
             `Welcome, <b>${escapeHtml(name)}</b>!${humoId ? ` (${humoId})` : ""}\n\n` +
-            `Both bots (@ForHumo_AIBot and @bozornarxidabot) now know it's you. ` +
-            `Ask about your orders, wallet, products, etc.` +
-            forHumoEcosystemBlock(lang);
+            `Important notifications (orders, payments, achievements) will now arrive here. ` +
+            `You can go back to: <a href="${FOR_HUMO_URL}/id">forhumo.uz/id</a>`;
     }
-    return `<b>Tayyor!</b> Sizning Telegram Humo ID'ga bog'landi.\n\n` +
+    return `<b>Telegram ulandi!</b>\n\n` +
         `Xush kelibsiz, <b>${escapeHtml(name)}</b>!${humoId ? ` (${humoId})` : ""}\n\n` +
-        `Endi ikkala bot ham (@ForHumo_AIBot va @bozornarxidabot) sizni taniydi. ` +
-        `Buyurtmalaringiz, hamyoningiz, mahsulotlaringiz haqida savol bering.` +
-        forHumoEcosystemBlock(lang);
+        `Endi muhim bildirishnomalar (buyurtma, to'lov, yutuq) shu yerga keladi. ` +
+        `Saytga qaytishingiz mumkin: <a href="${FOR_HUMO_URL}/id">forhumo.uz/id</a>`;
 }
 
 function linkedErrorText(lang: Lang, error?: string): string {
