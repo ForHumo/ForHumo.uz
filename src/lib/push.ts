@@ -30,6 +30,7 @@ export interface PushPayload {
      *  Nexus mayda ijtimoiy shovqin (like/izoh) Telegram'ga ketmasligi uchun. */
     tg?: boolean;
     tgPreferBot?: import("@/lib/telegram-bots").BotKey;   // modul boti; bloklansa hub fallback
+    tgImageUrl?: string;                                   // Telegram'da rasm (Ummi) — sendPhoto
 }
 
 function escTgHtml(s: string): string {
@@ -69,7 +70,7 @@ export async function sendPushToProfile(profileId: string, payload: PushPayload)
             const replyMarkup = payload.url
                 ? { inline_keyboard: [[{ text: "Ochish", url: payload.url }]] }
                 : undefined;
-            await notifyTelegram(profileId, text, { preferBot: payload.tgPreferBot, replyMarkup, parseMode: "HTML" });
+            await notifyTelegram(profileId, text, { preferBot: payload.tgPreferBot, replyMarkup, parseMode: "HTML", imageUrl: payload.tgImageUrl });
         } catch { /* Telegram xato asosiy amalni buzmaydi */ }
     }
 }

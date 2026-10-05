@@ -4,7 +4,7 @@
 import { prisma } from "@/lib/prisma";
 import { sendAgentDM } from "@/lib/nexus-agent-send";
 import { nexusNotify } from "@/lib/nexus-notify";
-import { notifyTelegramSimple } from "@/lib/telegram-notify";
+import { notifyTelegramRich } from "@/lib/telegram-notify";
 
 interface Params {
     ticketId: string;
@@ -76,7 +76,7 @@ export async function triggerSupportAgentDM(p: Params): Promise<void> {
         }
 
         // Telegram bildirishnoma (support javobi / holat o'zgarishi)
-        void notifyTelegramSimple(ticket.profileId, title, body || ticket.subject, { preferBot: "support", url: "/support" }).catch(() => { /* jim */ });
+        void notifyTelegramRich(ticket.profileId, { title, body: body || ticket.subject, imageUrl: "https://www.forhumo.uz/notif/support.png", url: "/support", preferBot: "support" }).catch(() => { /* jim */ });
     } catch (e) {
         console.error("triggerSupportAgentDM failed:", e);
     }

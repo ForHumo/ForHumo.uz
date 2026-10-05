@@ -42,6 +42,7 @@ export async function bnNotify(input: {
             tag: `bn:${input.type}`,
             tg: true,                       // Telegram'ga ham (buyurtma/return/... muhim)
             tgPreferBot: "bozor_narxida",   // bloklansa hub fallback
+            tgImageUrl: "https://www.forhumo.uz/notif/order.png",
         });
     } catch { /* ignore */ }
 }

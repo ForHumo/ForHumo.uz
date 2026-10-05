@@ -106,6 +106,7 @@ export async function grantAchievement(profileId: string, code: string, meta?: R
             url: def.category === "bn" ? "https://bozornarxida.uz/kabinet" : undefined,
             tag: `ach:${def.code}`,
             tg: true,   // Yutuq — Telegram'ga ham (hub orqали)
+            tgImageUrl: "https://www.forhumo.uz/notif/achievement.png",
         }).catch(() => { /* ignore */ });
         return true;
     } catch { return false; }
