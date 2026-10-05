@@ -1,13 +1,14 @@
 // Multi-bot Telegram API wrapper.
-// For Humo'da hozir 2 bot ishlaydi:
-//   - humo_ai           → @ForHumo_AIBot   (universal AI + Business Mode)
-//   - bozor_narxida     → @bozornarxidabot (marketplace bot)
-//
-// Har bot uchun alohida token va webhook secret env'da:
-//   HUMO_BOT_TOKEN + HUMO_BOT_WEBHOOK_SECRET
-//   BN_BOT_TOKEN   + BN_BOT_WEBHOOK_SECRET
+// For Humo'da 10 bot — har biri Mini App (web_app) + /start + Humo ID link.
+//   forhumo, humo_id, humo_ai, nexus, esport, market, pay, bozor_narxida, ummi, support
+// humo_ai va bozor_narxida — o'z boy webhook route'lari bor (AI chat / BN).
+// Qolgan 8 tasi — umumiy dinamik route (/api/telegram/[bot]/webhook) +
+// telegram-bot-generic.ts (salom + Mini App tugma + Humo ID bog'lash).
+// Har bot uchun token/secret env'da (BOTS[key].tokenEnvKey / secretEnvKey).
 
-export type BotKey = "humo_ai" | "bozor_narxida";
+export type BotKey =
+    | "forhumo" | "humo_id" | "humo_ai" | "nexus" | "esport"
+    | "market" | "pay" | "bozor_narxida" | "ummi" | "support";
 
 export interface BotInfo {
     key: BotKey;
@@ -16,9 +17,31 @@ export interface BotInfo {
     secretEnvKey: string;
     webhookPath: string;                           // /api/... (host'siz)
     label: string;                                 // Odam o'qiydigan nom
+    miniAppUrl: string;                            // Telegram Mini App (web_app) URL
+    generic?: boolean;                             // true = umumiy dinamik handler ishlatadi
 }
 
 export const BOTS: Record<BotKey, BotInfo> = {
+    forhumo: {
+        key: "forhumo",
+        username: "ForHumoBot",
+        tokenEnvKey: "FORHUMO_BOT_TOKEN",
+        secretEnvKey: "FORHUMO_BOT_WEBHOOK_SECRET",
+        webhookPath: "/api/telegram/forhumo/webhook",
+        label: "For Humo",
+        miniAppUrl: "https://forhumo.uz",
+        generic: true,
+    },
+    humo_id: {
+        key: "humo_id",
+        username: "ForHumo_IDBot",
+        tokenEnvKey: "HUMO_ID_BOT_TOKEN",
+        secretEnvKey: "HUMO_ID_BOT_WEBHOOK_SECRET",
+        webhookPath: "/api/telegram/humo_id/webhook",
+        label: "Humo ID",
+        miniAppUrl: "https://forhumo.uz/id",
+        generic: true,
+    },
     humo_ai: {
         key: "humo_ai",
         username: "ForHumo_AIBot",
@@ -26,6 +49,47 @@ export const BOTS: Record<BotKey, BotInfo> = {
         secretEnvKey: "HUMO_BOT_WEBHOOK_SECRET",
         webhookPath: "/api/telegram/humo-bot/webhook",
         label: "Humo AI",
+        miniAppUrl: "https://forhumo.uz/ai",
+    },
+    nexus: {
+        key: "nexus",
+        username: "ForHumo_NexusBot",
+        tokenEnvKey: "NEXUS_BOT_TOKEN",
+        secretEnvKey: "NEXUS_BOT_WEBHOOK_SECRET",
+        webhookPath: "/api/telegram/nexus/webhook",
+        label: "Humo Nexus",
+        miniAppUrl: "https://forhumo.uz/nexus",
+        generic: true,
+    },
+    esport: {
+        key: "esport",
+        username: "ForHumo_eSportBot",
+        tokenEnvKey: "ESPORT_BOT_TOKEN",
+        secretEnvKey: "ESPORT_BOT_WEBHOOK_SECRET",
+        webhookPath: "/api/telegram/esport/webhook",
+        label: "Humo eSport",
+        miniAppUrl: "https://forhumo.uz/esport",
+        generic: true,
+    },
+    market: {
+        key: "market",
+        username: "ForHumo_MarketBot",
+        tokenEnvKey: "MARKET_BOT_TOKEN",
+        secretEnvKey: "MARKET_BOT_WEBHOOK_SECRET",
+        webhookPath: "/api/telegram/market/webhook",
+        label: "Humo Market",
+        miniAppUrl: "https://forhumo.uz/market",
+        generic: true,
+    },
+    pay: {
+        key: "pay",
+        username: "ForHumo_PayBot",
+        tokenEnvKey: "PAY_BOT_TOKEN",
+        secretEnvKey: "PAY_BOT_WEBHOOK_SECRET",
+        webhookPath: "/api/telegram/pay/webhook",
+        label: "For Pay",
+        miniAppUrl: "https://forhumo.uz/pay",
+        generic: true,
     },
     bozor_narxida: {
         key: "bozor_narxida",
@@ -34,6 +98,28 @@ export const BOTS: Record<BotKey, BotInfo> = {
         secretEnvKey: "BN_BOT_WEBHOOK_SECRET",
         webhookPath: "/api/telegram/bn-bot/webhook",
         label: "Bozor Narxida",
+        miniAppUrl: "https://bozornarxida.uz",
+    },
+    ummi: {
+        key: "ummi",
+        username: "ForHumo_UmmiBot",
+        tokenEnvKey: "UMMI_BOT_TOKEN",
+        secretEnvKey: "UMMI_BOT_WEBHOOK_SECRET",
+        webhookPath: "/api/telegram/ummi/webhook",
+        label: "Ummi",
+        // /ummi sahifasi hali yo'q (404) — vaqtincha hub; Ummi fazasida to'g'rilanadi
+        miniAppUrl: "https://forhumo.uz",
+        generic: true,
+    },
+    support: {
+        key: "support",
+        username: "ForHumo_SupportBot",
+        tokenEnvKey: "SUPPORT_BOT_TOKEN",
+        secretEnvKey: "SUPPORT_BOT_WEBHOOK_SECRET",
+        webhookPath: "/api/telegram/support/webhook",
+        label: "Humo Support",
+        miniAppUrl: "https://forhumo.uz/support",
+        generic: true,
     },
 };
 
