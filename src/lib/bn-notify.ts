@@ -40,6 +40,8 @@ export async function bnNotify(input: {
             body: input.body ?? "",
             url: bnLinkToUrl(input.link),
             tag: `bn:${input.type}`,
+            tg: true,                       // Telegram'ga ham (buyurtma/return/... muhim)
+            tgPreferBot: "bozor_narxida",   // bloklansa hub fallback
         });
     } catch { /* ignore */ }
 }

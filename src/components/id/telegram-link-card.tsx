@@ -111,8 +111,8 @@ export function TelegramLinkCard() {
                     </button>
                 </div>
                 <div className="text-xs text-muted-foreground">
-                    Endi <b>@ForHumo_AIBot</b> va <b>@bozornarxidabot</b> sizni taniydi. Telegram'da
-                    buyurtmalaringiz, hamyoningiz va boshqa For Humo ma'lumotlaringiz haqida bilib javob beradi.
+                    Endi For Humo botlari sizni taniydi va muhim bildirishnomalar (buyurtma, to'lov,
+                    yutuq va h.k.) Telegram'ga ham keladi. Har bir modul boti o'z Mini App'ини ochadi.
                 </div>
             </div>
         );
@@ -135,9 +135,9 @@ export function TelegramLinkCard() {
             {!code ? (
                 <>
                     <ul className="text-xs text-muted-foreground space-y-1 pl-4 list-disc">
-                        <li>@ForHumo_AIBot — barcha modul haqida savol</li>
-                        <li>@bozornarxidabot — mahsulot narxi qidirish</li>
-                        <li>Kelasi bildirishnomalar Telegram'ga ham keladi</li>
+                        <li>Muhim bildirishnomalar Telegram'ga ham keladi (buyurtma, to'lov, yutuq)</li>
+                        <li>Har bir bot o'z Mini App'ини Telegram ichida ochadi</li>
+                        <li>@ForHumo_AIBot — barcha modul haqida AI savol-javob</li>
                     </ul>
                     <button
                         onClick={issue}

@@ -1,0 +1,79 @@
+// Humo ID'ga Telegram orqali bildirishnoma yuborish (barcha modul ishlatadi).
+//
+//   await notifyTelegram(profileId, "Matn", { preferBot: "esport" });
+//
+// Telegram qoidasi: bot faqat o'zini START bosgan foydalanuvchiga xabar yubora oladi.
+// Shuning uchun: avval modul boti (preferBot), u bloklangan bo'lsa HUB @ForHumoBot'ga
+// fallback. Foydalanuvchi link paytida hub'ni start bosgani uchun fallback odatda yetadi.
+// To'liq fail-safe — hech qachon throw qilmaydi (chaqiruvchini buzmaydi).
+
+import { prisma } from "@/lib/prisma";
+import { sendMessage, type BotKey } from "@/lib/telegram-bots";
+
+/** profileId → bog'langan Telegram user id (yo'q bo'lsa null). */
+export async function getLinkedTelegramId(profileId: string): Promise<string | null> {
+    try {
+        const identity = await prisma.identity.findFirst({
+            where: { profileId, provider: "TELEGRAM" },
+            select: { providerId: true },
+        });
+        return identity?.providerId ?? null;
+    } catch {
+        return null;
+    }
+}
+
+export interface NotifyResult {
+    sent: boolean;
+    notLinked?: boolean;    // Humo ID Telegram'ga bog'lanmagan
+    blocked?: boolean;      // Bog'langan, lekin hech bir bot yubora olmadi (start bosilmagan/bloklangan)
+}
+
+interface NotifyOpts {
+    preferBot?: BotKey;                 // Modul boti (masalan "esport"); bloklansa hub'ga fallback
+    parseMode?: "HTML" | "MarkdownV2";
+    replyMarkup?: object;               // Masalan Mini App ochish tugmasi
+    disableWebPreview?: boolean;
+}
+
+const HUB: BotKey = "forhumo";
+
+/**
+ * Bog'langan Humo ID'ga Telegram xabar yuboradi. preferBot → bloklansa HUB fallback.
+ */
+export async function notifyTelegram(profileId: string, text: string, opts: NotifyOpts = {}): Promise<NotifyResult> {
+    const tgId = await getLinkedTelegramId(profileId);
+    if (!tgId) return { sent: false, notLinked: true };
+
+    // Urinish tartibi: preferBot (hub'dan farqli bo'lsa) → hub
+    const order: BotKey[] = [];
+    if (opts.preferBot && opts.preferBot !== HUB) order.push(opts.preferBot);
+    order.push(HUB);
+
+    let blocked = false;
+    for (const bot of order) {
+        try {
+            const res = await sendMessage(bot, {
+                chatId: tgId,
+                text,
+                parseMode: opts.parseMode ?? "HTML",
+                replyMarkup: opts.replyMarkup,
+                disableWebPreview: opts.disableWebPreview ?? true,
+            });
+            if (res.ok) return { sent: true };
+            // 403 = foydalanuvchi bu botni start bosmagan yoki bloklagan → keyingisiga o'tamiz
+            if (res.error_code === 403) { blocked = true; continue; }
+            // Boshqa xato (token yo'q emas — bu throw bo'lardi; masalan 400) → keyingisini sinaymiz
+            blocked = true;
+        } catch {
+            // tokenFor throw (bot token env yo'q) yoki tarmoq — keyingisini sinaymiz
+            continue;
+        }
+    }
+    return { sent: false, blocked };
+}
+
+/** Mini App ochish tugmasi (bildirishnoma ostiga qo'yish uchun). */
+export function miniAppButton(url: string, label = "Ochish"): object {
+    return { inline_keyboard: [[{ text: label, web_app: { url } }]] };
+}

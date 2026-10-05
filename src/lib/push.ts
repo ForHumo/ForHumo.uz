@@ -25,6 +25,15 @@ export interface PushPayload {
     /** Ixtiyoriy tracker: notificationclick paytida shu id serverga POST qilinadi
      *  (BN broadcast CTR uchun). sw.js `data.trackClickPath`ga jo'natadi. */
     trackClickPath?: string;
+    /** TRUE bo'lsa — Telegram'ga ham yuboriladi (Humo ID bog'langan bo'lsa).
+     *  Faqat MUHIM bildirishnomalarda yoqing (buyurtma/to'lov/eSport/support) —
+     *  Nexus mayda ijtimoiy shovqin (like/izoh) Telegram'ga ketmasligi uchun. */
+    tg?: boolean;
+    tgPreferBot?: import("@/lib/telegram-bots").BotKey;   // modul boti; bloklansa hub fallback
+}
+
+function escTgHtml(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 // Bitta foydalanuvchining barcha qurilmalariga push yuborish.
@@ -50,5 +59,17 @@ export async function sendPushToProfile(profileId: string, payload: PushPayload)
         }));
     } catch {
         /* push asosiy amalni buzmaydi */
+    }
+
+    // Telegram oynasi (opt-in) — web push'dan mustaqil, fail-safe
+    if (payload.tg) {
+        try {
+            const { notifyTelegram } = await import("@/lib/telegram-notify");
+            const text = `<b>${escTgHtml(payload.title)}</b>` + (payload.body ? `\n${escTgHtml(payload.body)}` : "");
+            const replyMarkup = payload.url
+                ? { inline_keyboard: [[{ text: "Ochish", url: payload.url }]] }
+                : undefined;
+            await notifyTelegram(profileId, text, { preferBot: payload.tgPreferBot, replyMarkup, parseMode: "HTML" });
+        } catch { /* Telegram xato asosiy amalni buzmaydi */ }
     }
 }
