@@ -51,23 +51,28 @@ export async function notifyTelegram(profileId: string, text: string, opts: Noti
     if (opts.preferBot && opts.preferBot !== HUB) order.push(opts.preferBot);
     order.push(HUB);
 
+    const sendText = (bot: BotKey) => sendMessage(bot, {
+        chatId: tgId, text,
+        parseMode: opts.parseMode ?? "HTML", replyMarkup: opts.replyMarkup,
+        disableWebPreview: opts.disableWebPreview ?? true,
+    });
+
     let blocked = false;
     for (const bot of order) {
         try {
-            const res = opts.imageUrl
-                ? await sendPhoto(bot, {
+            // Rasm bo'lsa — avval sendPhoto; rasm xato bo'lsa (403 emas) MATNga qaytamiz
+            if (opts.imageUrl) {
+                const ph = await sendPhoto(bot, {
                     chatId: tgId, photoUrl: opts.imageUrl, caption: text,
                     parseMode: opts.parseMode ?? "HTML", replyMarkup: opts.replyMarkup,
-                })
-                : await sendMessage(bot, {
-                    chatId: tgId, text,
-                    parseMode: opts.parseMode ?? "HTML", replyMarkup: opts.replyMarkup,
-                    disableWebPreview: opts.disableWebPreview ?? true,
                 });
+                if (ph.ok) return { sent: true };
+                if (ph.error_code === 403) { blocked = true; continue; }   // bot bloklangan → keyingi bot
+                // rasm yuklanmadi (masalan 400) — matn bilan davom (shu bot)
+            }
+            const res = await sendText(bot);
             if (res.ok) return { sent: true };
-            // 403 = foydalanuvchi bu botni start bosmagan yoki bloklagan → keyingisiga o'tamiz
             if (res.error_code === 403) { blocked = true; continue; }
-            // Boshqa xato (token yo'q emas — bu throw bo'lardi; masalan 400) → keyingisini sinaymiz
             blocked = true;
         } catch {
             // tokenFor throw (bot token env yo'q) yoki tarmoq — keyingisini sinaymiz
