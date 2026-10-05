@@ -8,6 +8,7 @@ import { minAmount, roundMoney, convert, formatMoney } from "@/lib/money";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { after } from "next/server";
 import { triggerPayAgentDM } from "@/lib/pay-agent-trigger";
+import { notifyTelegramSimple } from "@/lib/telegram-notify";
 
 // POST /api/pay/transfer — username bo'yicha pul yuborish.
 // Yuboruvchi o'z valyutasida tanlaydi; qabul qiluvchi o'z valyutasida (kerak bo'lsa konvert) oladi.
@@ -67,6 +68,14 @@ export async function POST(req: Request) {
         amount: recvAmount, currency: rCur as "UZS" | "USD",
         fromUsername: sender.username, note: desc,
     }));
+
+    // Qabul qiluvchiga Telegram bildirishnoma ("pul oldingiz")
+    after(() => void notifyTelegramSimple(
+        receiver.id,
+        "Pul oldingiz",
+        `@${sender.username ?? "Foydalanuvchi"} dan ${formatMoney(recvAmount, rCur)}` + (desc ? ` — ${desc}` : ""),
+        { preferBot: "pay", url: "/pay" },
+    ).catch(() => { /* jim */ }));
 
     return NextResponse.json({
         balance: result, currency: sCur,

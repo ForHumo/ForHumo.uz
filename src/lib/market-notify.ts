@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { notifyTelegramSimple } from "@/lib/telegram-notify";
 
 type NotifType =
     | "REVIEW_LIKE" | "PRODUCT_REVIEW" | "BRAND_REVIEW"
@@ -28,5 +29,9 @@ export async function notify(profileId: string, n: NotifInput) {
         });
     } catch {
         /* bildirishnoma muhim emas — asosiy amal davom etadi */
+    }
+    // Buyurtma/sotuv bildirishnomalari Telegram'ga ham (ORDER_* — sharh/savol shovqini emas)
+    if (n.type.startsWith("ORDER")) {
+        void notifyTelegramSimple(profileId, n.title, n.body, { preferBot: "market", url: n.link }).catch(() => { /* jim */ });
     }
 }

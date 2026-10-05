@@ -77,3 +77,25 @@ export async function notifyTelegram(profileId: string, text: string, opts: Noti
 export function miniAppButton(url: string, label = "Ochish"): object {
     return { inline_keyboard: [[{ text: label, web_app: { url } }]] };
 }
+
+function escHtml(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function fullUrl(link: string): string {
+    if (/^https?:\/\//.test(link)) return link;
+    return "https://www.forhumo.uz" + (link.startsWith("/") ? link : "/" + link);
+}
+
+/** Qulay: sarlavha + matn + ixtiyoriy "Ochish" (url) tugma bilan Telegram bildirishnoma.
+ *  Modullar shuni chaqiradi (eSport/Market/Pay/Support). Fail-safe. */
+export async function notifyTelegramSimple(
+    profileId: string,
+    title: string,
+    body?: string | null,
+    opts: { preferBot?: BotKey; url?: string | null } = {},
+): Promise<NotifyResult> {
+    const text = `<b>${escHtml(title)}</b>` + (body ? `\n${escHtml(body)}` : "");
+    const url = opts.url ? fullUrl(opts.url) : undefined;
+    const replyMarkup = url ? { inline_keyboard: [[{ text: "Ochish", url }]] } : undefined;
+    return notifyTelegram(profileId, text, { preferBot: opts.preferBot, replyMarkup, parseMode: "HTML" });
+}

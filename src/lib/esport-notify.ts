@@ -1,5 +1,6 @@
 // eSport bildirishnomalari — fail-safe (xato yuzaga kelsa asosiy amalni buzmaydi).
 import { prisma } from "@/lib/prisma";
+import { notifyTelegramSimple } from "@/lib/telegram-notify";
 
 interface NotifInput { type: string; title: string; body?: string | null; href?: string | null }
 
@@ -9,6 +10,7 @@ export async function esNotify(profileId: string | null | undefined, n: NotifInp
     try {
         await prisma.esNotification.create({ data: { profileId, type: n.type, title: n.title, body: n.body ?? null, href: n.href ?? null } });
     } catch { /* jim */ }
+    void notifyTelegramSimple(profileId, n.title, n.body, { preferBot: "esport", url: n.href }).catch(() => { /* jim */ });
 }
 
 // Bir nechta foydalanuvchiga
@@ -18,6 +20,7 @@ export async function esNotifyMany(profileIds: (string | null | undefined)[], n:
     try {
         await prisma.esNotification.createMany({ data: ids.map(profileId => ({ profileId, type: n.type, title: n.title, body: n.body ?? null, href: n.href ?? null })) });
     } catch { /* jim */ }
+    for (const id of ids) void notifyTelegramSimple(id, n.title, n.body, { preferBot: "esport", url: n.href }).catch(() => { /* jim */ });
 }
 
 // athleteId → uning Humo profil id'si (bildirishnoma uchun)
