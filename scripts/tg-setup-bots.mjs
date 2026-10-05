@@ -12,7 +12,9 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const BASE = (process.argv[2] || "https://forhumo.uz").replace(/\/+$/, "");
+// MUHIM: apex forhumo.uz -> www.forhumo.uz 307 redirect qiladi; Telegram webhook
+// redirect'ni kuzatmaydi, shuning uchun BASE www bo'lishi SHART.
+const BASE = (process.argv[2] || "https://www.forhumo.uz").replace(/\/+$/, "");
 const TG = "https://api.telegram.org";
 
 // .env.local ni oddiy parse qilish
