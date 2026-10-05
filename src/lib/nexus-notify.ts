@@ -74,8 +74,11 @@ export async function nexusNotify(opts: {
         const who = actor?.name || (actor?.username ? `@${actor.username}` : "Kimdir");
         const title = opts.type === "SUPPORT" ? "For Humo · Yordam" : "Nexus";
         const body = opts.customBody?.slice(0, 200) || `${who} ${PUSH_TEXT[opts.type]}`;
+        // Faqat DAROMAD hodisalari Telegram'ga (tip/sotib olish — "pul tushdi"); like/izoh shovqini EMAS
+        const money = opts.type === "TIP" || opts.type === "PURCHASE";
         void sendPushToProfile(opts.recipientId, {
             title, body, url: pushUrl({ ...opts, type: opts.type }), tag: opts.type,
+            ...(money ? { tg: true, tgPreferBot: "nexus" as const, tgImageUrl: "https://www.forhumo.uz/notif/pay.png" } : {}),
         });
     } catch {
         /* bildirishnoma asosiy amalни buzmaydi */
