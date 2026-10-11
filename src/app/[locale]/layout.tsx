@@ -73,8 +73,14 @@ export async function generateMetadata({
             },
         },
         icons: {
-            icon: "/logo.png",
-            apple: "/logo.png",
+            icon: [
+                { url: "/forhumo/favicon.ico", sizes: "any" },
+                { url: "/forhumo/icon-32.png", type: "image/png", sizes: "32x32" },
+                { url: "/forhumo/icon-16.png", type: "image/png", sizes: "16x16" },
+                { url: "/forhumo/icon-192.png", type: "image/png", sizes: "192x192" },
+                { url: "/forhumo/icon-512.png", type: "image/png", sizes: "512x512" },
+            ],
+            apple: "/forhumo/apple-icon.png",
         },
         robots: {
             index: true,

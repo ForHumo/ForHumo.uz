@@ -10,10 +10,13 @@ export function generateMetadata(): Metadata {
         manifest: "/esport.webmanifest",
         icons: {
             icon: [
+                { url: "/esport/favicon.ico", sizes: "any" },
+                { url: "/esport/icon-32.png", type: "image/png", sizes: "32x32" },
+                { url: "/esport/icon-16.png", type: "image/png", sizes: "16x16" },
                 { url: "/esport/icon-192.png", type: "image/png", sizes: "192x192" },
                 { url: "/esport/icon-512.png", type: "image/png", sizes: "512x512" },
             ],
-            apple: "/esport/icon-192.png",
+            apple: "/esport/apple-icon.png",
         },
         appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Humo eSport" },
     };

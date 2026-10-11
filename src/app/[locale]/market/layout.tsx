@@ -1,7 +1,24 @@
+import type { Metadata } from "next";
 import { MarketNavbar } from "@/components/market/market-navbar";
 import { MarketDock } from "@/components/market/market-dock";
 import { MarketFooter } from "@/components/market/market-footer";
 import { HumoAiModal } from "@/components/market/humo-ai-modal";
+
+// Humo Market — favicon + ikonalar public/market-icons/*.
+export const metadata: Metadata = {
+    title: "Humo Market",  // tab: "Humo Market | For Humo"
+    applicationName: "Humo Market",
+    icons: {
+        icon: [
+            { url: "/market-icons/favicon.ico", sizes: "any" },
+            { url: "/market-icons/icon-32.png", type: "image/png", sizes: "32x32" },
+            { url: "/market-icons/icon-16.png", type: "image/png", sizes: "16x16" },
+            { url: "/market-icons/icon-192.png", type: "image/png", sizes: "192x192" },
+            { url: "/market-icons/icon-512.png", type: "image/png", sizes: "512x512" },
+        ],
+        apple: "/market-icons/apple-icon.png",
+    },
+};
 
 export default function MarketLayout({ children }: { children: React.ReactNode }) {
     return (

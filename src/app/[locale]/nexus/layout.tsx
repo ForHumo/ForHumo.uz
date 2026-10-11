@@ -20,10 +20,13 @@ export function generateMetadata(): Metadata {
         manifest: "/nexus.webmanifest",
         icons: {
             icon: [
+                { url: "/nexus/favicon.ico", sizes: "any" },
+                { url: "/nexus/icon-32.png", type: "image/png", sizes: "32x32" },
+                { url: "/nexus/icon-16.png", type: "image/png", sizes: "16x16" },
                 { url: "/nexus/icon-192.png", type: "image/png", sizes: "192x192" },
                 { url: "/nexus/icon-512.png", type: "image/png", sizes: "512x512" },
             ],
-            apple: "/nexus/icon-192.png",
+            apple: "/nexus/apple-icon.png",
         },
         appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Humo Nexus" },
     };
