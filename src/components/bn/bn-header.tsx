@@ -11,7 +11,8 @@ import {
 } from "lucide-react";
 import { BN, groupThousands } from "@/lib/bn-theme";
 import { BnLink, useBnHref, useBnBase, BnThemeToggle, BnLangSwitch } from "./bn-nav";
-import { useBnScrolled } from "./bn-scroll";
+import { useBnScrolled, getBnScrollRoot } from "./bn-scroll";
+import { createPortal } from "react-dom";
 
 /** Header uchun kichik kategoriya DTO (dropdown menyu) */
 export interface BnHeaderCategoryDTO {
@@ -276,7 +277,9 @@ export function BnHeader({
             )}
 
             {/* ── Mobil menyu ── */}
-            {menuOpen && (
+            {/* Drawer layout scroll ildiziga portal qilinadi: header `relative z-10` o'ram ichida,
+                pastki navbar (z-50) esa uning qo'shnisi — portalsiz drawer navbar ostida qolardi. */}
+            {menuOpen && createPortal(
                 <div className={`fixed inset-0 z-[110] ${overlay ? "xl:hidden" : "md:hidden"}`}>
                     <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.55)" }} onClick={() => setMenuOpen(false)} />
                     <div
@@ -399,7 +402,8 @@ export function BnHeader({
                             ))}
                         </div>
                     </div>
-                </div>
+                </div>,
+                getBnScrollRoot() ?? document.body,
             )}
         </>
     );

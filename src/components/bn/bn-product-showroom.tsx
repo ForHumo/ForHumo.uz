@@ -123,7 +123,7 @@ function useSaveData(): boolean {
     const [v, setV] = useState(false);
     useEffect(() => {
         const c = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
-        setV(!!c && (c.saveData === true || c.effectiveType === "slow-2g" || c.effectiveType === "2g"));
+        setV(!!c && (c.saveData === true || c.effectiveType === "slow-2g" || c.effectiveType === "2g" || c.effectiveType === "3g"));
     }, []);
     return v;
 }
@@ -338,10 +338,10 @@ export function BnProductShowroom(props: BnShowroomProps) {
                 aria-label={p.title}
             >
                 {/* ═══ SAHNA — yopishqoq media ═══ */}
-                <div className="sticky top-0 h-[100vh] h-[100svh] overflow-hidden">
+                <div className="bn-stage-h sticky top-0 overflow-hidden">
                     {/* Atmosfera: sotuvchi rasmining o'zidan */}
                     {ambientSrc ? (
-                        <motion.div className="absolute inset-0" style={still || !isDesktop ? { scale: 1.25 } : { scale: ambientScale }}>
+                        <motion.div className="absolute inset-0 will-change-transform" style={still || !isDesktop ? { scale: 1.25 } : { scale: ambientScale }}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={ambientSrc}
@@ -381,7 +381,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
                                     muted
                                     loop
                                     playsInline
-                                    preload={mounted && autoplayOk ? "auto" : "metadata"}
+                                    preload={!mounted ? "none" : autoplayOk ? "auto" : "metadata"}
                                     className="w-full h-full object-cover"
                                     onPlay={() => setPlaying(true)}
                                     onPause={() => setPlaying(false)}
@@ -458,9 +458,9 @@ export function BnProductShowroom(props: BnShowroomProps) {
                 </div>
 
                 {/* ═══ KONTENT — sahna ustidan aylanadi ═══ */}
-                <div className="relative -mt-[100vh] -mt-[100svh]">
+                <div className="bn-stage-pull relative">
                     {/* Mobil: media ustidagi bo'sh joy + media boshqaruvi */}
-                    <div className="lg:hidden relative h-[58vh] h-[58svh]">
+                    <div className="bn-stage-spacer lg:hidden relative">
                         <MediaControls
                             className="absolute inset-x-4 bottom-12"
                             media={media}
@@ -616,7 +616,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
                                     {p.allowPickup && directionsHref && (
                                         <GlassLink href={directionsHref} external>
                                             <MapPin className="w-[18px] h-[18px]" />
-                                            {ts("pickup")}
+                                            <span>{ts("pickup")}</span>
                                         </GlassLink>
                                     )}
                                 </div>
@@ -664,7 +664,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
 
                             {/* Desktop: media boshqaruvi, scroll ishorasi, bob hisoblagichi */}
                             <MediaControls
-                                className="hidden lg:flex flex-col absolute top-[50vh] top-[50svh] -translate-y-1/2 right-[max(8px,calc(3.5vw-28px))]"
+                                className="bn-stage-mid hidden lg:flex flex-col absolute -translate-y-1/2 right-[max(8px,calc(3.5vw-28px))]"
                                 media={media}
                                 active={active}
                                 onPick={setActive}
@@ -941,11 +941,11 @@ export function BnProductShowroom(props: BnShowroomProps) {
             {/* Mobil: pastki xarid paneli (navbar ustida) */}
             {!outOfStock && (
                 <div
-                    className={`bn-stage lg:hidden fixed inset-x-0 z-40 px-4 transition-[transform,opacity] duration-300 ${barHidden ? "translate-y-6 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"}`}
+                    className={`bn-stage lg:hidden fixed inset-x-0 z-40 px-4 pointer-events-none transition-[transform,opacity] duration-300 ${barHidden ? "translate-y-6 opacity-0" : "translate-y-0 opacity-100"}`}
                     style={{ bottom: "calc(max(14px, env(safe-area-inset-bottom)) + 74px)" }}
                     aria-hidden={barHidden}
                 >
-                    <div className="mx-auto max-w-[440px] flex items-center gap-2 p-1.5 rounded-full"
+                    <div className={`mx-auto max-w-[440px] flex items-center gap-2 p-1.5 rounded-full ${barHidden ? "" : "pointer-events-auto"}`}
                         style={{ background: "rgba(14, 18, 17, 0.92)", border: "1px solid rgba(255,255,255,0.14)", boxShadow: "0 12px 36px rgba(0,0,0,0.4)" }}>
                         {waPlainHref && (
                             <a href={waPlainHref} target="_blank" rel="noopener noreferrer" aria-label={ts("whatsappAria")}
@@ -1170,7 +1170,7 @@ function GlassBtn({ onClick, disabled, label, iconOnlyLg, children }: {
             disabled={disabled}
             aria-label={iconOnlyLg ? label : undefined}
             title={iconOnlyLg ? label : undefined}
-            className={`h-[54px] px-3 lg:px-5 inline-flex items-center justify-center gap-2 rounded-full text-[14px] lg:text-[15px] font-bold whitespace-nowrap transition-colors hover:bg-white/20 disabled:opacity-60 ${iconOnlyLg ? "lg:w-[54px] lg:px-0" : ""}`}
+            className={`min-w-0 h-[54px] px-3 lg:px-5 inline-flex items-center justify-center gap-2 rounded-full text-[14px] lg:text-[15px] font-bold whitespace-nowrap transition-colors hover:bg-white/20 disabled:opacity-60 [&>span]:min-w-0 [&>span]:truncate ${iconOnlyLg ? "lg:w-[54px] lg:px-0" : ""}`}
             style={{ background: "rgba(255,255,255,0.13)", border: "1px solid rgba(255,255,255,0.24)", color: BN.text }}
         >
             {children}
@@ -1183,7 +1183,7 @@ function GlassLink({ href, external, small, children }: { href: string; external
         <a
             href={href}
             {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-            className={`${small ? "h-11 text-[13.5px]" : "h-[54px] px-3 lg:px-5 text-[14px] lg:text-[15px]"} inline-flex items-center justify-center gap-2 rounded-full font-bold whitespace-nowrap transition-colors hover:bg-white/20`}
+            className={`${small ? "h-11 text-[13.5px]" : "h-[54px] px-3 lg:px-5 text-[14px] lg:text-[15px]"} min-w-0 inline-flex items-center justify-center gap-2 rounded-full font-bold whitespace-nowrap transition-colors hover:bg-white/20 [&>span]:min-w-0 [&>span]:truncate`}
             style={{ background: "rgba(255,255,255,0.13)", border: "1px solid rgba(255,255,255,0.24)", color: BN.text }}
         >
             {children}

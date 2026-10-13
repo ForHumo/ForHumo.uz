@@ -138,6 +138,12 @@ export function BnStyles() {
                 color: var(--bn-text);
                 color-scheme: dark;
             }
+            /* Vitrina o'lchamlari — svh + vh zaxira BIR qoidada (Tailwind'da ikki klass
+               tartibi kafolatlanmaydi, vh doim yutib chiqardi). */
+            .bn-scope .bn-stage-h { height: 100vh; height: 100svh; }
+            .bn-scope .bn-stage-pull { margin-top: -100vh; margin-top: -100svh; }
+            .bn-scope .bn-stage-spacer { height: 58vh; height: 58svh; }
+            .bn-scope .bn-stage-mid { top: 50vh; top: 50svh; }
             /* Vitrina media ramkasi — kenglik media nisbatidan (--r) */
             .bn-scope .bn-stage-frame {
                 width: min(76vw, calc(46vh * var(--r, 0.8)));
