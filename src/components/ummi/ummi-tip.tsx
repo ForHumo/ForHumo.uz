@@ -1,18 +1,50 @@
 "use client";
 
-// Ummi taklif kartasi — qayta-ishlatiladigan in-app yuza (bosh sahifa, AI chat, ...).
+// Ummi taklif kartasi — qayta-ishlatiladigan in-app yuza (bosh sahifa, AI chat, Market, eSport, Nexus...).
 // O'zi ma'lumotini oladi (GET /api/ai/suggestions). Taklif yo'q / kirmagan / toggle o'chiq /
 // rad etilgan bo'lsa — HECH NARSA ko'rsatmaydi (joy egallamaydi, anti-spam jim).
-// Dizayn: global tema tokenlari (bg-card/foreground/...) — light/dark + AI monoxromga o'zi moslanadi.
+// variant — modul temasiga moslash:
+//   "default" (global tokenlar: bosh sahifa/AI — AI o'zi monoxromga override qiladi)
+//   "nexus"   (--nx-* dizayn tizimi)
+//   "esport"  (--es-* dizayn tizimi, .es-bg scope)
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { X, ArrowRight } from "lucide-react";
 
 interface Suggestion { id: string; kind: string; title: string; body: string; url: string; }
+type Variant = "default" | "nexus" | "esport";
 
-export function UmmiTip({ className = "" }: { className?: string }) {
+interface VariantStyle {
+    card: CSSProperties;
+    eyebrow: CSSProperties;
+    title: CSSProperties;
+    body: CSSProperties;
+    link: CSSProperties;
+    dismiss: CSSProperties;
+}
+
+const VARIANTS: Record<Exclude<Variant, "default">, VariantStyle> = {
+    nexus: {
+        card: { background: "var(--nx-surface)", border: "1px solid var(--nx-border)" },
+        eyebrow: { color: "var(--nx-accent)" },
+        title: { color: "var(--nx-text)" },
+        body: { color: "var(--nx-text-2)" },
+        link: { color: "var(--nx-accent)" },
+        dismiss: { color: "var(--nx-text-3)" },
+    },
+    esport: {
+        card: { background: "var(--es-card)", border: "1px solid var(--es-card-bd)", backdropFilter: "blur(8px)" },
+        eyebrow: { color: "var(--es-c1)" },
+        title: { color: "var(--es-fg)" },
+        body: { color: "var(--es-mut)" },
+        link: { color: "var(--es-c1)" },
+        dismiss: { color: "var(--es-mut)" },
+    },
+};
+
+export function UmmiTip({ className = "", variant = "default" }: { className?: string; variant?: Variant }) {
     const t = useTranslations("ummi");
     const [s, setS] = useState<Suggestion | null>(null);
     const [hidden, setHidden] = useState(false);
@@ -46,15 +78,26 @@ export function UmmiTip({ className = "" }: { className?: string }) {
     const onOpen = () => patch(s.id, "ACTED");
     const onDismiss = () => { setHidden(true); patch(s.id, "DISMISSED"); };
 
-    const openInner = (
-        <>
-            {t("open")} <ArrowRight className="w-3.5 h-3.5" />
-        </>
-    );
-    const openCls = "inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline";
+    const v = variant === "default" ? null : VARIANTS[variant];
+
+    // Default — global tema tokenlari (Tailwind klasslari); nexus/esport — inline modul tokenlari.
+    const cardCls = variant === "default"
+        ? "border border-border bg-card/80 backdrop-blur"
+        : "";
+    const eyebrowCls = variant === "default" ? "text-primary/80" : "";
+    const titleCls = variant === "default" ? "text-foreground" : "";
+    const bodyCls = variant === "default" ? "text-muted-foreground" : "";
+    const linkCls = variant === "default" ? "text-primary" : "";
+    const dismissCls = variant === "default" ? "text-muted-foreground hover:text-foreground hover:bg-foreground/5" : "hover:opacity-70";
+
+    const openInner = (<>{t("open")} <ArrowRight className="w-3.5 h-3.5" /></>);
+    const openCls = `inline-flex items-center gap-1 text-xs font-bold hover:underline ${linkCls}`;
 
     return (
-        <div className={`relative flex items-start gap-3 rounded-2xl border border-border bg-card/80 backdrop-blur p-3.5 shadow-sm ${className}`}>
+        <div
+            className={`relative flex items-start gap-3 rounded-2xl p-3.5 shadow-sm ${cardCls} ${className}`}
+            style={v?.card}
+        >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
                 src="/mascot/ummi.webp"
@@ -64,18 +107,18 @@ export function UmmiTip({ className = "" }: { className?: string }) {
                 className="w-10 h-10 rounded-xl object-contain shrink-0"
             />
             <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-bold uppercase tracking-wide text-primary/80 mb-0.5">
+                <div className={`text-[11px] font-bold uppercase tracking-wide mb-0.5 ${eyebrowCls}`} style={v?.eyebrow}>
                     {t("eyebrow")}
                 </div>
-                <div className="text-sm font-bold text-foreground leading-snug">{s.title}</div>
-                <div className="text-xs text-muted-foreground leading-snug mt-0.5">{s.body}</div>
+                <div className={`text-sm font-bold leading-snug ${titleCls}`} style={v?.title}>{s.title}</div>
+                <div className={`text-xs leading-snug mt-0.5 ${bodyCls}`} style={v?.body}>{s.body}</div>
                 <div className="mt-2">
                     {external ? (
-                        <a href={s.url} target="_blank" rel="noopener noreferrer" onClick={onOpen} className={openCls}>
+                        <a href={s.url} target="_blank" rel="noopener noreferrer" onClick={onOpen} className={openCls} style={v?.link}>
                             {openInner}
                         </a>
                     ) : (
-                        <Link href={s.url} onClick={onOpen} className={openCls}>
+                        <Link href={s.url} onClick={onOpen} className={openCls} style={v?.link}>
                             {openInner}
                         </Link>
                     )}
@@ -85,7 +128,8 @@ export function UmmiTip({ className = "" }: { className?: string }) {
                 onClick={onDismiss}
                 aria-label={t("dismiss")}
                 title={t("dismiss")}
-                className="shrink-0 -mt-1 -mr-1 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
+                className={`shrink-0 -mt-1 -mr-1 p-1.5 rounded-lg transition-colors ${dismissCls}`}
+                style={v?.dismiss}
             >
                 <X className="w-4 h-4" />
             </button>

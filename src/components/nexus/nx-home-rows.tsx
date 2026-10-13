@@ -149,7 +149,7 @@ export function NxHomeRows() {
     return (
         <div className="mt-2">
             {/* Ummi taklifi — shaxsiy (taklif bor + toggle yoniq bo'lsa; aks holda ko'rinmaydi) */}
-            <div className="px-3 sm:px-4 mb-2"><UmmiTip /></div>
+            <div className="px-3 sm:px-4 mb-2"><UmmiTip variant="nexus" /></div>
             {/* 0. TOP karaoke ijrolari (haftalik) — bo'sh bo'lsa yashiradi */}
             <NxKaraokeRow />
 
