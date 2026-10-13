@@ -12,6 +12,8 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { X, ArrowRight } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { pickUmmiPose } from "@/lib/ummi-poses";
 
 interface Suggestion { id: string; kind: string; title: string; body: string; url: string; }
 type Variant = "default" | "nexus" | "esport";
@@ -112,14 +114,7 @@ export function UmmiTip({ className = "", variant = "default" }: { className?: s
             className={`relative flex items-start gap-3 rounded-2xl p-3.5 shadow-sm ${cardCls} ${className}`}
             style={v?.card}
         >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-                src="/mascot/ummi-avatar.webp"
-                alt="Ummi"
-                width={40}
-                height={40}
-                className="w-10 h-10 rounded-xl object-cover shrink-0"
-            />
+            <UmmiPose pose={pickUmmiPose({ kind: s.kind })} size={44} className="w-11 h-11 shrink-0 -mt-0.5" />
             <div className="min-w-0 flex-1">
                 <div className={`text-[11px] font-bold uppercase tracking-wide mb-0.5 ${eyebrowCls}`} style={v?.eyebrow}>
                     {t("eyebrow")}
