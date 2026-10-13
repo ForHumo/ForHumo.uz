@@ -10,8 +10,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendPushToProfile } from "@/lib/push";
-import { getOrRefreshSignals } from "@/lib/user-signals";
-import { listKnowledge } from "@/lib/user-knowledge";
+import { buildSuggestion, upsertSuggestion, ummiTipsEnabled } from "@/lib/ummi-suggestions";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -37,7 +36,7 @@ export async function GET(req: Request) {
                 { lastLoginAt: { gt: activeSince } },
             ],
         },
-        select: { id: true, name: true, username: true, country: true },
+        select: { id: true, name: true, username: true, country: true, notifPrefs: true },
         take: MAX_PUSH_PER_DAY,
     });
 
@@ -55,13 +54,17 @@ export async function GET(req: Request) {
             });
             if (already) { skipped++; continue; }
 
+            // Ummi takliflari o'chirilganmi?
+            if (!ummiTipsEnabled(u.notifPrefs)) { skipped++; continue; }
+
             // Push obunasi?
             const hasSub = await prisma.nexusPushSub.count({ where: { profileId: u.id } });
             if (hasSub === 0) { skipped++; continue; }
 
-            // Tavsiya generatsiya (KB + signals asosida)
-            const rec = await generateRecommendation(u.id, u.name || u.username || "");
-            if (!rec) { skipped++; continue; }
+            // Tavsiya generatsiya (KB + signals asosida) + saqlash (in-app yuza ham ko'radi)
+            const draft = await buildSuggestion(u.id, u.name || u.username || "");
+            if (!draft) { skipped++; continue; }
+            const rec = await upsertSuggestion(u.id, draft);
 
             await sendPushToProfile(u.id, {
                 title: rec.title,
@@ -86,72 +89,4 @@ export async function GET(req: Request) {
         sent, skipped,
         tookMs: Date.now() - started,
     });
-}
-
-/** KB + signals'dan tavsiya matn generatsiya. */
-async function generateRecommendation(profileId: string, name: string): Promise<{ title: string; body: string; url: string } | null> {
-    const [signals, kb] = await Promise.all([
-        getOrRefreshSignals(profileId),
-        listKnowledge(profileId),
-    ]);
-
-    // Prioritet: Belis (agar oila/to'y signali), Nexus (top followed), BN (kategoriyalar)
-    const kbMap = new Map(kb.map(k => [`${k.category}:${k.key}`, k.value.toLowerCase()]));
-
-    // 1. Belis — agar KB'da "kids" yoki "family_event" yoki hobbies:sarpo bo'lsa
-    if (
-        kbMap.get("family:kids")?.match(/1|2|3/)?.length ||
-        kbMap.get("family:marital_status") === "uylangan" ||
-        kbMap.get("goals:current_goal")?.includes("to'y") ||
-        kbMap.get("goals:current_goal")?.includes("marosim")
-    ) {
-        return {
-            title: `${name ? name + ", " : ""}yaqin marosim uchun`,
-            body: "Belisda Fotiha va Beshik to'y sarpo qutilari ijarada. Sifatli, hamyonbop, yetkazish bilan.",
-            url: "https://belis.uz",
-        };
-    }
-
-    // 2. Nexus — top followed author yangi post
-    if (signals && signals.topFollowedAuthors.length > 0) {
-        const author = signals.topFollowedAuthors[0];
-        const authorProfile = await prisma.userProfile.findFirst({
-            where: { username: author }, select: { id: true },
-        });
-        if (authorProfile) {
-            const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-            const recentPost = await prisma.nexusPost.findFirst({
-                where: { profileId: authorProfile.id, createdAt: { gt: yesterday } },
-                select: { id: true },
-            });
-            if (recentPost) {
-                return {
-                    title: `@${author} yangi post joyladi`,
-                    body: "Sizni qiziqtirishi mumkin — Nexus'da ko'ring.",
-                    url: `/nexus/u/${author}`,
-                };
-            }
-        }
-    }
-
-    // 3. BN — foydalanuvchi kategoriyalarga qarab yangi arzon mahsulot
-    if (signals && signals.bnCategoryClicks.length > 0) {
-        const cat = signals.bnCategoryClicks[0];
-        return {
-            title: `${cat} kategoriyasi — yangi tavsiya`,
-            body: "Bozor Narxidada arzon topilmalar bor. Solishtirib ko'ring.",
-            url: `https://bozornarxida.uz/qidiruv?category=${encodeURIComponent(cat)}`,
-        };
-    }
-
-    // 4. Default — profil to'ldirish (agar KB kam bo'lsa)
-    if (kb.length < 5) {
-        return {
-            title: `${name ? name + ", " : ""}sizni yaxshiroq tanish uchun`,
-            body: "1 daqiqada bir necha savolga javob bering — tavsiyalar aniqroq bo'ladi.",
-            url: "/id/discover",
-        };
-    }
-
-    return null;
 }

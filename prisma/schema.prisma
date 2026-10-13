@@ -1068,6 +1068,26 @@ model UserSignals {
   @@index([updatedAt(sort: Desc)])
 }
 
+// Ummi takliflari (L1) — KB+signallardan hosil qilingan shaxsiy taklif.
+// In-app yuza (UmmiTip) + kunlik push cron shu bitta saqlagichdan foydalanadi.
+// Matn hosil qilingan (maxfiy xom-fakt emas); faqat egaga ko'rinadi.
+model UmmiSuggestion {
+  id         String   @id @default(cuid())
+  profileId  String                          // owner (faqat o'zi)
+  kind       String                          // "belis"|"nexus"|"bn"|"profile"|...
+  title      String
+  body       String
+  url        String                          // ichki ("/nexus/...") yoki tashqi (https://...)
+  status     String   @default("NEW")        // NEW|SEEN|DISMISSED|ACTED
+  dedupeKey  String                          // kind+resurs — takrorlamaslik uchun
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime                         // odatda +3 kun; o'tgach ko'rinmaydi
+  updatedAt  DateTime @updatedAt
+
+  @@unique([profileId, dedupeKey])            // idempotent — qayta generatsiyada dublikat yo'q
+  @@index([profileId, status, expiresAt])
+}
+
 // Tavsiya algoritmi 4-bosqich: semantik embeddinglar (pgvector + Gemini).
 // Prisma vector turini bilmaydi → Unsupported; insert/qidiruv raw SQL orqali (lib/nexus-embed.ts).
 model NexusPostEmbedding {

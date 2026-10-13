@@ -1494,5 +1494,10 @@
       "copyright": "© Belis · часть For Humo",
       "madeWith": "Для вас, с любовью"
     }
+  },
+  "ummi": {
+    "eyebrow": "Совет Ummi",
+    "open": "Открыть",
+    "dismiss": "Не нужно"
   }
 }

@@ -1494,5 +1494,10 @@
       "copyright": "© Belis · part of For Humo",
       "madeWith": "For you, with love"
     }
+  },
+  "ummi": {
+    "eyebrow": "Ummi tip",
+    "open": "Open",
+    "dismiss": "Dismiss"
   }
 }

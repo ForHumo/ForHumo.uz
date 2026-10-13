@@ -33,6 +33,8 @@ const DICT: Record<string, Record<AiLang, string>> = {
     "set.personal": { uz: "Shaxsiylashtirish", ru: "Персонализация", en: "Personalization" },
     "set.remember": { uz: "AI meni eslab qolsin", ru: "ИИ запоминает обо мне", en: "Let the AI remember me" },
     "set.rememberHint": { uz: "O'chirilsa, yangi suhbatlardan siz haqingizda ma'lumot saqlanmaydi.", ru: "Если выключено, ИИ не будет сохранять факты о вас из новых чатов.", en: "When off, the AI won't save facts about you from new chats." },
+    "set.tips": { uz: "Ummi takliflari", ru: "Советы Ummi", en: "Ummi tips" },
+    "set.tipsHint": { uz: "Ummi siz uchun shaxsiy takliflar ko'rsatadi (bosh sahifa, AI). O'chirsangiz — ko'rinmaydi.", ru: "Ummi показывает персональные советы (главная, ИИ). Выключите — не будут показываться.", en: "Ummi shows personal suggestions (home, AI). Turn off to hide them." },
     "set.export":   { uz: "Suhbatlarni eksport (JSON)", ru: "Экспорт чатов (JSON)", en: "Export chats (JSON)" },
     "set.account":  { uz: "Hisob",      ru: "Аккаунт",   en: "Account" },
     "set.data":     { uz: "Ma'lumotlar", ru: "Данные",   en: "Data" },

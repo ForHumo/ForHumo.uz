@@ -18,6 +18,7 @@ import { AiStarfield } from "@/components/ai/ai-starfield";
 import { AiMarkdown } from "@/components/ai/ai-markdown";
 import { HumoLive } from "@/components/ai/humo-live";
 import { AiCalendarPanel } from "@/components/ai/ai-calendar-panel";
+import { UmmiTip } from "@/components/ummi/ummi-tip";
 import { AI_MODELS, DEFAULT_MODEL, findModel } from "@/lib/ai-models";
 import { aiT, aiTn, aiLangFromLocale, type AiLang } from "@/lib/ai-i18n";
 
@@ -381,6 +382,25 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
     useEffect(() => { try { setRememberMe(localStorage.getItem("ai-remember") !== "0"); } catch { /* ignore */ } }, []);
     function toggleRemember() {
         setRememberMe(p => { const n = !p; try { localStorage.setItem("ai-remember", n ? "1" : "0"); } catch { /* ignore */ } return n; });
+    }
+    // Ummi takliflari (in-app taklif yuzasi) — server'da saqlanadi (notifPrefs.ummiTips), cron ham hurmat qiladi
+    const [ummiTips, setUmmiTips] = useState(true);
+    useEffect(() => {
+        fetch("/api/user/notif-prefs", { cache: "no-store" })
+            .then(r => (r.ok ? r.json() : null))
+            .then(d => { if (d?.prefs) setUmmiTips(d.prefs.ummiTips !== false); })
+            .catch(() => { /* ignore */ });
+    }, []);
+    function toggleUmmiTips() {
+        setUmmiTips(p => {
+            const n = !p;
+            fetch("/api/user/notif-prefs", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: "ummiTips", enabled: n }),
+            }).catch(() => { /* ignore */ });
+            return n;
+        });
     }
     // Suhbatlarni JSON faylga eksport (har suhbat + xabarlari)
     const [exporting, setExporting] = useState(false);
@@ -1532,6 +1552,8 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                     </button>
                                 ))}
                             </div>
+                            {/* Ummi taklifi — shaxsiy (taklif bor + toggle yoniq bo'lsa; aks holda ko'rinmaydi) */}
+                            <UmmiTip className="max-w-md w-full mt-4 text-left" />
                         </div>
                     )}
 
@@ -2009,6 +2031,15 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                                             </button>
                                         </div>
                                         <p className="text-[11px] mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{t("set.rememberHint")}</p>
+                                        <div className="flex items-center justify-between gap-3 py-2.5">
+                                            <span className="text-[13px] min-w-0">{t("set.tips")}</span>
+                                            <button onClick={toggleUmmiTips} role="switch" aria-checked={ummiTips}
+                                                className="w-10 h-6 rounded-full p-0.5 transition-colors flex-shrink-0"
+                                                style={{ background: ummiTips ? T.primary : "var(--ai-raise)" }}>
+                                                <span className="block w-5 h-5 rounded-full transition-transform" style={{ background: ummiTips ? T.onPrimary : "hsl(var(--muted-foreground))", transform: ummiTips ? "translateX(16px)" : "translateX(0)" }} />
+                                            </button>
+                                        </div>
+                                        <p className="text-[11px] mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{t("set.tipsHint")}</p>
                                         <button onClick={() => openPanel("knowledge")} className="w-full text-left flex items-center gap-2 py-2.5 text-[13px] hover:underline">
                                             <ShieldCheck className="w-4 h-4 flex-shrink-0" style={{ color: T.primary }} /> {t("sidebar.knowledge")}
                                         </button>

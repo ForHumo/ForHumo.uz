@@ -21,7 +21,11 @@ export async function PATCH(req: Request) {
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { type, enabled } = (await req.json()) as { type?: string; enabled?: boolean };
-    if (!type || !NOTIF_TYPES.includes(type as (typeof NOTIF_TYPES)[number])) {
+    // NOTIF_TYPES (Nexus bildirishnomalar) + alohida ruxsat etilgan sozlama kalitlari.
+    // "ummiTips" NOTIF_TYPES'ga qo'shilmaydi (bildirishnoma ro'yxatida ko'rinmasligi uchun).
+    const EXTRA_PREF_KEYS = ["ummiTips"];
+    const isValid = !!type && (NOTIF_TYPES.includes(type as (typeof NOTIF_TYPES)[number]) || EXTRA_PREF_KEYS.includes(type));
+    if (!isValid) {
         return NextResponse.json({ error: "Noto'g'ri tur" }, { status: 400 });
     }
     const me = await prisma.userProfile.findUnique({

@@ -1494,5 +1494,10 @@
       "copyright": "© Belis · For Humo tarkibida",
       "madeWith": "Siz uchun, mehr bilan"
     }
+  },
+  "ummi": {
+    "eyebrow": "Ummi taklifi",
+    "open": "Ochish",
+    "dismiss": "Kerakmas"
   }
 }

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { ProjectCard } from "@/components/ui/project-card";
 import { LiveBackground } from "@/components/home/live-background";
+import { UmmiTip } from "@/components/ummi/ummi-tip";
 
 export function HomeContent() {
     const tHero = useTranslations("Hero");
@@ -220,6 +221,9 @@ export function HomeContent() {
             {/* Projects Grid */}
             <section id="project" className="py-24 relative z-10 scroll-mt-16">
                 <div className="container px-4 mx-auto max-w-6xl">
+
+                    {/* Ummi taklifi — shaxsiy (kirgan + taklif bor + toggle yoniq bo'lsa; aks holda ko'rinmaydi) */}
+                    <UmmiTip className="max-w-2xl mx-auto mb-12" />
 
                     {/* Section header */}
                     <div className="text-center mb-16">
