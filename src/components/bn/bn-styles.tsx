@@ -106,6 +106,50 @@ export function BnStyles() {
                 color-scheme: dark;
             }
 
+            /* ── SAHNA (vitrina) — mavzudan qat'i nazar doim tungi ──────────
+               Mahsulot vitrinasi va uning ustidagi shaffof header media
+               (video/rasm) ustida turadi, shuning uchun matn doim och rangda.
+               Ichidagi barcha BN.* komponentlar shu palitrani avtomatik oladi. */
+            .bn-scope .bn-stage {
+                --bn-gold:        #F5D46A;
+                --bn-gold-light:  #FBE59A;
+                --bn-gold-dark:   #D9B64A;
+                --bn-gold-soft:   rgba(245, 212, 106, 0.14);
+                --bn-gold-edge:   rgba(245, 212, 106, 0.40);
+                --bn-bg:          #0B0F0E;
+                --bn-surface:     #151B1A;
+                --bn-surface-up:  #1D2523;
+                --bn-surface-top: #26302E;
+                --bn-border:      rgba(255, 255, 255, 0.14);
+                --bn-border-gold: rgba(245, 212, 106, 0.40);
+                --bn-text:        #F4F0E6;
+                --bn-text-2:      #D9D3C4;
+                --bn-text-3:      #A8A291;
+                --bn-on-gold:     #17140F;
+                --bn-ok:          #7FDBA4;
+                --bn-ok-soft:     rgba(91, 203, 135, 0.16);
+                --bn-warn:        #F7B07A;
+                --bn-warn-soft:   rgba(245, 154, 85, 0.16);
+                --bn-err:         #F59A8F;
+                --bn-err-soft:    rgba(239, 139, 128, 0.16);
+                --bn-info:        #8DB4FF;
+                --bn-glass:       rgba(20, 26, 25, 0.55);
+                --bn-shadow:      0 20px 60px rgba(0, 0, 0, 0.5);
+                color: var(--bn-text);
+                color-scheme: dark;
+            }
+            /* Vitrina media ramkasi — kenglik media nisbatidan (--r) */
+            .bn-scope .bn-stage-frame {
+                width: min(76vw, calc(46vh * var(--r, 0.8)));
+                width: min(76vw, calc(46svh * var(--r, 0.8)));
+            }
+            @media (min-width: 1024px) {
+                .bn-scope .bn-stage-frame {
+                    width: min(40vw, calc(70vh * var(--r, 0.8)));
+                    width: min(40vw, calc(70svh * var(--r, 0.8)));
+                }
+            }
+
             /* ── Tipografiya ─────────────────────────────────────────────
                Body: Manrope. Display serif (Playfair): sahifa H1 + .bn-display.
                Funksional UI sarlavhalari (h2/h3) toza sans'da qoladi. */

@@ -1,16 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import {
     Search, ShoppingCart, Menu, X, User, Bell, LayoutGrid,
     Package, ChevronRight, LogIn, Navigation, Headphones, Heart, Store,
-    Mic, Camera, ShoppingBag,
+    Mic, Camera, ShoppingBag, ChevronLeft,
 } from "lucide-react";
 import { BN, groupThousands } from "@/lib/bn-theme";
 import { BnLink, useBnHref, useBnBase, BnThemeToggle, BnLangSwitch } from "./bn-nav";
+import { useBnScrolled } from "./bn-scroll";
 
 /** Header uchun kichik kategoriya DTO (dropdown menyu) */
 export interface BnHeaderCategoryDTO {
@@ -39,13 +40,11 @@ export function BnHeader({
     const tNav = useTranslations("bn.nav");
     const [q, setQ] = useState("");
     const [menuOpen, setMenuOpen] = useState(false);
-    const [scrolled, setScrolled] = useState(false);
-
-    useEffect(() => {
-        const onScroll = () => setScrolled(window.scrollY > 8);
-        window.addEventListener("scroll", onScroll, { passive: true });
-        return () => window.removeEventListener("scroll", onScroll);
-    }, []);
+    // BN'da window emas, layout div'i scroll bo'ladi (bn-scroll.ts) — ilgari
+    // window.scrollY doim 0 edi va header hech qachon "glass" holatga o'tmasdi.
+    const scrolled = useBnScrolled(8);
+    // Mahsulot sahifasi (vitrina) — header media ustida suzuvchi shaffof kapsula bo'ladi
+    const overlay = isProductRoute(usePathname() ?? "");
 
     useEffect(() => {
         if (!menuOpen) return;
@@ -63,6 +62,13 @@ export function BnHeader({
 
     return (
         <>
+            {overlay ? (
+                <BnOverlayHeader
+                    cartCount={cartCount}
+                    scrolled={scrolled}
+                    onMenu={() => setMenuOpen(true)}
+                />
+            ) : (
             <header
                 className="sticky top-0 z-40 transition-shadow"
                 style={{
@@ -258,6 +264,7 @@ export function BnHeader({
                     </div>
                 </div>
             </header>
+            )}
 
             {/* ── Mobil menyu ── */}
             {menuOpen && (
@@ -389,8 +396,26 @@ export function BnHeader({
     );
 }
 
-export function BnLogo({ size = 52 }: { size?: number }) {
+export function BnLogo({ size = 52, variant = "auto" }: { size?: number; variant?: "auto" | "dark" }) {
     // Manba PNG'da logo atrofida ~40% bo'sh joy bor. scale bilan qoplaymiz.
+    // variant="dark" — mavzudan qat'i nazar tungi logo (media ustidagi sahna uchun).
+    if (variant === "dark") {
+        return (
+            <span
+                className="relative flex-shrink-0 overflow-hidden grid place-items-center"
+                style={{ width: size, height: size }}
+            >
+                <img
+                    src="/bn/logo-dark.png"
+                    alt="Bozor Narxida"
+                    width={size}
+                    height={size}
+                    style={{ transform: "scale(1.35)" }}
+                    className="max-w-none object-contain"
+                />
+            </span>
+        );
+    }
     return (
         <span
             className="relative flex-shrink-0 overflow-hidden grid place-items-center"
@@ -414,6 +439,151 @@ export function BnLogo({ size = 52 }: { size?: number }) {
                 className="max-w-none object-contain hidden dark:block"
             />
         </span>
+    );
+}
+
+// ── Mahsulot sahifasi: shaffof suzuvchi header ──────────────────────────────
+
+/** `/p/<slug>` yoki `/d/<do'kon>/<mahsulot>` (prefiksli `/uz/bn/...` ham). */
+export function isProductRoute(pathname: string): boolean {
+    return /(?:^|\/)(?:p\/[^/]+|d\/[^/]+\/[^/]+)\/?$/.test(pathname);
+}
+
+const OVERLAY_NAV = [
+    { href: "/bozorlar",      key: "footer.markets" },
+    { href: "/dokonlar",      key: "footer.shops" },
+    { href: "/katalog",       key: "nav.catalog" },
+    { href: "/buyurtmalarim", key: "footer.myOrders" },
+    { href: "/yordam",        key: "footer.help" },
+] as const;
+
+function BnOverlayHeader({
+    cartCount, scrolled, onMenu,
+}: { cartCount: number; scrolled: boolean; onMenu: () => void }) {
+    const router = useRouter();
+    const to = useBnHref();
+    const { data: session, status } = useSession();
+    const t = useTranslations("bn");
+
+    function goBack() {
+        if (typeof window !== "undefined" && window.history.length > 1) router.back();
+        else router.push(to("/"));
+    }
+
+    return (
+        <header className="bn-stage fixed inset-x-0 top-0 z-40 px-3 pt-3 md:px-6 md:pt-5 pointer-events-none">
+            <div
+                className="pointer-events-auto mx-auto max-w-[1344px] flex items-center gap-1 md:gap-1.5 h-14 md:h-[66px] px-1.5 md:pl-4 md:pr-2 rounded-full transition-[background-color,box-shadow] duration-300"
+                style={{
+                    background: scrolled ? "rgba(16, 21, 20, 0.80)" : "rgba(20, 26, 25, 0.34)",
+                    border: "1px solid rgba(255, 255, 255, 0.14)",
+                    backdropFilter: "blur(20px) saturate(140%)",
+                    WebkitBackdropFilter: "blur(20px) saturate(140%)",
+                    boxShadow: scrolled ? "0 12px 40px rgba(0, 0, 0, 0.35)" : "none",
+                }}
+            >
+                <button
+                    type="button"
+                    onClick={goBack}
+                    aria-label={t("back.label")}
+                    className="md:hidden w-11 h-11 grid place-items-center rounded-full flex-shrink-0"
+                    style={{ color: BN.text }}
+                >
+                    <ChevronLeft className="w-5 h-5" />
+                </button>
+
+                <BnLink href="/" className="flex items-center gap-2 md:gap-2.5 min-w-0 md:mr-5">
+                    <BnLogo size={34} variant="dark" />
+                    <span className="bn-display-sans font-bold text-[16px] md:text-[18px] tracking-tight leading-none truncate">
+                        {t("brandName")}
+                    </span>
+                </BnLink>
+
+                <nav aria-label={t("navbar.ariaLabel")} className="hidden lg:flex items-center gap-0.5 flex-1 min-w-0">
+                    {OVERLAY_NAV.map(n => (
+                        <BnLink
+                            key={n.href}
+                            href={n.href}
+                            className="h-11 px-3.5 flex items-center rounded-full text-[14.5px] font-medium whitespace-nowrap transition-colors hover:bg-white/10"
+                            style={{ color: BN.text2 }}
+                        >
+                            {t(n.key)}
+                        </BnLink>
+                    ))}
+                </nav>
+                <div className="flex-1 lg:hidden" />
+
+                <OverlayIcon href="/qidiruv" label={t("search.submit")} className="hidden md:grid">
+                    <Search className="w-[19px] h-[19px]" />
+                </OverlayIcon>
+                <span className="hidden md:block"><BnLangSwitch /></span>
+                <OverlayIcon href="/bildirishnomalar" label={t("nav.notifications")} className="hidden md:grid">
+                    <Bell className="w-[19px] h-[19px]" />
+                </OverlayIcon>
+                <OverlayIcon href="/savat" label={t("nav.cart")} badge={cartCount}>
+                    <ShoppingCart className="w-[19px] h-[19px]" />
+                </OverlayIcon>
+
+                {status === "authenticated" ? (
+                    <BnLink
+                        href="/profil"
+                        aria-label={t("nav.profile")}
+                        className="hidden md:grid w-11 h-11 place-items-center rounded-full overflow-hidden flex-shrink-0"
+                        style={{ background: BN.surfaceUp }}
+                    >
+                        {session?.user?.image ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={session.user.image} alt="" className="w-9 h-9 rounded-full object-cover" />
+                        ) : (
+                            <User className="w-[18px] h-[18px]" />
+                        )}
+                    </BnLink>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={() => signIn("google")}
+                        className="hidden md:flex items-center h-11 ml-1 px-5 rounded-full text-[14.5px] font-bold flex-shrink-0 transition-transform active:scale-[0.97]"
+                        style={{ background: BN.gold, color: BN.onGold }}
+                    >
+                        {t("auth.signIn")}
+                    </button>
+                )}
+
+                <button
+                    type="button"
+                    onClick={onMenu}
+                    aria-label={t("nav.menu")}
+                    className="md:hidden w-11 h-11 grid place-items-center rounded-full flex-shrink-0"
+                    style={{ color: BN.text }}
+                >
+                    <Menu className="w-5 h-5" />
+                </button>
+            </div>
+        </header>
+    );
+}
+
+function OverlayIcon({
+    href, label, badge, className = "", children,
+}: { href: string; label: string; badge?: number; className?: string; children: React.ReactNode }) {
+    return (
+        <BnLink
+            href={href}
+            aria-label={badge && badge > 0 ? `${label} (${badge})` : label}
+            title={label}
+            className={`relative w-11 h-11 place-items-center rounded-full flex-shrink-0 transition-colors hover:bg-white/10 ${className || "grid"}`}
+            style={{ color: BN.text }}
+        >
+            {children}
+            {badge !== undefined && badge > 0 && (
+                <span
+                    className="absolute top-1 right-0.5 min-w-[18px] h-[18px] px-1 grid place-items-center rounded-full text-[11px] font-black leading-none tabular-nums"
+                    style={{ background: BN.gold, color: BN.onGold }}
+                >
+                    {badge > 99 ? "99+" : badge}
+                </span>
+            )}
+        </BnLink>
     );
 }
 

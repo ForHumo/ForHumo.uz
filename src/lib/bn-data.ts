@@ -65,6 +65,8 @@ export interface BnProductDTO {
     oldPrice: number | null;
     marketAvgPrice: number | null;
     images: string[];
+    /** Mahsulot videolari (maks 2, Vercel Blob MP4) — vitrina fonida ishlatiladi */
+    videos?: string[];
     categorySlug: string;
     shopSlug: string;
     shopName: string;
@@ -150,6 +152,7 @@ function toProductDTO(p: ProductWithRels): BnProductDTO {
         oldPrice: p.oldPrice,
         marketAvgPrice: p.marketAvgPrice,
         images: p.images,
+        videos: p.videos ?? [],
         categorySlug: p.category?.slug ?? "",
         shopSlug: p.shop?.slug ?? "",
         shopName: p.shop?.name ?? "",

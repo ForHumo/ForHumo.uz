@@ -25,13 +25,13 @@ const BN_HOSTS = ["bozornarxida.uz", "www.bozornarxida.uz"];
 // Body:   Manrope — geometrik, toza, tabular raqamlar (narxlar uchun ideal).
 const bnDisplay = Playfair_Display({
     subsets: ["latin", "cyrillic"],
-    weight: ["600", "700", "800", "900"],
+    weight: ["400", "500", "600", "700", "800", "900"],
     variable: "--bn-font-display",
     display: "swap",
 });
 const bnBody = Manrope({
     subsets: ["latin", "cyrillic"],
-    weight: ["400", "500", "600", "700", "800"],
+    weight: ["300", "400", "500", "600", "700", "800"],
     variable: "--bn-font-body",
     display: "swap",
 });
@@ -112,7 +112,7 @@ export default async function BnLayout({
     const hasShop = !!shop;
 
     return (
-        <div className={`bn-scope ${bnDisplay.variable} ${bnBody.variable} fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden`}>
+        <div data-bn-scroll-root className={`bn-scope ${bnDisplay.variable} ${bnBody.variable} fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden`}>
             <BnStyles />
             <BnAurora />
             <BnBaseProvider base={base} locale={locale} hasShop={hasShop}>
