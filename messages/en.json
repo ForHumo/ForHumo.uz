@@ -666,7 +666,10 @@
         "unmute": "Unmute",
         "mediaN": "Media {n}",
         "mediaGroup": "Product photos and video",
-        "linkCopied": "Link copied"
+        "linkCopied": "Link copied",
+        "meterEmpty": "We're still collecting the market price for this product. We'll let you know as soon as the price drops.",
+        "offerInApp": "Make an offer in BN chat",
+        "messageCopied": "Message copied — paste it in Telegram"
       }
     },
     "cart": {

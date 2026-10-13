@@ -33,6 +33,7 @@ import { BnProductDealChip } from "./bn-product-deal-chip";
 import { BnOneClickBuy } from "./bn-one-click-buy";
 import { useShopLocationText } from "./bn-cards";
 import { getBnScrollRoot, onBnScroll } from "./bn-scroll";
+import { bnToast } from "./bn-toast";
 import { TelegramLogo, WhatsAppLogo, HumoNexusLogo } from "@/components/brand-icons";
 import { BN, fmtPrice, groupThousands, priceRankOf, TIER_META } from "@/lib/bn-theme";
 import type { BnProductDTO, BnShopDTO } from "@/lib/bn-data";
@@ -205,9 +206,22 @@ export function BnProductShowroom(props: BnShowroomProps) {
     // ham, va `playing` holati noto'g'ri qolardi.
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
+    // Gidratsiyadan OLDIN sodir bo'lgan media hodisalari (load / loadedmetadata)
+    // React'ga yetib kelmaydi — holatni element'dan to'g'ridan o'qiymiz.
+    const imgRef = useRef<HTMLImageElement | null>(null);
+    useEffect(() => {
+        setDuration(null);
+        const im = imgRef.current;
+        if (im && im.complete && im.naturalWidth && im.naturalHeight) setRatio(clampRatio(im.naturalWidth / im.naturalHeight));
+        const v = videoRef.current;
+        if (v && v.readyState >= 1) {
+            if (v.videoWidth && v.videoHeight) setRatio(clampRatio(v.videoWidth / v.videoHeight));
+            if (Number.isFinite(v.duration)) setDuration(v.duration);
+        }
+    }, [current?.src]);
     useEffect(() => {
         const v = videoRef.current;
-        if (!v || !mounted) return;
+        if (!v || !mounted) { setPlaying(false); return; }
         if (autoplayOk) {
             void v.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
         } else {
@@ -276,8 +290,6 @@ export function BnProductShowroom(props: BnShowroomProps) {
     const waPlainHref = canMessenger ? `https://wa.me/${phone}?text=${encodeURIComponent(`${p.title} — ${productUrl}`)}` : null;
     // t.me/+<raqam> — sotuvchi Telegram'iga to'g'ridan (raqam orqali topish yoqilgan bo'lsa)
     const tgHref = canMessenger ? `https://t.me/+${phone}` : null;
-    // Tayyor xabar — Telegram ulashish oynasi (chat tanlanadi, matn tayyor)
-    const tgShareHref = `https://t.me/share/url?url=${encodeURIComponent(productUrl)}&text=${encodeURIComponent(prefill)}`;
     const lat = shop?.lat ?? p.shopLat ?? null;
     const lng = shop?.lng ?? p.shopLng ?? null;
     const directionsHref = lat != null && lng != null
@@ -289,19 +301,28 @@ export function BnProductShowroom(props: BnShowroomProps) {
     const [titleHead, titleTail] = splitTitle(p.title);
     const outOfStock = p.stock < 1;
 
-    // Mobil pastki panel — hero tugmalari ko'rinmay qolganda chiqadi
+    // Mobil pastki panel — foydalanuvchi hero tugmalaridan PASTGA o'tganda chiqadi,
+    // sayt footer'i ko'ringanda yashirinadi. IntersectionObserver emas, scroll'da
+    // o'lchaymiz: tez "fling"da element bitta kadrda sakrab o'tilsa IO xabar bermaydi.
     const heroActionsRef = useRef<HTMLDivElement | null>(null);
-    const [heroActionsVisible, setHeroActionsVisible] = useState(true);
+    const [barHidden, setBarHidden] = useState(true);
     useEffect(() => {
-        const el = heroActionsRef.current;
-        if (!el || typeof IntersectionObserver === "undefined") return;
-        // Panel faqat foydalanuvchi hero tugmalaridan PASTGA o'tganda chiqadi
-        // (sahifa ochilganda tugmalar hali pastda — panel sarlavhani yopmasin).
-        const io = new IntersectionObserver(([e]) => {
-            setHeroActionsVisible(e.isIntersecting || e.boundingClientRect.top > 0);
-        }, { threshold: 0 });
-        io.observe(el);
-        return () => io.disconnect();
+        let raf = 0;
+        const check = () => {
+            raf = 0;
+            const el = heroActionsRef.current;
+            if (!el) return;
+            const vh = window.innerHeight;
+            const pastHero = el.getBoundingClientRect().bottom < 0;
+            const footer = document.querySelector("[data-bn-scroll-root] footer");
+            const footerIn = !!footer && footer.getBoundingClientRect().top < vh;
+            const hide = !pastHero || footerIn;
+            setBarHidden(prev => (prev === hide ? prev : hide));
+        };
+        const onScroll = () => { if (!raf) raf = requestAnimationFrame(check); };
+        check();
+        const off = onBnScroll(onScroll);
+        return () => { off(); if (raf) cancelAnimationFrame(raf); };
     }, []);
 
     const chapterCls = "py-7 lg:py-24 lg:min-h-[100svh] lg:flex lg:items-center";
@@ -372,6 +393,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
                             ) : (current?.kind === "image" || poster) ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
+                                    ref={imgRef}
                                     key={current?.kind === "image" ? current.src : poster ?? ""}
                                     src={current?.kind === "image" ? current.src : (poster ?? "")}
                                     alt={p.title}
@@ -449,6 +471,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
                             duration={duration}
                             onTogglePlay={togglePlay}
                             onToggleMute={() => setMuted(m => !m)}
+                            blurred={blurred}
                             compact
                         />
                     </div>
@@ -650,43 +673,48 @@ export function BnProductShowroom(props: BnShowroomProps) {
                                 duration={duration}
                                 onTogglePlay={togglePlay}
                                 onToggleMute={() => setMuted(m => !m)}
+                                blurred={blurred}
                             />
                         </section>
 
                         {/* ── 02 · Narx ── */}
-                        {(meter || rankLabel) && (
-                            <section className={chapterCls} aria-labelledby="bn-sr-price">
-                                <div className={colCls}>
-                                    <ChapterHead n="02" kicker={ts("chapterPrice")} id="bn-sr-price" a={ts("priceQ1")} b={ts("priceQ2")} />
-                                    {meter && (
-                                        <>
-                                            <p className="mt-3 text-[15px]" style={{ color: BN.text2 }}>
-                                                {othersSorted.length > 0
-                                                    ? ts("meterBasis", { n: othersSorted.length + 1 })
-                                                    : ts("meterBasisAvg")}
-                                            </p>
-                                            <MarketMeter meter={meter} price={unitPrice} />
-                                        </>
-                                    )}
-                                    <SocialProof buyers={buyersRecent} sold={soldRecent} viewers={viewersRecent} />
-                                    <button
-                                        type="button"
-                                        onClick={onTogglePriceWatch}
-                                        disabled={pwBusy}
-                                        aria-pressed={priceWatch}
-                                        className="mt-5 h-12 px-5 inline-flex items-center gap-2 rounded-full text-[14px] font-bold transition-colors disabled:opacity-60"
-                                        style={{
-                                            background: priceWatch ? BN.goldSoft : "rgba(255,255,255,0.10)",
-                                            border: `1px solid ${priceWatch ? BN.goldEdge : "rgba(255,255,255,0.22)"}`,
-                                            color: priceWatch ? BN.gold : BN.text,
-                                        }}
-                                    >
-                                        {priceWatch ? <BellRing className="w-[18px] h-[18px]" /> : <Bell className="w-[18px] h-[18px]" />}
-                                        {priceWatch ? t("watchOn") : t("watchOff")}
-                                    </button>
-                                </div>
-                            </section>
-                        )}
+                        {/* Narx kuzatuvi va ijtimoiy isbot har doim kerak — bob doim chiqadi,
+                            o'lchagich faqat ma'lumot bo'lsa */}
+                        <section className={chapterCls} aria-labelledby="bn-sr-price">
+                            <div className={colCls}>
+                                <ChapterHead n="02" kicker={ts("chapterPrice")} id="bn-sr-price" a={ts("priceQ1")} b={ts("priceQ2")} />
+                                {meter ? (
+                                    <>
+                                        <p className="mt-3 text-[15px]" style={{ color: BN.text2 }}>
+                                            {othersSorted.length > 0
+                                                ? ts("meterBasis", { n: othersSorted.length + 1 })
+                                                : ts("meterBasisAvg")}
+                                        </p>
+                                        <MarketMeter meter={meter} price={unitPrice} />
+                                    </>
+                                ) : (
+                                    <p className="mt-3 max-w-[520px] text-[15px] leading-relaxed" style={{ color: BN.text2 }}>
+                                        {ts("meterEmpty")}
+                                    </p>
+                                )}
+                                <SocialProof buyers={buyersRecent} sold={soldRecent} viewers={viewersRecent} />
+                                <button
+                                    type="button"
+                                    onClick={onTogglePriceWatch}
+                                    disabled={pwBusy}
+                                    aria-pressed={priceWatch}
+                                    className="mt-5 h-12 px-5 inline-flex items-center gap-2 rounded-full text-[14px] font-bold transition-colors disabled:opacity-60"
+                                    style={{
+                                        background: priceWatch ? BN.goldSoft : "rgba(255,255,255,0.10)",
+                                        border: `1px solid ${priceWatch ? BN.goldEdge : "rgba(255,255,255,0.22)"}`,
+                                        color: priceWatch ? BN.gold : BN.text,
+                                    }}
+                                >
+                                    {priceWatch ? <BellRing className="w-[18px] h-[18px]" /> : <Bell className="w-[18px] h-[18px]" />}
+                                    {priceWatch ? t("watchOn") : t("watchOff")}
+                                </button>
+                            </div>
+                        </section>
 
                         {/* ── 03 · Olish ── */}
                         <section className={chapterCls} aria-labelledby="bn-sr-get">
@@ -725,12 +753,30 @@ export function BnProductShowroom(props: BnShowroomProps) {
                                             {prefill}
                                         </p>
                                         <div className="mt-3 flex flex-wrap gap-2">
-                                            <ContactPill href={tgShareHref} external big label={ts("sendTelegram")}>
-                                                <TelegramLogo size={22} />{ts("sendTelegram")}
-                                            </ContactPill>
+                                            {/* Ilova ichidagi taklif — sotuvchiga albatta yetadi */}
+                                            <span className="[&>button]:!h-[50px] [&>button]:!px-5 [&>button]:!rounded-full [&>button]:!text-[15px] [&>button]:!font-bold [&>button]:!gap-2">
+                                                <BnShopChatButton
+                                                    shopSlug={p.shopSlug}
+                                                    shopName={p.shopName}
+                                                    triggerLabel={ts("offerInApp")}
+                                                    product={{ id: p.id, title: p.title, price: unitPrice, imageUrl: p.images?.[0] ?? null }}
+                                                />
+                                            </span>
                                             {waHref && (
                                                 <ContactPill href={waHref} external big label={ts("sendWhatsapp")}>
                                                     <WhatsAppLogo size={22} />{ts("sendWhatsapp")}
+                                                </ContactPill>
+                                            )}
+                                            {/* Telegram raqam havolasi matn qabul qilmaydi — xabarni nusxalab, sotuvchi chatini ochamiz */}
+                                            {tgHref && (
+                                                <ContactPill href={tgHref} external big label={ts("sendTelegram")}
+                                                    onClick={() => {
+                                                        void navigator.clipboard?.writeText(prefill).then(
+                                                            () => bnToast(ts("messageCopied"), "success"),
+                                                            () => { /* clipboard ruxsat berilmadi */ },
+                                                        );
+                                                    }}>
+                                                    <TelegramLogo size={22} />{ts("sendTelegram")}
                                                 </ContactPill>
                                             )}
                                         </div>
@@ -894,27 +940,27 @@ export function BnProductShowroom(props: BnShowroomProps) {
             {/* Mobil: pastki xarid paneli (navbar ustida) */}
             {!outOfStock && (
                 <div
-                    className={`bn-stage lg:hidden fixed inset-x-0 z-40 px-4 transition-[transform,opacity] duration-300 ${heroActionsVisible ? "translate-y-6 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"}`}
+                    className={`bn-stage lg:hidden fixed inset-x-0 z-40 px-4 transition-[transform,opacity] duration-300 ${barHidden ? "translate-y-6 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"}`}
                     style={{ bottom: "calc(max(14px, env(safe-area-inset-bottom)) + 74px)" }}
-                    aria-hidden={heroActionsVisible}
+                    aria-hidden={barHidden}
                 >
                     <div className="mx-auto max-w-[440px] flex items-center gap-2 p-1.5 rounded-full"
                         style={{ background: "rgba(14, 18, 17, 0.92)", border: "1px solid rgba(255,255,255,0.14)", boxShadow: "0 12px 36px rgba(0,0,0,0.4)" }}>
                         {waPlainHref && (
                             <a href={waPlainHref} target="_blank" rel="noopener noreferrer" aria-label={ts("whatsappAria")}
-                                tabIndex={heroActionsVisible ? -1 : 0}
+                                tabIndex={barHidden ? -1 : 0}
                                 className="w-12 h-12 grid place-items-center rounded-full flex-shrink-0" style={{ background: "rgba(255,255,255,0.08)" }}>
                                 <WhatsAppLogo size={26} />
                             </a>
                         )}
                         {p.allowInspect && (
-                            <button type="button" onClick={onStartInspect} disabled={cartBusy} tabIndex={heroActionsVisible ? -1 : 0}
+                            <button type="button" onClick={onStartInspect} disabled={cartBusy} tabIndex={barHidden ? -1 : 0}
                                 className="flex-1 h-12 rounded-full text-[14.5px] font-bold disabled:opacity-60"
                                 style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", color: BN.text }}>
                                 {ts("reserveShort")}
                             </button>
                         )}
-                        <button type="button" onClick={onBuyNow} disabled={cartBusy} tabIndex={heroActionsVisible ? -1 : 0}
+                        <button type="button" onClick={onBuyNow} disabled={cartBusy} tabIndex={barHidden ? -1 : 0}
                             className="flex-[1.3] h-12 rounded-full text-[14.5px] font-extrabold inline-flex items-center justify-center gap-2 disabled:opacity-60"
                             style={{ background: BN.gold, color: BN.onGold }}>
                             {cartBusy && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -1144,11 +1190,14 @@ function GlassLink({ href, external, small, children }: { href: string; external
     );
 }
 
-function ContactPill({ href, external, big, label, children }: { href: string; external?: boolean; big?: boolean; label: string; children: ReactNode }) {
+function ContactPill({ href, external, big, label, onClick, children }: {
+    href: string; external?: boolean; big?: boolean; label: string; onClick?: () => void; children: ReactNode;
+}) {
     return (
         <a
             href={href}
             aria-label={label}
+            onClick={onClick}
             {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
             className={`${big ? "h-[50px] px-5 text-[15px]" : "h-11 px-4 text-[14px]"} inline-flex items-center gap-2 rounded-full font-semibold transition-colors hover:bg-white/15`}
             style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.16)", color: BN.text }}
@@ -1168,7 +1217,7 @@ function QtyBtn({ label, onClick, disabled, children }: { label: string; onClick
 }
 
 function MediaControls({
-    className = "", media, active, onPick, current, playing, muted, duration, onTogglePlay, onToggleMute, compact,
+    className = "", media, active, onPick, current, playing, muted, duration, onTogglePlay, onToggleMute, compact, blurred,
 }: {
     className?: string;
     media: MediaItem[];
@@ -1181,9 +1230,12 @@ function MediaControls({
     onTogglePlay: () => void;
     onToggleMute: () => void;
     compact?: boolean;
+    /** 18+ darvozasi yopiq — kichik rasmlar ham xira */
+    blurred?: boolean;
 }) {
     const ts = useTranslations("bn.product.showroom");
-    const isVideo = current?.kind === "video";
+    // 18+ darvozasi yopiq bo'lsa video umuman render qilinmaydi — boshqaruv ham kerak emas
+    const isVideo = current?.kind === "video" && !blurred;
     if (media.length <= 1 && !isVideo) return null;
     const glass: CSSProperties = { background: "rgba(16,21,20,0.55)", border: "1px solid rgba(255,255,255,0.22)", color: BN.text };
 
@@ -1222,25 +1274,22 @@ function MediaControls({
 
     return (
         <div className={`items-center gap-2 ${className}`}>
-            {media.slice(0, 5).map((m, i) => (
+            {/* Barcha media — 5 tadan ko'p bo'lsa gorizontal aylanadi */}
+            <div className="flex items-center gap-2 max-w-[332px] overflow-x-auto bn-noscroll p-0.5" role="group" aria-label={ts("mediaGroup")}>
+            {media.map((m, i) => (
                 <button key={`${m.src}-${i}`} type="button" onClick={() => onPick(i)}
                     aria-label={m.kind === "video" ? ts("video") : ts("mediaN", { n: i + 1 })} aria-current={i === active}
-                    className="relative w-[60px] h-[60px] rounded-[14px] overflow-hidden grid place-items-center transition-transform hover:scale-[1.04]"
+                    className="relative w-[60px] h-[60px] flex-shrink-0 rounded-[14px] overflow-hidden grid place-items-center transition-transform hover:scale-[1.04]"
                     style={{ border: i === active ? `2px solid ${BN.text}` : "1px solid rgba(255,255,255,0.22)", background: "rgba(255,255,255,0.10)" }}>
                     {m.kind === "image" ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={m.src} alt="" className="w-full h-full object-cover" />
+                        <img src={m.src} alt="" className="w-full h-full object-cover" style={blurred ? { filter: "blur(10px)" } : undefined} />
                     ) : (
                         <Play className="w-[18px] h-[18px]" fill="currentColor" style={{ color: BN.text }} />
                     )}
                 </button>
             ))}
-            {media.length > 5 && (
-                <span className="w-[60px] h-[60px] rounded-[14px] grid place-items-center text-[14px] font-bold"
-                    style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.22)" }}>
-                    +{media.length - 5}
-                </span>
-            )}
+            </div>
             {isVideo && (
                 <>
                     <button type="button" onClick={onTogglePlay} aria-label={playing ? ts("pause") : ts("play")}

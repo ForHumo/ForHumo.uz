@@ -72,13 +72,22 @@ export function BnHeader({
             <header
                 className="sticky top-0 z-40 transition-shadow"
                 style={{
-                    background: scrolled ? BN.glass : BN.bg,
-                    backdropFilter: scrolled ? "blur(10px)" : undefined,
-                    WebkitBackdropFilter: scrolled ? "blur(10px)" : undefined,
                     borderBottom: `1px solid ${BN.border}`,
                     boxShadow: scrolled ? BN.shadow : undefined,
                 }}
             >
+                {/* Fon + blur ALOHIDA qatlamda: backdrop-filter elementi o'z ichidagi
+                    `position: fixed` bolalarni qamab qo'yadi (til/mavzu menyusining
+                    "tashqariga bosib yopish" qatlami header ichida qolib ketardi). */}
+                <div
+                    aria-hidden="true"
+                    className="absolute inset-0 -z-10"
+                    style={{
+                        background: scrolled ? BN.glass : BN.bg,
+                        backdropFilter: scrolled ? "blur(10px)" : undefined,
+                        WebkitBackdropFilter: scrolled ? "blur(10px)" : undefined,
+                    }}
+                />
                 <div className="mx-auto max-w-[1280px] px-4">
                     {/* ── Desktop ── */}
                     <div className="hidden md:flex items-start gap-4 py-3">
@@ -268,7 +277,7 @@ export function BnHeader({
 
             {/* ── Mobil menyu ── */}
             {menuOpen && (
-                <div className="fixed inset-0 z-[110] md:hidden">
+                <div className={`fixed inset-0 z-[110] ${overlay ? "lg:hidden" : "md:hidden"}`}>
                     <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.55)" }} onClick={() => setMenuOpen(false)} />
                     <div
                         className="absolute inset-y-0 left-0 w-[86%] max-w-[340px] overflow-y-auto"
@@ -473,20 +482,25 @@ function BnOverlayHeader({
     return (
         <header className="bn-stage fixed inset-x-0 top-0 z-40 px-3 pt-3 md:px-6 md:pt-5 pointer-events-none">
             <div
-                className="pointer-events-auto mx-auto max-w-[1344px] flex items-center gap-1 md:gap-1.5 h-14 md:h-[66px] px-1.5 md:pl-4 md:pr-2 rounded-full transition-[background-color,box-shadow] duration-300"
-                style={{
-                    background: scrolled ? "rgba(16, 21, 20, 0.80)" : "rgba(20, 26, 25, 0.34)",
-                    border: "1px solid rgba(255, 255, 255, 0.14)",
-                    backdropFilter: "blur(20px) saturate(140%)",
-                    WebkitBackdropFilter: "blur(20px) saturate(140%)",
-                    boxShadow: scrolled ? "0 12px 40px rgba(0, 0, 0, 0.35)" : "none",
-                }}
+                className="pointer-events-auto relative isolate mx-auto max-w-[1344px] flex items-center gap-1 md:gap-1.5 h-14 md:h-[66px] px-1.5 md:pl-4 md:pr-2 rounded-full transition-shadow duration-300"
+                style={{ boxShadow: scrolled ? "0 12px 40px rgba(0, 0, 0, 0.35)" : "none" }}
             >
+                {/* Shisha fon alohida qatlamda — backdrop-filter ichki fixed menyularni qamamasin */}
+                <div
+                    aria-hidden="true"
+                    className="absolute inset-0 -z-10 rounded-full transition-[background-color] duration-300"
+                    style={{
+                        background: scrolled ? "rgba(16, 21, 20, 0.80)" : "rgba(20, 26, 25, 0.34)",
+                        border: "1px solid rgba(255, 255, 255, 0.14)",
+                        backdropFilter: "blur(20px) saturate(140%)",
+                        WebkitBackdropFilter: "blur(20px) saturate(140%)",
+                    }}
+                />
                 <button
                     type="button"
                     onClick={goBack}
                     aria-label={t("back.label")}
-                    className="md:hidden w-11 h-11 grid place-items-center rounded-full flex-shrink-0"
+                    className="w-11 h-11 grid place-items-center rounded-full flex-shrink-0 transition-colors hover:bg-white/10"
                     style={{ color: BN.text }}
                 >
                     <ChevronLeft className="w-5 h-5" />
@@ -494,7 +508,7 @@ function BnOverlayHeader({
 
                 <BnLink href="/" className="flex items-center gap-2 md:gap-2.5 min-w-0 md:mr-5">
                     <BnLogo size={34} variant="dark" />
-                    <span className="bn-display-sans font-bold text-[16px] md:text-[18px] tracking-tight leading-none truncate">
+                    <span className="hidden min-[420px]:inline bn-display-sans font-bold text-[16px] md:text-[18px] tracking-tight leading-none truncate">
                         {t("brandName")}
                     </span>
                 </BnLink>
@@ -513,11 +527,11 @@ function BnOverlayHeader({
                 </nav>
                 <div className="flex-1 lg:hidden" />
 
-                <OverlayIcon href="/qidiruv" label={t("search.submit")} className="hidden md:grid">
+                <OverlayIcon href="/qidiruv" label={t("search.submit")}>
                     <Search className="w-[19px] h-[19px]" />
                 </OverlayIcon>
                 <span className="hidden md:block"><BnLangSwitch /></span>
-                <OverlayIcon href="/bildirishnomalar" label={t("nav.notifications")} className="hidden md:grid">
+                <OverlayIcon href="/bildirishnomalar" label={t("nav.notifications")}>
                     <Bell className="w-[19px] h-[19px]" />
                 </OverlayIcon>
                 <OverlayIcon href="/savat" label={t("nav.cart")} badge={cartCount}>
@@ -553,7 +567,7 @@ function BnOverlayHeader({
                     type="button"
                     onClick={onMenu}
                     aria-label={t("nav.menu")}
-                    className="md:hidden w-11 h-11 grid place-items-center rounded-full flex-shrink-0"
+                    className="lg:hidden w-11 h-11 grid place-items-center rounded-full flex-shrink-0"
                     style={{ color: BN.text }}
                 >
                     <Menu className="w-5 h-5" />

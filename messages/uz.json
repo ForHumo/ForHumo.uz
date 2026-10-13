@@ -666,7 +666,10 @@
         "unmute": "Ovozni yoqish",
         "mediaN": "{n}-media",
         "mediaGroup": "Mahsulot rasmlari va videosi",
-        "linkCopied": "Havola nusxalandi"
+        "linkCopied": "Havola nusxalandi",
+        "meterEmpty": "Bu mahsulot uchun bozor narxi hali yig'ilmoqda. Narx tushsa — darhol xabar beramiz.",
+        "offerInApp": "BN chatda taklif berish",
+        "messageCopied": "Xabar nusxalandi — Telegram'da joylashtiring"
       }
     },
     "cart": {
