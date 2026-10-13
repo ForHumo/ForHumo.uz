@@ -19,6 +19,8 @@ import { AiMarkdown } from "@/components/ai/ai-markdown";
 import { HumoLive } from "@/components/ai/humo-live";
 import { AiCalendarPanel } from "@/components/ai/ai-calendar-panel";
 import { UmmiTip } from "@/components/ummi/ummi-tip";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { pickUmmiPose, UMMI } from "@/lib/ummi-poses";
 import { AI_MODELS, DEFAULT_MODEL, findModel } from "@/lib/ai-models";
 import { aiT, aiTn, aiLangFromLocale, type AiLang } from "@/lib/ai-i18n";
 
@@ -344,6 +346,12 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
     const aiVars = (dark ? AI_VARS_DARK : AI_VARS_LIGHT) as CSSProperties;
     // Logo temaga mos: dark → oq logo, light → qora logo
     const logoSrc = dark ? "/logos/humo-ai-white.png" : "/logos/humo-ai-black.png";
+    // Ummi poza — suhbat mavzusiga qarab (founder misoli: Ramazon → 211). Bo'sh bo'lsa salom.
+    const aiUmmiPose = pickUmmiPose({
+        topic: messages.slice(-5).map(m => m.body).join(" "),
+        fallback: messages.length ? UMMI.hero : UMMI.greet,
+        seasonal: false,
+    });
     // Foydalanuvchi ismi (salomlashuvda ko'rsatiladi) — faqat birinchi so'z
     const firstName = (session?.user?.name || "").trim().split(/\s+/)[0] || "";
 
@@ -1089,8 +1097,7 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                 <div className={`h-14 border-b flex items-center flex-shrink-0 ${showLabels ? "px-3 gap-2" : "px-0 justify-center"}`} style={{ borderColor: T.border }}>
                     {showLabels ? (
                         <>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={logoSrc} alt="Humo AI" className="w-7 h-7 flex-shrink-0 select-none" draggable={false} />
+                            <UmmiPose pose={aiUmmiPose} size={28} alt="Humo AI" className="w-7 h-7 flex-shrink-0" />
                             <span className="font-black text-sm flex-1 truncate text-[var(--foreground)]">Humo AI</span>
                             <button onClick={toggleCollapse} title={t("sidebar.collapse")} aria-label={t("sidebar.collapse")}
                                 className="hidden md:grid w-8 h-8 rounded-lg place-items-center hover:bg-[var(--ai-hover)]" style={{ color: "var(--muted-foreground)" }}>
@@ -1521,9 +1528,9 @@ export function AiChatPage({ locale, orAvailable = false }: { locale?: string; o
                     )}
                     {!AI_MODE_MAP[mode].soon && !activeId && messages.length === 0 && (
                         <div className="h-full flex flex-col items-center justify-center text-center px-4">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={logoSrc} alt="Humo AI" className="w-[74px] h-[74px] mb-6 select-none"
-                                style={{ animation: "aiLogoFloat 4s ease-in-out infinite" }} draggable={false} />
+                            <div className="mb-6" style={{ animation: "aiLogoFloat 4s ease-in-out infinite" }}>
+                                <UmmiPose pose={aiUmmiPose} size={84} alt="Humo AI" priority />
+                            </div>
                             <p className="text-[13px] mb-2" style={{ color: "hsl(var(--muted-foreground))" }}>
                                 {firstName ? t("empty.greet").replace("{name}", firstName) : t("empty.welcome")}
                             </p>

@@ -16,6 +16,7 @@ const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const PRECACHE_URLS = [
     "/offline.html",
     "/logo.png",
+    "/ummi/144.webp",
     "/bn/favicon.png",
     "/bn/apple-icon.png",
 ];
