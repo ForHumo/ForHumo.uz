@@ -30,7 +30,7 @@ export async function GET(req: Request) {
     // ── Foydalanuvchilar ──
     const userRows = await prisma.userProfile.findMany({
         where: {
-            accountType: "GOOGLE", // SWEET (hamkor) profillar For Humo ijtimoiy yuzasida ko'rinmaydi
+            accountType: "GOOGLE", // faqat haqiqiy foydalanuvchilar — tizim (SYSTEM) profillari ko'rinmaydi
             username: { not: null },
             ...(hidden.length ? { id: { notIn: hidden } } : {}),
             OR: [
