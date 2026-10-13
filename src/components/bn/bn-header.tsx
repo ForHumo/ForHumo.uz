@@ -277,7 +277,7 @@ export function BnHeader({
 
             {/* ── Mobil menyu ── */}
             {menuOpen && (
-                <div className={`fixed inset-0 z-[110] ${overlay ? "lg:hidden" : "md:hidden"}`}>
+                <div className={`fixed inset-0 z-[110] ${overlay ? "xl:hidden" : "md:hidden"}`}>
                     <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.55)" }} onClick={() => setMenuOpen(false)} />
                     <div
                         className="absolute inset-y-0 left-0 w-[86%] max-w-[340px] overflow-y-auto"
@@ -513,7 +513,7 @@ function BnOverlayHeader({
                     </span>
                 </BnLink>
 
-                <nav aria-label={t("navbar.ariaLabel")} className="hidden lg:flex items-center gap-0.5 flex-1 min-w-0">
+                <nav aria-label={t("navbar.ariaLabel")} className="hidden xl:flex items-center gap-0.5 flex-1 min-w-0">
                     {OVERLAY_NAV.map(n => (
                         <BnLink
                             key={n.href}
@@ -525,7 +525,7 @@ function BnOverlayHeader({
                         </BnLink>
                     ))}
                 </nav>
-                <div className="flex-1 lg:hidden" />
+                <div className="flex-1 xl:hidden" />
 
                 <OverlayIcon href="/qidiruv" label={t("search.submit")}>
                     <Search className="w-[19px] h-[19px]" />
@@ -567,7 +567,7 @@ function BnOverlayHeader({
                     type="button"
                     onClick={onMenu}
                     aria-label={t("nav.menu")}
-                    className="lg:hidden w-11 h-11 grid place-items-center rounded-full flex-shrink-0"
+                    className="xl:hidden w-11 h-11 grid place-items-center rounded-full flex-shrink-0"
                     style={{ color: BN.text }}
                 >
                     <Menu className="w-5 h-5" />

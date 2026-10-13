@@ -256,7 +256,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
         ? lerp(0.94, 1.04, ease(seg(v, 0, 0.33))) - 0.06 * ease(seg(v, 0.68, 1))
         : lerp(1, 0.86, ease(clamp01(o / 420))));
     const frameX = useTransform(progress, v => isDesktop
-        ? lerp(0, -40, ease(seg(v, 0, 0.33))) + lerp(0, -70, ease(seg(v, 0.68, 1))) : 0);
+        ? lerp(0, -20, ease(seg(v, 0, 0.33))) + lerp(0, -30, ease(seg(v, 0.68, 1))) : 0);
     const frameY = useTransform([progress, offset] as MotionValue<number>[], ([v, o]: number[]) => isDesktop
         ? lerp(0, 20, ease(seg(v, 0, 0.33)))
         : lerp(0, -70, ease(clamp01(o / 420))));
@@ -264,7 +264,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
     const revealClip = useMotionTemplate`circle(${revealR}% at 72% 50%)`;
     const revealRotY = useTransform(progress, v => lerp(14, 0, ease(seg(v, 0.36, 0.62))) + lerp(0, 6, ease(seg(v, 0.68, 1))));
     const revealScale = useTransform(progress, v => lerp(0.9, 1, ease(seg(v, 0.36, 0.62))) + 0.04 * ease(seg(v, 0.68, 1)));
-    const revealX = useTransform(progress, v => lerp(60, 0, ease(seg(v, 0.36, 0.62))) + lerp(0, -70, ease(seg(v, 0.68, 1))));
+    const revealX = useTransform(progress, v => lerp(60, 0, ease(seg(v, 0.36, 0.62))) + lerp(0, -30, ease(seg(v, 0.68, 1))));
     const ambientScale = useTransform(progress, v => 1.25 + 0.12 * v);
     const dimMobile = useTransform(offset, o => isDesktop ? 0 : 0.55 * ease(clamp01(o / 420)));
 
@@ -326,7 +326,8 @@ export function BnProductShowroom(props: BnShowroomProps) {
     }, []);
 
     const chapterCls = "py-7 lg:py-24 lg:min-h-[100svh] lg:flex lg:items-center";
-    const colCls = "w-full lg:max-w-[600px] lg:ml-[max(24px,6.6vw)]";
+    // Ustun media ramkasiga hech qachon yetmasin (ramka chap cheti ≈ 53vw − siljish)
+    const colCls = "w-full lg:max-w-[min(600px,calc(46vw-60px))] lg:ml-[max(24px,6.6vw)]";
 
     return (
         <>
@@ -346,7 +347,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
                                 src={ambientSrc}
                                 alt=""
                                 className="w-full h-full object-cover"
-                                style={{ filter: isDesktop ? "blur(60px) saturate(1.5) brightness(0.5)" : "blur(36px) saturate(1.4) brightness(0.5)" }}
+                                style={{ filter: isDesktop ? "blur(60px) saturate(1.5) brightness(0.42)" : "blur(36px) saturate(1.4) brightness(0.45)" }}
                             />
                         </motion.div>
                     ) : null}
@@ -447,7 +448,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
                     {/* O'qish uchun soya: desktop — chapdan, mobil — tepadan */}
                     <div
                         className="hidden lg:block absolute inset-0"
-                        style={{ background: "linear-gradient(90deg, rgba(8,12,11,0.78) 0%, rgba(8,12,11,0.42) 40%, rgba(8,12,11,0) 60%)" }}
+                        style={{ background: "linear-gradient(90deg, rgba(8,12,11,0.88) 0%, rgba(8,12,11,0.7) 44%, rgba(8,12,11,0) 68%)" }}
                     />
                     <div
                         className="lg:hidden absolute inset-x-0 top-0 h-40"
@@ -663,7 +664,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
 
                             {/* Desktop: media boshqaruvi, scroll ishorasi, bob hisoblagichi */}
                             <MediaControls
-                                className="hidden lg:flex absolute top-[calc(100vh-92px)] top-[calc(100svh-92px)] right-[7vw]"
+                                className="hidden lg:flex flex-col absolute top-[50vh] top-[50svh] -translate-y-1/2 right-[max(8px,calc(3.5vw-28px))]"
                                 media={media}
                                 active={active}
                                 onPick={setActive}
@@ -927,7 +928,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
                             <motion.span className="absolute inset-y-0 left-0 w-full origin-left" style={{ background: BN.text, scaleX: progress }} />
                         </span>
                         <span
-                            className="inline-flex items-center gap-1 text-[12px] font-semibold uppercase tracking-[0.08em] transition-opacity duration-300"
+                            className="hidden xl:inline-flex items-center gap-1 text-[12px] font-semibold uppercase tracking-[0.08em] transition-opacity duration-300"
                             style={{ color: BN.text3, opacity: step === 1 ? 1 : 0 }}
                         >
                             {ts("scrollHint")}
@@ -1254,7 +1255,7 @@ function MediaControls({
                         {media.map((m, i) => (
                             <button key={`${m.src}-${i}`} type="button" onClick={() => onPick(i)}
                                 aria-label={ts("mediaN", { n: i + 1 })} aria-current={i === active}
-                                className="h-11 grid place-items-center px-0.5">
+                                className="h-11 min-w-6 grid place-items-center px-1.5">
                                 <span className="block h-1.5 rounded-full transition-all"
                                     style={{ width: i === active ? 18 : 6, background: i === active ? BN.text : "rgba(244,240,230,0.45)" }} />
                             </button>
@@ -1274,12 +1275,12 @@ function MediaControls({
 
     return (
         <div className={`items-center gap-2 ${className}`}>
-            {/* Barcha media — 5 tadan ko'p bo'lsa gorizontal aylanadi */}
-            <div className="flex items-center gap-2 max-w-[332px] overflow-x-auto bn-noscroll p-0.5" role="group" aria-label={ts("mediaGroup")}>
+            {/* Barcha media — vertikal tasma, sig'masa aylanadi */}
+            <div className="flex flex-col items-center gap-2 max-h-[min(392px,52vh)] overflow-y-auto bn-noscroll p-0.5" role="group" aria-label={ts("mediaGroup")}>
             {media.map((m, i) => (
                 <button key={`${m.src}-${i}`} type="button" onClick={() => onPick(i)}
                     aria-label={m.kind === "video" ? ts("video") : ts("mediaN", { n: i + 1 })} aria-current={i === active}
-                    className="relative w-[60px] h-[60px] flex-shrink-0 rounded-[14px] overflow-hidden grid place-items-center transition-transform hover:scale-[1.04]"
+                    className="relative w-[52px] h-[52px] xl:w-[60px] xl:h-[60px] flex-shrink-0 rounded-[14px] overflow-hidden grid place-items-center transition-transform hover:scale-[1.04]"
                     style={{ border: i === active ? `2px solid ${BN.text}` : "1px solid rgba(255,255,255,0.22)", background: "rgba(255,255,255,0.10)" }}>
                     {m.kind === "image" ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -1293,14 +1294,14 @@ function MediaControls({
             {isVideo && (
                 <>
                     <button type="button" onClick={onTogglePlay} aria-label={playing ? ts("pause") : ts("play")}
-                        className="ml-2 w-11 h-11 grid place-items-center rounded-full" style={glass}>
+                        className="mt-2 w-11 h-11 grid place-items-center rounded-full" style={glass}>
                         {playing ? <Pause className="w-4 h-4" fill="currentColor" /> : <Play className="w-4 h-4" fill="currentColor" />}
                     </button>
                     <button type="button" onClick={onToggleMute} aria-label={muted ? ts("unmute") : ts("mute")}
                         className="w-11 h-11 grid place-items-center rounded-full" style={glass}>
                         {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                     </button>
-                    {duration ? <span className="text-[12.5px] font-bold tabular-nums" style={{ color: BN.text2 }}>{mmss(duration)}</span> : null}
+                    {duration ? <span className="text-[12.5px] font-bold tabular-nums" style={{ color: BN.text }}>{mmss(duration)}</span> : null}
                 </>
             )}
         </div>
