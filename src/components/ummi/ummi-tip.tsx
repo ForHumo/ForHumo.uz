@@ -78,6 +78,20 @@ export function UmmiTip({ className = "", variant = "default" }: { className?: s
     const onOpen = () => patch(s.id, "ACTED");
     const onDismiss = () => { setHidden(true); patch(s.id, "DISMISSED"); };
 
+    // Matn tilga mos — kind+url'dan shablon bilan (saqlangan s.title/s.body o'zbekcha, u fallback).
+    let title = s.title, body = s.body;
+    if (s.kind === "nexus") {
+        const author = decodeURIComponent((s.url.split("/nexus/u/")[1] || "").replace(/\/.*$/, ""));
+        title = t("s.nexus.title", { author }); body = t("s.nexus.body");
+    } else if (s.kind === "bn") {
+        const mm = s.url.match(/[?&]category=([^&]+)/);
+        title = t("s.bn.title", { category: mm ? decodeURIComponent(mm[1]) : "" }); body = t("s.bn.body");
+    } else if (s.kind === "belis") {
+        title = t("s.belis.title"); body = t("s.belis.body");
+    } else if (s.kind === "profile") {
+        title = t("s.profile.title"); body = t("s.profile.body");
+    }
+
     const v = variant === "default" ? null : VARIANTS[variant];
 
     // Default — global tema tokenlari (Tailwind klasslari); nexus/esport — inline modul tokenlari.
@@ -100,18 +114,18 @@ export function UmmiTip({ className = "", variant = "default" }: { className?: s
         >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-                src="/mascot/ummi.webp"
+                src="/mascot/ummi-avatar.webp"
                 alt="Ummi"
                 width={40}
                 height={40}
-                className="w-10 h-10 rounded-xl object-contain shrink-0"
+                className="w-10 h-10 rounded-xl object-cover shrink-0"
             />
             <div className="min-w-0 flex-1">
                 <div className={`text-[11px] font-bold uppercase tracking-wide mb-0.5 ${eyebrowCls}`} style={v?.eyebrow}>
                     {t("eyebrow")}
                 </div>
-                <div className={`text-sm font-bold leading-snug ${titleCls}`} style={v?.title}>{s.title}</div>
-                <div className={`text-xs leading-snug mt-0.5 ${bodyCls}`} style={v?.body}>{s.body}</div>
+                <div className={`text-sm font-bold leading-snug ${titleCls}`} style={v?.title}>{title}</div>
+                <div className={`text-xs leading-snug mt-0.5 ${bodyCls}`} style={v?.body}>{body}</div>
                 <div className="mt-2">
                     {external ? (
                         <a href={s.url} target="_blank" rel="noopener noreferrer" onClick={onOpen} className={openCls} style={v?.link}>

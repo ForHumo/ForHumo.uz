@@ -1498,6 +1498,24 @@
   "ummi": {
     "eyebrow": "Ummi taklifi",
     "open": "Ochish",
-    "dismiss": "Kerakmas"
+    "dismiss": "Kerakmas",
+    "s": {
+      "belis": {
+        "title": "Yaqin marosim uchun",
+        "body": "Belisda Fotiha va Beshik to’y sarpo qutilari ijarada. Sifatli, hamyonbop, yetkazish bilan."
+      },
+      "nexus": {
+        "title": "@{author} yangi post joyladi",
+        "body": "Sizni qiziqtirishi mumkin — Nexus’da ko’ring."
+      },
+      "bn": {
+        "title": "{category} — yangi tavsiya",
+        "body": "Bozor Narxidada arzon topilmalar bor. Solishtirib ko’ring."
+      },
+      "profile": {
+        "title": "Sizni yaxshiroq tanishimiz uchun",
+        "body": "1 daqiqada bir necha savolga javob bering — tavsiyalar aniqroq bo’ladi."
+      }
+    }
   }
 }

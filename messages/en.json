@@ -1498,6 +1498,24 @@
   "ummi": {
     "eyebrow": "Ummi tip",
     "open": "Open",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "s": {
+      "belis": {
+        "title": "For an upcoming celebration",
+        "body": "Belis offers Fotiha and Beshik wedding sets for rent. Quality, affordable, with delivery."
+      },
+      "nexus": {
+        "title": "@{author} posted something new",
+        "body": "You might find it interesting — check it on Nexus."
+      },
+      "bn": {
+        "title": "{category} — new pick",
+        "body": "Great deals on Bozor Narxida. Compare prices."
+      },
+      "profile": {
+        "title": "To get to know you better",
+        "body": "Answer a couple of questions in a minute — your tips get sharper."
+      }
+    }
   }
 }
