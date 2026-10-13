@@ -8,6 +8,7 @@ import { Loader2, Trophy, TrendingUp, Swords, Crown, Star, Gamepad2, Newspaper, 
 import EsportBroadcast, { type Broadcast } from "./esport-broadcast";
 import { useEsT } from "@/lib/esport-i18n";
 import { seasonPoster } from "@/lib/esport-season";
+import { UmmiTip } from "@/components/ummi/ummi-tip";
 
 interface TeamLite { id: string; name: string; tag: string; logo: string | null }
 interface T { id: string; name: string; game: string; status: string; teams: number; prizePool: number | null; currency: string }
@@ -83,6 +84,8 @@ export default function EsportHome() {
 
     return (
         <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+            {/* Ummi taklifi — shaxsiy (taklif bor + toggle yoniq bo'lsa; aks holda ko'rinmaydi) */}
+            <UmmiTip className="mb-6" />
             {/* Hero */}
             <motion.div {...fade} transition={{ duration: 0.4 }} className="relative mb-6 overflow-hidden rounded-3xl es-card">
                 <div className="pointer-events-none absolute inset-0 es-accent-bg3 opacity-[0.08]" />

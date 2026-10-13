@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 import { ProductCard } from "./product-card";
+import { UmmiTip } from "@/components/ummi/ummi-tip";
 import { AiQuickHelper } from "@/components/ai/ai-quick-helper";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -149,6 +150,9 @@ export function MarketHome() {
                 </section>
 
                 <div className="container mx-auto px-4 max-w-6xl py-8 space-y-10">
+
+                    {/* Ummi taklifi — shaxsiy (taklif bor + toggle yoniq bo'lsa; aks holda ko'rinmaydi) */}
+                    <UmmiTip className="max-w-2xl" />
 
                     {/* ── Kategoriyalar ── */}
                     <section>

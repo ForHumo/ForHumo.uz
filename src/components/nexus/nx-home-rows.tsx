@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { NxLiveRoom } from "./nx-live-room";
 import { NxKaraokeRow } from "./nx-karaoke-row";
+import { UmmiTip } from "@/components/ummi/ummi-tip";
 
 interface HVid {
     id: string; title: string; thumbUrl: string | null; videoUrl: string;
@@ -147,6 +148,8 @@ export function NxHomeRows() {
 
     return (
         <div className="mt-2">
+            {/* Ummi taklifi — shaxsiy (taklif bor + toggle yoniq bo'lsa; aks holda ko'rinmaydi) */}
+            <div className="px-3 sm:px-4 mb-2"><UmmiTip /></div>
             {/* 0. TOP karaoke ijrolari (haftalik) — bo'sh bo'lsa yashiradi */}
             <NxKaraokeRow />
 
