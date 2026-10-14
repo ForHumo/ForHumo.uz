@@ -12,6 +12,7 @@
 //   yaratishga olib boradi (yangi post shu yerda ham ko'rinadi).
 
 import { useState, useEffect } from "react";
+import NextImage from "next/image";
 import {
     Play, Image as ImageIcon, MessageCircle, Store, Sparkles, Filter,
     Heart, MessageSquare, Share2, BadgeCheck, ArrowUpRight, Loader2,
@@ -69,7 +70,8 @@ export function BnMedia() {
             {/* Sarlavha + integratsiya izohi */}
             <div className="mb-5">
                 <div className="flex items-center gap-2 mb-2">
-                    <img
+                    {/* next/image: manba PNG ~1.4 MB — 32px uchun optimallashtirilgan nusxa */}
+                    <NextImage
                         src="/logos/humo-nexus.png"
                         alt=""
                         width={32}

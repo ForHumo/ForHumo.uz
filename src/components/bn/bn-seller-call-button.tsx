@@ -7,6 +7,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Phone, Loader2 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { shopAvailability } from "@/lib/bn-hours";
@@ -23,8 +24,15 @@ interface Props {
 
 export function BnSellerCallButton({ sellerId, shopName, shopLogo, ownerUsername, workHours, product }: Props) {
     const { status } = useSession();
+    const t = useTranslations("bn.product");
     const [busy, setBusy] = useState(false);
     const avail = shopAvailability(workHours);
+    // avail.label lib'da o'zbekcha — yorliq shu yerda tarjimadan yig'iladi
+    const availLabel = avail.open
+        ? t("sellerHours.openNow")
+        : avail.todayHours
+            ? t("sellerHours.closedToday", { hours: avail.todayHours })
+            : t("sellerHours.dayOff");
 
     function call() {
         if (busy) return;
@@ -55,12 +63,12 @@ export function BnSellerCallButton({ sellerId, shopName, shopLogo, ownerUsername
         >
             <span className="flex items-center gap-2">
                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Phone className="w-4 h-4" />}
-                Qo&apos;ng&apos;iroq
+                {t("sellerCall")}
             </span>
             {avail.open !== null && (
                 <span className="flex items-center gap-1 text-[10px] font-medium" style={{ color: BN.text3 }}>
                     <span className="w-1.5 h-1.5 rounded-full" style={{ background: dot }} />
-                    {avail.label}
+                    {availLabel}
                 </span>
             )}
         </button>

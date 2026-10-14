@@ -35,7 +35,7 @@ import { useShopLocationText } from "./bn-cards";
 import { getBnScrollRoot, onBnScroll } from "./bn-scroll";
 import { bnToast } from "./bn-toast";
 import { TelegramLogo, WhatsAppLogo, HumoNexusLogo } from "@/components/brand-icons";
-import { BN, fmtPrice, groupThousands, priceRankOf, TIER_META } from "@/lib/bn-theme";
+import { BN, groupThousands, priceRankOf } from "@/lib/bn-theme";
 import type { BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
 // ── Turlar ──────────────────────────────────────────────────────────────────
@@ -79,22 +79,38 @@ const seg = (p: number, a: number, b: number) => clamp01((p - a) / (b - a));
 const ease = (t: number) => t * t * (3 - 2 * t);
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-/** Sarlavhani 2 qatorga bo'lamiz: sans + serif urg'u (dizayndagi kabi). */
+/** 3-bobdagi iliq "ochilish" foni */
+const WARM_BG = "radial-gradient(45% 55% at 70% 50%, #8C6A2A 0%, rgba(140,106,42,0) 70%), radial-gradient(30% 35% at 22% 78%, #3A2C14 0%, rgba(58,44,20,0) 70%), #15110A";
+/** Ramka balandligi = kenglik / --r (kenglik `.bn-stage-frame` CSS'ida). Ikkalasi aniq
+ *  berilgani uchun nisbat o'zgarganda transition ishlaydi; svh yo'q brauzerda aspect-ratio zaxira. */
+const FRAME_H = "h-[min(calc(76vw/var(--r,1)),46svh)] lg:h-[min(calc(40vw/var(--r,1)),70svh)]";
+const FRAME_SIZE_TRANSITION = "width 0.5s cubic-bezier(0.22,1,0.36,1), height 0.5s cubic-bezier(0.22,1,0.36,1)";
+
+/** Bozor o'rtachasi ishonarlimi: bor va narxdan 60% dan ko'p farq qilmaydi. */
+function isPlausibleAvg(price: number, avg: number | null | undefined): avg is number {
+    return !!avg && avg > 0 && price > 0 && Math.abs(price - avg) / avg <= 0.6;
+}
+
+/** Sarlavhani 2 qatorga bo'lamiz: sans + serif urg'u (dizayndagi kabi).
+ *  Faqat sotuvchi o'zi ajratgan joyda (" — ", ", ", " (") — matn o'zgarmaydi:
+ *  tire/qavs ikkinchi qatorda qoladi, vergul birinchisida. Ajratgich bo'lmasa — bo'linmaydi. */
 function splitTitle(title: string): [string, string] {
     const t = title.trim();
     const sep = t.match(/\s[—–-]\s|,\s|\s\(/);
     if (sep && sep.index !== undefined && sep.index > 3) {
-        const head = t.slice(0, sep.index).trim();
-        let tail = t.slice(sep.index + sep[0].length).trim();
-        if (sep[0].includes("(")) tail = tail.replace(/\)\s*$/, "");
-        if (tail) return [head, tail];
-    }
-    const words = t.split(/\s+/);
-    if (words.length >= 4) {
-        const k = words.length >= 6 ? 3 : 2;
-        return [words.slice(0, -k).join(" "), words.slice(-k).join(" ")];
+        const cut = sep[0].startsWith(",") ? sep.index + 1 : sep.index;
+        const head = t.slice(0, cut).trim();
+        const tail = t.slice(cut).trim();
+        if (tail.replace(/[\s—–\-(),.]/g, "")) return [head, tail];
     }
     return [t, ""];
+}
+
+/** Do'kon joylashuvi ikonkasi — sotuvchi kartasi va hero qatorida bir xil. */
+function ShopLocIcon({ type, className }: { type?: BnShopDTO["locationType"] | null; className?: string }) {
+    if (type === "ONLINE") return <Globe className={className} />;
+    if (type === "IN_MARKET") return <Store className={className} />;
+    return <MapPin className={className} />;
 }
 
 function digitsOnly(phone?: string | null): string {
@@ -106,6 +122,8 @@ function mmss(sec: number): string {
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
+/** FAQAT harakat (motion transform) uchun. Layout'ni o'zgartiradigan narsa shu bayroqqa
+ *  bog'lanmasin — SSR'da u doim `false`, gidratsiyadan keyin almashadi (CLS). Layout → `lg:`. */
 function useIsDesktop(): boolean {
     const [v, setV] = useState(false);
     useEffect(() => {
@@ -165,6 +183,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
     } = props;
     const t = useTranslations("bn.product");
     const ts = useTranslations("bn.product.showroom");
+    const tTier = useTranslations("bn.tier");
     const locText = useShopLocationText();
     const still = useReducedMotion() ?? false;
     const isDesktop = useIsDesktop();
@@ -176,18 +195,27 @@ export function BnProductShowroom(props: BnShowroomProps) {
         ...p.images.filter(Boolean).map(src => ({ kind: "image" as const, src })),
     ], [p.videos, p.images]);
     const [active, setActive] = useState(0);
+    // Foydalanuvchi o'zi rasm tanlaganmi — unda 3-bobda rasm almashtirilmaydi
+    const [userPicked, setUserPicked] = useState(false);
+    const pick = useCallback((i: number) => { setActive(i); setUserPicked(true); }, []);
     const current = media[active] ?? null;
     const poster = p.images[0] ?? null;
     const ambientSrc = current?.kind === "image" ? current.src : poster;
-    // "Ochilish" qatlami — keyingi rasm; bo'lmasa shu rasmning yaqin ko'rinishi
-    const revealSrc = useMemo(() => {
-        const imgs = media.filter(m => m.kind === "image").map(m => m.src);
-        if (imgs.length === 0) return null;
-        const curImg = current?.kind === "image" ? current.src : imgs[0];
-        const next = imgs.find(s => s !== curImg);
-        return { src: next ?? curImg, zoom: !next };
-    }, [media, current]);
-    const [ratio, setRatio] = useState(0.8);
+    // "Ochilish" qatlami — joriy media'dan KEYINGI rasm. Boshqa rasm yo'q bo'lsa yoki
+    // foydalanuvchi o'zi tanlagan bo'lsa — almashtirmaymiz (faqat iliq rang to'lqini).
+    const revealIdx = useMemo(() => {
+        if (userPicked || media.length < 2) return -1;
+        const shownSrc = current?.src ?? poster;
+        for (let k = 1; k < media.length; k++) {
+            const j = (active + k) % media.length;
+            if (media[j].kind === "image" && media[j].src !== shownSrc) return j;
+        }
+        return -1;
+    }, [media, active, current, poster, userPicked]);
+    const revealSrc = revealIdx >= 0 ? media[revealIdx].src : null;
+    // Boshlang'ich nisbat 1 — BN mahsulot rasmlari asosan kvadrat (kartalar ham aspect-square),
+    // shuning uchun rasm yuklanganda ramka odatda o'lchamini o'zgartirmaydi (CLS yo'q).
+    const [ratio, setRatio] = useState(1);
     const blurred = !!p.isMature && !matureRevealed;
 
     // ── Video holati ──
@@ -244,6 +272,9 @@ export function BnProductShowroom(props: BnShowroomProps) {
         const s = Math.min(4, Math.round(v * 3) + 1);
         setStep(prev => (prev === s ? prev : s));
     });
+    // Desktop tasmasida ko'rinib turgan rasm belgilanadi (3-bobdan keyin — ochilgan rasm)
+    const revealOn = isDesktop && !still && !blurred && revealIdx >= 0;
+    const railActive = revealOn && step >= 3 ? revealIdx : active;
 
     // Desktop: 3D aylanish + ochilish. Mobil: parallaks.
     const frameRotY = useTransform(progress, v => isDesktop
@@ -260,8 +291,17 @@ export function BnProductShowroom(props: BnShowroomProps) {
     const frameY = useTransform([progress, offset] as MotionValue<number>[], ([v, o]: number[]) => isDesktop
         ? lerp(0, 20, ease(seg(v, 0, 0.33)))
         : lerp(0, -70, ease(clamp01(o / 420))));
-    const revealR = useTransform(progress, v => isDesktop ? lerp(0, 112, ease(seg(v, 0.36, 0.62))) : 0);
-    const revealClip = useMotionTemplate`circle(${revealR}% at 72% 50%)`;
+    // Ochilish — qattiq clip-path emas, chekkasi yumshoq radial maska (teshik bo'lib ko'rinmasin).
+    // 118% − 18% yumshoq chekka = 100% → oxirida butun sahna to'liq yopiladi.
+    const revealR = useTransform(progress, v => isDesktop ? lerp(0, 118, ease(seg(v, 0.36, 0.62))) : 0);
+    const revealIn = useTransform(revealR, r => r - 18);
+    const revealMask = useMotionTemplate`radial-gradient(circle at 72% 50%, black ${revealIn}%, transparent ${revealR}%)`;
+    // Teskari maska — ochilgan joyda asosiy ramka yashirinadi (ikki ramka ustma-ust ko'rinmasin)
+    const revealMaskInv = useMotionTemplate`radial-gradient(circle at 72% 50%, transparent ${revealIn}%, black ${revealR}%)`;
+    // Boshqa rasm yo'q (yoki foydalanuvchi tanlagan) — rasm joyida qoladi, faqat iliq rang to'lqini
+    const washOpacity = useTransform(progress, v => isDesktop ? 0.6 * ease(seg(v, 0.36, 0.62)) : 0);
+    // Bob ko'rsatkichi sahna oxirida so'nadi (sahna ostida "04 / 04" qolmasin)
+    const railFade = useTransform(progress, v => 1 - seg(v, 0.95, 1));
     const revealRotY = useTransform(progress, v => lerp(14, 0, ease(seg(v, 0.36, 0.62))) + lerp(0, 6, ease(seg(v, 0.68, 1))));
     const revealScale = useTransform(progress, v => lerp(0.9, 1, ease(seg(v, 0.36, 0.62))) + 0.04 * ease(seg(v, 0.68, 1)));
     const revealX = useTransform(progress, v => lerp(60, 0, ease(seg(v, 0.36, 0.62))) + lerp(0, -30, ease(seg(v, 0.68, 1))));
@@ -273,13 +313,18 @@ export function BnProductShowroom(props: BnShowroomProps) {
         : { rotateY: frameRotY, rotateX: frameRotX, rotate: frameRotZ, scale: frameScale, x: frameX, y: frameY, transformPerspective: 1400 };
 
     // ── Narx tahlili ──
-    const rank = priceRankOf(unitPrice, p.marketAvgPrice);
-    const pct = p.marketAvgPrice ? Math.round(((unitPrice - p.marketAvgPrice) / p.marketAvgPrice) * 100) : 0;
+    // Bozor o'rtachasi aql bovar qilmaydigan darajada farq qilsa (>60%) — bu ma'lumot xatosi
+    // (masalan 35 000 so'mlik kolbasaga 285 000 o'rtacha). Soxta "88% arzon" ko'rsatmaymiz.
+    const marketAvg = isPlausibleAvg(unitPrice, p.marketAvgPrice) ? p.marketAvgPrice : null;
+    const rank = priceRankOf(unitPrice, marketAvg);
+    const pct = marketAvg ? Math.round(((unitPrice - marketAvg) / marketAvg) * 100) : 0;
     const rankLabel = rank === "cheap" ? ts("cheaperBy", { pct: Math.abs(pct) })
         : rank === "expensive" ? ts("pricierBy", { pct: Math.abs(pct) })
         : rank === "fair" ? t("atMarketPrice") : null;
     const othersSorted = useMemo(() => others.slice().sort((a, b) => a.price - b.price), [others]);
-    const meter = useMemo(() => buildMeter(unitPrice, p.marketAvgPrice, othersSorted.map(o => o.price)), [unitPrice, p.marketAvgPrice, othersSorted]);
+    const meter = useMemo(() => buildMeter(unitPrice, marketAvg, othersSorted.map(o => o.price)), [unitPrice, marketAvg, othersSorted]);
+    /** Narx + valyuta — vitrinada bitta yorliq (locale bo'yicha: so'm / сум / UZS) */
+    const som = (n: number) => `${groupThousands(n)} ${t("currencySom")}`;
 
     // ── Aloqa havolalari ──
     const phone = shop?.phoneVerified ? digitsOnly(shop.phone) : "";
@@ -296,28 +341,43 @@ export function BnProductShowroom(props: BnShowroomProps) {
         ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}` : null;
     const verified = (shop?.verifiedTier && shop.verifiedTier !== "NONE") || (p.shopVerifiedTier && p.shopVerifiedTier !== "NONE") || p.shopVerified;
     const placeText = shop ? locText(shop) : (p.marketName ?? p.city);
-    const tier = shop ? TIER_META[shop.tier] : null;
+    const tierLabel = shop && shop.tier !== "NEW" && tTier.has(shop.tier) ? tTier(shop.tier) : null;
 
     const [titleHead, titleTail] = splitTitle(p.title);
     const outOfStock = p.stock < 1;
 
-    // Mobil pastki panel — foydalanuvchi hero tugmalaridan PASTGA o'tganda chiqadi,
-    // sayt footer'i ko'ringanda yashirinadi. IntersectionObserver emas, scroll'da
-    // o'lchaymiz: tez "fling"da element bitta kadrda sakrab o'tilsa IO xabar bermaydi.
+    // Pastki xarid panellari. IntersectionObserver emas, scroll'da o'lchaymiz: tez
+    // "fling"da element bitta kadrda sakrab o'tilsa IO xabar bermaydi.
+    //  - Mobil: hero tugmalari pastki navbar ustida TO'LIQ ko'rinmasa chiqadi (birinchi
+    //    ekranda ular navbar ostida qolsa ham), sayt footer'i ko'ringanda yashirinadi.
+    //  - Desktop: sahna bo'limi ekranning ~60% balandligidan yuqoriga chiqib ketgach chiqadi.
     const heroActionsRef = useRef<HTMLDivElement | null>(null);
+    const mobileBarRef = useRef<HTMLDivElement | null>(null);
     const [barHidden, setBarHidden] = useState(true);
+    const [deskBarShown, setDeskBarShown] = useState(false);
     useEffect(() => {
         let raf = 0;
         const check = () => {
             raf = 0;
-            const el = heroActionsRef.current;
-            if (!el) return;
             const vh = window.innerHeight;
-            const pastHero = el.getBoundingClientRect().bottom < 0;
             const footer = document.querySelector("[data-bn-scroll-root] footer");
             const footerIn = !!footer && footer.getBoundingClientRect().top < vh;
-            const hide = !pastHero || footerIn;
-            setBarHidden(prev => (prev === hide ? prev : hide));
+            const el = heroActionsRef.current;
+            if (el) {
+                // Navbar yuqori cheti = panelning `bottom` qiymati (transform'dan qat'i nazar)
+                const bar = mobileBarRef.current;
+                const navTop = vh - (bar ? parseFloat(getComputedStyle(bar).bottom) || 0 : 0);
+                const r = el.getBoundingClientRect();
+                // Tepada — shaffof header kapsulasi (mobil: pt-3 + h-14 = 68px) ostida ham "ko'rinmaydi"
+                const heroVisible = r.top >= 68 && r.bottom <= navTop;
+                const hide = heroVisible || footerIn;
+                setBarHidden(prev => (prev === hide ? prev : hide));
+            }
+            const track = trackRef.current;
+            if (track) {
+                const show = track.getBoundingClientRect().bottom < vh * 0.6 && !footerIn;
+                setDeskBarShown(prev => (prev === show ? prev : show));
+            }
         };
         const onScroll = () => { if (!raf) raf = requestAnimationFrame(check); };
         check();
@@ -325,7 +385,29 @@ export function BnProductShowroom(props: BnShowroomProps) {
         return () => { off(); if (raf) cancelAnimationFrame(raf); };
     }, []);
 
+    // Mobil galereya: media ustida gorizontal surish (vertikal scroll tabiiy qoladi — pan-y)
+    const swipeRef = useRef<{ x: number; y: number } | null>(null);
+    const onMediaTouchStart = (e: React.TouchEvent) => {
+        const tch = e.touches[0];
+        // Nuqtalar qatori o'zi gorizontal aylanadi — u yerdagi surish rasmni almashtirmasin
+        const onDots = (e.target as HTMLElement | null)?.closest?.("[data-media-dots]");
+        swipeRef.current = tch && !onDots ? { x: tch.clientX, y: tch.clientY } : null;
+    };
+    const onMediaTouchEnd = (e: React.TouchEvent) => {
+        const s = swipeRef.current;
+        swipeRef.current = null;
+        const tch = e.changedTouches[0];
+        if (!s || !tch || media.length < 2) return;
+        const dx = tch.clientX - s.x;
+        const dy = tch.clientY - s.y;
+        if (Math.abs(dx) < 40 || Math.abs(dx) <= Math.abs(dy)) return;
+        const next = dx < 0 ? Math.min(media.length - 1, active + 1) : Math.max(0, active - 1);
+        if (next !== active) pick(next);
+    };
+
     const chapterCls = "py-7 lg:py-24 lg:min-h-[100svh] lg:flex lg:items-center";
+    // Oxirgi bob: mobil'da pastki xarid paneli + navbar yakuniy tugmalarni yopmasin
+    const lastChapterCls = "pt-7 pb-[160px] lg:py-24 lg:min-h-[100svh] lg:flex lg:items-center";
     // Ustun media ramkasiga hech qachon yetmasin (ramka chap cheti ≈ 53vw − siljish)
     const colCls = "w-full lg:max-w-[min(600px,calc(46vw-60px))] lg:ml-[max(24px,6.6vw)]";
 
@@ -338,6 +420,9 @@ export function BnProductShowroom(props: BnShowroomProps) {
                 aria-label={p.title}
             >
                 {/* ═══ SAHNA — yopishqoq media ═══ */}
+                {/* Qatlam tartibi: atmosfera → iliq fon (ochilish/to'lqin) → o'qish soyasi →
+                    media ramkasi → ochilgan rasm ramkasi. Soya faqat fonni qoraytiradi — oq
+                    studiya rasmlari kir-kulrang bo'lib qolmasin. */}
                 <div className="bn-stage-h sticky top-0 overflow-hidden">
                     {/* Atmosfera: sotuvchi rasmining o'zidan */}
                     {ambientSrc ? (
@@ -346,8 +431,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
                             <img
                                 src={ambientSrc}
                                 alt=""
-                                className="w-full h-full object-cover"
-                                style={{ filter: isDesktop ? "blur(60px) saturate(1.5) brightness(0.42)" : "blur(36px) saturate(1.4) brightness(0.45)" }}
+                                className="w-full h-full object-cover blur-[36px] saturate-[1.4] brightness-[0.45] lg:blur-[60px] lg:saturate-[1.5] lg:brightness-[0.42]"
                             />
                         </motion.div>
                     ) : null}
@@ -360,92 +444,15 @@ export function BnProductShowroom(props: BnShowroomProps) {
                     <div className="hidden lg:block absolute inset-y-0 left-8 w-px" style={{ background: "rgba(255,255,255,0.07)" }} />
                     <div className="hidden lg:block absolute inset-y-0 right-8 w-px" style={{ background: "rgba(255,255,255,0.07)" }} />
 
-                    {/* Asosiy media ramkasi */}
-                    <div className="absolute left-1/2 top-[84px] -translate-x-1/2 lg:left-auto lg:right-[7vw] lg:top-1/2 lg:translate-x-0 lg:-translate-y-1/2">
-                        <motion.div
-                            className="bn-stage-frame relative rounded-[26px] lg:rounded-[30px] overflow-hidden will-change-transform"
-                            style={{
-                                ...(frameStyle as object),
-                                ["--r" as string]: ratio,
-                                aspectRatio: String(ratio),
-                                background: "#151B1A",
-                                boxShadow: "0 46px 90px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.12)",
-                            }}
-                        >
-                            {current?.kind === "video" && !blurred ? (
-                                <video
-                                    key={current.src}
-                                    ref={videoRef}
-                                    src={current.src}
-                                    poster={poster ?? undefined}
-                                    muted
-                                    loop
-                                    playsInline
-                                    preload={!mounted ? "none" : autoplayOk ? "auto" : "metadata"}
-                                    className="w-full h-full object-cover"
-                                    onPlay={() => setPlaying(true)}
-                                    onPause={() => setPlaying(false)}
-                                    onLoadedMetadata={e => {
-                                        const v = e.currentTarget;
-                                        if (v.videoWidth && v.videoHeight) setRatio(clampRatio(v.videoWidth / v.videoHeight));
-                                        if (Number.isFinite(v.duration)) setDuration(v.duration);
-                                    }}
-                                />
-                            ) : (current?.kind === "image" || poster) ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                    ref={imgRef}
-                                    key={current?.kind === "image" ? current.src : poster ?? ""}
-                                    src={current?.kind === "image" ? current.src : (poster ?? "")}
-                                    alt={p.title}
-                                    className="w-full h-full object-cover"
-                                    style={blurred ? { filter: "blur(28px)" } : undefined}
-                                    onLoad={e => {
-                                        const im = e.currentTarget;
-                                        if (im.naturalWidth && im.naturalHeight) setRatio(clampRatio(im.naturalWidth / im.naturalHeight));
-                                    }}
-                                />
-                            ) : (
-                                <div className="w-full h-full grid place-items-center" style={{ color: BN.text3 }}>
-                                    <Package className="w-14 h-14" />
-                                </div>
-                            )}
-                        </motion.div>
-                    </div>
+                    {/* 3-bob (desktop): iliq fon — keyingi rasm bilan yumshoq doira bo'lib ochiladi,
+                        boshqa rasm bo'lmasa shunchaki rang to'lqini (rasm joyida qoladi) */}
+                    {isDesktop && !still && !blurred && (revealOn ? (
+                        <motion.div key="reveal-bg" className="absolute inset-0" style={{ maskImage: revealMask, WebkitMaskImage: revealMask, background: WARM_BG }} />
+                    ) : (
+                        <motion.div key="wash" className="absolute inset-0" style={{ opacity: washOpacity, background: WARM_BG }} />
+                    ))}
 
-                    {/* Ochilish qatlami (desktop, 3-bob) — iliq fon + keyingi rasm */}
-                    {isDesktop && !still && revealSrc && !blurred && (
-                        <motion.div
-                            className="absolute inset-0"
-                            style={{
-                                clipPath: revealClip,
-                                WebkitClipPath: revealClip,
-                                background: "radial-gradient(45% 55% at 70% 50%, #8C6A2A 0%, rgba(140,106,42,0) 70%), radial-gradient(30% 35% at 22% 78%, #3A2C14 0%, rgba(58,44,20,0) 70%), #15110A",
-                            }}
-                        >
-                            <div className="absolute right-[7vw] top-1/2 -translate-y-1/2">
-                                <motion.div
-                                    className="bn-stage-frame relative rounded-[30px] overflow-hidden"
-                                    style={{
-                                        rotateY: revealRotY, scale: revealScale, x: revealX, transformPerspective: 1400,
-                                        ["--r" as string]: ratio,
-                                        aspectRatio: String(ratio),
-                                        boxShadow: "0 46px 90px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.14)",
-                                    }}
-                                >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                        src={revealSrc.src}
-                                        alt=""
-                                        className="w-full h-full object-cover"
-                                        style={revealSrc.zoom ? { transform: "scale(1.4)" } : undefined}
-                                    />
-                                </motion.div>
-                            </div>
-                        </motion.div>
-                    )}
-
-                    {/* O'qish uchun soya: desktop — chapdan, mobil — tepadan */}
+                    {/* O'qish uchun soya: desktop — chapdan, mobil — tepadan (ramka OSTIDA) */}
                     <div
                         className="hidden lg:block absolute inset-0"
                         style={{ background: "linear-gradient(90deg, rgba(8,12,11,0.88) 0%, rgba(8,12,11,0.7) 44%, rgba(8,12,11,0) 68%)" }}
@@ -454,18 +461,106 @@ export function BnProductShowroom(props: BnShowroomProps) {
                         className="lg:hidden absolute inset-x-0 top-0 h-40"
                         style={{ background: "linear-gradient(180deg, rgba(8,12,11,0.6) 0%, rgba(8,12,11,0) 100%)" }}
                     />
+
+                    {/* Asosiy media ramkasi. O'lcham CSS'da (--r): kenglik + balandlik aniq
+                        berilgan va yumshoq o'zgaradi — rasm yuklanganda sakramaydi.
+                        Tashqi qatlam butun sahna o'lchamida — teskari maska ochilish bilan bir xil koordinatada. */}
+                    <motion.div className="absolute inset-0" style={{ maskImage: revealOn ? revealMaskInv : "none", WebkitMaskImage: revealOn ? revealMaskInv : "none" }}>
+                        <div className="absolute left-1/2 top-[84px] -translate-x-1/2 lg:left-auto lg:right-[7vw] lg:top-1/2 lg:translate-x-0 lg:-translate-y-1/2">
+                            <motion.div
+                                className={`bn-stage-frame ${FRAME_H} relative rounded-[26px] lg:rounded-[30px] overflow-hidden will-change-transform`}
+                                style={{
+                                    ...(frameStyle as object),
+                                    ["--r" as string]: ratio,
+                                    aspectRatio: String(ratio),
+                                    transition: still ? undefined : FRAME_SIZE_TRANSITION,
+                                    background: BN.surface,
+                                    boxShadow: "0 46px 90px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.12)",
+                                }}
+                            >
+                                {current?.kind === "video" && !blurred ? (
+                                    <video
+                                        key={current.src}
+                                        ref={videoRef}
+                                        src={current.src}
+                                        poster={poster ?? undefined}
+                                        muted
+                                        loop
+                                        playsInline
+                                        preload={!mounted ? "none" : autoplayOk ? "auto" : "metadata"}
+                                        className="w-full h-full object-cover"
+                                        onPlay={() => setPlaying(true)}
+                                        onPause={() => setPlaying(false)}
+                                        onLoadedMetadata={e => {
+                                            const v = e.currentTarget;
+                                            if (v.videoWidth && v.videoHeight) setRatio(clampRatio(v.videoWidth / v.videoHeight));
+                                            if (Number.isFinite(v.duration)) setDuration(v.duration);
+                                        }}
+                                    />
+                                ) : (current?.kind === "image" || poster) ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                        ref={imgRef}
+                                        key={current?.kind === "image" ? current.src : poster ?? ""}
+                                        src={current?.kind === "image" ? current.src : (poster ?? "")}
+                                        alt={p.title}
+                                        className="w-full h-full object-cover"
+                                        style={blurred ? { filter: "blur(28px)" } : undefined}
+                                        onLoad={e => {
+                                            const im = e.currentTarget;
+                                            if (im.naturalWidth && im.naturalHeight) setRatio(clampRatio(im.naturalWidth / im.naturalHeight));
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="w-full h-full grid place-items-center" style={{ color: BN.text3 }}>
+                                        <Package className="w-14 h-14" />
+                                    </div>
+                                )}
+                            </motion.div>
+                        </div>
+                    </motion.div>
+
+                    {/* Ochilgan rasm ramkasi — o'sha yumshoq maska bilan, asosiy ramka ustida */}
+                    {revealOn && revealSrc && (
+                        <motion.div className="absolute inset-0" style={{ maskImage: revealMask, WebkitMaskImage: revealMask }}>
+                            <div className="absolute right-[7vw] top-1/2 -translate-y-1/2">
+                                <motion.div
+                                    className={`bn-stage-frame ${FRAME_H} relative rounded-[30px] overflow-hidden`}
+                                    style={{
+                                        rotateY: revealRotY, scale: revealScale, x: revealX, transformPerspective: 1400,
+                                        ["--r" as string]: ratio,
+                                        aspectRatio: String(ratio),
+                                        transition: FRAME_SIZE_TRANSITION,
+                                        background: BN.surface,
+                                        boxShadow: "0 46px 90px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.14)",
+                                    }}
+                                >
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={revealSrc} alt="" className="w-full h-full object-cover" />
+                                </motion.div>
+                            </div>
+                        </motion.div>
+                    )}
+
                     <motion.div className="lg:hidden absolute inset-0" style={{ background: "#0B0F0E", opacity: still ? 0 : dimMobile }} />
                 </div>
 
                 {/* ═══ KONTENT — sahna ustidan aylanadi ═══ */}
                 <div className="bn-stage-pull relative">
-                    {/* Mobil: media ustidagi bo'sh joy + media boshqaruvi */}
-                    <div className="bn-stage-spacer lg:hidden relative">
+                    {/* Mobil: media ustidagi bo'sh joy + media boshqaruvi. Chapga/o'ngga surish —
+                        keyingi/oldingi media (data-no-swipe: BnSwipeNav tab almashtirmasin) */}
+                    <div
+                        className="bn-stage-spacer lg:hidden relative"
+                        style={{ touchAction: "pan-y" }}
+                        data-no-swipe
+                        onTouchStart={onMediaTouchStart}
+                        onTouchEnd={onMediaTouchEnd}
+                    >
                         <MediaControls
                             className="absolute inset-x-4 bottom-12"
                             media={media}
                             active={active}
-                            onPick={setActive}
+                            onPick={pick}
                             current={current}
                             playing={playing}
                             muted={muted}
@@ -506,14 +601,15 @@ export function BnProductShowroom(props: BnShowroomProps) {
                                 </div>
                                 {placeText && (
                                     <p className="mt-2 flex items-center gap-1.5 text-[13.5px] min-w-0" style={{ color: BN.text3 }}>
-                                        <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                                        <ShopLocIcon type={shop?.locationType} className="w-3.5 h-3.5 flex-shrink-0" />
                                         <span className="truncate">{placeText}</span>
                                     </p>
                                 )}
 
+                                {/* Bo'shliq matn tugunida — textContent'da so'zlar qo'shilib ketmasin */}
                                 <h1 className="mt-4 lg:mt-5 leading-[1.05] tracking-[-0.03em] text-[34px] sm:text-[42px] lg:text-[clamp(40px,4vw,58px)]">
                                     <span className="bn-display-sans block font-light">{titleHead}</span>
-                                    {titleTail && <span className="block font-normal">{titleTail}</span>}
+                                    {titleTail && <>{" "}<span className="block font-normal">{titleTail}</span></>}
                                 </h1>
 
                                 <div className="mt-5">
@@ -541,7 +637,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
                                     ) : null}
                                     {rankLabel && (
                                         <PriceTag rank={rank!} label={rankLabel}
-                                            avg={rank === "fair" && p.marketAvgPrice ? ts("avgShort", { price: groupThousands(p.marketAvgPrice) }) : null} />
+                                            avg={rank === "fair" && marketAvg ? ts("avgShort", { price: groupThousands(marketAvg) }) : null} />
                                     )}
                                 </div>
 
@@ -583,12 +679,14 @@ export function BnProductShowroom(props: BnShowroomProps) {
                                             <QtyBtn label={ts("qtyMore")} onClick={() => onQtyChange(Math.min(p.stock, qty + 1))} disabled={qty >= p.stock}><Plus className="w-4 h-4" /></QtyBtn>
                                         </div>
                                         {p.isWholesale && (
-                                            <span className="tabular-nums">= <b style={{ color: BN.text }}>{fmtPrice(unitPrice * qty)}</b></span>
+                                            <span className="tabular-nums">= <b style={{ color: BN.text }}>{som(unitPrice * qty)}</b></span>
                                         )}
                                     </div>
                                 )}
 
-                                {/* Asosiy harakatlar */}
+                                {/* Asosiy harakatlar. lg (1024–1279): uchta asosiy tugma bitta qatorda —
+                                    "Band qilish" qisqa, savat faqat ikonka (aria/title bilan); xl+: savat
+                                    yorlig'i ko'rinadi (header'dagi savat havolasi bilan adashtirilmasin). */}
                                 <div ref={heroActionsRef} className="mt-6 lg:mt-7 grid grid-cols-2 gap-2.5 lg:flex lg:flex-wrap">
                                     <button
                                         type="button"
@@ -603,14 +701,15 @@ export function BnProductShowroom(props: BnShowroomProps) {
                                     {p.allowInspect && !outOfStock && (
                                         <GlassBtn onClick={onStartInspect} disabled={cartBusy}>
                                             <Clock className="w-[18px] h-[18px] flex-shrink-0" />
-                                            <span className="lg:hidden">{ts("reserveShort")}</span>
-                                            <span className="hidden lg:inline">{ts("reserve")}</span>
+                                            <span className="min-[1440px]:hidden">{ts("reserveShort")}</span>
+                                            <span className="hidden min-[1440px]:inline">{ts("reserve")}</span>
                                         </GlassBtn>
                                     )}
                                     {!outOfStock && (
                                         <GlassBtn onClick={onAddToCart} disabled={cartBusy} label={cartDone ? t("addedToCart") : t("addToCart")} iconOnlyLg>
                                             {cartDone ? <Check className="w-[18px] h-[18px] flex-shrink-0" style={{ color: BN.ok }} /> : <ShoppingCart className="w-[18px] h-[18px] flex-shrink-0" />}
-                                            <span className="lg:sr-only">{cartDone ? t("addedToCart") : t("addToCart")}</span>
+                                            <span className="lg:hidden">{cartDone ? t("addedToCart") : t("addToCart")}</span>
+                                            <span className="hidden xl:inline">{cartDone ? t("addedToCart") : ts("cartShort")}</span>
                                         </GlassBtn>
                                     )}
                                     {p.allowPickup && directionsHref && (
@@ -661,21 +760,6 @@ export function BnProductShowroom(props: BnShowroomProps) {
                                     <span className="inline-flex items-center gap-1.5"><Shield className="w-4 h-4" />{t("wayEscrowText")}</span>
                                 </div>
                             </div>
-
-                            {/* Desktop: media boshqaruvi, scroll ishorasi, bob hisoblagichi */}
-                            <MediaControls
-                                className="bn-stage-mid hidden lg:flex flex-col absolute -translate-y-1/2 right-[max(8px,calc(3.5vw-28px))]"
-                                media={media}
-                                active={active}
-                                onPick={setActive}
-                                current={current}
-                                playing={playing}
-                                muted={muted}
-                                duration={duration}
-                                onTogglePlay={togglePlay}
-                                onToggleMute={() => setMuted(m => !m)}
-                                blurred={blurred}
-                            />
                         </section>
 
                         {/* ── 02 · Narx ── */}
@@ -787,7 +871,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
                         </section>
 
                         {/* ── 04 · Sotuvchi ── */}
-                        <section className={chapterCls} aria-labelledby="bn-sr-seller">
+                        <section className={lastChapterCls} aria-labelledby="bn-sr-seller">
                             <div className={colCls}>
                                 <ChapterHead n="04" kicker={ts("chapterSeller")} id="bn-sr-seller" a={ts("sellerQ1")} b={ts("sellerQ2")} />
                                 {shop && (
@@ -802,25 +886,29 @@ export function BnProductShowroom(props: BnShowroomProps) {
                                                 )}
                                             </span>
                                             <span className="flex-1 min-w-0">
+                                                {/* Nom qatorida faqat nom + galochka; daraja belgisi reyting qatorida,
+                                                    manzil 2 qatorgacha o'raladi (tor ekranda kesilmasin) */}
                                                 <span className="flex items-center gap-1.5 text-[17px] font-bold">
                                                     <span className="truncate">{shop.name}</span>
                                                     {verified && <BadgeCheck className="w-[18px] h-[18px] flex-shrink-0" style={{ color: BN.info }} aria-label={ts("verified")} />}
-                                                    {tier && shop.tier !== "NEW" && (
-                                                        <span className="px-2 py-0.5 rounded-full text-[11.5px] font-bold flex-shrink-0" style={{ background: "rgba(255,255,255,0.12)", color: BN.text2 }}>
-                                                            {tier.label}
-                                                        </span>
-                                                    )}
                                                 </span>
-                                                <span className="flex items-center gap-1.5 mt-1 text-[13.5px]" style={{ color: BN.text3 }}>
-                                                    {shop.locationType === "IN_MARKET" ? <Store className="w-3.5 h-3.5 flex-shrink-0" />
-                                                        : shop.locationType === "STANDALONE" ? <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                                                        : <Globe className="w-3.5 h-3.5 flex-shrink-0" />}
-                                                    <span className="truncate">{locText(shop)}</span>
+                                                <span className="flex items-start gap-1.5 mt-1 text-[13.5px] leading-snug" style={{ color: BN.text3 }}>
+                                                    <ShopLocIcon type={shop.locationType} className="w-3.5 h-3.5 mt-[2px] flex-shrink-0" />
+                                                    <span className="min-w-0 line-clamp-2">{locText(shop)}</span>
                                                 </span>
-                                                {shop.ratingCount > 0 && (
-                                                    <span className="flex items-center gap-1 mt-1 text-[13px]" style={{ color: BN.text2 }}>
-                                                        <Star className="w-3.5 h-3.5 fill-current" style={{ color: BN.gold }} />
-                                                        {shop.rating.toFixed(1)} · {t("sellerRatings", { n: shop.ratingCount, p: shop.productCount })}
+                                                {(shop.ratingCount > 0 || tierLabel) && (
+                                                    <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-1 text-[13px]" style={{ color: BN.text2 }}>
+                                                        {shop.ratingCount > 0 && (
+                                                            <span className="inline-flex items-center gap-1">
+                                                                <Star className="w-3.5 h-3.5 fill-current" style={{ color: BN.gold }} />
+                                                                {shop.rating.toFixed(1)} · {t("sellerRatings", { n: shop.ratingCount, p: shop.productCount })}
+                                                            </span>
+                                                        )}
+                                                        {tierLabel && (
+                                                            <span className="px-2 py-0.5 rounded-full text-[11.5px] font-bold" style={{ background: "rgba(255,255,255,0.12)", color: BN.text2 }}>
+                                                                {tierLabel}
+                                                            </span>
+                                                        )}
                                                     </span>
                                                 )}
                                             </span>
@@ -901,7 +989,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
                                             className="h-[54px] px-7 inline-flex items-center gap-2 rounded-full text-[15px] font-extrabold transition-transform active:scale-[0.98] disabled:opacity-60"
                                             style={{ background: BN.gold, color: BN.onGold }}
                                         >
-                                            {ts("finalBuy", { price: `${groupThousands(unitPrice * qty)} ${t("currencySom")}` })}
+                                            {ts("finalBuy", { price: som(unitPrice * qty) })}
                                         </button>
                                     )}
                                     <a
@@ -920,28 +1008,58 @@ export function BnProductShowroom(props: BnShowroomProps) {
                     </div>
                 </div>
 
-                {/* Desktop: bob hisoblagichi (sahna ustida, o'ng pastda) */}
-                <div className="hidden lg:flex sticky bottom-8 justify-start pl-[max(24px,6.6vw)] -mt-14 h-14 pointer-events-none" aria-hidden="true">
-                    <div className="flex items-center gap-3.5">
-                        <span className="text-[13px] font-bold tabular-nums" style={{ color: BN.text2 }}>0{step} / 04</span>
-                        <span className="relative w-[120px] h-0.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.2)" }}>
-                            <motion.span className="absolute inset-y-0 left-0 w-full origin-left" style={{ background: BN.text, scaleX: progress }} />
+                {/* Desktop: sahna bilan birga yopishqoq qatlam (oxirgi bola — `sticky bottom-0`,
+                    shuning uchun sahna tugagach u bilan birga ketadi). Chapda — matn ustunidan
+                    TASHQARIDA (chap chiziq ustida) vertikal bob ko'rsatkichi; o'ngda — media tasmasi,
+                    barcha boblarda ishlaydi. Qatlamning o'zi bosishni o'tkazadi. */}
+                <div className="hidden lg:block sticky bottom-0 z-10 h-screen -mt-[100vh] pointer-events-none">
+                    <motion.div
+                        className="absolute left-8 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-3"
+                        style={{ opacity: railFade }}
+                        aria-hidden="true"
+                    >
+                        <span className="text-[12px] font-bold tabular-nums" style={{ color: BN.text }}>0{step}</span>
+                        <span className="relative w-0.5 h-[120px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.2)" }}>
+                            <motion.span className="absolute inset-x-0 top-0 h-full origin-top" style={{ background: BN.text, scaleY: progress }} />
                         </span>
+                        <span className="text-[12px] font-bold tabular-nums" style={{ color: BN.text3 }}>04</span>
                         <span
-                            className="hidden xl:inline-flex items-center gap-1 text-[12px] font-semibold uppercase tracking-[0.08em] transition-opacity duration-300"
+                            className="absolute top-full left-1/2 -translate-x-1/2 mt-4 flex flex-col items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] whitespace-nowrap transition-opacity duration-300"
                             style={{ color: BN.text3, opacity: step === 1 ? 1 : 0 }}
                         >
-                            {ts("scrollHint")}
-                            <ChevronDown className="w-4 h-4" />
+                            <span className="[writing-mode:vertical-rl] rotate-180">{ts("scrollHint")}</span>
+                            <ChevronDown className="w-3.5 h-3.5" />
                         </span>
-                    </div>
+                    </motion.div>
+                    <MediaControls
+                        className="flex flex-col absolute top-1/2 -translate-y-1/2 right-[max(8px,calc(3.5vw-28px))] pointer-events-auto"
+                        media={media}
+                        active={railActive}
+                        onPick={pick}
+                        current={current}
+                        playing={playing}
+                        muted={muted}
+                        duration={duration}
+                        onTogglePlay={togglePlay}
+                        onToggleMute={() => setMuted(m => !m)}
+                        blurred={blurred}
+                    />
                 </div>
             </section>
+
+            {/* Tungi sahna sahifa foniga yumshoq o'tadi (kunduzgi mavzuda qattiq chiziq o'rniga).
+                .bn-stage TASHQARISIDA — shuning uchun var(--bn-bg) sahifaning o'z foni. */}
+            <div
+                aria-hidden="true"
+                className="relative h-24 -mt-24 pointer-events-none"
+                style={{ background: "linear-gradient(180deg, transparent 0%, var(--bn-bg) 100%)" }}
+            />
 
             {/* Mobil: pastki xarid paneli (navbar ustida) */}
             {!outOfStock && (
                 <div
-                    className={`bn-stage lg:hidden fixed inset-x-0 z-40 px-4 pointer-events-none transition-[transform,opacity] duration-300 ${barHidden ? "translate-y-6 opacity-0" : "translate-y-0 opacity-100"}`}
+                    ref={mobileBarRef}
+                    className={`bn-stage lg:hidden fixed inset-x-0 z-40 px-4 pointer-events-none transition-[translate,opacity] duration-300 ${barHidden ? "translate-y-6 opacity-0" : "translate-y-0 opacity-100"}`}
                     style={{ bottom: "calc(max(14px, env(safe-area-inset-bottom)) + 74px)" }}
                     aria-hidden={barHidden}
                 >
@@ -970,6 +1088,43 @@ export function BnProductShowroom(props: BnShowroomProps) {
                     </div>
                 </div>
             )}
+
+            {/* Desktop: sahnadan keyin ixcham xarid paneli (pastda markazda; mahsulot sahifasida
+                lg+ da tab bar yo'q). Footer ko'ringanda yashirinadi. Tugmalar hero bilan bir xil
+                holatlarga bo'ysunadi: tugagan → o'chiq "Tugagan", 18+ → rasm xira. */}
+            <div
+                className={`bn-stage hidden lg:block fixed bottom-6 left-1/2 z-40 -translate-x-1/2 pointer-events-none transition-[translate,opacity] duration-300 ${deskBarShown ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
+                aria-hidden={!deskBarShown}
+            >
+                <div className={`flex items-center gap-3 p-2 pl-2 rounded-full w-[min(680px,calc(100vw-96px))] ${deskBarShown ? "pointer-events-auto" : ""}`}
+                    style={{ background: "rgba(14, 18, 17, 0.92)", border: "1px solid rgba(255,255,255,0.14)", boxShadow: "0 16px 44px rgba(0,0,0,0.38)" }}>
+                    <span className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 grid place-items-center" style={{ background: "rgba(255,255,255,0.10)" }}>
+                        {poster ? (
+                            <img src={poster} alt="" className="w-full h-full object-cover" style={blurred ? { filter: "blur(8px)" } : undefined} />
+                        ) : (
+                            <Package className="w-5 h-5" style={{ color: BN.text3 }} />
+                        )}
+                    </span>
+                    <span className="flex-1 min-w-0">
+                        <span className="block text-[14px] font-bold truncate">{p.title}</span>
+                        <span className="block text-[13px] font-semibold tabular-nums" style={{ color: BN.text2 }}>{som(unitPrice)}</span>
+                    </span>
+                    {p.allowInspect && !outOfStock && (
+                        <button type="button" onClick={onStartInspect} disabled={cartBusy} tabIndex={deskBarShown ? 0 : -1}
+                            className="h-11 px-5 inline-flex items-center gap-2 rounded-full text-[14px] font-bold whitespace-nowrap transition-colors hover:bg-white/20 disabled:opacity-60"
+                            style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", color: BN.text }}>
+                            <Clock className="w-4 h-4" />
+                            {ts("reserveShort")}
+                        </button>
+                    )}
+                    <button type="button" onClick={onBuyNow} disabled={cartBusy || outOfStock} tabIndex={deskBarShown ? 0 : -1}
+                        className="h-11 px-6 inline-flex items-center gap-2 rounded-full text-[14px] font-extrabold whitespace-nowrap disabled:opacity-60"
+                        style={{ background: BN.gold, color: BN.onGold }}>
+                        {cartBusy && <Loader2 className="w-4 h-4 animate-spin" />}
+                        {outOfStock ? ts("outOfStock") : ts("buyNow")}
+                    </button>
+                </div>
+            </div>
         </>
     );
 }
@@ -986,7 +1141,8 @@ function buildMeter(price: number, marketAvg: number | null, otherPrices: number
     const avg = marketAvg && marketAvg > 0
         ? marketAvg
         : otherPrices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : null;
-    if (!avg) return null;
+    // O'rtacha yo'q yoki ishonarsiz (>60% farq) — o'lchagich o'rniga "yig'ilmoqda" holati
+    if (!avg || !isPlausibleAvg(price, avg)) return null;
     let lo = Math.min(...prices, avg * 0.88);
     let hi = Math.max(...prices, avg * 1.16);
     const pad = (hi - lo) * 0.06;
@@ -1005,7 +1161,9 @@ function MarketMeter({ meter, price }: { meter: Meter; price: number }) {
     const ts = useTranslations("bn.product.showroom");
     const pricePos = meter.pos(price);
     const avgPos = meter.pos(meter.avg);
-    const labelPos = (v: number) => Math.min(84, Math.max(16, v));
+    // Yorliq chiziq kengligidan chiqmasin: left = p%, o'z kengligining p% iga chapga suriladi
+    // (p=0 → chapga tekis, p=100 → o'ngga tekis). O'lchash shart emas.
+    const pinned = (pos: number): CSSProperties => ({ left: `${pos}%`, transform: `translateX(-${pos}%)` });
     return (
         <div className="mt-6 p-5 rounded-[22px] max-w-[540px]" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.16)" }}>
             <div
@@ -1014,27 +1172,33 @@ function MarketMeter({ meter, price }: { meter: Meter; price: number }) {
                     price: groupThousands(price), avg: groupThousands(roundNice(meter.avg)),
                     lo: groupThousands(roundNice(meter.lo)), hi: groupThousands(roundNice(meter.hi)),
                 })}
-                className="relative h-[100px]"
             >
-                <span className="absolute top-0 -translate-x-1/2 px-2.5 py-1 rounded-lg text-[12.5px] font-extrabold whitespace-nowrap tabular-nums"
-                    style={{ left: `${labelPos(pricePos)}%`, background: "#F4F0E6", color: "#17140F" }}>
-                    {ts("thisPrice")} · {groupThousands(price)}
-                </span>
-                <div className="absolute top-[42px] inset-x-0 h-2 flex gap-[3px]">
-                    <span className="rounded-l-full" style={{ width: `${meter.cheapEdge}%`, background: "rgba(91,203,135,0.75)" }} />
-                    <span className="flex-1" style={{ background: "rgba(245,212,106,0.75)" }} />
-                    <span className="rounded-r-full" style={{ width: `${100 - meter.expEdge}%`, background: "rgba(245,154,85,0.75)" }} />
+                <div className="relative h-[58px]">
+                    <span className="absolute top-0 px-2.5 py-1 rounded-lg text-[12.5px] font-extrabold whitespace-nowrap tabular-nums"
+                        style={{ ...pinned(pricePos), background: "#F4F0E6", color: "#17140F" }}>
+                        {ts("thisPrice")} · {groupThousands(price)}
+                    </span>
+                    <div className="absolute top-[42px] inset-x-0 h-2 flex gap-[3px]">
+                        <span className="rounded-l-full" style={{ width: `${meter.cheapEdge}%`, background: "rgba(91,203,135,0.75)" }} />
+                        <span className="flex-1" style={{ background: "rgba(245,212,106,0.75)" }} />
+                        <span className="rounded-r-full" style={{ width: `${100 - meter.expEdge}%`, background: "rgba(245,154,85,0.75)" }} />
+                    </div>
+                    <span className="absolute top-[35px] -translate-x-1/2 w-[22px] h-[22px] rounded-full"
+                        style={{ left: `${pricePos}%`, background: "#F4F0E6", border: "5px solid #1A2120" }} />
+                    <span className="absolute top-[36px] w-0.5 h-5 -translate-x-1/2" style={{ left: `${avgPos}%`, background: "#F4F0E6" }} />
                 </div>
-                <span className="absolute top-[35px] -translate-x-1/2 w-[22px] h-[22px] rounded-full"
-                    style={{ left: `${pricePos}%`, background: "#F4F0E6", border: "5px solid #1A2120" }} />
-                <span className="absolute top-[36px] w-0.5 h-5" style={{ left: `${avgPos}%`, background: "#F4F0E6" }} />
-                <span className="absolute top-[70px] left-0 text-[12.5px] tabular-nums" style={{ color: BN.text3 }}>{groupThousands(roundNice(meter.lo))}</span>
-                <span className="absolute top-[70px] -translate-x-1/2 text-[12.5px] font-bold whitespace-nowrap tabular-nums" style={{ left: `${labelPos(avgPos)}%` }}>
-                    {ts("avgShort", { price: groupThousands(roundNice(meter.avg)) })}
-                </span>
-                <span className="absolute top-[70px] right-0 text-[12.5px] tabular-nums" style={{ color: BN.text3 }}>{groupThousands(roundNice(meter.hi))}</span>
+                {/* O'rtacha — o'z qatorida (chekka min/max yorliqlari bilan hech qachon to'qnashmaydi) */}
+                <div className="relative h-[18px] mt-1.5">
+                    <span className="absolute top-0 text-[12.5px] font-bold whitespace-nowrap tabular-nums" style={pinned(avgPos)}>
+                        {ts("avgShort", { price: groupThousands(roundNice(meter.avg)) })}
+                    </span>
+                </div>
+                <div className="mt-1 flex justify-between gap-3 text-[12.5px] tabular-nums" style={{ color: BN.text3 }}>
+                    <span>{groupThousands(roundNice(meter.lo))}</span>
+                    <span>{groupThousands(roundNice(meter.hi))}</span>
+                </div>
             </div>
-            <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-[13px]" style={{ color: BN.text2 }}>
+            <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1.5 text-[13px]" style={{ color: BN.text2 }}>
                 <Legend color="rgba(91,203,135,0.9)" label={ts("zoneCheap")} />
                 <Legend color="rgba(245,212,106,0.9)" label={ts("zoneFair")} />
                 <Legend color="rgba(245,154,85,0.9)" label={ts("zoneExpensive")} />
@@ -1089,7 +1253,7 @@ function WholesaleTiers({ tiers, qty }: { tiers: { minQty: number; price: number
                         <div key={i} className="flex items-center justify-between text-[13.5px] rounded-lg px-2 py-1"
                             style={{ background: on ? BN.goldSoft : "transparent", color: on ? BN.gold : BN.text2, fontWeight: on ? 800 : 500 }}>
                             <span>{range} {t("stockUnit")}</span>
-                            <span className="tabular-nums">{fmtPrice(tier.price)} / {t("perUnitShort")}</span>
+                            <span className="tabular-nums">{groupThousands(tier.price)} {t("currencySom")} / {t("perUnitShort")}</span>
                         </div>
                     );
                 })}
@@ -1170,7 +1334,7 @@ function GlassBtn({ onClick, disabled, label, iconOnlyLg, children }: {
             disabled={disabled}
             aria-label={iconOnlyLg ? label : undefined}
             title={iconOnlyLg ? label : undefined}
-            className={`min-w-0 h-[54px] px-3 lg:px-5 inline-flex items-center justify-center gap-2 rounded-full text-[14px] lg:text-[15px] font-bold whitespace-nowrap transition-colors hover:bg-white/20 disabled:opacity-60 [&>span]:min-w-0 [&>span]:truncate ${iconOnlyLg ? "lg:w-[54px] lg:px-0" : ""}`}
+            className={`min-w-0 h-[54px] px-3 lg:px-5 inline-flex items-center justify-center gap-2 rounded-full text-[14px] lg:text-[15px] font-bold whitespace-nowrap transition-colors hover:bg-white/20 disabled:opacity-60 [&>span]:min-w-0 [&>span]:truncate ${iconOnlyLg ? "lg:w-[54px] lg:px-0 xl:w-auto xl:px-5" : ""}`}
             style={{ background: "rgba(255,255,255,0.13)", border: "1px solid rgba(255,255,255,0.24)", color: BN.text }}
         >
             {children}
@@ -1250,12 +1414,13 @@ function MediaControls({
                         {ts("video")}{duration ? ` · ${mmss(duration)}` : ""}
                     </button>
                 )}
+                {/* Nuqtalar — har biri 44×44 bosish maydoni; ko'p bo'lsa qator aylanadi */}
                 {media.length > 1 && (
-                    <div className="flex items-center gap-1" role="group" aria-label={ts("mediaGroup")}>
+                    <div className="flex items-center min-w-0 overflow-x-auto bn-noscroll" role="group" aria-label={ts("mediaGroup")} data-media-dots>
                         {media.map((m, i) => (
                             <button key={`${m.src}-${i}`} type="button" onClick={() => onPick(i)}
                                 aria-label={ts("mediaN", { n: i + 1 })} aria-current={i === active}
-                                className="h-11 min-w-6 grid place-items-center px-1.5">
+                                className="w-11 h-11 flex-shrink-0 grid place-items-center">
                                 <span className="block h-1.5 rounded-full transition-all"
                                     style={{ width: i === active ? 18 : 6, background: i === active ? BN.text : "rgba(244,240,230,0.45)" }} />
                             </button>
@@ -1263,6 +1428,11 @@ function MediaControls({
                     </div>
                 )}
                 <span className="flex-1" />
+                {media.length > 1 && (
+                    <span className="h-8 px-3 inline-flex items-center rounded-full text-[12.5px] font-bold tabular-nums flex-shrink-0" style={glass} aria-hidden="true">
+                        {active + 1} / {media.length}
+                    </span>
+                )}
                 {isVideo && (
                     <button type="button" onClick={onToggleMute} aria-label={muted ? ts("unmute") : ts("mute")}
                         className="w-11 h-11 grid place-items-center rounded-full" style={glass}>

@@ -6,12 +6,14 @@
 
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, type PointerEvent as ReactPointerEvent } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Home, LayoutGrid, Heart, ShoppingCart } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { useBnPath, useBnHref } from "./bn-nav";
+import { isProductRoute } from "./bn-header";
 
 interface Item {
     href: string;
@@ -28,6 +30,9 @@ const ITEMS: Item[] = [
     { href: "/sevimlilar", labelKey: "favorites", icon: Heart },
     { href: "/savat",      labelKey: "cart",      icon: ShoppingCart },
 ];
+
+/** Katalog tabiga tegishli boshqa bo'limlar (kategoriya sahifasi, qidiruv natijalari) */
+const CATALOG_ALIASES = ["/k", "/qidiruv"];
 
 /** Swipe navigatsiya uchun tartib. `bn-swipe-nav.tsx` shu ro'yxatdan foydalanadi. */
 export const NAV_ORDER = ITEMS.map(i => i.href);
@@ -48,14 +53,22 @@ export function BnNavbar() {
 
     const [pill, setPill] = useState<{ x: number; w: number; ready: boolean }>({ x: 0, w: 0, ready: false });
 
-    const activeIdx = Math.max(0, ITEMS.findIndex(it =>
-        it.href === "/" ? path === "/" : path.startsWith(it.href)
-    ));
+    // 5 tabdan tashqari sahifada (bozorlar, do'kon, mahsulot, kabinet...) hech biri
+    // faol emas: -1 → pill yashirin. Ilgari Math.max(0, ...) "Asosiy"ni yoqib qo'yardi.
+    // Katalog tabi kategoriya (/k/...) va qidiruv (/qidiruv) sahifalarida ham faol.
+    const under = (href: string) => path === href || path.startsWith(`${href}/`);
+    const activeIdx = ITEMS.findIndex(it =>
+        it.href === "/" ? path === "/"
+            : under(it.href) || (it.href === "/katalog" && CATALOG_ALIASES.some(under))
+    );
+    // Mahsulot vitrinasi: sahna doim tungi — navbar ham tungi palitrada (kontrast),
+    // lg+ da esa umuman yo'q (shaffof header'da navigatsiya bor, bob ustunini yopmasin).
+    const onStage = isProductRoute(path);
 
     const measure = useCallback(() => {
-        const btn = btnRefs.current[activeIdx];
+        const btn = activeIdx >= 0 ? btnRefs.current[activeIdx] : null;
         const wrap = wrapRef.current;
-        if (!btn || !wrap) return;
+        if (!btn || !wrap) { setPill(p => (p.ready ? { ...p, ready: false } : p)); return; }
         const b = btn.getBoundingClientRect();
         const w = wrap.getBoundingClientRect();
         setPill({ x: b.left - w.left, w: b.width, ready: true });
@@ -86,12 +99,12 @@ export function BnNavbar() {
 
     // shownIdx o'zgarganda pill'ni ko'chirish
     useEffect(() => {
-        const btn = btnRefs.current[shownIdx];
+        const btn = shownIdx >= 0 ? btnRefs.current[shownIdx] : null;
         const wrap = wrapRef.current;
-        if (!btn || !wrap) return;
+        if (!btn || !wrap) { setPill(p => (p.ready ? { ...p, ready: false } : p)); return; }
         const b = btn.getBoundingClientRect();
         const w = wrap.getBoundingClientRect();
-        setPill(p => ({ ...p, x: b.left - w.left, w: b.width }));
+        setPill({ x: b.left - w.left, w: b.width, ready: true });
     }, [shownIdx]);
 
     function buzz() {
@@ -135,7 +148,7 @@ export function BnNavbar() {
 
     return (
         <nav
-            className="fixed inset-x-0 bottom-0 z-50 pointer-events-none"
+            className={`fixed inset-x-0 bottom-0 z-50 pointer-events-none ${onStage ? "bn-stage lg:hidden" : ""}`}
             style={{ paddingBottom: "max(14px, env(safe-area-inset-bottom))" }}
         >
             <div className="mx-auto max-w-[440px] px-4">
@@ -196,12 +209,13 @@ export function BnNavbar() {
                                 }}
                             >
                                 {it.iconSrc ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img
+                                    // next/image: manba PNG ~1.4 MB — optimizator 20px uchun kichik nusxa beradi
+                                    <Image
                                         src={it.iconSrc}
                                         alt={it.iconSrcAlt ?? label}
                                         width={20}
                                         height={20}
+                                        draggable={false}
                                         className="w-[20px] h-[20px] object-contain pointer-events-none"
                                         style={{
                                             filter: active ? "none" : "grayscale(1) opacity(0.75)",

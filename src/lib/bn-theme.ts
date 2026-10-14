@@ -2,7 +2,7 @@
 // Reja: docs/BN-PLAN.md §6
 //
 // MUHIM: ranglar CSS o'zgaruvchilariga bog'langan — Kunduzgi / Tungi / Tizim
-// rejimlari shu orqali ishlaydi. Qiymatlar `bn-styles.tsx` da e'lon qilinadi.
+// rejimlari shu orqali ishlaydi. Qiymatlar `bn-styles.css` da e'lon qilinadi (server render, BN layout import qiladi).
 // Komponentlarda hech qachon hex yozilmaydi — doim `BN.*` ishlatiladi.
 
 export const BN = {

@@ -575,6 +575,11 @@
       "othersCheaper": "{pct}% arzon",
       "seller": "Sotuvchi",
       "sellerCall": "Qo'ng'iroq",
+      "sellerHours": {
+        "openNow": "Hozir ochiq",
+        "closedToday": "Yopiq · bugun {hours}",
+        "dayOff": "Bugun dam olish kuni"
+      },
       "sellerMessage": "Yozish",
       "sellerRatings": "{n} baho · {p} mahsulot",
       "atMarketPrice": "Bozor narxida",
@@ -669,7 +674,15 @@
         "linkCopied": "Havola nusxalandi",
         "meterEmpty": "Bu mahsulot uchun bozor narxi hali yig'ilmoqda. Narx tushsa — darhol xabar beramiz.",
         "offerInApp": "BN chatda taklif berish",
-        "messageCopied": "Xabar nusxalandi — Telegram'da joylashtiring"
+        "messageCopied": "Xabar nusxalandi — Telegram'da joylashtiring",
+        "cartShort": "Savatga"
+      },
+      "deal": {
+        "title": "Siz kelishgan narx",
+        "expired": "Muddati tugadi",
+        "heldFor": "{time} band — savatga qo'shib sotib oling",
+        "hours": "{n} soat",
+        "minutes": "{n} daqiqa"
       }
     },
     "cart": {
@@ -1456,6 +1469,12 @@
     },
     "newShops": {
       "text": "Bu hafta <b>{n} ta</b> yangi do'kon qo'shildi — ko'rish"
+    },
+    "tier": {
+      "NEW": "Yangi",
+      "TRUSTED": "Ishonchli",
+      "VERIFIED": "Tasdiqlangan",
+      "PREMIUM": "Premium"
     }
   },
   "belis": {

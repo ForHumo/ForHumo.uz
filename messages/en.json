@@ -575,6 +575,11 @@
       "othersCheaper": "{pct}% cheaper",
       "seller": "Seller",
       "sellerCall": "Call",
+      "sellerHours": {
+        "openNow": "Open now",
+        "closedToday": "Closed · today {hours}",
+        "dayOff": "Day off today"
+      },
       "sellerMessage": "Message",
       "sellerRatings": "{n} ratings · {p} products",
       "atMarketPrice": "At market price",
@@ -669,7 +674,15 @@
         "linkCopied": "Link copied",
         "meterEmpty": "We're still collecting the market price for this product. We'll let you know as soon as the price drops.",
         "offerInApp": "Make an offer in BN chat",
-        "messageCopied": "Message copied — paste it in Telegram"
+        "messageCopied": "Message copied — paste it in Telegram",
+        "cartShort": "Add to cart"
+      },
+      "deal": {
+        "title": "Your agreed price",
+        "expired": "Expired",
+        "heldFor": "Held for {time} — add to cart to buy",
+        "hours": "{n} h",
+        "minutes": "{n} min"
       }
     },
     "cart": {
@@ -1456,6 +1469,12 @@
     },
     "newShops": {
       "text": "<b>{n}</b> new shops opened this week — explore"
+    },
+    "tier": {
+      "NEW": "New",
+      "TRUSTED": "Trusted",
+      "VERIFIED": "Verified",
+      "PREMIUM": "Premium"
     }
   },
   "belis": {

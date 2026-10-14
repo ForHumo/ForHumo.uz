@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import {
     Search, ShoppingCart, Menu, X, User, Bell, LayoutGrid,
     Package, ChevronRight, LogIn, Navigation, Headphones, Heart, Store,
-    Mic, Camera, ShoppingBag, ChevronLeft,
+    Mic, Camera, ShoppingBag, ChevronLeft, Building2, HelpCircle,
 } from "lucide-react";
 import { BN, groupThousands } from "@/lib/bn-theme";
 import { BnLink, useBnHref, useBnBase, BnThemeToggle, BnLangSwitch } from "./bn-nav";
@@ -46,6 +46,7 @@ export function BnHeader({
     const scrolled = useBnScrolled(8);
     // Mahsulot sahifasi (vitrina) — header media ustida suzuvchi shaffof kapsula bo'ladi
     const overlay = isProductRoute(usePathname() ?? "");
+    const visibleCats = categories.filter(c => c.productCount > 0);
 
     useEffect(() => {
         if (!menuOpen) return;
@@ -280,7 +281,7 @@ export function BnHeader({
             {/* Drawer layout scroll ildiziga portal qilinadi: header `relative z-10` o'ram ichida,
                 pastki navbar (z-50) esa uning qo'shnisi — portalsiz drawer navbar ostida qolardi. */}
             {menuOpen && createPortal(
-                <div className={`fixed inset-0 z-[110] ${overlay ? "xl:hidden" : "md:hidden"}`}>
+                <div className={`fixed inset-0 z-[110] ${overlay ? "" : "md:hidden"}`}>
                     <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.55)" }} onClick={() => setMenuOpen(false)} />
                     <div
                         className="absolute inset-y-0 left-0 w-[86%] max-w-[340px] overflow-y-auto"
@@ -343,7 +344,23 @@ export function BnHeader({
                                 {hasShop ? t("seller.openCabinet") : t("seller.become")}
                             </BnLink>
 
-                            {NAV.map(n => {
+                            {/* Vitrina header'i: tor ekranda uning 5 ta havolasi yashirin — drawer
+                                tepasida beriladi (Buyurtmalarim NAV'dan takrorlanmaydi). */}
+                            {overlay && OVERLAY_NAV.map(n => {
+                                const Icon = n.icon;
+                                return (
+                                    <BnLink
+                                        key={n.href}
+                                        href={n.href}
+                                        onClick={() => setMenuOpen(false)}
+                                        className="flex items-center gap-3 h-12 px-3 rounded-xl text-[14px] font-bold"
+                                    >
+                                        <span style={{ color: BN.gold }}><Icon className="w-[18px] h-[18px]" /></span>
+                                        {t(n.key)}
+                                    </BnLink>
+                                );
+                            })}
+                            {NAV.filter(n => !overlay || !OVERLAY_NAV.some(o => o.href === n.href)).map(n => {
                                 const Icon = n.icon;
                                 return (
                                     <BnLink
@@ -383,10 +400,13 @@ export function BnHeader({
                                 <BnThemeToggle compact />
                             </div>
 
-                            <p className="px-3 pt-5 pb-2 text-[11px] font-black uppercase tracking-wider" style={{ color: BN.text3 }}>
-                                {tNav("categories")}
-                            </p>
-                            {categories.map(c => (
+                            {/* Mahsuloti yo'q kategoriyalar ("... 0") ko'rsatilmaydi */}
+                            {visibleCats.length > 0 && (
+                                <p className="px-3 pt-5 pb-2 text-[11px] font-black uppercase tracking-wider" style={{ color: BN.text3 }}>
+                                    {tNav("categories")}
+                                </p>
+                            )}
+                            {visibleCats.map(c => (
                                 <BnLink
                                     key={c.slug}
                                     href={`/k/${c.slug}`}
@@ -463,11 +483,11 @@ export function isProductRoute(pathname: string): boolean {
 }
 
 const OVERLAY_NAV = [
-    { href: "/bozorlar",      key: "footer.markets" },
-    { href: "/dokonlar",      key: "footer.shops" },
-    { href: "/katalog",       key: "nav.catalog" },
-    { href: "/buyurtmalarim", key: "footer.myOrders" },
-    { href: "/yordam",        key: "footer.help" },
+    { href: "/bozorlar",      key: "footer.markets",  icon: Building2 },
+    { href: "/dokonlar",      key: "footer.shops",    icon: Store },
+    { href: "/katalog",       key: "nav.catalog",     icon: LayoutGrid },
+    { href: "/buyurtmalarim", key: "footer.myOrders", icon: Package },
+    { href: "/yordam",        key: "footer.help",     icon: HelpCircle },
 ] as const;
 
 function BnOverlayHeader({
@@ -494,7 +514,9 @@ function BnOverlayHeader({
                     aria-hidden="true"
                     className="absolute inset-0 -z-10 rounded-full transition-[background-color] duration-300"
                     style={{
-                        background: scrolled ? "rgba(16, 21, 20, 0.80)" : "rgba(20, 26, 25, 0.34)",
+                        // Scrolled: 0.90 — backdrop-filter ishlamasa ham (eski brauzer / dasturiy
+                        // kompozitor) ostidagi matn header yorliqlari bilan to'qnashmasin.
+                        background: scrolled ? "rgba(16, 21, 20, 0.90)" : "rgba(20, 26, 25, 0.34)",
                         border: "1px solid rgba(255, 255, 255, 0.14)",
                         backdropFilter: "blur(20px) saturate(140%)",
                         WebkitBackdropFilter: "blur(20px) saturate(140%)",
@@ -567,11 +589,13 @@ function BnOverlayHeader({
                     </button>
                 )}
 
+                {/* Menyu tugmasi HAR kenglikda: rejim, "Sotuvchi bo'lish", joylashuv,
+                    topshirish punkti va Support faqat drawer'da (xl'da ham kerak). */}
                 <button
                     type="button"
                     onClick={onMenu}
                     aria-label={t("nav.menu")}
-                    className="xl:hidden w-11 h-11 grid place-items-center rounded-full flex-shrink-0"
+                    className="w-11 h-11 grid place-items-center rounded-full flex-shrink-0 transition-colors hover:bg-white/10"
                     style={{ color: BN.text }}
                 >
                     <Menu className="w-5 h-5" />

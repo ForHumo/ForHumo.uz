@@ -270,8 +270,9 @@ export function BnProductDetail({
                     <ChevronRight className="w-3 h-3" />
                     {p.categorySlug && (
                         <>
+                            {/* Haqiqiy kategoriya nomi (ru'da nameRu); eski kesh yozuvida bo'lmasa — umumiy yorliq */}
                             <BnLink href={`/k/${p.categorySlug}`} className="hover:opacity-70 transition-colors">
-                                {tCrumb("category")}
+                                {(locale === "ru" && p.categoryNameRu) || p.categoryName || tCrumb("category")}
                             </BnLink>
                             <ChevronRight className="w-3 h-3" />
                         </>

@@ -68,6 +68,9 @@ export interface BnProductDTO {
     /** Mahsulot videolari (maks 2, Vercel Blob MP4) — vitrina fonida ishlatiladi */
     videos?: string[];
     categorySlug: string;
+    /** Kategoriya nomi (uz) va ruscha nomi — breadcrumb uchun (ixtiyoriy) */
+    categoryName?: string | null;
+    categoryNameRu?: string | null;
     shopSlug: string;
     shopName: string;
     shopVerified: boolean;
@@ -138,7 +141,7 @@ function toShopDTO(s: ShopWithMarket, ownerUsername?: string | null): BnShopDTO 
 type ProductWithRels = Awaited<ReturnType<typeof prisma.bnProduct.findMany>>[number]
     & {
         shop: { slug: string; name: string; tier: string; verifiedTier?: string; market: { name: string } | null; city: string; lat?: number | null; lng?: number | null } | null;
-        category: { slug: string } | null;
+        category: { slug: string; name?: string; nameRu?: string | null } | null;
         fits?: { modelId: string }[];
     };
 
@@ -154,6 +157,8 @@ function toProductDTO(p: ProductWithRels): BnProductDTO {
         images: p.images,
         videos: p.videos ?? [],
         categorySlug: p.category?.slug ?? "",
+        categoryName: p.category?.name ?? null,
+        categoryNameRu: p.category?.nameRu ?? null,
         shopSlug: p.shop?.slug ?? "",
         shopName: p.shop?.name ?? "",
         shopVerified: p.shop?.tier === "VERIFIED" || p.shop?.tier === "PREMIUM",
@@ -202,7 +207,7 @@ export async function viewerCanSeeWholesale(profileId: string | null): Promise<b
 
 const PRODUCT_INCLUDE = {
     shop: { select: { slug: true, name: true, tier: true, verifiedTier: true, city: true, status: true, lat: true, lng: true, phone: true, phoneVerified: true, market: { select: { name: true } } } },
-    category: { select: { slug: true } },
+    category: { select: { slug: true, name: true, nameRu: true } },
     fits: { select: { modelId: true } },   // avto moslik — client filtr + karta belgisi
 } as const;
 

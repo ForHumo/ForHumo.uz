@@ -3,12 +3,18 @@
 // BN onboarding modal — faqat birinchi kirishda ochiladi. framer-motion shu
 // yerda import qilinadi va dinamik yuklanadi (BnOnboarding gate orqali) —
 // natijada takroriy tashriflarda motion kutubxonasi umuman yuklanmaydi.
+//
+// Modal layout scroll ildiziga PORTAL qilinadi: BnHome `relative z-10` o'ram ichida,
+// pastki navbar (z-50) esa uning qo'shnisi — portalsiz "Keyingi"/"O'tkazish"
+// tugmalari navbar ostida qolib, bosish Katalog/Sevimlilar tabiga ketardi.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { ShoppingBag, Truck, Shield, Sparkles, ChevronRight, X } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
+import { getBnScrollRoot } from "./bn-scroll";
 
 interface StepMeta {
     icon: typeof ShoppingBag;
@@ -30,6 +36,13 @@ export default function BnOnboardingModal({ onClose }: { onClose: () => void }) 
     const t = useTranslations("bn.onboarding");
     const [step, setStep] = useState(0);
 
+    // Esc — yopish (X / "O'tkazish" bilan bir xil)
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [onClose]);
+
     const next = () => {
         if (step < STEP_META.length - 1) setStep(s => s + 1);
         else onClose();
@@ -38,15 +51,22 @@ export default function BnOnboardingModal({ onClose }: { onClose: () => void }) 
     const current = STEP_META[step];
     const Icon = current.icon;
 
-    return (
+    // ssr:false bilan dinamik yuklanadi — document doim mavjud
+    return createPortal(
         <AnimatePresence>
             <motion.div
                 className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-4"
-                style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+                style={{
+                    background: "rgba(0,0,0,0.7)",
+                    backdropFilter: "blur(8px)",
+                    paddingBottom: "max(16px, env(safe-area-inset-bottom))",
+                }}
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onClick={onClose}
             >
                 <motion.div
+                    role="dialog"
+                    aria-modal="true"
                     className="w-full max-w-[420px] rounded-3xl overflow-hidden relative"
                     style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                     initial={{ y: 40, opacity: 0, scale: 0.96 }}
@@ -71,7 +91,7 @@ export default function BnOnboardingModal({ onClose }: { onClose: () => void }) 
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ type: "spring", stiffness: 340, damping: 24 }}
                             className="w-16 h-16 rounded-3xl mx-auto mb-4 grid place-items-center"
-                            style={{ background: `${current.color}22`, color: current.color }}
+                            style={{ background: `color-mix(in srgb, ${current.color} 14%, transparent)`, color: current.color }}
                         >
                             <Icon className="w-7 h-7" />
                         </motion.div>
@@ -126,6 +146,7 @@ export default function BnOnboardingModal({ onClose }: { onClose: () => void }) 
                     </div>
                 </motion.div>
             </motion.div>
-        </AnimatePresence>
+        </AnimatePresence>,
+        getBnScrollRoot() ?? document.body,
     );
 }

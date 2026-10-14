@@ -8,7 +8,9 @@ import { Playfair_Display, Manrope } from "next/font/google";
 import { BnHeader } from "@/components/bn/bn-header";
 import { BnFooter } from "@/components/bn/bn-footer";
 import { BnNavbar } from "@/components/bn/bn-navbar";
-import { BnStyles, BnAurora } from "@/components/bn/bn-styles";
+import { BnAurora } from "@/components/bn/bn-styles";
+// BN dizayn tokenlari — statik CSS (SSR <link>, birinchi kadrdanoq tema tayyor)
+import "@/components/bn/bn-styles.css";
 import { BnBaseProvider } from "@/components/bn/bn-nav";
 import { BnSwipeNav } from "@/components/bn/bn-swipe-nav";
 import { BnReferralAttach } from "@/components/bn/bn-referral-attach";
@@ -113,7 +115,6 @@ export default async function BnLayout({
 
     return (
         <div data-bn-scroll-root className={`bn-scope ${bnDisplay.variable} ${bnBody.variable} fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden`}>
-            <BnStyles />
             <BnAurora />
             <BnBaseProvider base={base} locale={locale} hasShop={hasShop}>
                 <BnSwipeNav>
