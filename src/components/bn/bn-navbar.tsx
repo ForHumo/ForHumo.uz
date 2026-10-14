@@ -74,7 +74,9 @@ export function BnNavbar() {
         const check = () => {
             raf = 0;
             const stage = document.querySelector("section.bn-stage");
-            const over = !!stage && stage.getBoundingClientRect().bottom > window.innerHeight - 60;
+            // Sahna oxiridagi o'tish qatlami (~96px) kremga aylanguncha almashtiramiz — aks holda
+            // yarim shaffof tungi shisha krem ustida kulrang bo'lib qoladi.
+            const over = !!stage && stage.getBoundingClientRect().bottom > window.innerHeight + 40;
             setOverStage(prev => (prev === over ? prev : over));
         };
         const onScroll = () => { if (!raf) raf = requestAnimationFrame(check); };

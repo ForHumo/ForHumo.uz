@@ -1067,7 +1067,7 @@ export function BnProductShowroom(props: BnShowroomProps) {
                     aria-hidden={barHidden}
                 >
                     <div className={`mx-auto max-w-[440px] flex items-center gap-2 p-1.5 rounded-full ${barHidden ? "" : "pointer-events-auto"}`}
-                        style={{ background: "rgba(14, 18, 17, 0.92)", border: "1px solid rgba(255,255,255,0.14)", boxShadow: "0 12px 36px rgba(0,0,0,0.4)" }}>
+                        style={{ background: "rgba(14, 18, 17, 0.97)", border: "1px solid rgba(255,255,255,0.14)", boxShadow: "0 12px 36px rgba(0,0,0,0.4)" }}>
                         {/* Narx — panel birinchi ekranda hero narxini yopsa ham narx ko'rinib tursin.
                             (WhatsApp hero'dagi aloqa qatorida va 3-bobda bor.) */}
                         <span className="pl-3 pr-1 flex-shrink-0 leading-tight tabular-nums" style={{ color: BN.text }}>

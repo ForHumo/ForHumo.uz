@@ -133,7 +133,7 @@
     --bn-err:         #F59A8F;
     --bn-err-soft:    rgba(239, 139, 128, 0.16);
     --bn-info:        #8DB4FF;
-    --bn-glass:       rgba(20, 26, 25, 0.55);
+    --bn-glass:       rgba(20, 26, 25, 0.80);
     --bn-shadow:      0 20px 60px rgba(0, 0, 0, 0.5);
     color: var(--bn-text);
     color-scheme: dark;
