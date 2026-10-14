@@ -85,7 +85,7 @@ export function BnHeader({
                     aria-hidden="true"
                     className="absolute inset-0 -z-10"
                     style={{
-                        background: scrolled ? BN.glass : BN.bg,
+                        background: scrolled ? "color-mix(in srgb, var(--bn-bg) 88%, transparent)" : BN.bg,
                         backdropFilter: scrolled ? "blur(10px)" : undefined,
                         WebkitBackdropFilter: scrolled ? "blur(10px)" : undefined,
                     }}

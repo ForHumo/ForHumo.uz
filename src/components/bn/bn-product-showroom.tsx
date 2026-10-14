@@ -1048,11 +1048,14 @@ export function BnProductShowroom(props: BnShowroomProps) {
             </section>
 
             {/* Tungi sahna sahifa foniga yumshoq o'tadi (kunduzgi mavzuda qattiq chiziq o'rniga).
-                .bn-stage TASHQARISIDA — shuning uchun var(--bn-bg) sahifaning o'z foni. */}
+                .bn-stage TASHQARISIDA — shuning uchun var(--bn-bg) sahifaning o'z foni.
+                Ikki tomonlama: sahna chetida to'liq fon, pastga qarab yana shaffof — orqadagi
+                aurora nuri chegarada sakrab paydo bo'lmasin. Keyingi kontent (`relative z-[1]`)
+                bu qatlam ustida turadi. */}
             <div
                 aria-hidden="true"
-                className="relative h-24 -mt-24 pointer-events-none"
-                style={{ background: "linear-gradient(180deg, transparent 0%, var(--bn-bg) 100%)" }}
+                className="relative h-48 -mt-24 -mb-24 pointer-events-none"
+                style={{ background: "linear-gradient(180deg, transparent 0%, var(--bn-bg) 50%, transparent 100%)" }}
             />
 
             {/* Mobil: pastki xarid paneli (navbar ustida) */}
@@ -1065,13 +1068,12 @@ export function BnProductShowroom(props: BnShowroomProps) {
                 >
                     <div className={`mx-auto max-w-[440px] flex items-center gap-2 p-1.5 rounded-full ${barHidden ? "" : "pointer-events-auto"}`}
                         style={{ background: "rgba(14, 18, 17, 0.92)", border: "1px solid rgba(255,255,255,0.14)", boxShadow: "0 12px 36px rgba(0,0,0,0.4)" }}>
-                        {waPlainHref && (
-                            <a href={waPlainHref} target="_blank" rel="noopener noreferrer" aria-label={ts("whatsappAria")}
-                                tabIndex={barHidden ? -1 : 0}
-                                className="w-12 h-12 grid place-items-center rounded-full flex-shrink-0" style={{ background: "rgba(255,255,255,0.08)" }}>
-                                <WhatsAppLogo size={26} />
-                            </a>
-                        )}
+                        {/* Narx — panel birinchi ekranda hero narxini yopsa ham narx ko'rinib tursin.
+                            (WhatsApp hero'dagi aloqa qatorida va 3-bobda bor.) */}
+                        <span className="pl-3 pr-1 flex-shrink-0 leading-tight tabular-nums" style={{ color: BN.text }}>
+                            <span className="block text-[15px] font-extrabold whitespace-nowrap">{groupThousands(unitPrice)}</span>
+                            <span className="block text-[11px] font-semibold" style={{ color: BN.text2 }}>{t("currencySom")}</span>
+                        </span>
                         {p.allowInspect && (
                             <button type="button" onClick={onStartInspect} disabled={cartBusy} tabIndex={barHidden ? -1 : 0}
                                 className="flex-1 h-12 rounded-full text-[14.5px] font-bold disabled:opacity-60"

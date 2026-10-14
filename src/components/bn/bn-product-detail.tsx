@@ -263,7 +263,7 @@ export function BnProductDetail({
             />
 
             {/* pb-24 (mobil) — navbar ustidagi xarid paneli kontentni yopmasin */}
-            <div className="mx-auto max-w-[1280px] px-4 pt-8 pb-24 lg:pb-16">
+            <div className="relative z-[1] mx-auto max-w-[1280px] px-4 pt-8 pb-24 lg:pb-16">
                 {/* Non-ushoq */}
                 <nav aria-label={tCrumb("home")} className="flex items-center gap-1.5 text-[13px] mb-6 flex-wrap" style={{ color: BN.text3 }}>
                     <BnLink href="/" className="hover:opacity-70 transition-colors">{tCrumb("home")}</BnLink>

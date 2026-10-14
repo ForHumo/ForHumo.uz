@@ -14,6 +14,7 @@ import type { LucideIcon } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { useBnPath, useBnHref } from "./bn-nav";
 import { isProductRoute } from "./bn-header";
+import { onBnScroll } from "./bn-scroll";
 
 interface Item {
     href: string;
@@ -64,6 +65,23 @@ export function BnNavbar() {
     // Mahsulot vitrinasi: sahna doim tungi — navbar ham tungi palitrada (kontrast),
     // lg+ da esa umuman yo'q (shaffof header'da navigatsiya bor, bob ustunini yopmasin).
     const onStage = isProductRoute(path);
+    // Tungi palitra faqat navbar hali sahna ustida turganda: sahnadan pastda (kunduzgi
+    // mavzuda krem fon) tungi shisha kulrang bo'lib, yozuvlar o'qilmay qolardi.
+    const [overStage, setOverStage] = useState(true);
+    useEffect(() => {
+        if (!onStage) return;
+        let raf = 0;
+        const check = () => {
+            raf = 0;
+            const stage = document.querySelector("section.bn-stage");
+            const over = !!stage && stage.getBoundingClientRect().bottom > window.innerHeight - 60;
+            setOverStage(prev => (prev === over ? prev : over));
+        };
+        const onScroll = () => { if (!raf) raf = requestAnimationFrame(check); };
+        check();
+        const off = onBnScroll(onScroll);
+        return () => { off(); if (raf) cancelAnimationFrame(raf); };
+    }, [onStage, path]);
 
     const measure = useCallback(() => {
         const btn = activeIdx >= 0 ? btnRefs.current[activeIdx] : null;
@@ -148,7 +166,7 @@ export function BnNavbar() {
 
     return (
         <nav
-            className={`fixed inset-x-0 bottom-0 z-50 pointer-events-none ${onStage ? "bn-stage lg:hidden" : ""}`}
+            className={`fixed inset-x-0 bottom-0 z-50 pointer-events-none ${onStage ? "lg:hidden" : ""} ${onStage && overStage ? "bn-stage" : ""}`}
             style={{ paddingBottom: "max(14px, env(safe-area-inset-bottom))" }}
         >
             <div className="mx-auto max-w-[440px] px-4">
