@@ -10,7 +10,7 @@ import { getActiveSuggestion } from "@/lib/ummi-suggestions";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ suggestion: null });
 
@@ -22,7 +22,21 @@ export async function GET() {
     const s = await getActiveSuggestion(me.id);
     if (!s) return NextResponse.json({ suggestion: null });
 
+    // Tilga mos "label" — slug o'rniga kategoriya nomi (uz/ru). Faqat bn kind'да.
+    const locale = new URL(req.url).searchParams.get("locale") || "uz";
+    let label: string | undefined;
+    if (s.kind === "bn") {
+        const m = s.url.match(/[?&]category=([^&]+)/);
+        const slug = m ? decodeURIComponent(m[1]) : "";
+        if (slug) {
+            const cat = await prisma.bnCategory.findUnique({
+                where: { slug }, select: { name: true, nameRu: true },
+            });
+            if (cat) label = locale === "ru" ? (cat.nameRu || cat.name) : cat.name;
+        }
+    }
+
     return NextResponse.json({
-        suggestion: { id: s.id, kind: s.kind, title: s.title, body: s.body, url: s.url },
+        suggestion: { id: s.id, kind: s.kind, title: s.title, body: s.body, url: s.url, ...(label ? { label } : {}) },
     });
 }

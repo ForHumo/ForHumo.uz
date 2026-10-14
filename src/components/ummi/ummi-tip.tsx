@@ -9,13 +9,13 @@
 //   "esport"  (--es-* dizayn tizimi, .es-bg scope)
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { X, ArrowRight } from "lucide-react";
 import { UmmiPose } from "@/components/ummi/ummi-pose";
 import { pickUmmiPose } from "@/lib/ummi-poses";
 
-interface Suggestion { id: string; kind: string; title: string; body: string; url: string; }
+interface Suggestion { id: string; kind: string; title: string; body: string; url: string; label?: string; }
 type Variant = "default" | "nexus" | "esport";
 
 interface VariantStyle {
@@ -48,12 +48,13 @@ const VARIANTS: Record<Exclude<Variant, "default">, VariantStyle> = {
 
 export function UmmiTip({ className = "", variant = "default" }: { className?: string; variant?: Variant }) {
     const t = useTranslations("ummi");
+    const locale = useLocale();
     const [s, setS] = useState<Suggestion | null>(null);
     const [hidden, setHidden] = useState(false);
 
     useEffect(() => {
         let alive = true;
-        fetch("/api/ai/suggestions", { cache: "no-store" })
+        fetch(`/api/ai/suggestions?locale=${encodeURIComponent(locale)}`, { cache: "no-store" })
             .then(r => (r.ok ? r.json() : null))
             .then(d => {
                 if (alive && d?.suggestion) {
@@ -63,7 +64,7 @@ export function UmmiTip({ className = "", variant = "default" }: { className?: s
             })
             .catch(() => { /* jim — yuza ixtiyoriy */ });
         return () => { alive = false; };
-    }, []);
+    }, [locale]);
 
     function patch(id: string, status: "SEEN" | "DISMISSED" | "ACTED") {
         fetch(`/api/ai/suggestions/${id}`, {
@@ -87,7 +88,8 @@ export function UmmiTip({ className = "", variant = "default" }: { className?: s
         title = t("s.nexus.title", { author }); body = t("s.nexus.body");
     } else if (s.kind === "bn") {
         const mm = s.url.match(/[?&]category=([^&]+)/);
-        title = t("s.bn.title", { category: mm ? decodeURIComponent(mm[1]) : "" }); body = t("s.bn.body");
+        const category = s.label ?? (mm ? decodeURIComponent(mm[1]) : "");
+        title = t("s.bn.title", { category }); body = t("s.bn.body");
     } else if (s.kind === "belis") {
         title = t("s.belis.title"); body = t("s.belis.body");
     } else if (s.kind === "profile") {
