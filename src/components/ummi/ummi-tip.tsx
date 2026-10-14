@@ -15,7 +15,7 @@ import { X, ArrowRight } from "lucide-react";
 import { UmmiPose } from "@/components/ummi/ummi-pose";
 import { pickUmmiPose } from "@/lib/ummi-poses";
 
-interface Suggestion { id: string; kind: string; title: string; body: string; url: string; label?: string; }
+interface Suggestion { id: string; kind: string; title: string; body: string; url: string; params?: Record<string, string>; }
 type Variant = "default" | "nexus" | "esport";
 
 interface VariantStyle {
@@ -81,19 +81,17 @@ export function UmmiTip({ className = "", variant = "default" }: { className?: s
     const onOpen = () => patch(s.id, "ACTED");
     const onDismiss = () => { setHidden(true); patch(s.id, "DISMISSED"); };
 
-    // Matn tilga mos — kind+url'dan shablon bilan (saqlangan s.title/s.body o'zbekcha, u fallback).
+    // Matn tilga mos — kind + GET bergan params shabloni bilan (saqlangan uz matn fallback).
     let title = s.title, body = s.body;
-    if (s.kind === "nexus") {
-        const author = decodeURIComponent((s.url.split("/nexus/u/")[1] || "").replace(/\/.*$/, ""));
-        title = t("s.nexus.title", { author }); body = t("s.nexus.body");
-    } else if (s.kind === "bn") {
-        const mm = s.url.match(/[?&]category=([^&]+)/);
-        const category = s.label ?? (mm ? decodeURIComponent(mm[1]) : "");
-        title = t("s.bn.title", { category }); body = t("s.bn.body");
-    } else if (s.kind === "belis") {
-        title = t("s.belis.title"); body = t("s.belis.body");
-    } else if (s.kind === "profile") {
-        title = t("s.profile.title"); body = t("s.profile.body");
+    const KNOWN = ["belis", "nexus", "bn", "profile", "cart", "pricedrop"];
+    if (KNOWN.includes(s.kind)) {
+        try {
+            const P = s.params ?? {};
+            title = t(`s.${s.kind}.title`, P);
+            body = t(`s.${s.kind}.body`, P);
+        } catch {
+            title = s.title; body = s.body;   // shablon/param yetmasa — saqlangan matn
+        }
     }
 
     const v = variant === "default" ? null : VARIANTS[variant];

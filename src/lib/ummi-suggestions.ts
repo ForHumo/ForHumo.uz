@@ -41,6 +41,49 @@ export async function buildCandidates(profileId: string, name: string): Promise<
     const kbMap = new Map(kb.map(k => [`${k.category}:${k.key}`, String(k.value).toLowerCase()]));
     const out: SuggestionDraft[] = [];
 
+    // Narx tushishi (kuzatilgan BN mahsulot) — eng yuqori intent (hodisa-trigger)
+    const watches = await prisma.bnPriceWatch.findMany({
+        where: { profileId }, select: { productId: true, basePrice: true, targetPct: true }, take: 30,
+    });
+    if (watches.length > 0) {
+        const prods = await prisma.bnProduct.findMany({
+            where: { id: { in: watches.map(w => w.productId) }, isActive: true, hidden: false },
+            select: { id: true, slug: true, title: true, titleUz: true, price: true },
+        });
+        const pmap = new Map(prods.map(p => [p.id, p]));
+        for (const w of watches) {
+            const p = pmap.get(w.productId);
+            if (!p || p.price >= w.basePrice) continue;
+            const pct = Math.round((1 - p.price / w.basePrice) * 100);
+            if (pct >= w.targetPct) {
+                out.push({
+                    kind: "pricedrop",
+                    title: `${p.titleUz || p.title} narxi ${pct}% tushdi`,
+                    body: "Kuzatganingiz arzonlashdi — ko'rib chiqing.",
+                    url: `https://bozornarxida.uz/p/${p.slug}?drop=${pct}`,
+                    dedupeKey: `pricedrop:${p.id}:${d}`,
+                });
+                break; // bittasi yetarli
+            }
+        }
+    }
+
+    // Tashlab ketilgan savat (BN) — yuqori intent (hodisa-trigger)
+    const cart = await prisma.bnCartItem.findMany({ where: { profileId }, select: { createdAt: true } });
+    if (cart.length > 0) {
+        const newest = Math.max(...cart.map(c => c.createdAt.getTime()));
+        const hrs = (Date.now() - newest) / 36e5;
+        if (hrs >= 6) {   // faol xarid emas — tashlab ketilgan
+            out.push({
+                kind: "cart",
+                title: `Savatingizda ${cart.length} mahsulot kutyapti`,
+                body: "Rasmiylashtirishni yakunlang — qulay narxlar qo'ldan ketmasin.",
+                url: "https://bozornarxida.uz/savat",
+                dedupeKey: `cart:${d}`,
+            });
+        }
+    }
+
     // Belis — oila/to'y/marosim signali
     if (
         kbMap.get("family:kids")?.match(/1|2|3/)?.length ||
@@ -108,7 +151,7 @@ export async function buildCandidates(profileId: string, name: string): Promise<
 }
 
 // Affinitet teng bo'lsa tie-break (yuqori = ustun).
-const BASE_PRIORITY: Record<string, number> = { belis: 4, nexus: 3, bn: 2, profile: 1 };
+const BASE_PRIORITY: Record<string, number> = { pricedrop: 7, cart: 6, belis: 4, nexus: 3, bn: 2, profile: 1 };
 
 interface KindAffinity { score: number; suppressed: boolean; }
 

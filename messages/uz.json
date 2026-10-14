@@ -1515,6 +1515,14 @@
       "profile": {
         "title": "Sizni yaxshiroq tanishimiz uchun",
         "body": "1 daqiqada bir necha savolga javob bering — tavsiyalar aniqroq bo’ladi."
+      },
+      "cart": {
+        "title": "Savatingizda {count} mahsulot kutyapti",
+        "body": "Rasmiylashtirishni yakunlang — qulay narxlar qo’ldan ketmasin."
+      },
+      "pricedrop": {
+        "title": "{product} narxi {percent}% tushdi",
+        "body": "Kuzatganingiz arzonlashdi — ko’rib chiqing."
       }
     }
   }

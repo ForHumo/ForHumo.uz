@@ -28,6 +28,7 @@ const KIND_POSES: Record<string, number> = {
     belis: UMMI.gift, nexus: UMMI.chat, market: UMMI.market, bn: UMMI.order,
     pay: UMMI.pay, esport: UMMI.esport, id: UMMI.id, ai: UMMI.idea,
     profile: UMMI.greet, calendar: UMMI.calendar,
+    cart: UMMI.market, pricedrop: UMMI.saving,
 };
 
 // UI holat → poza.

@@ -1515,6 +1515,14 @@
       "profile": {
         "title": "To get to know you better",
         "body": "Answer a couple of questions in a minute — your tips get sharper."
+      },
+      "cart": {
+        "title": "{count} items waiting in your cart",
+        "body": "Finish checkout before the deals are gone."
+      },
+      "pricedrop": {
+        "title": "{product} dropped {percent}%",
+        "body": "Your watched item got cheaper — take a look."
       }
     }
   }
