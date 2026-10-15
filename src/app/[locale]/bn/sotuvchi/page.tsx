@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { bnPageMeta } from "@/lib/bn-seo";
 import { redirect } from "next/navigation";
 import { BnSellerRegister } from "@/components/bn/bn-seller-register";
 import { getMarkets } from "@/lib/bn-data";
@@ -8,10 +10,13 @@ import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-    title: "Sotuvchi bo'lish",
-    description: "Do'koningizni onlaynga chiqaring. YaTT yoki MChJ bilan ro'yxatdan o'ting, komissiya 5%.",
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+    const { locale } = await params;
+    const t = await getTranslations({ locale, namespace: "bn" });
+    const title = t("seller.become");
+    const description = t("seo.sellerDesc");
+    return { title, description, ...bnPageMeta({ locale, path: "/sotuvchi", title, description }) };
+}
 
 const BN_HOSTS = ["bozornarxida.uz", "www.bozornarxida.uz"];
 

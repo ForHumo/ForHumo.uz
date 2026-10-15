@@ -1,17 +1,22 @@
 "use client";
 
+import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { BnLink } from "./bn-nav";
 import {
-    Store, MapPin, Clock, Phone, ChevronRight, Star, Package,
-    ShoppingCart, Heart, Globe, Navigation, MessageCircle, AtSign,
+    Store, MapPin, Clock, Phone, ChevronRight, Package,
+    ShoppingCart, Heart, Globe, Navigation, AtSign,
 } from "lucide-react";
 import { BN, TIER_META } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
+import { directionsUrl } from "@/lib/bn-directions";
 import { BnProductCard } from "./bn-product-card";
-import { BnShopCard, BnSectionTitle, BnEmpty, shopLocationText } from "./bn-cards";
+import { BnShopCard, BnSectionTitle, BnEmpty, BnMarketCover, BnShopRating, useShopLocationText } from "./bn-cards";
 import { BnBackButton } from "./bn-back-button";
 import { BnBuyCta } from "./bn-buy-cta";
 import { BnShopFollowButton } from "./bn-shop-follow-button";
 import { BnShopChatButton } from "./bn-shop-chat-button";
+import { BnSellerCallButton } from "./bn-seller-call-button";
 import { BnReviews } from "./bn-reviews";
 import { BnMapView } from "./bn-map-view";
 import type { BnMarketDTO, BnProductDTO, BnShopDTO } from "@/lib/bn-data";
@@ -34,16 +39,31 @@ export function BnMarketPage({
     market, shops, products,
 }: { market: BnMarketPageDTO; shops: BnShopDTO[]; products: BnProductDTO[] }) {
     const m = market;
+    const t = useTranslations("bn.markets");
+    const tp = useTranslations("bn.marketPage");
+    const tCrumb = useTranslations("bn.breadcrumb");
+    // Muqova bo'sh/buzuq bo'lsa — BN fon; foto uchun mo'ljallangan qorong'i qatlam va oq
+    // breadcrumb faqat foto ustida (kunduzgi rejimda och fonda ko'rinmay qolardi)
+    const [hasCover, setHasCover] = useState(!!m.coverUrl);
 
     return (
         <div className="pb-16">
             {/* Muqova */}
-            <div className="relative h-[220px] sm:h-[300px] overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={m.coverUrl} alt={m.name} className="w-full h-full object-cover" />
+            <div className="relative h-[220px] sm:h-[300px] overflow-hidden" style={{ background: BN.surfaceUp }}>
+                <BnMarketCover
+                    src={m.coverUrl}
+                    alt={m.name}
+                    eager
+                    iconClass="w-24 h-24 sm:w-28 sm:h-28"
+                    onFallback={() => setHasCover(false)}
+                />
                 <div
                     className="absolute inset-0"
-                    style={{ background: `linear-gradient(to top, ${BN.bg} 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.15) 100%)` }}
+                    style={{
+                        background: hasCover
+                            ? `linear-gradient(to top, ${BN.bg} 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.15) 100%)`
+                            : `linear-gradient(to top, ${BN.bg} 0%, transparent 65%)`,
+                    }}
                 />
                 <div className="absolute inset-x-0 top-4 pointer-events-none">
                     <div className="mx-auto max-w-[1280px] px-4 pointer-events-auto">
@@ -52,10 +72,10 @@ export function BnMarketPage({
                 </div>
                 <div className="absolute inset-x-0 bottom-0">
                     <div className="mx-auto max-w-[1280px] px-4 pb-5">
-                        <nav className="flex items-center gap-1.5 text-[12px] mb-2" style={{ color: "rgba(255,255,255,0.72)" }}>
-                            <BnLink href="/" className="hover:opacity-70 transition-colors">Bosh sahifa</BnLink>
+                        <nav className="flex items-center gap-1.5 text-[12px] mb-2" style={{ color: hasCover ? "rgba(255,255,255,0.72)" : BN.text3 }}>
+                            <BnLink href="/" className="hover:opacity-70 transition-colors">{tCrumb("home")}</BnLink>
                             <ChevronRight className="w-3 h-3" />
-                            <BnLink href="/bozorlar" className="hover:opacity-70 transition-colors">Bozorlar</BnLink>
+                            <BnLink href="/bozorlar" className="hover:opacity-70 transition-colors">{t("title")}</BnLink>
                         </nav>
                         <h1 className="text-[26px] sm:text-[34px] font-black tracking-tight leading-tight">{m.name}</h1>
                     </div>
@@ -65,22 +85,25 @@ export function BnMarketPage({
             <div className="mx-auto max-w-[1280px] px-4 -mt-1">
                 {/* Ma'lumot */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
-                    <Info icon={<MapPin className="w-4 h-4" />} label="Manzil" value={m.address} />
-                    <Info icon={<Clock className="w-4 h-4" />} label="Ish vaqti" value={m.workHours} />
-                    <Info icon={<Store className="w-4 h-4" />} label="Do'konlar" value={`${m.shopCount} ta`} />
+                    {/* Manzil / ish vaqti — DB'dagi erkin matn, tarjima qilinmaydi */}
+                    <Info icon={<MapPin className="w-4 h-4" />} label={tp("address")} value={m.address} />
+                    <Info icon={<Clock className="w-4 h-4" />} label={tp("hours")} value={m.workHours} />
+                    {/* Soni — pastdagi ro'yxatning o'zidan (kesh shopCount bilan ziddiyat bo'lmasin) */}
+                    <Info icon={<Store className="w-4 h-4" />} label={tp("shops")}
+                        value={shops.length > 0 ? t("shopN", { n: shops.length }) : t("shopsSoon")} />
                 </div>
 
                 {/* Bo'limlar */}
                 {m.lat != null && m.lng != null && (
                     <section className="mb-8">
-                        <BnSectionTitle title="Xarita" subtitle="Bozor joylashuvi" />
+                        <BnSectionTitle title={tp("mapTitle")} subtitle={tp("mapSub")} />
                         <BnMapView lat={m.lat} lng={m.lng} label={m.name} height={260} />
                     </section>
                 )}
 
                 {m.sections.length > 0 && (
                     <section className="mb-8">
-                        <BnSectionTitle title="Bo'limlar" />
+                        <BnSectionTitle title={tp("sections")} />
                         <div className="flex flex-wrap gap-2">
                             {m.sections.map(s => (
                                 <span
@@ -97,10 +120,10 @@ export function BnMarketPage({
 
                 {/* Do'konlar */}
                 <section className="mb-8">
-                    <BnSectionTitle title="Bu bozordagi do'konlar" subtitle={`${shops.length} ta do'kon onlaynda`} />
+                    <BnSectionTitle title={tp("shopsTitle")} subtitle={tp("shopsOnline", { n: shops.length })} />
                     {shops.length === 0 ? (
-                        <BnEmpty icon={<Store className="w-6 h-6" />} title="Hali do'kon yo'q"
-                            text="Bu bozordan birinchi bo'lib siz chiqing." />
+                        <BnEmpty icon={<Store className="w-6 h-6" />} title={tp("emptyTitle")}
+                            text={tp("emptyText")} />
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
                             {shops.map(s => <BnShopCard key={s.id} s={s} />)}
@@ -111,7 +134,7 @@ export function BnMarketPage({
                 {/* Mahsulotlar */}
                 {products.length > 0 && (
                     <section>
-                        <BnSectionTitle title="Bu bozordagi mahsulotlar" />
+                        <BnSectionTitle title={tp("productsTitle")} />
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
                             {products.map(p => <BnProductCard key={p.id} p={p} compact />)}
                         </div>
@@ -129,15 +152,34 @@ export function BnShopPage({
 }: { shop: BnShopDTO; products: BnProductDTO[] }) {
     const s = shop;
     const tier = TIER_META[s.tier];
+    const fmt = useBnFormat();
+    const tc = useTranslations("bn.shopCard");
+    const tp = useTranslations("bn.product");
+    const ts = useTranslations("bn.shopPage");
+    const tCrumb = useTranslations("bn.breadcrumb");
+    const tShops = useTranslations("bn.shops");
+    const locText = useShopLocationText();
     const hasMap = s.lat != null && s.lng != null;
+
+    // Yo'nalish — do'kon koordinatasi, bo'lmasa (bozordagi do'kon) bozor koordinatasi.
+    // Onlayn do'kon yoki koordinata yo'q bo'lsa tugma chiqmaydi.
+    const dirLat = s.lat ?? (s.locationType === "IN_MARKET" ? s.marketLat ?? null : null);
+    const dirLng = s.lng ?? (s.locationType === "IN_MARKET" ? s.marketLng ?? null : null);
+    const directionsHref = s.locationType !== "ONLINE" && dirLat != null && dirLng != null
+        ? directionsUrl(dirLat, dirLng) : null;
+    // Qo'ng'iroq — mahsulot sahifasidagi jonli BN qo'ng'iroq (raqam yashirin). Sotuvchi id'si
+    // bo'lmasa — faqat TASDIQLANGAN raqamga tel:. Ikkalasi ham yo'q bo'lsa tugma chiqmaydi.
+    const telHref = !s.sellerId && s.phoneVerified && s.phone ? `tel:${s.phone.replace(/[^\d+]/g, "")}` : null;
+    const canCall = !!s.sellerId || !!telHref;
+    const ctaCls = "flex items-center justify-center gap-2 w-full h-11 rounded-xl text-[13.5px] font-bold whitespace-nowrap";
 
     return (
         <div className="mx-auto max-w-[1280px] px-4 py-6 pb-16">
             <BnBackButton className="mb-4" fallbackHref="/dokonlar" />
             <nav className="flex items-center gap-1.5 text-[12px] mb-5" style={{ color: BN.text3 }}>
-                <BnLink href="/" className="hover:opacity-70 transition-colors">Bosh sahifa</BnLink>
+                <BnLink href="/" className="hover:opacity-70 transition-colors">{tCrumb("home")}</BnLink>
                 <ChevronRight className="w-3 h-3" />
-                <BnLink href="/dokonlar" className="hover:opacity-70 transition-colors">Do&apos;konlar</BnLink>
+                <BnLink href="/dokonlar" className="hover:opacity-70 transition-colors">{tShops("title")}</BnLink>
             </nav>
 
             {/* Shapka */}
@@ -165,12 +207,10 @@ export function BnShopPage({
                                 className="px-2 py-1 rounded-lg text-[10.5px] font-black leading-none"
                                 style={{ background: `${tier.color}1F`, color: tier.color }}
                             >
-                                {tier.label}
+                                {fmt.tier(s.tier)}
                             </span>
                         )}
-                        <BnBuyCta shopSlug={s.slug} shopName={s.name} />
                         <BnShopFollowButton shopSlug={s.slug} />
-                        <BnShopChatButton shopSlug={s.slug} shopName={s.name} />
                     </div>
 
                     <p className="flex items-center gap-1.5 text-[13px] mb-2" style={{ color: BN.text2 }}>
@@ -179,70 +219,79 @@ export function BnShopPage({
                             : s.locationType === "STANDALONE"
                                 ? <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: BN.gold }} />
                                 : <Globe className="w-3.5 h-3.5 flex-shrink-0" style={{ color: BN.gold }} />}
-                        {shopLocationText(s)}
+                        {locText(s)}
                     </p>
 
-                    <div className="flex items-center gap-4 text-[12.5px] flex-wrap" style={{ color: BN.text3 }}>
-                        <span className="flex items-center gap-1">
-                            <Package className="w-3.5 h-3.5" />{s.productCount} mahsulot
-                        </span>
-                        {s.ratingCount > 0 && (
-                            <span className="flex items-center gap-1" style={{ color: BN.gold }}>
-                                <Star className="w-3.5 h-3.5 fill-current" />
-                                {s.rating.toFixed(1)} ({s.ratingCount})
+                    {/* Sonlar — haqiqiy qatorlardan (bn-data): mahsulot = pastdagi ro'yxat, baho = sharhlar */}
+                    <div className="flex items-center gap-x-4 gap-y-1.5 text-[12.5px] flex-wrap" style={{ color: BN.text3 }}>
+                        {s.productCount > 0 && (
+                            <span className="flex items-center gap-1">
+                                <Package className="w-3.5 h-3.5" />{tc("productsLabel", { n: s.productCount })}
                             </span>
                         )}
+                        <BnShopRating rating={s.rating} ratingCount={s.ratingCount} showCount />
                         {s.ownerUsername && (
                             <a
                                 href={`https://forhumo.uz/uz/nexus/u/${s.ownerUsername}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1 transition-colors hover:text-[color:var(--bn-gold)]"
-                                aria-label="Nexus profilga o'tish"
+                                aria-label={ts("nexusProfileAria")}
                             >
                                 <AtSign className="w-3.5 h-3.5" />
                                 {s.ownerUsername}
                             </a>
                         )}
+                        {/* "Xarid qildim" — ikkinchi darajali amal, matnli havola ko'rinishida */}
+                        <BnBuyCta shopSlug={s.slug} shopName={s.name} />
                     </div>
                 </div>
 
-                <div className="flex sm:flex-col gap-2 flex-shrink-0">
-                    {s.ownerUsername && (
+                {/* Aloqa: bitta chat (asosiy) + qo'ng'iroq + yo'nalish. Mobil'da chat to'liq
+                    kenglikda, qolgan ikkitasi yonma-yon; desktop'da 180px ustun. flex-1 YO'Q —
+                    flex-col ichida u h-11 ni bosib, tugmalarni 20px'ga siqib qo'yardi. */}
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-col sm:w-[180px] flex-shrink-0">
+                    <div className="col-span-2 [&>button]:w-full [&>button]:h-11 [&>button]:justify-center [&>button]:gap-2 [&>button]:rounded-xl [&>button]:text-[13.5px] [&>button_svg]:w-4 [&>button_svg]:h-4">
+                        <BnShopChatButton shopSlug={s.slug} shopName={s.name} triggerLabel={tp("sellerMessage")} />
+                    </div>
+                    {s.sellerId ? (
+                        <BnSellerCallButton
+                            sellerId={s.sellerId}
+                            shopName={s.name}
+                            shopLogo={s.logoUrl}
+                            ownerUsername={s.ownerUsername}
+                            workHours={s.workHours}
+                            className={`w-full ${directionsHref ? "" : "col-span-2"}`}
+                        />
+                    ) : telHref ? (
                         <a
-                            href={`https://forhumo.uz/uz/nexus?dm=${s.ownerUsername}`}
+                            href={telHref}
+                            className={`${ctaCls} ${directionsHref ? "" : "col-span-2"}`}
+                            style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
+                        >
+                            <Phone className="w-4 h-4" />
+                            {tp("sellerCall")}
+                        </a>
+                    ) : null}
+                    {directionsHref && (
+                        <a
+                            href={directionsHref}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2 flex-1 sm:w-[180px] h-11 rounded-xl text-[13.5px] font-bold"
-                            style={{ background: BN.gold, color: BN.onGold }}
-                        >
-                            <MessageCircle className="w-4 h-4" />
-                            Nexus&apos;da yozish
-                        </a>
-                    )}
-                    <button
-                        className="flex items-center justify-center gap-2 flex-1 sm:w-[180px] h-11 rounded-xl text-[13.5px] font-bold"
-                        style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
-                    >
-                        <Phone className="w-4 h-4" />
-                        Qo&apos;ng&apos;iroq
-                    </button>
-                    {s.locationType === "IN_MARKET" && (
-                        <button
-                            className="flex items-center justify-center gap-2 flex-1 sm:w-[180px] h-11 rounded-xl text-[13.5px] font-bold"
+                            className={`${ctaCls} ${canCall ? "" : "col-span-2"}`}
                             style={{ background: BN.goldSoft, border: `1px solid ${BN.goldEdge}`, color: BN.gold }}
                         >
                             <Navigation className="w-4 h-4" />
-                            Yo&apos;lni ko&apos;rsatish
-                        </button>
+                            {tp("showroom.directions")}
+                        </a>
                     )}
                 </div>
             </div>
 
             {/* Mahsulotlar */}
-            <BnSectionTitle title="Mahsulotlar" subtitle={`${products.length} ta`} />
+            <BnSectionTitle title={ts("productsTitle")} subtitle={fmt.products(products.length)} />
             {products.length === 0 ? (
-                <BnEmpty title="Hali mahsulot yo'q" text="Bu do'kon hozircha mahsulot qo'shmagan." />
+                <BnEmpty title={ts("emptyTitle")} text={ts("emptyText")} />
             ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
                     {products.map(p => <BnProductCard key={p.id} p={p} compact />)}
@@ -252,15 +301,15 @@ export function BnShopPage({
             {/* Xarita — STANDALONE/IN_MARKET do'kon uchun */}
             {hasMap && (
                 <section className="mt-10">
-                    <BnSectionTitle title="Xarita" subtitle="Do'konga borish uchun" />
+                    <BnSectionTitle title={ts("mapTitle")} subtitle={ts("mapSub")} />
                     <BnMapView lat={s.lat!} lng={s.lng!} label={s.name} height={240} />
                     <div className="mt-3 flex">
-                        <a href={`https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}`}
+                        <a href={directionsUrl(s.lat!, s.lng!)}
                             target="_blank" rel="noopener"
                             className="inline-flex items-center gap-2 h-11 px-5 rounded-2xl text-[13.5px] font-black transition-transform active:scale-[0.97]"
                             style={{ background: BN.gold, color: BN.onGold }}>
                             <Navigation className="w-4 h-4" />
-                            Route ochish
+                            {ts("openRoute")}
                         </a>
                     </div>
                 </section>

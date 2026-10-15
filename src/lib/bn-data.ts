@@ -15,6 +15,8 @@ export interface BnMarketDTO {
     id: string;
     slug: string;
     name: string;
+    /** Rus tilidagi nom (bo'lsa) — ru sahifalarda ko'rsatiladi */
+    nameRu?: string | null;
     district: string;
     coverUrl: string;
     workHours: string;
@@ -54,6 +56,9 @@ export interface BnShopDTO {
     workHours?: string | null;
     /** Sotuvchi UserProfile.id — jonli qo'ng'iroq peerId sifatida (faqat to'liq do'kon yozuvida) */
     sellerId?: string | null;
+    /** Bozor koordinatlari — bozordagi do'konning o'z koordinatasi bo'lmasa "Yo'nalish" uchun (faqat to'liq do'kon yozuvida) */
+    marketLat?: number | null;
+    marketLng?: number | null;
 }
 
 export interface BnProductDTO {
@@ -131,11 +136,30 @@ function toShopDTO(s: ShopWithMarket, ownerUsername?: string | null): BnShopDTO 
         lng: s.lng,
         ownerUsername: ownerUsername ?? null,
         verifiedTier: (s.verifiedTier as "NONE" | "RETAIL" | "WHOLESALE" | undefined) ?? "NONE",
-        phone: (s as { phone?: string | null }).phone ?? null,
+        // Raqam faqat tasdiqlangan bo'lsa client'ga ketadi (tasdiqlanmagani RSC payload'ga ham chiqmasin)
+        phone: (s as { phoneVerified?: boolean }).phoneVerified ? (s as { phone?: string | null }).phone ?? null : null,
         phoneVerified: (s as { phoneVerified?: boolean }).phoneVerified ?? false,
         workHours: (s as { workHours?: string | null }).workHours ?? null,
         sellerId: (s as { profileId?: string | null }).profileId ?? null,
     };
+}
+
+// Do'kon ko'rsatkichlari kesh maydonlardan (rating/ratingCount/productCount — seed'da
+// to'qima qiymatlar qolgan) EMAS, haqiqiy qatorlardan olinadi: sahifadagi ro'yxat bilan
+// bir xil filtr. Bitta groupBy — do'konlar soniga qarab qo'shimcha so'rov yo'q.
+const ACTIVE_PRODUCTS_COUNT = {
+    _count: { select: { products: { where: { isActive: true, hidden: false } } } },
+} as const;
+
+async function realShopRatings(shopIds: string[]): Promise<Map<string, { rating: number; count: number }>> {
+    if (shopIds.length === 0) return new Map();
+    const rows = await prisma.bnShopReview.groupBy({
+        by: ["shopId"],
+        where: { shopId: { in: shopIds }, hidden: false },
+        _avg: { rating: true },
+        _count: { _all: true },
+    });
+    return new Map(rows.map(r => [r.shopId, { rating: r._avg.rating ?? 0, count: r._count._all }]));
 }
 
 type ProductWithRels = Awaited<ReturnType<typeof prisma.bnProduct.findMany>>[number]
@@ -218,18 +242,21 @@ export const getMarkets = unstable_cache(
             orderBy: [{ order: "asc" }, { name: "asc" }],
             take: limit,
             select: {
-                id: true, slug: true, name: true, district: true,
-                coverUrl: true, workHours: true, shopCount: true, sections: true,
+                id: true, slug: true, name: true, nameRu: true, district: true,
+                coverUrl: true, workHours: true, sections: true,
+                // Do'konlar soni — kesh `shopCount` emas, bozor sahifasidagi ro'yxat bilan bir xil (APPROVED)
+                _count: { select: { shops: { where: { status: "APPROVED" } } } },
             },
         });
         return rows.map(m => ({
             id: m.id,
             slug: m.slug,
             name: m.name,
+            nameRu: m.nameRu,
             district: m.district ?? "Toshkent",
             coverUrl: m.coverUrl ?? "",
             workHours: m.workHours ?? "",
-            shopCount: m.shopCount,
+            shopCount: m._count.shops,
             sections: m.sections,
         }));
     },
@@ -238,15 +265,26 @@ export const getMarkets = unstable_cache(
 );
 
 export const getTopShops = unstable_cache(
-    async (limit = 10): Promise<BnShopDTO[]> => {
-        // Reyting × log(reyting soni) — mock'dagi bilan bir xil formula
+    async (limit = 10, includeEmpty = false): Promise<BnShopDTO[]> => {
+        // Reyting × log(reyting soni) — mock'dagi bilan bir xil formula.
+        // includeEmpty: /dokonlar katalogi yangi (mahsulotsiz, bahosiz) do'konlarni ham ko'rsatadi —
+        // "TOP" ro'yxatlari (bosh sahifa) esa ularni chiqarmaydi.
         const shops = await prisma.bnShop.findMany({
             where: { status: "APPROVED" },
             orderBy: [{ rating: "desc" }, { ratingCount: "desc" }],
             take: limit * 3,   // ko'proq olib, kodda saralaymiz
-            include: { market: { select: { slug: true, name: true } } },
+            include: { market: { select: { slug: true, name: true } }, ...ACTIVE_PRODUCTS_COUNT },
         });
+        const ratings = await realShopRatings(shops.map(s => s.id));
         const sorted = shops
+            .map(({ _count, ...s }) => ({
+                ...s,
+                productCount: _count.products,
+                rating: ratings.get(s.id)?.rating ?? 0,
+                ratingCount: ratings.get(s.id)?.count ?? 0,
+            }))
+            // Na bahosi, na mahsuloti yo'q do'kon reyting ro'yxatida turmaydi
+            .filter(s => includeEmpty || s.ratingCount > 0 || s.productCount > 0)
             .sort((a, b) => (b.rating * Math.log10(b.ratingCount + 10)) - (a.rating * Math.log10(a.ratingCount + 10)))
             .slice(0, limit);
         return sorted.map(s => toShopDTO(s));
@@ -273,11 +311,20 @@ const getHomeProductsPublic = unstable_cache(
     { revalidate: 120, tags: ["bn-products"] },
 );
 
+// Faol bozorlar umumiy soni — bosh sahifa "N ta bozor" uchun (getMarkets(6) faqat
+// ko'rsatish uchun 6 tasini oladi, uzunligi umumiy son emas).
+const getMarketCount = unstable_cache(
+    async () => prisma.bnMarket.count({ where: { isActive: true } }),
+    ["bn-market-count"],
+    { revalidate: 300, tags: ["bn-markets"] },
+);
+
 export async function getHomeData(profileId: string | null = null) {
     const seeWholesale = await viewerCanSeeWholesale(profileId);
 
-    const [markets, topShops, allProducts, forYou] = await Promise.all([
+    const [markets, marketCount, topShops, allProducts, forYou] = await Promise.all([
         getMarkets(6),
+        getMarketCount(),
         getTopShops(10),
         seeWholesale
             ? prisma.bnProduct.findMany({
@@ -301,20 +348,31 @@ export async function getHomeData(profileId: string | null = null) {
         ["kiyim", "sport", "uy"].some(k => p.categorySlug.startsWith(k))
     );
 
-    return { markets, topShops, cheap, fresh, top, seasonal, forYou };
+    return { markets, marketCount, topShops, cheap, fresh, top, seasonal, forYou };
 }
 
 export async function getMarketBySlug(slug: string) {
-    return prisma.bnMarket.findUnique({
+    const m = await prisma.bnMarket.findUnique({
         where: { slug },
         include: {
             shops: {
                 where: { status: "APPROVED" },
-                include: { market: { select: { slug: true, name: true } } },
+                include: { market: { select: { slug: true, name: true } }, ...ACTIVE_PRODUCTS_COUNT },
                 orderBy: [{ tier: "desc" }, { rating: "desc" }],
             },
         },
     });
+    if (!m) return null;
+    // Sonlar haqiqiy qatorlardan: do'konlar soni = shu ro'yxat (kesh `shopCount` emas),
+    // har do'konning mahsulot/baho soni — faol mahsulot va ko'rinadigan sharhlardan
+    const ratings = await realShopRatings(m.shops.map(s => s.id));
+    const shops = m.shops.map(({ _count, ...s }) => ({
+        ...s,
+        productCount: _count.products,
+        rating: ratings.get(s.id)?.rating ?? 0,
+        ratingCount: ratings.get(s.id)?.count ?? 0,
+    }));
+    return { ...m, shopCount: shops.length, shops };
 }
 
 // Do'kon sahifasi — DTO qaytaradi (serializable), 60s cache. Do'konga trafik
@@ -324,23 +382,33 @@ export const getShopBySlug = unstable_cache(
         const shop = await prisma.bnShop.findUnique({
             where: { slug },
             include: {
-                market: { select: { slug: true, name: true } },
+                market: { select: { slug: true, name: true, lat: true, lng: true } },
                 products: {
                     where: { isActive: true, hidden: false },
                     include: PRODUCT_INCLUDE,
                     orderBy: { createdAt: "desc" },
                     take: 60,
                 },
+                ...ACTIVE_PRODUCTS_COUNT,   // ro'yxat 60 ta bilan cheklangan — umumiy son alohida
             },
         });
         if (!shop) return null;
-        // Nexus username — do'kon egasidan
-        const owner = await prisma.userProfile.findUnique({
-            where: { id: shop.profileId },
-            select: { username: true },
-        });
+        // Nexus username — do'kon egasidan; baho — ko'rinadigan sharhlardan (sahifadagi bilan bir xil)
+        const [owner, ratings] = await Promise.all([
+            prisma.userProfile.findUnique({
+                where: { id: shop.profileId },
+                select: { username: true },
+            }),
+            realShopRatings([shop.id]),
+        ]);
+        const dto = toShopDTO({
+            ...shop,
+            productCount: shop._count.products,
+            rating: ratings.get(shop.id)?.rating ?? 0,
+            ratingCount: ratings.get(shop.id)?.count ?? 0,
+        }, owner?.username);
         return {
-            shop: toShopDTO(shop, owner?.username),
+            shop: { ...dto, marketLat: shop.market?.lat ?? null, marketLng: shop.market?.lng ?? null },
             products: shop.products.map(toProductDTO),
         };
     },
@@ -483,9 +551,21 @@ export interface BnCategoryTreeDTO {
     id: string;
     slug: string;
     name: string;
+    nameRu?: string | null;
     icon: string | null;
     productCount: number;
-    children: { slug: string; name: string; icon: string | null; productCount: number }[];
+    children: { slug: string; name: string; nameRu?: string | null; icon: string | null; productCount: number }[];
+}
+
+/** Kategoriya daraxti nomlarini tilga moslash: ru'da nameRu (bo'lsa), aks holda asl nom.
+ *  (BnCategory'da nameEn yo'q — en'da asl nom qoladi.) */
+export function localizeCategoryTree(tree: BnCategoryTreeDTO[], locale: string): BnCategoryTreeDTO[] {
+    if (locale !== "ru") return tree;
+    return tree.map(c => ({
+        ...c,
+        name: c.nameRu || c.name,
+        children: c.children.map(ch => ({ ...ch, name: ch.nameRu || ch.name })),
+    }));
 }
 
 // Kategoriyalar deyarli hech qachon o'zgarmaydi — 10 daq. cache.
@@ -501,7 +581,7 @@ export const getCategoriesTree = unstable_cache(
                     where: { isActive: true },
                     orderBy: { order: "asc" },
                     select: {
-                        slug: true, name: true, icon: true,
+                        slug: true, name: true, nameRu: true, icon: true,
                         _count: { select: { products: { where: { isActive: true, hidden: false } } } },
                     },
                 },
@@ -511,10 +591,11 @@ export const getCategoriesTree = unstable_cache(
             id: c.id,
             slug: c.slug,
             name: c.name,
+            nameRu: c.nameRu,
             icon: c.icon,
             productCount: c._count.products + c.children.reduce((s, ch) => s + ch._count.products, 0),
             children: c.children.map(ch => ({
-                slug: ch.slug, name: ch.name, icon: ch.icon, productCount: ch._count.products,
+                slug: ch.slug, name: ch.name, nameRu: ch.nameRu, icon: ch.icon, productCount: ch._count.products,
             })),
         }));
     },

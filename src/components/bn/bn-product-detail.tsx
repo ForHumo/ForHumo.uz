@@ -14,7 +14,8 @@ import { BnInspectHoldModal } from "./bn-inspect-modal";
 import { BnProductReferralCta } from "./bn-product-referral-cta";
 import { BnProductShowroom } from "./bn-product-showroom";
 import { Eye, ChevronRight, Globe, Car, Hash, Search } from "lucide-react";
-import { BN, fmtPrice, groupThousands } from "@/lib/bn-theme";
+import { BN, groupThousands } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
 import { BnProductCard } from "./bn-product-card";
 import { BnProductCompareCard } from "./bn-product-compare-card";
 import { BnSectionTitle } from "./bn-cards";
@@ -58,6 +59,7 @@ export function BnProductDetail({
     const t = useTranslations("bn.product");
     const tCrumb = useTranslations("bn.breadcrumb");
     const tAttr = useTranslations("bn.attr");
+    const fmt = useBnFormat();
     const locale = useLocale();
     const to = useBnHref();
     // Ulgurji mahsulot bo'lsa boshlang'ich qty = minWholesaleQty (buyer'ni majburiy chegaraga
@@ -389,7 +391,7 @@ export function BnProductDetail({
                                                 <span className="block text-[12.5px]" style={{ color: BN.text3 }}>{o.marketName ?? o.city}</span>
                                             </span>
                                             <span className="text-right flex-shrink-0">
-                                                <span className="block text-[15px] font-black tabular-nums leading-none">{fmtPrice(o.price)}</span>
+                                                <span className="block text-[15px] font-black tabular-nums leading-none">{fmt.price(o.price)}</span>
                                                 {o.price < p.price && (
                                                     <span className="block text-[12px] mt-1" style={{ color: BN.ok }}>
                                                         {t("othersCheaper", { pct: Math.round(((p.price - o.price) / p.price) * 100) })}

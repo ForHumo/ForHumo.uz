@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { bnPageMeta } from "@/lib/bn-seo";
 import { BnLegalPage } from "@/components/bn/bn-legal";
 import { FileText } from "lucide-react";
 
-export const metadata: Metadata = {
-    title: "Ommaviy oferta",
-    description: "Bozor Narxida platformasida xarid va sotuv shartlarining ommaviy oferta shakli.",
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+    const { locale } = await params;
+    const t = await getTranslations({ locale, namespace: "bn" });
+    const title = t("footer.offer");
+    const description = t("seo.offerDesc");
+    return { title, description, ...bnPageMeta({ locale, path: "/huquqiy/oferta", title, description }) };
+}
 
 export default function Page() {
     return (

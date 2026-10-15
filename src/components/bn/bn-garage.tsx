@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Car, ChevronDown, X, Search, Check, Trash2 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
+import { getBnScrollRoot } from "./bn-scroll";
 
 export interface GarageCar {
     modelId: string;
@@ -169,7 +170,7 @@ function GaragePicker({ current, onSelect, onClose }: { current: string | null; 
                             onChange={e => setQ(e.target.value)}
                             placeholder="Nexia, Cobalt, Spark..."
                             className="w-full h-11 pl-10 pr-3 rounded-xl text-[14px] outline-none"
-                            style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: "#fff" }}
+                            style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
                         />
                     </div>
                 </div>
@@ -213,7 +214,8 @@ function GaragePicker({ current, onSelect, onClose }: { current: string | null; 
                 </div>
             </div>
         </div>,
-        document.body,
+        // Scroll root'ga — u yerda --bn-* tokenlar (.bn-scope) bor va pastki menyu ustida turadi.
+        getBnScrollRoot() ?? document.body,
     );
 }
 
@@ -222,7 +224,7 @@ function Row({ label, sub, selected, onClick, indent }: { label: string; sub?: s
         <button
             onClick={onClick}
             className="w-full flex items-center justify-between gap-2 h-11 rounded-xl text-[14px] text-left transition-colors"
-            style={{ background: selected ? BN.goldSoft : "transparent", color: selected ? BN.gold : "#fff", paddingLeft: indent ? 28 : 14, paddingRight: 14 }}
+            style={{ background: selected ? BN.goldSoft : "transparent", color: selected ? BN.gold : BN.text, paddingLeft: indent ? 28 : 14, paddingRight: 14 }}
         >
             <span className="flex items-center gap-2">
                 <span className="font-medium">{label}</span>

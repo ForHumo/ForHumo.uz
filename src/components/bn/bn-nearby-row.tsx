@@ -9,14 +9,9 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { MapPin, ChevronRight, Store, Loader2, Navigation, Route } from "lucide-react";
 import { BN, TIER_META } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
 import { BnLink } from "./bn-nav";
-
-function directionsUrl(destLat: number, destLng: number, originLat?: number, originLng?: number): string {
-    const base = "https://www.google.com/maps/dir/?api=1&destination=" + destLat + "," + destLng;
-    return originLat != null && originLng != null
-        ? base + "&origin=" + originLat + "," + originLng
-        : base;
-}
+import { directionsUrl } from "@/lib/bn-directions";
 
 interface NearbyShop {
     slug: string;
@@ -48,6 +43,7 @@ function formatDist(km: number): string {
 
 export function BnNearbyRow() {
     const t = useTranslations("bn.nearby");
+    const fmt = useBnFormat();
     const [state, setState] = useState<"idle" | "prompt" | "loading" | "ready" | "denied" | "empty">("idle");
     const [shops, setShops] = useState<NearbyShop[]>([]);
     const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
@@ -177,7 +173,7 @@ export function BnNearbyRow() {
                                         {s.tier !== "NEW" && (
                                             <span className="px-1 py-0.5 rounded text-[9px] font-black leading-none flex-shrink-0"
                                                 style={{ background: `${TIER_META[s.tier].color}1F`, color: TIER_META[s.tier].color }}>
-                                                {TIER_META[s.tier].label}
+                                                {fmt.tier(s.tier)}
                                             </span>
                                         )}
                                     </span>

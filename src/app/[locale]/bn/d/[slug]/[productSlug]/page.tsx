@@ -2,6 +2,9 @@
 // Awvalgi /p/<productSlug> ham ishlaydi (backward compat), lekin bu canonical bo'ladi.
 
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { buildBnFormat } from "@/lib/bn-format";
+import { BN_SITE, bnCity, bnPageMeta } from "@/lib/bn-seo";
 import { notFound, redirect } from "next/navigation";
 import { after } from "next/server";
 import { BnProductDetail } from "@/components/bn/bn-product-detail";
@@ -14,39 +17,42 @@ export const dynamic = "force-dynamic";
 
 type Locale = "uz" | "ru" | "en";
 
-function formatUZS(n: number, locale: Locale): string {
-    const bcp = locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : "uz-Latn-UZ";
-    const num = n.toLocaleString(bcp, { maximumFractionDigits: 0 });
-    return locale === "ru" ? `${num} сум` : locale === "en" ? `${num} UZS` : `${num} so'm`;
-}
-
 export async function generateMetadata(
     { params }: { params: Promise<{ locale: Locale; slug: string; productSlug: string }> }
 ): Promise<Metadata> {
     const { locale, slug, productSlug } = await params;
+    const t = await getTranslations({ locale, namespace: "bn" });
     const data = await getProductBySlug(productSlug, null);
-    if (!data) return { title: "Mahsulot topilmadi" };
+    if (!data) return { title: t("notFound.title") };
 
     // Agar shopSlug mos kelmasa — canonical'ni to'g'ri URL'ga o'zgartiramiz
     const correctShopSlug = data.product.shopSlug ?? slug;
     const p = data.product;
-    const priceStr = formatUZS(p.price, locale);
+    const priceStr = buildBnFormat(t).price(p.price);   // body bilan bir xil: "4 250 000 so'm / сум / UZS"
     const title = `${p.title} — ${priceStr} · ${p.shopName ?? ""}`;
-    const canonical = `https://bozornarxida.uz/d/${correctShopSlug}/${p.slug}`;
-    const ogImage = `https://bozornarxida.uz/api/og/bn/product/${p.slug}`;
+
+    // Tavsif: nom + narx + do'kon/joy, bozor o'rtachasidan tejash (vitrina bilan bir xil
+    // ishonchlilik sharti: >60% farq — ko'rsatilmaydi) va "ko'rib olish" belgisi.
+    const avg = p.marketAvgPrice;
+    const plausible = !!avg && avg > 0 && p.price > 0 && Math.abs(p.price - avg) / avg <= 0.6;
+    const pct = plausible && avg && p.price < avg ? Math.round(((avg - p.price) / avg) * 100) : 0;
+    const place = p.marketName || bnCity(p.city, locale);
+    const description = [
+        t("seo.productDesc", { title: p.title, price: priceStr, shop: p.shopName ?? "", place }),
+        pct > 0 ? t("seo.productCheaper", { pct }) : null,
+        p.allowInspect ? t("seo.productInspect") : null,
+    ].filter(Boolean).join(" ");
+
+    // Asosiy rasm — brendli OG karta (narx + do'kon); keyin mahsulotning o'z rasmi
+    const ogImage = `${BN_SITE}/api/og/bn/product/${encodeURIComponent(p.slug)}${locale === "uz" ? "" : `?l=${locale}`}`;
+    const images = [
+        { url: ogImage, width: 1200, height: 630, alt: p.title },
+        ...p.images.slice(0, 1).map(img => ({ url: img, alt: p.title })),
+    ];
     return {
         title,
-        alternates: { canonical },
-        openGraph: {
-            type: "website",
-            title,
-            url: canonical,
-            siteName: "Bozor Narxida",
-            images: p.images.length
-                ? p.images.slice(0, 4).map(img => ({ url: img, width: 1200, height: 1200, alt: p.title }))
-                : [{ url: ogImage, width: 1200, height: 630, alt: p.title }],
-        },
-        twitter: { card: "summary_large_image", title, images: [ogImage] },
+        description,
+        ...bnPageMeta({ locale, path: `/d/${correctShopSlug}/${p.slug}`, title, description, images }),
     };
 }
 
@@ -57,6 +63,7 @@ export default async function Page({
     const auth = await getBnAuth();
     const data = await getProductBySlug(productSlug, auth?.profileId ?? null);
     if (!data) notFound();
+    const t = await getTranslations({ locale, namespace: "bn" });
 
     const correctShopSlug = data.product.shopSlug;
     // Agar URL'dagi shopSlug mahsulot do'koni bilan mos kelmasa — to'g'risiga redirect
@@ -89,8 +96,8 @@ export default async function Page({
                 ratingCount={p.ratingCount || null}
             />
             <BnBreadcrumbLd items={[
-                { name: "Bosh sahifa", url: "/" },
-                { name: "Do'konlar", url: "/dokonlar" },
+                { name: t("breadcrumb.home"), url: "/" },
+                { name: t("shops.title"), url: "/dokonlar" },
                 ...(p.shopSlug && p.shopName ? [{ name: p.shopName, url: `/d/${p.shopSlug}` }] : []),
                 { name: p.title, url: `/d/${p.shopSlug ?? slug}/${p.slug}` },
             ]} />

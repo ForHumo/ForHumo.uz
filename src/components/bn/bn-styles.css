@@ -15,13 +15,18 @@
 
 .bn-scope {
     /* ── KUNDUZGI — Ivory & Gold ─────────────────────────────
-       Boy antique tilla (logo o'rta toni), issiq parchment fon. */
-    --bn-gold:        #9E7A1E;
+       Boy antique tilla (logo o'rta toni), issiq parchment fon.
+       Kontrast (WCAG AA, kichik matn >= 4.5:1): --bn-gold #7E6012 —
+       bg 5.2 / surface 5.8 / surface-up 4.9 / gold-soft ustida 4.7;
+       on-gold (oq) shu fon ustida 5.8. Ilgari #9E7A1E 3.5-3.9 edi.
+       Soft/edge tuslari eski (yorqinroq) tilladan qoldi — faqat fon/chegara. */
+    --bn-gold:        #7E6012;
     --bn-gold-light:  #C29A2E;
     --bn-gold-dark:   #6E5312;
     --bn-gold-soft:   rgba(158, 122, 30, 0.09);
     --bn-gold-edge:   rgba(158, 122, 30, 0.30);
-    --bn-gold-grad:   linear-gradient(135deg, #C9A63C 0%, #A67C1A 48%, #7A5A12 100%);
+    /* Tugma foni (on-gold matn bilan) — o'rta tus oq matnga ~5:1 */
+    --bn-gold-grad:   linear-gradient(135deg, #A9852A 0%, #846516 48%, #5E4610 100%);
     --bn-gold-sheen:  linear-gradient(105deg, #B98E24 0%, #E2C766 45%, #A67C1A 100%);
 
     --bn-bg:          #F7F1E5;
@@ -34,7 +39,8 @@
 
     --bn-text:        #1B1610;
     --bn-text-2:      #5A5041;
-    --bn-text-3:      #94886F;
+    /* text-3: bg 5.1 / surface 5.7 / surface-up 4.8 (ilgari #94886F 2.9-3.4) */
+    --bn-text-3:      #6F654F;
     --bn-on-gold:     #FFFDF8;
 
     --bn-ok:          #15803D;
@@ -310,6 +316,10 @@
 }
 .bn-input::placeholder { color: var(--bn-text-3); }
 textarea.bn-input { height: auto; }
+/* Inline-style'li BN inputlar ham (qidiruv, telefon...) — placeholder har ikki
+   temada o'qiladigan text-3 (preflight'ning "currentColor 50%" o'rniga). */
+.bn-scope input::placeholder,
+.bn-scope textarea::placeholder { color: var(--bn-text-3); opacity: 1; }
 
 /* Premium kartochka ko'tarilishi (hover) */
 .bn-lift {
@@ -473,3 +483,28 @@ textarea.bn-input { height: auto; }
 
 /* Uzun bir so'zli sarlavhalar 320px'da sindirilsin */
 .bn-scope h1, .bn-scope h2 { overflow-wrap: break-word; word-break: break-word; }
+
+/* ── Huquqiy matnlar (bn-legal.tsx, /huquqiy/*) ──────────────
+   Ilgari inline <style> + qattiq oq (#fff) edi — kunduzgi temada
+   krem fonda ko'rinmas edi. Endi tokenlar: har ikki temada o'qiladi. */
+.bn-scope .prose-bn { color: var(--bn-text-2); }
+.bn-scope .prose-bn h2 { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; margin: 28px 0 10px; color: var(--bn-text); }
+.bn-scope .prose-bn h3 { font-size: 16px; font-weight: 700; margin: 20px 0 8px; color: var(--bn-text); }
+.bn-scope .prose-bn p { margin: 8px 0; }
+.bn-scope .prose-bn ul { list-style: disc; padding-left: 22px; margin: 8px 0; }
+.bn-scope .prose-bn ol { list-style: decimal; padding-left: 22px; margin: 8px 0; }
+.bn-scope .prose-bn li { margin: 4px 0; }
+.bn-scope .prose-bn a { color: var(--bn-gold); text-decoration: underline; text-underline-offset: 2px; }
+.bn-scope .prose-bn strong { color: var(--bn-text); font-weight: 700; }
+.bn-scope .prose-bn hr { border: none; border-top: 1px solid var(--bn-border); margin: 24px 0; }
+.bn-scope .prose-bn .bn-legal-note { font-size: 13px; color: var(--bn-text-3); }
+
+/* ── Leaflet popup (/xarita) — oq qattiq fon o'rniga BN yuzasi,
+   ichidagi BN.* ranglar har ikki temada o'qilsin. */
+.bn-scope .leaflet-popup-content-wrapper,
+.bn-scope .leaflet-popup-tip {
+    background: var(--bn-surface);
+    color: var(--bn-text);
+}
+.bn-scope .leaflet-popup-content-wrapper { border: 1px solid var(--bn-border); }
+.bn-scope .leaflet-container a.leaflet-popup-close-button { color: var(--bn-text-3); }

@@ -62,8 +62,7 @@ export function BnNavbar() {
         it.href === "/" ? path === "/"
             : under(it.href) || (it.href === "/katalog" && CATALOG_ALIASES.some(under))
     );
-    // Mahsulot vitrinasi: sahna doim tungi — navbar ham tungi palitrada (kontrast),
-    // lg+ da esa umuman yo'q (shaffof header'da navigatsiya bor, bob ustunini yopmasin).
+    // Mahsulot vitrinasi: sahna doim tungi — navbar ham tungi palitrada (kontrast).
     const onStage = isProductRoute(path);
     // Tungi palitra faqat navbar hali sahna ustida turganda: sahnadan pastda (kunduzgi
     // mavzuda krem fon) tungi shisha kulrang bo'lib, yozuvlar o'qilmay qolardi.
@@ -166,9 +165,11 @@ export function BnNavbar() {
         setPreviewIdx(null);
     }
 
+    // lg+ da HAMMA sahifada yo'q: u yerda header to'liq (savat ikonka, Katalog/Nexus/
+    // Sevimlilar — menyu drawer'ida) — mobil "dock" desktop'da kontentni yopib qo'yardi.
     return (
         <nav
-            className={`fixed inset-x-0 bottom-0 z-50 pointer-events-none ${onStage ? "lg:hidden" : ""} ${onStage && overStage ? "bn-stage" : ""}`}
+            className={`fixed inset-x-0 bottom-0 z-50 pointer-events-none lg:hidden ${onStage && overStage ? "bn-stage" : ""}`}
             style={{ paddingBottom: "max(14px, env(safe-area-inset-bottom))" }}
         >
             <div className="mx-auto max-w-[440px] px-4">

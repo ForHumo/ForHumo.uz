@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -23,10 +24,18 @@ export interface BnHeaderCategoryDTO {
 
 // Foydalanuvchi so'rovi: Katalog/Bozorlar/Do'konlar OLIB TASHLANDI (navbar/asosiy'da bor).
 // Faqat gorizontal 1 qatorda: Mening joylashuvim → Topshirish punkti → Buyurtmalarim → Humo Support
+// `xl` — lg..xl oralig'ida qator sig'maydi (kesilib qolardi): bu havolalar faqat xl+ da
+// qatorda, undan tor ekranda menyu drawer'ida (u yerda doim bor).
 const NAV = [
-    { href: "/joylashuv",     labelKey: "location",     icon: Navigation },
-    { href: "/punktlar",      labelKey: "pickupPoint",  icon: Package },
-    { href: "/buyurtmalarim", labelKey: "myOrders",     icon: Package },
+    { href: "/joylashuv",     labelKey: "location",     icon: Navigation, xl: true },
+    { href: "/punktlar",      labelKey: "pickupPoint",  icon: Package,    xl: true },
+    { href: "/buyurtmalarim", labelKey: "myOrders",     icon: Package,    xl: false },
+] as const;
+
+/** Pastki navbar faqat < lg da — desktop'da uning Katalog/Nexus'i menyu drawer'ida beriladi. */
+const DRAWER_EXTRA = [
+    { href: "/katalog", labelKey: "catalog" },
+    { href: "/nexus",   labelKey: "nexus" },
 ] as const;
 
 export function BnHeader({
@@ -62,6 +71,10 @@ export function BnHeader({
         setMenuOpen(false);
     }
 
+    // "Sotuvchi bo'lish": kirmagan tashrifchi /sotuvchi'da faqat login devorini ko'rardi —
+    // MChJ kutilayotgan marketing fazasida asosiy oqim kirishsiz waitlist.
+    const sellerHref = hasShop ? "/kabinet" : status === "authenticated" ? "/sotuvchi" : "/sotuvchi/waitlist";
+
     return (
         <>
             {overlay ? (
@@ -91,8 +104,20 @@ export function BnHeader({
                     }}
                 />
                 <div className="mx-auto max-w-[1280px] px-4">
-                    {/* ── Desktop ── */}
-                    <div className="hidden md:flex items-start gap-4 py-3">
+                    {/* ── Desktop (lg+; 768–1023 da ikkinchi qator sig'mas edi — mobil header) ── */}
+                    <div className="hidden lg:flex items-start gap-4 py-3">
+                        {/* Menyu — desktop'da pastki navbar yo'q: Katalog, Nexus, Sevimlilar,
+                            joylashuv va boshqalar drawer orqali doim ochiq */}
+                        <button
+                            type="button"
+                            onClick={() => setMenuOpen(true)}
+                            aria-label={tNav("menu")}
+                            className="w-10 h-10 mt-2 -mr-1 grid place-items-center rounded-xl flex-shrink-0"
+                            style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
+                        >
+                            <Menu className="w-[18px] h-[18px]" />
+                        </button>
+
                         <BnLink href="/" className="flex items-center gap-2.5 flex-shrink-0 group h-14">
                             <BnLogo size={52} />
                             <span className="bn-display font-black text-[20px] tracking-tight leading-none">{t("brandName")}</span>
@@ -140,7 +165,7 @@ export function BnHeader({
                                         <BnLink
                                             key={n.href}
                                             href={n.href}
-                                            className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl text-[12.5px] font-bold whitespace-nowrap flex-shrink-0"
+                                            className={`${n.xl ? "hidden xl:flex" : "flex"} items-center gap-1.5 h-9 px-2.5 rounded-xl text-[12.5px] font-bold whitespace-nowrap flex-shrink-0`}
                                             style={{ color: BN.text2 }}
                                         >
                                             <Icon className="w-[15px] h-[15px]" />
@@ -203,7 +228,7 @@ export function BnHeader({
                             </div>
 
                             <BnLink
-                                href={hasShop ? "/kabinet" : "/sotuvchi"}
+                                href={sellerHref}
                                 className="flex items-center justify-center gap-1.5 h-9 rounded-xl text-[12.5px] font-black transition-colors"
                                 style={{ background: BN.goldSoft, color: BN.gold, border: `1px solid ${BN.goldEdge}` }}
                             >
@@ -213,13 +238,15 @@ export function BnHeader({
                         </div>
                     </div>
 
-                    {/* ── Mobil ── */}
-                    <div className="md:hidden">
-                        <div className="flex items-center gap-2.5 h-14">
+                    {/* ── Mobil + planshet (< lg) ── */}
+                    {/* Ikonka tugmalar 40×40 (barmoq uchun; ilgari 36). Sig'ishi uchun: oraliqlar
+                        ixchamroq, brend yozuvi 16px va 375px dan tor ekranda faqat logo. */}
+                    <div className="lg:hidden">
+                        <div className="flex items-center gap-2 h-14">
                             <button
                                 onClick={() => setMenuOpen(true)}
                                 aria-label={tNav("menu")}
-                                className="w-9 h-9 -ml-1 grid place-items-center rounded-xl flex-shrink-0"
+                                className="w-10 h-10 -ml-1 grid place-items-center rounded-xl flex-shrink-0"
                                 style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                             >
                                 <Menu className="w-[18px] h-[18px]" />
@@ -227,18 +254,18 @@ export function BnHeader({
 
                             <BnLink href="/" className="flex items-center gap-2 flex-shrink-0">
                                 <BnLogo size={42} />
-                                <span className="bn-display font-black text-[17px] tracking-tight leading-none">{t("brandName")}</span>
+                                <span className="hidden min-[375px]:inline bn-display font-black text-[16px] tracking-tight leading-none">{t("brandName")}</span>
                             </BnLink>
 
-                            <div className="flex-1" />
-
-                            <BnThemeToggle compact />
-                            <IconBtn href="/bildirishnomalar" label={tNav("notifications")} compact>
-                                <Bell className="w-4 h-4" />
-                            </IconBtn>
-                            <IconBtn href="/savat" label={tNav("cart")} compact badge={cartCount}>
-                                <ShoppingCart className="w-4 h-4" />
-                            </IconBtn>
+                            <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">
+                                <BnThemeToggle />
+                                <IconBtn href="/bildirishnomalar" label={tNav("notifications")}>
+                                    <Bell className="w-[17px] h-[17px]" />
+                                </IconBtn>
+                                <IconBtn href="/savat" label={tNav("cart")} badge={cartCount}>
+                                    <ShoppingCart className="w-[17px] h-[17px]" />
+                                </IconBtn>
+                            </div>
                         </div>
 
                         <form onSubmit={submitSearch} className="pb-3">
@@ -277,11 +304,11 @@ export function BnHeader({
             </header>
             )}
 
-            {/* ── Mobil menyu ── */}
+            {/* ── Menyu drawer (har kenglikda — desktop header'da ham menyu tugmasi bor) ── */}
             {/* Drawer layout scroll ildiziga portal qilinadi: header `relative z-10` o'ram ichida,
                 pastki navbar (z-50) esa uning qo'shnisi — portalsiz drawer navbar ostida qolardi. */}
             {menuOpen && createPortal(
-                <div className={`fixed inset-0 z-[110] ${overlay ? "" : "md:hidden"}`}>
+                <div className="fixed inset-0 z-[110]">
                     <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.55)" }} onClick={() => setMenuOpen(false)} />
                     <div
                         className="absolute inset-y-0 left-0 w-[86%] max-w-[340px] overflow-y-auto"
@@ -295,7 +322,7 @@ export function BnHeader({
                             <button
                                 onClick={() => setMenuOpen(false)}
                                 aria-label={tNav("close")}
-                                className="w-9 h-9 grid place-items-center rounded-lg"
+                                className="w-10 h-10 grid place-items-center rounded-lg"
                                 style={{ background: BN.surfaceUp }}
                             >
                                 <X className="w-4 h-4" />
@@ -335,7 +362,7 @@ export function BnHeader({
                             )}
 
                             <BnLink
-                                href={hasShop ? "/kabinet" : "/sotuvchi"}
+                                href={sellerHref}
                                 onClick={() => setMenuOpen(false)}
                                 className="flex items-center justify-center gap-2 w-full h-12 rounded-2xl text-[14px] font-black mb-4"
                                 style={{ background: BN.gold, color: BN.onGold }}
@@ -360,6 +387,23 @@ export function BnHeader({
                                     </BnLink>
                                 );
                             })}
+                            {DRAWER_EXTRA.filter(n => !overlay || !OVERLAY_NAV.some(o => o.href === n.href)).map(n => (
+                                <BnLink
+                                    key={n.href}
+                                    href={n.href}
+                                    onClick={() => setMenuOpen(false)}
+                                    className="flex items-center gap-3 h-12 px-3 rounded-xl text-[14px] font-bold"
+                                >
+                                    {n.href === "/nexus" ? (
+                                        // next/image: manba PNG ~1.4 MB — 18px uchun kichik nusxa (bn-navbar kabi)
+                                        <Image src="/logos/humo-nexus.png" alt="" width={18} height={18}
+                                            className="w-[18px] h-[18px] object-contain" />
+                                    ) : (
+                                        <span style={{ color: BN.gold }}><LayoutGrid className="w-[18px] h-[18px]" /></span>
+                                    )}
+                                    {tNav(n.labelKey)}
+                                </BnLink>
+                            ))}
                             {NAV.filter(n => !overlay || !OVERLAY_NAV.some(o => o.href === n.href)).map(n => {
                                 const Icon = n.icon;
                                 return (
@@ -396,8 +440,9 @@ export function BnHeader({
                                     {tNav("themeAndLang")}
                                 </span>
                                 <div className="flex-1" />
-                                <BnLangSwitch compact />
-                                <BnThemeToggle compact />
+                                {/* Tap target 40px (ilgari "compact" 36px edi) */}
+                                <BnLangSwitch />
+                                <BnThemeToggle />
                             </div>
 
                             {/* Mahsuloti yo'q kategoriyalar ("... 0") ko'rsatilmaydi */}
@@ -638,7 +683,7 @@ function SearchExtraBtn({
             onClick={onClick}
             aria-label={label}
             title={label}
-            className="grid place-items-center w-9 h-9 rounded-xl mr-1 flex-shrink-0 transition-colors active:scale-95"
+            className="grid place-items-center w-10 h-10 rounded-xl mr-0.5 flex-shrink-0 transition-colors active:scale-95"
             style={{
                 background: gold ? BN.goldSoft : "transparent",
                 color: gold ? BN.gold : BN.text2,
@@ -649,15 +694,16 @@ function SearchExtraBtn({
     );
 }
 
+// 40×40 har kenglikda (mobil tap target; ilgari mobilda 36)
 function IconBtn({
-    href, label, compact, children, badge,
-}: { href: string; label: string; compact?: boolean; children: React.ReactNode; badge?: number }) {
+    href, label, children, badge,
+}: { href: string; label: string; children: React.ReactNode; badge?: number }) {
     return (
         <BnLink
             href={href}
             aria-label={badge && badge > 0 ? `${label} (${badge})` : label}
             title={label}
-            className={`relative grid place-items-center rounded-xl transition-colors ${compact ? "w-9 h-9" : "w-10 h-10"}`}
+            className="relative grid place-items-center w-10 h-10 rounded-xl flex-shrink-0 transition-colors"
             style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text2 }}
         >
             {children}

@@ -17,7 +17,8 @@ import {
     Play, Image as ImageIcon, MessageCircle, Store, Sparkles, Filter,
     Heart, MessageSquare, Share2, BadgeCheck, ArrowUpRight, Loader2,
 } from "lucide-react";
-import { BN, fmtPrice } from "@/lib/bn-theme";
+import { BN } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
 import { BnLink } from "./bn-nav";
 
 type Tab = "feed" | "reels" | "chat";
@@ -181,6 +182,7 @@ function NexusEmpty({ kind }: { kind: "feed" | "reels" }) {
 }
 
 function MediaGrid({ posts }: { posts: MediaPost[] }) {
+    const fmt = useBnFormat();
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {posts.map(p => (
@@ -272,7 +274,7 @@ function MediaGrid({ posts }: { posts: MediaPost[] }) {
                                 <span className="flex-1 min-w-0">
                                     <span className="block text-[12.5px] font-bold truncate">{p.bnProduct.title}</span>
                                     <span className="block text-[13px] font-black tabular-nums mt-0.5" style={{ color: BN.gold }}>
-                                        {fmtPrice(p.bnProduct.price)}
+                                        {fmt.price(p.bnProduct.price)}
                                     </span>
                                 </span>
                                 <span

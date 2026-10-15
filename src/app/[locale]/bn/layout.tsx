@@ -16,7 +16,7 @@ import { BnSwipeNav } from "@/components/bn/bn-swipe-nav";
 import { BnReferralAttach } from "@/components/bn/bn-referral-attach";
 import { BnCallProvider } from "@/components/bn/bn-call-provider";
 import { BnServiceWorker } from "@/components/bn/bn-service-worker";
-import { getCategoriesTree } from "@/lib/bn-data";
+import { getCategoriesTree, localizeCategoryTree } from "@/lib/bn-data";
 import { getBnAuth } from "@/lib/bn-auth";
 import { prisma } from "@/lib/prisma";
 
@@ -39,45 +39,57 @@ const bnBody = Manrope({
 });
 
 import type { Metadata, Viewport } from "next";
+import { getTranslations } from "next-intl/server";
+import { BN_SITE, BN_SITE_NAME, bnDefaultOgImage, bnLocale } from "@/lib/bn-seo";
 
-export const metadata: Metadata = {
-    metadataBase: new URL("https://bozornarxida.uz"),
-    title: {
-        default: "Bozor Narxida | For Humo",
-        template: "%s | Bozor Narxida",
-    },
-    description:
-        "O'zbekiston bozorlari va do'konlari onlayn. Har mahsulot narxi bozor o'rtachasi bilan solishtiriladi. "
-        + "Ko'rib sotib olish, xavfsiz to'lov, rasmiy sotuvchilar.",
-    applicationName: "Bozor Narxida",
-    manifest: "/manifest.webmanifest",
-    icons: {
-        icon: [
-            { url: "/bn/favicon.ico", sizes: "any" },
-            { url: "/bn/icon-32.png", type: "image/png", sizes: "32x32" },
-            { url: "/bn/favicon.png", type: "image/png", sizes: "64x64" },
-            { url: "/bn/icon-192.png", type: "image/png", sizes: "192x192" },
-            { url: "/bn/icon-512.png", type: "image/png", sizes: "512x512" },
-        ],
-        apple: "/bn/apple-icon.png",
-    },
-    openGraph: {
-        type: "website",
-        siteName: "Bozor Narxida",
-        title: "Bozor Narxida",
-        description: "O'zbekiston bozorlari va do'konlari onlayn.",
-        locale: "uz_UZ",
-        images: ["/bn/og.png"],
-    },
-    twitter: {
-        card: "summary_large_image",
-        title: "Bozor Narxida",
-        description: "O'zbekiston bozorlari va do'konlari onlayn.",
-        images: ["/bn/og.png"],
-    },
-    alternates: { canonical: "/" },
-    robots: { index: true, follow: true },
-};
+// Umumiy metadata — tilga mos. canonical bu yerda YO'Q: har sahifa o'zini canonical qiladi
+// (lib/bn-seo.ts bnPageMeta). Layout'da "/" tursa, o'z canonical'i yo'q sahifalar bosh
+// sahifaga "yopishib" Google'dan tushib qolardi.
+// title.absolute — root layout shabloni ("%s | For Humo") qo'shilmasin ("... | For Humo | For Humo").
+export async function generateMetadata(
+    { params }: { params: Promise<{ locale: string }> },
+): Promise<Metadata> {
+    const locale = bnLocale((await params).locale);
+    const t = await getTranslations({ locale, namespace: "bn" });
+    const og = bnDefaultOgImage(locale);
+    return {
+        metadataBase: new URL(BN_SITE),
+        title: {
+            absolute: t("seo.homeTitle"),
+            template: `%s | ${BN_SITE_NAME}`,
+        },
+        description: t("seo.homeDesc"),
+        applicationName: BN_SITE_NAME,
+        manifest: "/manifest.webmanifest",
+        icons: {
+            icon: [
+                { url: "/bn/favicon.ico", sizes: "any" },
+                { url: "/bn/icon-32.png", type: "image/png", sizes: "32x32" },
+                { url: "/bn/favicon.png", type: "image/png", sizes: "64x64" },
+                { url: "/bn/icon-192.png", type: "image/png", sizes: "192x192" },
+                { url: "/bn/icon-512.png", type: "image/png", sizes: "512x512" },
+            ],
+            apple: "/bn/apple-icon.png",
+        },
+        openGraph: {
+            type: "website",
+            siteName: BN_SITE_NAME,
+            title: BN_SITE_NAME,
+            description: t("tagline"),
+            locale: locale === "ru" ? "ru_RU" : locale === "en" ? "en_US" : "uz_UZ",
+            images: [og],
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: BN_SITE_NAME,
+            description: t("tagline"),
+            images: [og.url],
+        },
+        // Bo'sh — root layout'ning forhumo.uz canonical/hreflang'i BN sahifalariga meros bo'lmasin
+        alternates: {},
+        robots: { index: true, follow: true },
+    };
+}
 
 // iOS: safe-area-inset ishlashi uchun viewport-fit=cover
 export const viewport: Viewport = {
@@ -98,7 +110,8 @@ export default async function BnLayout({
 
     // Header dropdown menyusi uchun kategoriyalar (bir marta serverdan yuklab
     // olamiz — deyarli hech qachon o'zgarmaydi, Next avto-keshlaydi).
-    const catTree = await getCategoriesTree();
+    // ru'da kategoriya nomlari nameRu'dan (bo'lsa)
+    const catTree = localizeCategoryTree(await getCategoriesTree(), locale);
     const headerCats = catTree.map(c => ({
         slug: c.slug, name: c.name, productCount: c.productCount,
     }));
@@ -114,16 +127,17 @@ export default async function BnLayout({
     const hasShop = !!shop;
 
     return (
-        <div data-bn-scroll-root className={`bn-scope ${bnDisplay.variable} ${bnBody.variable} fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden`}>
+        // data-bn-authed — kirgan foydalanuvchi uchun SSR'dan CSS belgisi: anonimlarga
+        // mo'ljallangan kartalar (BnReferralHero) birinchi kadrdanoq yashirin, sessiya
+        // klientda kech kelib sahifani surmaydi (CLS).
+        <div data-bn-scroll-root data-bn-authed={auth ? "" : undefined} className={`bn-scope ${bnDisplay.variable} ${bnBody.variable} fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden`}>
             <BnAurora />
             <BnBaseProvider base={base} locale={locale} hasShop={hasShop}>
                 <BnSwipeNav>
                     <div className="relative z-10 flex flex-col min-h-full">
                         <BnHeader categories={headerCats} cartCount={cartCount} favCount={favCount} />
-                        <main
-                            className="flex-1"
-                            style={{ paddingBottom: "calc(96px + env(safe-area-inset-bottom))" }}
-                        >
+                        {/* Pastki navbar uchun joy footer'ning o'zida (bn-footer.tsx) — bu yerda ikki marta qo'shilmasin */}
+                        <main className="flex-1 pb-8">
                             {children}
                         </main>
                         <BnFooter />

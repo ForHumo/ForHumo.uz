@@ -10,8 +10,9 @@ import {
     ShoppingCart, Heart, LogOut, ShieldCheck, Loader2,
 } from "lucide-react";
 import { BN, TIER_META, groupThousands, fmtBnDateTime } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
 import { BnLink } from "./bn-nav";
-import { BnEmpty, shopLocationText } from "./bn-cards";
+import { BnEmpty, BnShopRating, useShopLocationText } from "./bn-cards";
 import type { BnCategoryTreeDTO, BnShopDTO } from "@/lib/bn-data";
 
 const CAT_ICONS: Record<string, React.ReactNode> = {
@@ -34,19 +35,23 @@ const CAT_ICONS: Record<string, React.ReactNode> = {
 export function BnCatalogPage({ categories }: { categories: BnCategoryTreeDTO[] }) {
     const [active, setActive] = useState<string>(categories[0]?.slug ?? "");
     const cat = categories.find(c => c.slug === active) ?? categories[0];
+    const t = useTranslations("bn.catalogPage");
+    const tCat = useTranslations("bn.catalog");
+    const tHome = useTranslations("bn.home");
+    const fmt = useBnFormat();
 
     if (!cat) {
         return (
             <Wrap>
-                <PageHead title="Katalog" />
-                <BnEmpty icon={<Store className="w-6 h-6" />} title="Hozircha kategoriya yo'q" />
+                <PageHead title={tCat("catalog")} />
+                <BnEmpty icon={<Store className="w-6 h-6" />} title={t("empty")} />
             </Wrap>
         );
     }
 
     return (
         <Wrap>
-            <PageHead title="Katalog" subtitle="Barcha kategoriyalar" />
+            <PageHead title={tCat("catalog")} subtitle={t("subtitle")} />
 
             {/* Desktop — 2 ustun */}
             <div
@@ -110,7 +115,7 @@ export function BnCatalogPage({ categories }: { categories: BnCategoryTreeDTO[] 
                             className="flex items-center gap-1 text-[13px] font-bold"
                             style={{ color: BN.gold }}
                         >
-                            Barcha {groupThousands(cat.productCount)} ta
+                            {t("allN", { n: cat.productCount })}
                             <ChevronRight className="w-4 h-4" />
                         </BnLink>
                     </div>
@@ -133,7 +138,7 @@ export function BnCatalogPage({ categories }: { categories: BnCategoryTreeDTO[] 
                         </div>
                     ) : (
                         <p className="text-[13px]" style={{ color: BN.text3 }}>
-                            Bo&apos;linmalar keyin qo&apos;shiladi. Hozircha to&apos;g&apos;ridan-to&apos;g&apos;ri kategoriya ochiladi.
+                            {t("noChildren")}
                         </p>
                     )}
                 </div>
@@ -162,7 +167,7 @@ export function BnCatalogPage({ categories }: { categories: BnCategoryTreeDTO[] 
                                 <span className="flex-1 min-w-0">
                                     <span className="block text-[14.5px] font-black truncate">{c.name}</span>
                                     <span className="block text-[11.5px] mt-0.5" style={{ color: BN.text3 }}>
-                                        {groupThousands(c.productCount)} ta mahsulot
+                                        {fmt.products(c.productCount)}
                                     </span>
                                 </span>
                                 <ChevronRight
@@ -178,7 +183,7 @@ export function BnCatalogPage({ categories }: { categories: BnCategoryTreeDTO[] 
                                         className="flex items-center justify-between h-11 px-3 rounded-xl text-[13px] font-bold mt-2"
                                         style={{ background: BN.goldSoft, color: BN.gold }}
                                     >
-                                        <span>Barchasini ko&apos;rish</span>
+                                        <span>{tHome("seeAll")}</span>
                                         <span className="text-[11px]">{groupThousands(c.productCount)}</span>
                                     </BnLink>
                                     {c.children.map(ch => (
@@ -208,14 +213,19 @@ export function BnCatalogPage({ categories }: { categories: BnCategoryTreeDTO[] 
 
 type ShopTab = "all" | "market" | "other";
 
-const SHOP_TABS: { key: ShopTab; label: string }[] = [
-    { key: "all",    label: "Umumiy" },
-    { key: "market", label: "Bozordagi do'konlar" },
-    { key: "other",  label: "Boshqa do'konlar" },
+// Yorliqlar — bn.shops.* (tab*)
+const SHOP_TABS: { key: ShopTab; labelKey: "tabAll" | "tabMarket" | "tabOther" }[] = [
+    { key: "all",    labelKey: "tabAll" },
+    { key: "market", labelKey: "tabMarket" },
+    { key: "other",  labelKey: "tabOther" },
 ];
 
 export function BnShopsRanked({ shops }: { shops: BnShopDTO[] }) {
     const [tab, setTab] = useState<ShopTab>("all");
+    const tShops = useTranslations("bn.shops");
+    const tCard = useTranslations("bn.shopCard");
+    const fmt = useBnFormat();
+    const locText = useShopLocationText();
 
     const items = useMemo(() => {
         // AI reytingi: baho × ishonch (baho soni logarifmi) — FAZA 6 da haqiqiy tahlil
@@ -228,10 +238,7 @@ export function BnShopsRanked({ shops }: { shops: BnShopDTO[] }) {
 
     return (
         <Wrap>
-            <PageHead
-                title="Do'konlar"
-                subtitle="Reyting va xaridor faolligiga qarab AI saralagan ro'yxat"
-            />
+            <PageHead title={tShops("title")} subtitle={tShops("subtitle")} />
 
             <div className="flex items-center gap-1.5 mb-5 overflow-x-auto pb-1 bn-noscroll">
                 {SHOP_TABS.map(t => (
@@ -245,13 +252,13 @@ export function BnShopsRanked({ shops }: { shops: BnShopDTO[] }) {
                             color: tab === t.key ? BN.gold : BN.text2,
                         }}
                     >
-                        {t.label}
+                        {tShops(t.labelKey)}
                     </button>
                 ))}
             </div>
 
             {items.length === 0 ? (
-                <BnEmpty icon={<Store className="w-6 h-6" />} title="Do'kon topilmadi" />
+                <BnEmpty icon={<Store className="w-6 h-6" />} title={tShops("empty")} />
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                     {items.map((s, i) => (
@@ -293,7 +300,7 @@ export function BnShopsRanked({ shops }: { shops: BnShopDTO[] }) {
                                             className="px-1.5 py-0.5 rounded-md text-[9px] font-black leading-none flex-shrink-0"
                                             style={{ background: `${TIER_META[s.tier].color}1F`, color: TIER_META[s.tier].color }}
                                         >
-                                            {TIER_META[s.tier].label}
+                                            {fmt.tier(s.tier)}
                                         </span>
                                     )}
                                 </span>
@@ -303,19 +310,22 @@ export function BnShopsRanked({ shops }: { shops: BnShopDTO[] }) {
                                         : s.locationType === "STANDALONE"
                                             ? <MapPin className="w-3 h-3 flex-shrink-0" />
                                             : <Globe className="w-3 h-3 flex-shrink-0" />}
-                                    <span className="truncate">{shopLocationText(s)}</span>
+                                    <span className="truncate">{locText(s)}</span>
                                 </span>
                             </span>
 
+                            {/* Baho yo'q bo'lsa oltin "0.0" emas — "Yangi"; mahsulot soni yorliq bilan
+                                (yulduz ostidagi yalang raqam "baho soni" bo'lib o'qilardi) */}
                             <span className="flex flex-col items-end flex-shrink-0">
-                                <span className="flex items-center gap-1 text-[12.5px] font-black" style={{ color: BN.gold }}>
-                                    <Star className="w-3.5 h-3.5 fill-current" />
-                                    {s.rating.toFixed(1)}
+                                <span className="text-[12.5px] font-black">
+                                    <BnShopRating rating={s.rating} ratingCount={s.ratingCount} />
                                 </span>
-                                <span className="flex items-center gap-1 text-[10.5px] mt-0.5" style={{ color: BN.text3 }}>
-                                    <Package className="w-3 h-3" />
-                                    {s.productCount}
-                                </span>
+                                {s.productCount > 0 && (
+                                    <span className="flex items-center gap-1 text-[10.5px] mt-0.5 whitespace-nowrap" style={{ color: BN.text3 }}>
+                                        <Package className="w-3 h-3" />
+                                        {tCard("productsLabel", { n: s.productCount })}
+                                    </span>
+                                )}
                             </span>
                         </BnLink>
                     ))}
@@ -460,6 +470,8 @@ export function BnNotificationsPage() {
 
 function BnNotificationsClient() {
     const t = useTranslations("bn.notif");
+    const tAuth = useTranslations("bn.auth");
+    const { status } = useSession();
     const [items, setItems] = useState<Array<{
         id: string; type: string; title: string; body: string | null;
         link: string | null; read: boolean; createdAt: string;
@@ -467,13 +479,15 @@ function BnNotificationsClient() {
     const [loading, setLoading] = useState(true);
     const [unread, setUnread] = useState(0);
 
+    // Kirmagan foydalanuvchi uchun API chaqirilmaydi (401 + "bildirishnoma yo'q" chalg'itardi)
     useEffect(() => {
+        if (status !== "authenticated") return;
         fetch("/api/bn/notifications")
-            .then(r => r.json())
+            .then(r => (r.ok ? r.json() : { items: [], unreadCount: 0 }))
             .then(d => { setItems(d.items ?? []); setUnread(d.unreadCount ?? 0); })
             .catch(() => {})
             .finally(() => setLoading(false));
-    }, []);
+    }, [status]);
 
     async function markAllRead() {
         try {
@@ -487,6 +501,34 @@ function BnNotificationsClient() {
         } catch { /* ignore */ }
     }
 
+    if (status === "unauthenticated") {
+        // /savat dagi kabi kirish kartasi
+        return (
+            <div
+                className="max-w-[440px] mx-auto p-7 rounded-3xl text-center"
+                style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
+            >
+                <span
+                    className="w-14 h-14 rounded-2xl grid place-items-center mx-auto mb-5"
+                    style={{ background: BN.goldSoft, color: BN.gold }}
+                >
+                    <Bell className="w-7 h-7" />
+                </span>
+                <p className="text-[18px] font-black mb-2">{t("signInTitle")}</p>
+                <p className="text-[13.5px] leading-relaxed mb-5" style={{ color: BN.text2 }}>
+                    {t("signInText")}
+                </p>
+                <button
+                    onClick={() => signIn("google")}
+                    className="flex items-center justify-center gap-2 w-full h-12 rounded-2xl text-[15px] font-black"
+                    style={{ background: BN.gold, color: BN.onGold }}
+                >
+                    <LogIn className="w-5 h-5" />
+                    {tAuth("signInWithHumoID")}
+                </button>
+            </div>
+        );
+    }
     if (loading) return <div className="grid place-items-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>;
     if (items.length === 0) {
         return (

@@ -49,44 +49,44 @@ export function BnMarketsWithFilter({ markets, districts }: Props) {
         router.push(qs ? `${path}?${qs}` : path, { scroll: false });
     }
 
-    return (
-        <div>
-            {/* Tuman chiplari — BnMarketsList container'iga hamohang */}
-            {districtOptions.length > 0 && (
-                <div className="mx-auto max-w-[1280px] px-4 pt-6 flex items-center gap-1.5 overflow-x-auto no-scrollbar"
-                    data-no-swipe>
-                    <button onClick={() => selectTuman("")}
+    // Tuman chiplari — sarlavha ostida (BnMarketsList `filter` slot'i).
+    // sm+ da qatorlarga o'raladi: ilgari desktop'da 2000px+ qator yashirin scrollbar bilan
+    // kesilib, oxirgi tumanlarga sichqoncha bilan yetib bo'lmasdi. Mobil'da gorizontal
+    // scroll qoladi — ekran chetigacha cho'zilgan, chetlari xiralashgan (davomi borligi ko'rinsin).
+    const chips = districtOptions.length > 0 && (
+        <div
+            className="-mx-4 px-4 mb-6 flex items-center gap-1.5 overflow-x-auto no-scrollbar [mask-image:linear-gradient(to_right,transparent,#000_16px,#000_calc(100%-16px),transparent)] sm:mx-0 sm:px-0 sm:flex-wrap sm:overflow-visible sm:[mask-image:none]"
+            data-no-swipe>
+            <button onClick={() => selectTuman("")}
+                className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-[12.5px] font-bold flex-shrink-0 transition-colors"
+                style={{
+                    background: activeSlug === "" ? BN.gold : BN.surface,
+                    color: activeSlug === "" ? BN.onGold : BN.text2,
+                    border: `1px solid ${activeSlug === "" ? BN.gold : BN.border}`,
+                }}>
+                {t("allTumans")}
+                <span className="tabular-nums opacity-70">{markets.length}</span>
+            </button>
+            {districtOptions.map(o => {
+                const active = activeSlug === o.slug;
+                const count = markets.filter(m => (m.district || "Toshkent") === o.name).length;
+                if (count === 0) return null;
+                return (
+                    <button key={o.slug} onClick={() => selectTuman(o.slug)}
                         className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-[12.5px] font-bold flex-shrink-0 transition-colors"
                         style={{
-                            background: activeSlug === "" ? BN.gold : BN.surface,
-                            color: activeSlug === "" ? BN.onGold : BN.text2,
-                            border: `1px solid ${activeSlug === "" ? BN.gold : BN.border}`,
+                            background: active ? BN.gold : BN.surface,
+                            color: active ? BN.onGold : BN.text2,
+                            border: `1px solid ${active ? BN.gold : BN.border}`,
                         }}>
-                        {t("allTumans")}
-                        <span className="tabular-nums opacity-70">{markets.length}</span>
+                        <MapPin className="w-3 h-3" />
+                        {o.name}
+                        <span className="tabular-nums opacity-70">{count}</span>
                     </button>
-                    {districtOptions.map(o => {
-                        const active = activeSlug === o.slug;
-                        const count = markets.filter(m => (m.district || "Toshkent") === o.name).length;
-                        if (count === 0) return null;
-                        return (
-                            <button key={o.slug} onClick={() => selectTuman(o.slug)}
-                                className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-[12.5px] font-bold flex-shrink-0 transition-colors"
-                                style={{
-                                    background: active ? BN.gold : BN.surface,
-                                    color: active ? BN.onGold : BN.text2,
-                                    border: `1px solid ${active ? BN.gold : BN.border}`,
-                                }}>
-                                <MapPin className="w-3 h-3" />
-                                {o.name}
-                                <span className="tabular-nums opacity-70">{count}</span>
-                            </button>
-                        );
-                    })}
-                </div>
-            )}
-
-            <BnMarketsList markets={filtered} />
+                );
+            })}
         </div>
     );
+
+    return <BnMarketsList markets={filtered} filter={chips || undefined} />;
 }
