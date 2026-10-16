@@ -11,7 +11,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
-import { X, ArrowRight } from "lucide-react";
+import { X, ArrowRight, HelpCircle } from "lucide-react";
 import { UmmiPose } from "@/components/ummi/ummi-pose";
 import { pickUmmiPose } from "@/lib/ummi-poses";
 
@@ -51,6 +51,7 @@ export function UmmiTip({ className = "", variant = "default" }: { className?: s
     const locale = useLocale();
     const [s, setS] = useState<Suggestion | null>(null);
     const [hidden, setHidden] = useState(false);
+    const [showWhy, setShowWhy] = useState(false);
 
     useEffect(() => {
         let alive = true;
@@ -94,6 +95,10 @@ export function UmmiTip({ className = "", variant = "default" }: { className?: s
         }
     }
 
+    // "Nega bu taklif?" — shaffoflik (kind'ga mos sabab, params bilan)
+    let reason = "";
+    try { reason = t(`why.${s.kind}`, s.params ?? {}); } catch { reason = ""; }
+
     const v = variant === "default" ? null : VARIANTS[variant];
 
     // Default — global tema tokenlari (Tailwind klasslari); nexus/esport — inline modul tokenlari.
@@ -121,7 +126,7 @@ export function UmmiTip({ className = "", variant = "default" }: { className?: s
                 </div>
                 <div className={`text-sm font-bold leading-snug ${titleCls}`} style={v?.title}>{title}</div>
                 <div className={`text-xs leading-snug mt-0.5 ${bodyCls}`} style={v?.body}>{body}</div>
-                <div className="mt-2">
+                <div className="mt-2 flex items-center gap-3">
                     {external ? (
                         <a href={s.url} target="_blank" rel="noopener noreferrer" onClick={onOpen} className={openCls} style={v?.link}>
                             {openInner}
@@ -131,7 +136,21 @@ export function UmmiTip({ className = "", variant = "default" }: { className?: s
                             {openInner}
                         </Link>
                     )}
+                    {reason && (
+                        <button
+                            onClick={() => setShowWhy(w => !w)}
+                            className={`inline-flex items-center gap-1 text-[11px] hover:underline ${bodyCls}`}
+                            style={v?.body}
+                        >
+                            <HelpCircle className="w-3 h-3" /> {t("whyLabel")}
+                        </button>
+                    )}
                 </div>
+                {reason && showWhy && (
+                    <div className={`text-[11px] leading-snug mt-1.5 ${bodyCls}`} style={v?.body}>
+                        {reason}
+                    </div>
+                )}
             </div>
             <button
                 onClick={onDismiss}

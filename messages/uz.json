@@ -1524,6 +1524,15 @@
         "title": "{product} narxi {percent}% tushdi",
         "body": "Kuzatganingiz arzonlashdi — ko’rib chiqing."
       }
+    },
+    "whyLabel": "Nega bu?",
+    "why": {
+      "pricedrop": "Siz bu mahsulotni kuzatyapsiz",
+      "cart": "Savatingizda qolgan edi",
+      "bn": "«{category}» kategoriyasini ko’p ko’rasiz",
+      "nexus": "@{author} ni kuzatasiz",
+      "belis": "Yaqin marosim rejangizga ko’ra",
+      "profile": "Profilingiz hali to’liq emas"
     }
   }
 }

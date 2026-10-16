@@ -1524,6 +1524,15 @@
         "title": "{product} dropped {percent}%",
         "body": "Your watched item got cheaper — take a look."
       }
+    },
+    "whyLabel": "Why this?",
+    "why": {
+      "pricedrop": "You’re watching this item",
+      "cart": "Left in your cart",
+      "bn": "You often view the {category} category",
+      "nexus": "You follow @{author}",
+      "belis": "Based on your upcoming celebration",
+      "profile": "Your profile isn’t complete yet"
     }
   }
 }
