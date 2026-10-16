@@ -4,6 +4,7 @@
 // Faqat pin + "Yo'l ko'rsatish" tugmasi (Yandex/Google Maps'ni tashqarida ochadi).
 
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Navigation } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 
@@ -26,6 +27,7 @@ function injectLeafletCss() {
 }
 
 export function BnMapView({ lat, lng, label, height = 220 }: Props) {
+    const t = useTranslations("bn.map");
     const containerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<import("leaflet").Map | null>(null);
 
@@ -52,9 +54,10 @@ export function BnMapView({ lat, lng, label, height = 220 }: Props) {
                 maxZoom: 19,
             }).addTo(map);
 
+            // Pin — BN tilla tokeni (temaga mos); oq halqa och OSM plitkasida ajralib tursin
             const pinIcon = L.divIcon({
                 className: "",
-                html: `<div style="width:26px;height:26px;background:#e0b64e;border:3px solid white;border-radius:50%;box-shadow:0 3px 12px rgba(224,182,78,0.5);"></div>`,
+                html: `<div style="width:26px;height:26px;background:${BN.gold};border:3px solid white;border-radius:50%;box-shadow:0 3px 12px ${BN.goldEdge};"></div>`,
                 iconSize: [26, 26],
                 iconAnchor: [13, 13],
             });
@@ -88,7 +91,7 @@ export function BnMapView({ lat, lng, label, height = 220 }: Props) {
                     style={{ background: BN.surface, color: BN.text2, border: `1px solid ${BN.border}` }}
                 >
                     <Navigation className="w-3.5 h-3.5" />
-                    Yandex xaritada
+                    {t("yandex")}
                 </a>
                 <a
                     href={`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`}
@@ -98,7 +101,7 @@ export function BnMapView({ lat, lng, label, height = 220 }: Props) {
                     style={{ background: BN.gold, color: BN.onGold }}
                 >
                     <Navigation className="w-3.5 h-3.5" />
-                    Yo&apos;l ko&apos;rsatish
+                    {t("directions")}
                 </a>
             </div>
         </div>

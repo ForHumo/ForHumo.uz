@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { bnPageMeta } from "@/lib/bn-seo";
 import { BnMarketsWithFilter } from "@/components/bn/bn-markets-with-filter";
 import { getMarkets } from "@/lib/bn-data";
 import { prisma } from "@/lib/prisma";
@@ -25,13 +26,13 @@ function slugifyDistrict(d: string): string {
 
 function buildTitle(locale: Locale, activeName: string | null): string {
     if (activeName) {
-        if (locale === "ru") return `Базары ${activeName} — Ташкент · Bozor Narxida`;
-        if (locale === "en") return `${activeName} district bazaars — Tashkent · Bozor Narxida`;
-        return `${activeName} tumani bozorlari — Toshkent · Bozor Narxida`;
+        if (locale === "ru") return `Базары ${activeName} — Ташкент`;
+        if (locale === "en") return `${activeName} district bazaars — Tashkent`;
+        return `${activeName} tumani bozorlari — Toshkent`;
     }
-    if (locale === "ru") return "Базары Ташкента онлайн · Bozor Narxida";
-    if (locale === "en") return "Tashkent bazaars online · Bozor Narxida";
-    return "Toshkent bozorlari onlayn · Bozor Narxida";
+    if (locale === "ru") return "Базары Ташкента онлайн";
+    if (locale === "en") return "Tashkent bazaars online";
+    return "Toshkent bozorlari onlayn";
 }
 
 function buildDescription(locale: Locale, count: number, activeName: string | null): string {
@@ -72,33 +73,13 @@ export async function generateMetadata({
 
     const title = buildTitle(locale, activeName);
     const description = buildDescription(locale, filteredCount, activeName);
-    const pageUrl = activeName
-        ? `https://bozornarxida.uz/bozorlar?tuman=${sp.tuman}`
-        : "https://bozornarxida.uz/bozorlar";
+    // Filtr ham alohida SEO landing — canonical filtr bilan (o'z tilida), sarlavha "| Bozor Narxida" shabloni bilan
+    const path = activeName ? `/bozorlar?tuman=${encodeURIComponent(sp.tuman ?? "")}` : "/bozorlar";
 
     return {
-        title: { absolute: title },
+        title,
         description,
-        alternates: {
-            canonical: pageUrl,
-            languages: {
-                "uz": pageUrl.replace("https://bozornarxida.uz/", "https://bozornarxida.uz/uz/"),
-                "ru": pageUrl.replace("https://bozornarxida.uz/", "https://bozornarxida.uz/ru/"),
-                "en": pageUrl.replace("https://bozornarxida.uz/", "https://bozornarxida.uz/en/"),
-            },
-        },
-        openGraph: {
-            type: "website",
-            title,
-            description,
-            url: pageUrl,
-            siteName: "Bozor Narxida",
-        },
-        twitter: {
-            card: "summary_large_image",
-            title,
-            description,
-        },
+        ...bnPageMeta({ locale, path, title, description }),
     };
 }
 
@@ -113,16 +94,16 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
         "@context": "https://schema.org",
         "@type": "CollectionPage",
         name: buildTitle(locale, null),
-        url: "https://bozornarxida.uz/bozorlar",
+        url: "https://www.bozornarxida.uz/bozorlar",
         inLanguage: locale,
-        isPartOf: { "@type": "WebSite", name: "Bozor Narxida", url: "https://bozornarxida.uz" },
+        isPartOf: { "@type": "WebSite", name: "Bozor Narxida", url: "https://www.bozornarxida.uz" },
         mainEntity: {
             "@type": "ItemList",
             numberOfItems: markets.length,
             itemListElement: markets.slice(0, 30).map((m, i) => ({
                 "@type": "ListItem",
                 position: i + 1,
-                url: `https://bozornarxida.uz/m/${m.slug}`,
+                url: `https://www.bozornarxida.uz/m/${m.slug}`,
                 name: m.name,
             })),
         },

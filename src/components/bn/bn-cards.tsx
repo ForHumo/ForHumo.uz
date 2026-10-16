@@ -1,9 +1,12 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { BnLink } from "./bn-nav";
-import { Store, MapPin, Star, Globe, Package, Clock, ChevronRight, ShoppingBasket, BadgeCheck } from "lucide-react";
+import { Store, MapPin, Star, Globe, Package, Clock, ChevronRight, ShoppingBasket, BadgeCheck, Landmark } from "lucide-react";
 import { BN, TIER_META, type ShopTier, type LocationType } from "@/lib/bn-theme";
+import { bnCity } from "@/lib/bn-seo";
+import { useBnFormat } from "./bn-format-hook";
 
 // ── Do'kon kartasi ──────────────────────────────────────────────────────────
 
@@ -27,6 +30,7 @@ export interface ShopCardData {
 export function BnShopCard({ s }: { s: ShopCardData }) {
     const tier = TIER_META[s.tier];
     const t = useTranslations("bn.shopCard");
+    const fmt = useBnFormat();
     const locText = useShopLocationText();
     return (
         <BnLink
@@ -65,7 +69,7 @@ export function BnShopCard({ s }: { s: ShopCardData }) {
                             className="px-1.5 py-0.5 rounded-md text-[9.5px] font-black leading-none flex-shrink-0"
                             style={{ background: `${tier.color}1F`, color: tier.color }}
                         >
-                            {tier.label}
+                            {fmt.tier(s.tier)}
                         </span>
                     )}
                 </div>
@@ -76,17 +80,13 @@ export function BnShopCard({ s }: { s: ShopCardData }) {
                 </p>
 
                 <div className="flex items-center gap-3 mt-1 text-[11px]" style={{ color: BN.text3 }}>
-                    <span className="flex items-center gap-1">
-                        <Package className="w-3 h-3" />
-                        {t("productsN", { n: s.productCount })}
-                    </span>
-                    {s.ratingCount > 0 && (
-                        <span className="flex items-center gap-1" style={{ color: BN.gold }}>
-                            <Star className="w-3 h-3 fill-current" />
-                            {s.rating.toFixed(1)}
-                            <span style={{ color: BN.text3 }}>({s.ratingCount})</span>
+                    {s.productCount > 0 && (
+                        <span className="flex items-center gap-1">
+                            <Package className="w-3 h-3" />
+                            {t("productsLabel", { n: s.productCount })}
                         </span>
                     )}
+                    <BnShopRating rating={s.rating} ratingCount={s.ratingCount} showCount iconClass="w-3 h-3" />
                 </div>
             </div>
 
@@ -95,11 +95,38 @@ export function BnShopCard({ s }: { s: ShopCardData }) {
     );
 }
 
+/** Do'kon bahosi: baho bo'lsa yulduz + o'rtacha, bo'lmasa "Yangi" belgisi — oltin "0.0"
+ *  yulduzi juda yomon baho bo'lib o'qiladi. Shrift o'lchami ota elementdan meros. */
+export function BnShopRating({
+    rating, ratingCount, showCount = false, iconClass = "w-3.5 h-3.5",
+}: { rating: number; ratingCount: number; showCount?: boolean; iconClass?: string }) {
+    const t = useTranslations("bn.shopCard");
+    if (ratingCount > 0) {
+        return (
+            <span className="inline-flex items-center gap-1" style={{ color: BN.gold }}>
+                <Star className={`${iconClass} fill-current`} />
+                {rating.toFixed(1)}
+                {showCount && <span style={{ color: BN.text3 }}>({ratingCount})</span>}
+            </span>
+        );
+    }
+    return (
+        <span
+            className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-black leading-none"
+            style={{ background: BN.goldSoft, color: BN.gold }}
+            title={t("newBadgeHint")}
+        >
+            {t("newBadge")}
+        </span>
+    );
+}
+
 type ShopLocInput = Pick<ShopCardData, "locationType" | "marketName" | "marketSection" | "marketShopNo" | "address" | "city">;
 
 /** Locale-aware do'kon joylashuv matni. Komponent ichida chaqirilishi kerak. */
 export function useShopLocationText() {
     const t = useTranslations("bn.shopLoc");
+    const locale = useLocale();
     return (s: ShopLocInput): string => {
         if (s.locationType === "IN_MARKET") {
             const parts = [
@@ -109,7 +136,8 @@ export function useShopLocationText() {
             ].filter(Boolean);
             return parts.join(" · ");
         }
-        if (s.locationType === "STANDALONE") return s.address || s.city;
+        // Manzil — erkin matn (DB); faqat shahar nomi tilga moslanadi ("Toshkent" → "Ташкент")
+        if (s.locationType === "STANDALONE") return s.address || bnCity(s.city, locale);
         return t("onlineShop");
     };
 }
@@ -152,12 +180,10 @@ export function BnMarketCard({ m, wide = false }: { m: MarketCardData; wide?: bo
             style={{ border: `1px solid ${BN.border}` }}
         >
             <div className={wide ? "aspect-[16/7]" : "aspect-[4/3]"} style={{ background: BN.surfaceUp }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <BnMarketCover
                     src={m.coverUrl}
                     alt={m.name}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
+                    imgClassName="transition-transform duration-500 group-hover:scale-[1.05]"
                 />
             </div>
 
@@ -177,7 +203,7 @@ export function BnMarketCard({ m, wide = false }: { m: MarketCardData; wide?: bo
                     </span>
                     <span className="flex items-center gap-1">
                         <Store className="w-3 h-3" />
-                        {t("shopN", { n: m.shopCount })}
+                        {m.shopCount > 0 ? t("shopN", { n: m.shopCount }) : t("shopsSoon")}
                     </span>
                 </div>
                 {wide && (
@@ -188,6 +214,50 @@ export function BnMarketCard({ m, wide = false }: { m: MarketCardData; wide?: bo
                 )}
             </div>
         </BnLink>
+    );
+}
+
+/** Bozor muqovasi. coverUrl bo'sh yoki buzuq bo'lsa `<img src="">` (buzuq rasm belgisi +
+ *  alt matn) o'rniga BN gradient + Landmark ikon chiqadi. Nom yonidagi matnda bor —
+ *  fallback ichida takrorlanmaydi. `onFallback` — ota (masalan hero matn rangi) uchun. */
+export function BnMarketCover({
+    src, alt, eager = false, imgClassName = "", iconClass = "w-10 h-10", onFallback,
+}: {
+    src: string | null | undefined; alt: string; eager?: boolean;
+    imgClassName?: string; iconClass?: string; onFallback?: () => void;
+}) {
+    const [failed, setFailed] = useState(false);
+    const imgRef = useRef<HTMLImageElement>(null);
+    const fail = () => { setFailed(true); onFallback?.(); };
+    // Rasm hidratsiyadan OLDIN buzilgan bo'lsa onError kelmaydi — holatni o'zimiz tekshiramiz
+    // (currentSrc: lazy rasm hali so'ralmagan bo'lsa bo'sh — uni buzuq deb hisoblamaymiz)
+    useEffect(() => {
+        const el = imgRef.current;
+        if (el && el.complete && el.currentSrc && el.naturalWidth === 0) fail();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [src]);
+
+    if (src && !failed) {
+        return (
+            <img
+                ref={imgRef}
+                src={src}
+                alt={alt}
+                loading={eager ? "eager" : "lazy"}
+                onError={fail}
+                className={`w-full h-full object-cover ${imgClassName}`}
+            />
+        );
+    }
+    return (
+        <div
+            role="img"
+            aria-label={alt}
+            className="w-full h-full grid place-items-center"
+            style={{ background: `radial-gradient(120% 90% at 85% 0%, ${BN.goldSoft} 0%, transparent 60%), linear-gradient(160deg, ${BN.surfaceUp} 0%, ${BN.surface} 100%)` }}
+        >
+            <Landmark className={iconClass} style={{ color: BN.gold, opacity: 0.6 }} strokeWidth={1.4} />
+        </div>
     );
 }
 

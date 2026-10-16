@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { bnPageMeta } from "@/lib/bn-seo";
 import { getTranslations } from "next-intl/server";
 import { BnYordamPage } from "@/components/bn/bn-yordam";
 
@@ -15,9 +16,9 @@ const FAQ_KEYS: { q: string; a: string }[][] = [
 ];
 
 function buildTitle(locale: Locale): string {
-    if (locale === "ru") return "Помощь и частые вопросы · Bozor Narxida";
-    if (locale === "en") return "Help & FAQ · Bozor Narxida";
-    return "Yordam va tez-tez so'raladigan savollar · Bozor Narxida";
+    if (locale === "ru") return "Помощь и частые вопросы";
+    if (locale === "en") return "Help & FAQ";
+    return "Yordam va tez-tez so'raladigan savollar";
 }
 
 function buildDescription(locale: Locale): string {
@@ -37,31 +38,11 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
     const { locale } = await params;
     const title = buildTitle(locale);
     const description = buildDescription(locale);
-    const pageUrl = "https://bozornarxida.uz/yordam";
 
     return {
-        title: { absolute: title },
+        title,
         description,
-        alternates: {
-            canonical: pageUrl,
-            languages: {
-                "uz": "https://bozornarxida.uz/uz/yordam",
-                "ru": "https://bozornarxida.uz/ru/yordam",
-                "en": "https://bozornarxida.uz/en/yordam",
-            },
-        },
-        openGraph: {
-            type: "website",
-            title,
-            description,
-            url: pageUrl,
-            siteName: "Bozor Narxida",
-        },
-        twitter: {
-            card: "summary_large_image",
-            title,
-            description,
-        },
+        ...bnPageMeta({ locale, path: "/yordam", title, description }),
     };
 }
 
@@ -74,7 +55,7 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "FAQPage",
-        "@id": `https://bozornarxida.uz/yordam#faq`,
+        "@id": `https://www.bozornarxida.uz/yordam#faq`,
         inLanguage: locale,
         mainEntity: FAQ_KEYS.flat().map(k => ({
             "@type": "Question",

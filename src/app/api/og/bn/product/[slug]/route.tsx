@@ -1,214 +1,166 @@
 // BN mahsulot uchun dinamik OG share preview (1200×630).
 // Telegram/Instagram/Facebook'da link ulashilganda katta rasm sifatida ko'rinadi.
 //
-// URL: /api/og/bn/product/<slug>
+// URL: /api/og/bn/product/<slug>?l=<uz|ru|en>
 // Har product/page.tsx metadata.openGraph.images shunga yo'naltiradi.
 
-import { ImageResponse } from "next/og";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
+import { groupThousands } from "@/lib/bn-theme";
+import { bnCity } from "@/lib/bn-seo";
+import { OG, OgBrand, clip, fallbackOg, ogHandler, ogImageSrc, ogLocale, renderOg } from "../../_shared";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;   // 1 soat
 
-const BN_GOLD    = "#F5B301";
-const BN_ONGOLD  = "#0A0A0A";
-const BN_BG      = "#0F0F10";
-const BN_SURFACE = "#191919";
-const BN_TEXT    = "#F7F7F7";
-const BN_TEXT2   = "#B8B8B8";
-const BN_TEXT3   = "#8A8A8A";
-const BN_OK      = "#22C55E";
+export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
+    return ogHandler(async () => {
+        const { slug } = await params;
+        const locale = ogLocale(req);
+        const t = await getTranslations({ locale, namespace: "bn" });
 
-function fmt(n: number): string {
-    return new Intl.NumberFormat("uz-UZ").format(n);
-}
-
-export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
-    const { slug } = await params;
-    const product = await prisma.bnProduct.findUnique({
-        where: { slug },
-        select: {
-            title: true,
-            price: true,
-            marketAvgPrice: true,
-            images: true,
-            shop: {
-                select: {
-                    name: true, city: true,
-                    market: { select: { name: true } },
+        const product = await prisma.bnProduct.findUnique({
+            where: { slug },
+            select: {
+                title: true,
+                price: true,
+                marketAvgPrice: true,
+                images: true,
+                isActive: true,
+                hidden: true,
+                shop: {
+                    select: {
+                        name: true, city: true,
+                        market: { select: { name: true, nameRu: true } },
+                    },
                 },
             },
-        },
-    }).catch(() => null);
+        }).catch(() => null);
 
-    if (!product) {
-        return fallbackOg();
-    }
+        // Yashirin/o'chirilgan mahsulot preview'da ko'rinmasin
+        if (!product || !product.isActive || product.hidden) return fallbackOg(t("tagline"));
 
-    const cheap = product.marketAvgPrice && product.price < product.marketAvgPrice;
-    const savedPct = cheap && product.marketAvgPrice
-        ? Math.round(((product.marketAvgPrice - product.price) / product.marketAvgPrice) * 100)
-        : null;
-    const image = product.images?.[0] ?? null;
-    const shop = product.shop;
-    const location = shop?.market?.name || shop?.city || null;
+        // Vitrina bilan bir xil: o'rtacha narxdan >60% farq — ishonchsiz, chegirma ko'rsatilmaydi
+        const avg = product.marketAvgPrice;
+        const plausible = !!avg && avg > 0 && product.price > 0 && Math.abs(product.price - avg) / avg <= 0.6;
+        const savedPct = plausible && avg && product.price < avg
+            ? Math.round(((avg - product.price) / avg) * 100)
+            : null;
+        const cheap = savedPct != null && savedPct > 0;
+        const shop = product.shop;
+        const marketName = shop?.market ? (locale === "ru" && shop.market.nameRu ? shop.market.nameRu : shop.market.name) : null;
+        const location = marketName || (shop?.city ? bnCity(shop.city, locale) : null);
+        const shopLine = shop ? [shop.name, location].filter(Boolean).join(" · ") : null;
+        const currency = t("currency");
+        const image = await ogImageSrc(product.images?.[0] ?? null);
 
-    return new ImageResponse(
-        (
-            <div style={{
-                width: "100%", height: "100%",
-                display: "flex",
-                background: `linear-gradient(135deg, ${BN_BG} 0%, ${BN_SURFACE} 100%)`,
-                color: BN_TEXT,
-                fontFamily: "sans-serif",
-                padding: "56px 64px",
-                position: "relative",
-            }}>
-                {/* Chap: rasm */}
-                {image ? (
-                    <div style={{
-                        width: 480,
-                        height: 480,
-                        borderRadius: 32,
-                        overflow: "hidden",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        background: "#0A0A0A",
-                        border: `1px solid ${BN_GOLD}22`,
-                        flexShrink: 0,
-                    }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={image} alt="" width={480} height={480} style={{ objectFit: "cover", width: "100%", height: "100%" }} />
-                    </div>
-                ) : (
-                    <div style={{
-                        width: 480, height: 480, borderRadius: 32,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        background: BN_SURFACE, color: BN_TEXT3, fontSize: 80,
-                        flexShrink: 0,
-                    }}>
-                        BN
-                    </div>
-                )}
-
-                {/* O'ng: matn */}
+        return renderOg(
+            (
                 <div style={{
-                    display: "flex", flexDirection: "column",
-                    marginLeft: 48, flex: 1, minWidth: 0,
-                    justifyContent: "space-between",
+                    width: "100%", height: "100%",
+                    display: "flex",
+                    background: `linear-gradient(135deg, ${OG.bg} 0%, ${OG.surface} 100%)`,
+                    color: OG.text,
+                    fontFamily: "sans-serif",
+                    padding: "56px 64px",
+                    position: "relative",
                 }}>
-                    {/* Brend qatori */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    {/* Chap: rasm (yuklanmasa — BN monogramma) */}
+                    {image ? (
                         <div style={{
-                            width: 44, height: 44, borderRadius: 12,
-                            background: BN_GOLD, color: BN_ONGOLD,
+                            width: 480,
+                            height: 480,
+                            borderRadius: 32,
+                            overflow: "hidden",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "#0A0A0A",
+                            border: `1px solid ${OG.gold}22`,
+                            flexShrink: 0,
+                        }}>
+                            <img src={image} alt="" width={480} height={480} style={{ objectFit: "cover", width: "100%", height: "100%" }} />
+                        </div>
+                    ) : (
+                        <div style={{
+                            width: 480, height: 480, borderRadius: 32,
                             display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: 22, fontWeight: 900,
+                            background: OG.surface, color: OG.text3, fontSize: 80,
+                            flexShrink: 0,
                         }}>
                             BN
                         </div>
-                        <div style={{ fontSize: 22, fontWeight: 800, color: BN_TEXT2 }}>
-                            Bozor Narxida
-                        </div>
-                    </div>
+                    )}
 
-                    {/* Sarlavha */}
+                    {/* O'ng: matn */}
                     <div style={{
                         display: "flex", flexDirection: "column",
-                        marginTop: 24,
+                        marginLeft: 48, flex: 1, minWidth: 0,
+                        justifyContent: "space-between",
                     }}>
-                        <div style={{
-                            fontSize: 44,
-                            fontWeight: 900,
-                            lineHeight: 1.15,
-                            letterSpacing: "-0.02em",
-                            maxHeight: 202,
-                            overflow: "hidden",
-                        }}>
-                            {product.title.length > 90 ? product.title.slice(0, 90) + "…" : product.title}
-                        </div>
-                        {shop && (
-                            <div style={{
-                                fontSize: 22, marginTop: 16, color: BN_TEXT3,
-                                display: "flex", alignItems: "center", gap: 8,
-                            }}>
-                                <span style={{ fontWeight: 700, color: BN_TEXT2 }}>{shop.name}</span>
-                                {location && (
-                                    <>
-                                        <span>·</span>
-                                        <span>{location}</span>
-                                    </>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                        <OgBrand />
 
-                    {/* Narx bloki */}
-                    <div style={{ display: "flex", flexDirection: "column", marginTop: 24 }}>
+                        {/* Sarlavha */}
                         <div style={{
-                            display: "flex", alignItems: "baseline", gap: 16,
+                            display: "flex", flexDirection: "column",
+                            marginTop: 24,
                         }}>
                             <div style={{
-                                fontSize: 68, fontWeight: 900,
-                                color: cheap ? BN_OK : BN_GOLD,
+                                display: "flex",
+                                fontSize: 44,
+                                fontWeight: 900,
+                                lineHeight: 1.15,
                                 letterSpacing: "-0.02em",
-                                lineHeight: 1,
+                                maxHeight: 202,
+                                overflow: "hidden",
                             }}>
-                                {fmt(product.price)}
+                                {clip(product.title, 90)}
                             </div>
-                            <div style={{ fontSize: 28, fontWeight: 700, color: BN_TEXT2 }}>so&apos;m</div>
+                            {shopLine && (
+                                <div style={{ display: "flex", fontSize: 22, marginTop: 16, color: OG.text2 }}>
+                                    {shopLine}
+                                </div>
+                            )}
                         </div>
-                        {cheap && savedPct != null && product.marketAvgPrice && (
-                            <div style={{
-                                display: "flex", alignItems: "center", gap: 12,
-                                marginTop: 12,
-                            }}>
-                                <div style={{
-                                    background: `${BN_OK}22`,
-                                    color: BN_OK,
-                                    padding: "8px 14px",
-                                    borderRadius: 10,
-                                    fontSize: 20,
-                                    fontWeight: 900,
-                                }}>
-                                    {savedPct}% arzon
-                                </div>
-                                <div style={{ fontSize: 18, color: BN_TEXT3, textDecoration: "line-through" }}>
-                                    {fmt(product.marketAvgPrice)} so&apos;m
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-        ),
-        { width: 1200, height: 630 },
-    );
-}
 
-function fallbackOg() {
-    return new ImageResponse(
-        (
-            <div style={{
-                width: "100%", height: "100%",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                background: BN_BG, color: BN_TEXT, fontFamily: "sans-serif",
-            }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                    <div style={{
-                        fontSize: 96, fontWeight: 900, color: BN_GOLD,
-                        letterSpacing: "-0.03em",
-                    }}>
-                        Bozor Narxida
-                    </div>
-                    <div style={{ fontSize: 28, marginTop: 16, color: BN_TEXT2 }}>
-                        Toshkent bozorlari va do&apos;konlari onlayn
+                        {/* Narx bloki */}
+                        <div style={{ display: "flex", flexDirection: "column", marginTop: 24 }}>
+                            <div style={{ display: "flex", alignItems: "baseline", gap: 16 }}>
+                                <div style={{
+                                    display: "flex",
+                                    fontSize: 68, fontWeight: 900,
+                                    color: cheap ? OG.ok : OG.gold,
+                                    letterSpacing: "-0.02em",
+                                    lineHeight: 1,
+                                }}>
+                                    {groupThousands(product.price)}
+                                </div>
+                                <div style={{ display: "flex", fontSize: 28, fontWeight: 700, color: OG.text2 }}>{currency}</div>
+                            </div>
+                            {cheap && avg && (
+                                <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12 }}>
+                                    <div style={{
+                                        display: "flex",
+                                        background: `${OG.ok}22`,
+                                        color: OG.ok,
+                                        padding: "8px 14px",
+                                        borderRadius: 10,
+                                        fontSize: 20,
+                                        fontWeight: 900,
+                                    }}>
+                                        {t("product.showroom.cheaperBy", { pct: savedPct })}
+                                    </div>
+                                    <div style={{ display: "flex", fontSize: 18, color: OG.text3, textDecoration: "line-through" }}>
+                                        {`${groupThousands(avg)} ${currency}`}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
-        ),
-        { width: 1200, height: 630 },
-    );
+            ),
+            t("tagline"),
+        );
+    });
 }

@@ -126,7 +126,7 @@ export function BnAdminAddShop() {
                         </div>
                     )}
                     <input value={section} onChange={e => setSection(e.target.value)} placeholder="A blok / 12-qator"
-                        className="w-full h-11 rounded-xl px-3.5 text-[14px]" style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: "#fff" }} />
+                        className="w-full h-11 rounded-xl px-3.5 text-[14px]" style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }} />
                 </div>
 
                 {/* Nom + raqam */}
@@ -135,12 +135,12 @@ export function BnAdminAddShop() {
                         <label className="text-[11px] font-black uppercase tracking-wider mb-1.5 block" style={{ color: BN.text3 }}>Do&apos;kon nomi</label>
                         <input value={name} onChange={e => setName(e.target.value)} placeholder="Jalol Motors"
                             onKeyDown={e => { if (e.key === "Enter") void add(); }}
-                            className="w-full h-11 rounded-xl px-3.5 text-[14px]" style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: "#fff" }} />
+                            className="w-full h-11 rounded-xl px-3.5 text-[14px]" style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }} />
                     </div>
                     <div className="w-24">
                         <label className="text-[11px] font-black uppercase tracking-wider mb-1.5 block" style={{ color: BN.text3 }}>Raqam</label>
                         <input value={shopNo} onChange={e => setShopNo(e.target.value)} placeholder="1"
-                            className="w-full h-11 rounded-xl px-3.5 text-[14px] tabular-nums text-center" style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: "#fff" }} />
+                            className="w-full h-11 rounded-xl px-3.5 text-[14px] tabular-nums text-center" style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }} />
                     </div>
                 </div>
 
@@ -148,7 +148,7 @@ export function BnAdminAddShop() {
                 <div>
                     <label className="text-[11px] font-black uppercase tracking-wider mb-1.5 block" style={{ color: BN.text3 }}>Telefon</label>
                     <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+998 90 000 00 00" inputMode="tel"
-                        className="w-full h-11 rounded-xl px-3.5 text-[14px]" style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: "#fff" }} />
+                        className="w-full h-11 rounded-xl px-3.5 text-[14px]" style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }} />
                 </div>
 
                 {/* Huquqiy shakl + STIR */}
@@ -165,7 +165,7 @@ export function BnAdminAddShop() {
                     <div>
                         <label className="text-[11px] font-black uppercase tracking-wider mb-1.5 block" style={{ color: BN.text3 }}>STIR (ixtiyoriy)</label>
                         <input value={inn} onChange={e => setInn(e.target.value.replace(/\D/g, "").slice(0, 9))} placeholder="123456789" inputMode="numeric"
-                            className="w-full h-11 rounded-xl px-3.5 text-[14px] tabular-nums" style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: "#fff" }} />
+                            className="w-full h-11 rounded-xl px-3.5 text-[14px] tabular-nums" style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }} />
                     </div>
                 </div>
 

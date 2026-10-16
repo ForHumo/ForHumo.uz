@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Car, Plus, X, Search, Check, Hash, Globe } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
+import { getBnScrollRoot } from "./bn-scroll";
 
 export interface FitModel {
     modelId: string;
@@ -56,7 +57,7 @@ export function BnFitSelector({
                     onChange={e => onPartNumberChange(e.target.value)}
                     placeholder="48510-80D50"
                     className="w-full h-11 rounded-xl px-3.5 text-[14px] tabular-nums"
-                    style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: "#fff" }}
+                    style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text }}
                 />
                 <p className="text-[11px] mt-1" style={{ color: BN.text3 }}>Xaridorlar aynan shu raqam bo'yicha qidiradi. Bilmasangiz bo'sh qoldiring.</p>
             </div>
@@ -71,7 +72,7 @@ export function BnFitSelector({
                     onChange={e => onOemChange(e.target.value)}
                     placeholder="45022-SNA, D6019 — vergul bilan ajrating"
                     className="w-full h-11 rounded-xl px-3.5 text-[13px]"
-                    style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: "#fff" }}
+                    style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text }}
                 />
             </div>
 
@@ -219,7 +220,7 @@ function CarPickerModal({
                             onChange={e => setQ(e.target.value)}
                             placeholder="Nexia, Cobalt, Damas..."
                             className="w-full h-11 pl-10 pr-3 rounded-xl text-[14px] outline-none"
-                            style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: "#fff" }}
+                            style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
                         />
                     </div>
                 </div>
@@ -277,7 +278,8 @@ function CarPickerModal({
                 </div>
             </div>
         </div>,
-        document.body,
+        // Scroll root'ga — u yerda --bn-* tokenlar (.bn-scope) bor va pastki menyu ustida turadi.
+        getBnScrollRoot() ?? document.body,
     );
 }
 
@@ -288,7 +290,7 @@ function ModelRow({ label, sub, selected, onClick, indent }: { label: string; su
             className="w-full flex items-center justify-between gap-2 h-11 rounded-xl text-[14px] text-left transition-colors"
             style={{
                 background: selected ? BN.goldSoft : "transparent",
-                color: selected ? BN.gold : "#fff",
+                color: selected ? BN.gold : BN.text,
                 paddingLeft: indent ? 28 : 14,
                 paddingRight: 14,
             }}

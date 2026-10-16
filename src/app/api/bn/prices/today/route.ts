@@ -13,6 +13,7 @@ export const revalidate = 900; // 15 daq
 interface CatAgg {
     slug: string;
     name: string;
+    nameRu: string | null;   // ru tilida ko'rsatish uchun (client locale bo'yicha tanlaydi)
     icon: string | null;
     productCount: number;
     avg: number;
@@ -30,7 +31,7 @@ export async function GET(req: Request) {
     // Faqat root kategoriyalar (top level)
     const roots = await prisma.bnCategory.findMany({
         where: { parentId: null, ...(filterSlug ? { slug: filterSlug } : {}) },
-        select: { id: true, slug: true, name: true, icon: true, order: true },
+        select: { id: true, slug: true, name: true, nameRu: true, icon: true, order: true },
         orderBy: [{ order: "asc" }, { name: "asc" }],
         take: limit,
     });
@@ -94,6 +95,7 @@ export async function GET(req: Request) {
         results.push({
             slug: root.slug,
             name: root.name,
+            nameRu: root.nameRu ?? null,
             icon: root.icon ?? null,
             productCount: prods.length,
             avg, min, max,

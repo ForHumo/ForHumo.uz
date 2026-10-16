@@ -4,32 +4,21 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
-import { BnLink } from "./bn-nav";
-import { BnShopChatButton } from "./bn-shop-chat-button";
-import { BnSellerCallButton } from "./bn-seller-call-button";
-import { BnProductDealChip } from "./bn-product-deal-chip";
-import { WhatsAppIcon, HumoNexusLogo } from "@/components/brand-icons";
+import { BnLink, useBnHref } from "./bn-nav";
 import { bnToast } from "./bn-toast";
 import { BnInspectDaysPicker } from "./bn-inspect-days-picker";
-import { BnBackButton } from "./bn-back-button";
 import { BnReviews } from "./bn-reviews";
 import { BnPriceChart } from "./bn-price-chart";
 import { BnBuyBox } from "./bn-buy-box";
-import { BnOneClickBuy } from "./bn-one-click-buy";
-import { BnMobileActions } from "./bn-mobile-actions";
 import { BnInspectHoldModal } from "./bn-inspect-modal";
 import { BnProductReferralCta } from "./bn-product-referral-cta";
-import {
-    Store, MapPin, Star, ShoppingCart, Eye, Truck, Package, Shield, Check,
-    ChevronLeft, ChevronRight, Heart, Share2, TrendingDown, Info, Globe, Loader2, BellRing, MessageCircle,
-    Car, Hash, Search,
-} from "lucide-react";
-import {
-    BN, fmtPrice, groupThousands, priceRankOf, PRICE_RANK_META, priceDiffLabel, TIER_META,
-} from "@/lib/bn-theme";
+import { BnProductShowroom } from "./bn-product-showroom";
+import { Eye, ChevronRight, Globe, Car, Hash, Search } from "lucide-react";
+import { BN, groupThousands } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
 import { BnProductCard } from "./bn-product-card";
 import { BnProductCompareCard } from "./bn-product-compare-card";
-import { BnSectionTitle, useShopLocationText } from "./bn-cards";
+import { BnSectionTitle } from "./bn-cards";
 import type { BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
 interface ReviewVideo {
@@ -70,9 +59,9 @@ export function BnProductDetail({
     const t = useTranslations("bn.product");
     const tCrumb = useTranslations("bn.breadcrumb");
     const tAttr = useTranslations("bn.attr");
+    const fmt = useBnFormat();
     const locale = useLocale();
-    const locText = useShopLocationText();
-    const [imgIdx, setImgIdx] = useState(0);
+    const to = useBnHref();
     // Ulgurji mahsulot bo'lsa boshlang'ich qty = minWholesaleQty (buyer'ni majburiy chegaraga
     // olib boradi, aks holda cart 400 qaytarardi).
     const [qty, setQty] = useState(() => {
@@ -111,11 +100,6 @@ export function BnProductDetail({
         try { localStorage.setItem("bn-mature-accepted", "1"); } catch {}
         setMatureRevealed(true);
     }
-
-    const rank = priceRankOf(p.price, p.marketAvgPrice);
-    const rankMeta = rank ? PRICE_RANK_META[rank] : null;
-    const diff = priceDiffLabel(p.price, p.marketAvgPrice);
-    const tier = shop ? TIER_META[shop.tier] : null;
 
     // Favorit + narx kuzatuv statusini yuklab olamiz (login bo'lsa)
     useEffect(() => {
@@ -169,6 +153,39 @@ export function BnProductDetail({
         } finally { setCartBusy(false); }
     }
 
+    // "Sotib olish" — tanlangan miqdorni savatga qo'yib, darhol savatga o'tadi
+    // (set: true — qayta bosilsa miqdor ikki barobar bo'lib ketmaydi).
+    async function buyNow() {
+        if (status === "unauthenticated") { signIn("google"); return; }
+        setCartBusy(true);
+        try {
+            const r = await fetch("/api/bn/cart", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ productId: p.id, qty, set: true }),
+            });
+            if (r.ok) {
+                router.push(to("/savat"));
+            } else if (r.status === 401) {
+                signIn("google");
+            } else {
+                const d = await r.json().catch(() => null);
+                bnToast(d?.message ?? t("holdError"), "error");
+            }
+        } catch {
+            bnToast(t("holdError"), "error");
+        } finally { setCartBusy(false); }
+    }
+
+    async function shareProduct() {
+        const url = typeof location !== "undefined" ? location.href : "";
+        try {
+            if (navigator.share) { await navigator.share({ title: p.title, url }); return; }
+            await navigator.clipboard.writeText(url);
+            bnToast(t("showroom.linkCopied"), "success");
+        } catch { /* foydalanuvchi bekor qildi */ }
+    }
+
     function startInspect() {
         if (status === "unauthenticated") { signIn("google"); return; }
         // Kun tanlash oynasini ochamiz — foydalanuvchi 1-7 kun tanlaydi
@@ -216,667 +233,239 @@ export function BnProductDetail({
     }
 
     return (
-        <div className="mx-auto max-w-[1280px] px-4 py-6 pb-16">
-            <BnBackButton className="mb-4" />
-            {/* Non-ushoq */}
-            <nav className="flex items-center gap-1.5 text-[12px] mb-5 flex-wrap" style={{ color: BN.text3 }}>
-                <BnLink href="/" className="hover:opacity-70 transition-colors">{tCrumb("home")}</BnLink>
-                <ChevronRight className="w-3 h-3" />
-                {p.categorySlug && (
-                    <>
-                        <BnLink href={`/k/${p.categorySlug}`} className="hover:opacity-70 transition-colors">
-                            {tCrumb("category")}
-                        </BnLink>
-                        <ChevronRight className="w-3 h-3" />
-                    </>
-                )}
-                <span className="truncate max-w-[220px]" style={{ color: BN.text2 }}>{p.title}</span>
-            </nav>
+        <div>
+            {/* ── Vitrina: media + narx + harakatlar (4 bob) ── */}
+            <BnProductShowroom
+                product={p}
+                shop={shop}
+                others={others}
+                locale={locale}
+                unitPrice={unitPrice}
+                qty={qty}
+                minQty={minWholesaleQtyN}
+                onQtyChange={setQty}
+                wholesaleTiers={wholesaleTiersSorted}
+                fav={fav}
+                favBusy={favBusy}
+                onToggleFav={toggleFav}
+                onShare={shareProduct}
+                priceWatch={priceWatch}
+                pwBusy={pwBusy}
+                onTogglePriceWatch={togglePriceWatch}
+                cartBusy={cartBusy}
+                cartDone={cartDone}
+                onAddToCart={addToCart}
+                onBuyNow={buyNow}
+                onStartInspect={startInspect}
+                matureRevealed={matureRevealed}
+                onAcceptMature={acceptMature}
+                soldRecent={soldRecent}
+                buyersRecent={buyersRecent}
+                viewersRecent={viewersRecent}
+            />
 
-            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-6">
-                {/* ── Chap: rasm + tafsilot ── */}
-                <div className="min-w-0">
-                    {/* Galereya */}
-                    <div
-                        className="relative aspect-square sm:aspect-[4/3] rounded-2xl overflow-hidden"
-                        style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
-                    >
-                        {p.images[imgIdx] ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                                src={p.images[imgIdx]}
-                                alt={p.title}
-                                className="w-full h-full object-cover"
-                                style={p.isMature && !matureRevealed ? { filter: "blur(24px)" } : undefined}
-                            />
-                        ) : (
-                            <div className="w-full h-full grid place-items-center" style={{ color: BN.text3 }}>
-                                <Package className="w-12 h-12" />
-                            </div>
-                        )}
-                        {p.isMature && !matureRevealed && (
-                            <div className="absolute inset-0 grid place-items-center p-4" style={{ background: "rgba(0,0,0,0.55)" }}>
-                                <div className="max-w-sm text-center">
-                                    <span className="inline-block px-3 py-1 rounded-full text-[12px] font-black mb-3" style={{ background: "#ef4444", color: "#fff" }}>{t("matureBadge")}</span>
-                                    <p className="text-[15px] font-bold mb-1">{t("matureTitle")}</p>
-                                    <p className="text-[13px] mb-4" style={{ color: BN.text2 }}>
-                                        {t("matureAsk")}
+            {/* pb-24 (mobil) — navbar ustidagi xarid paneli kontentni yopmasin */}
+            <div className="relative z-[1] mx-auto max-w-[1280px] px-4 pt-8 pb-24 lg:pb-16">
+                {/* Non-ushoq */}
+                <nav aria-label={tCrumb("home")} className="flex items-center gap-1.5 text-[13px] mb-6 flex-wrap" style={{ color: BN.text3 }}>
+                    <BnLink href="/" className="hover:opacity-70 transition-colors">{tCrumb("home")}</BnLink>
+                    <ChevronRight className="w-3 h-3" />
+                    {p.categorySlug && (
+                        <>
+                            {/* Haqiqiy kategoriya nomi (ru'da nameRu); eski kesh yozuvida bo'lmasa — umumiy yorliq */}
+                            <BnLink href={`/k/${p.categorySlug}`} className="hover:opacity-70 transition-colors">
+                                {(locale === "ru" && p.categoryNameRu) || p.categoryName || tCrumb("category")}
+                            </BnLink>
+                            <ChevronRight className="w-3 h-3" />
+                        </>
+                    )}
+                    <span className="truncate max-w-[260px]" style={{ color: BN.text2 }}>{p.title}</span>
+                </nav>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                    <div className="min-w-0 space-y-4">
+                        {/* Tavsif + xususiyatlar */}
+                        {(p.description || Object.keys(p.attributes).length > 0) && (
+                            <Panel>
+                                <h2 className="text-[16px] font-black mb-3">{t("about")}</h2>
+                                {p.description && (
+                                    <p className="text-[14.5px] leading-relaxed mb-3 whitespace-pre-line" style={{ color: BN.text2 }}>
+                                        {p.description}
                                     </p>
-                                    <button
-                                        onClick={acceptMature}
-                                        className="w-full h-11 rounded-xl text-[14px] font-bold"
-                                        style={{ background: BN.gold, color: BN.onGold }}
-                                    >
-                                        {t("matureConfirm")}
-                                    </button>
-                                </div>
-                            </div>
+                                )}
+                                {Object.keys(p.attributes).length > 0 && (
+                                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+                                        {Object.entries(p.attributes).map(([k, v]) => (
+                                            <div
+                                                key={k}
+                                                className="flex items-center justify-between gap-3 py-2.5 text-[14px]"
+                                                style={{ borderBottom: `1px solid ${BN.border}` }}
+                                            >
+                                                <dt style={{ color: BN.text3 }}>{tAttr.has(k) ? tAttr(k) : k}</dt>
+                                                <dd className="font-bold text-right">
+                                                    {typeof v === "boolean" ? (v ? t("yes") : t("no")) : String(v)}
+                                                </dd>
+                                            </div>
+                                        ))}
+                                    </dl>
+                                )}
+                            </Panel>
                         )}
-                        {p.images.length > 1 && (
-                            <>
-                                <GalleryBtn side="left" onClick={() => setImgIdx(i => (i - 1 + p.images.length) % p.images.length)} label={t("galleryPrev")} />
-                                <GalleryBtn side="right" onClick={() => setImgIdx(i => (i + 1) % p.images.length)} label={t("galleryNext")} />
-                                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                                    {p.images.map((_, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => setImgIdx(i)}
-                                            aria-label={t("galleryImageN", { n: i + 1 })}
-                                            className="w-1.5 h-1.5 rounded-full transition-all"
-                                            style={{
-                                                background: i === imgIdx ? BN.gold : "rgba(250,250,250,0.4)",
-                                                width: i === imgIdx ? 18 : 6,
-                                            }}
-                                        />
+
+                        {/* Avto moslik — bu qism qaysi mashinalarga to'g'ri keladi */}
+                        {(universalFit || fits.length > 0 || partNumber || oemNumbers.length > 0) && (
+                            <Panel>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Car className="w-4 h-4" style={{ color: BN.gold }} />
+                                    <h2 className="text-[16px] font-black">Mashina mosligi</h2>
+                                </div>
+
+                                {partNumber && (
+                                    <div className="flex items-center justify-between gap-3 py-2.5 text-[14px]" style={{ borderBottom: `1px solid ${BN.border}` }}>
+                                        <span className="flex items-center gap-1.5" style={{ color: BN.text3 }}>
+                                            <Hash className="w-3.5 h-3.5" /> Qism raqami
+                                        </span>
+                                        <BnLink
+                                            href={`/qidiruv?q=${encodeURIComponent(partNumber)}`}
+                                            className="font-black tabular-nums inline-flex items-center gap-1 transition-colors hover:opacity-80"
+                                            style={{ color: BN.gold }}
+                                            title="Shu raqam bo'yicha boshqa sotuvchilardan qidirish"
+                                        >
+                                            {partNumber}
+                                            <Search className="w-3.5 h-3.5" />
+                                        </BnLink>
+                                    </div>
+                                )}
+                                {oemNumbers.length > 0 && (
+                                    <div className="flex items-start justify-between gap-3 py-2.5 text-[14px]" style={{ borderBottom: `1px solid ${BN.border}` }}>
+                                        <span style={{ color: BN.text3 }}>Analog raqamlar</span>
+                                        <span className="font-semibold text-right select-all" style={{ color: BN.text2 }}>{oemNumbers.join(", ")}</span>
+                                    </div>
+                                )}
+
+                                {universalFit ? (
+                                    <div className="flex items-center gap-2 mt-3 px-3 py-2.5 rounded-xl text-[14px] font-bold"
+                                        style={{ background: BN.goldSoft, color: BN.gold }}>
+                                        <Globe className="w-4 h-4" /> Universal — barcha mashinaga to'g'ri keladi
+                                    </div>
+                                ) : fits.length > 0 && (
+                                    <div className="mt-3">
+                                        <p className="text-[13px] mb-2" style={{ color: BN.text3 }}>Quyidagi mashinalarga to'g'ri keladi:</p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {fits.map(f => (
+                                                <span
+                                                    key={f.modelSlug}
+                                                    className="inline-flex items-center h-8 px-3 rounded-full text-[13px] font-bold"
+                                                    style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text2 }}
+                                                >
+                                                    {f.makeName} {f.modelName}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </Panel>
+                        )}
+
+                        {/* Boshqa do'konlar — vitrinada 3 tasi, bu yerda to'liq ro'yxat */}
+                        {others.length > 3 && (
+                            <Panel>
+                                <h2 className="text-[16px] font-black mb-1">{t("othersTitle")}</h2>
+                                <p className="text-[13px] mb-3" style={{ color: BN.text3 }}>{t("othersSub")}</p>
+                                <div className="space-y-2">
+                                    {others.map(o => (
+                                        <BnLink
+                                            key={o.id}
+                                            href={o.shopSlug ? `/d/${o.shopSlug}/${o.slug}` : `/p/${o.slug}`}
+                                            className="group flex items-center gap-3 p-2.5 rounded-xl transition-colors"
+                                            style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}` }}
+                                        >
+                                            <span className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0" style={{ background: BN.surface }}>
+                                                {o.images[0] && (
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    <img src={o.images[0]} alt="" className="w-full h-full object-cover" />
+                                                )}
+                                            </span>
+                                            <span className="flex-1 min-w-0">
+                                                <span className="block text-[14px] font-bold truncate transition-colors group-hover:text-[color:var(--bn-gold)]">{o.shopName}</span>
+                                                <span className="block text-[12.5px]" style={{ color: BN.text3 }}>{o.marketName ?? o.city}</span>
+                                            </span>
+                                            <span className="text-right flex-shrink-0">
+                                                <span className="block text-[15px] font-black tabular-nums leading-none">{fmt.price(o.price)}</span>
+                                                {o.price < p.price && (
+                                                    <span className="block text-[12px] mt-1" style={{ color: BN.ok }}>
+                                                        {t("othersCheaper", { pct: Math.round(((p.price - o.price) / p.price) * 100) })}
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </BnLink>
                                     ))}
                                 </div>
-                            </>
+                            </Panel>
                         )}
                     </div>
 
-                    {/* Kichik rasmlar */}
-                    {p.images.length > 1 && (
-                        <div className="flex gap-2 mt-2.5 overflow-x-auto pb-1">
-                            {p.images.map((src, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => setImgIdx(i)}
-                                    className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 transition-all"
-                                    style={{
-                                        border: `2px solid ${i === imgIdx ? BN.gold : BN.border}`,
-                                        opacity: i === imgIdx ? 1 : 0.6,
-                                    }}
+                    <div className="min-w-0 space-y-4">
+                        {/* Narx tarixi grafigi — vaqt bo'yicha narx dinamikasi (BN uniqueness) */}
+                        <BnPriceChart slug={p.slug} />
+                        {/* Buy Box — bir xil mahsulot uchun eng arzon+ishonchli sotuvchi */}
+                        <BnBuyBox slug={p.slug} />
+                    </div>
+                </div>
+
+                {/* Xaridor sharh reels (Nexus) */}
+                {reviewVideos.length > 0 && (
+                    <section className="mt-12">
+                        <BnSectionTitle title={t("reviewReels")} subtitle={t("reviewReelsSub")} />
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                            {reviewVideos.map(v => (
+                                <a
+                                    key={v.id}
+                                    href={`https://forhumo.uz/${locale}/nexus/v/${v.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="relative aspect-[9/16] rounded-2xl overflow-hidden group"
+                                    style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                                 >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={src} alt="" className="w-full h-full object-cover" />
-                                </button>
+                                    {v.thumbUrl ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={v.thumbUrl} alt={v.title} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                                    ) : (
+                                        <div className="w-full h-full grid place-items-center" style={{ color: BN.text3 }}>
+                                            <Eye className="w-6 h-6" />
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-x-0 bottom-0 p-2" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85), transparent)" }}>
+                                        <p className="text-[12px] font-bold text-white line-clamp-2">{v.title}</p>
+                                        <p className="text-[12px]" style={{ color: "rgba(255,255,255,0.75)" }}>
+                                            {groupThousands(v.views)} {t("reviewViews")}
+                                        </p>
+                                    </div>
+                                </a>
                             ))}
                         </div>
-                    )}
+                    </section>
+                )}
 
-                    {/* Tavsif */}
-                    {(p.description || Object.keys(p.attributes).length > 0) && (
-                        <Panel className="mt-5">
-                            <h2 className="text-[15px] font-black mb-3">{t("about")}</h2>
-                            {p.description && (
-                                <p className="text-[13.5px] leading-relaxed mb-3" style={{ color: BN.text2 }}>
-                                    {p.description}
-                                </p>
-                            )}
-                            {Object.keys(p.attributes).length > 0 && (
-                                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-                                    {Object.entries(p.attributes).map(([k, v]) => (
-                                        <div
-                                            key={k}
-                                            className="flex items-center justify-between gap-3 py-2.5 text-[13px]"
-                                            style={{ borderBottom: `1px solid ${BN.border}` }}
-                                        >
-                                            <dt style={{ color: BN.text3 }}>{tAttr.has(k) ? tAttr(k) : k}</dt>
-                                            <dd className="font-bold text-right">
-                                                {typeof v === "boolean" ? (v ? t("yes") : t("no")) : String(v)}
-                                            </dd>
-                                        </div>
-                                    ))}
-                                </dl>
-                            )}
-                        </Panel>
-                    )}
+                {/* Sharhlar */}
+                <BnReviews kind="product" slug={p.slug} />
 
-                    {/* Avto moslik — bu qism qaysi mashinalarga to'g'ri keladi */}
-                    {(universalFit || fits.length > 0 || partNumber || oemNumbers.length > 0) && (
-                        <Panel className="mt-4">
-                            <div className="flex items-center gap-2 mb-3">
-                                <Car className="w-4 h-4" style={{ color: BN.gold }} />
-                                <h2 className="text-[15px] font-black">Mashina mosligi</h2>
-                            </div>
+                {/* Referral viral loop CTA (M4) */}
+                <BnProductReferralCta productSlug={p.slug} productTitle={p.title} />
 
-                            {partNumber && (
-                                <div className="flex items-center justify-between gap-3 py-2.5 text-[13px]" style={{ borderBottom: `1px solid ${BN.border}` }}>
-                                    <span className="flex items-center gap-1.5" style={{ color: BN.text3 }}>
-                                        <Hash className="w-3.5 h-3.5" /> Qism raqami
-                                    </span>
-                                    <BnLink
-                                        href={`/qidiruv?q=${encodeURIComponent(partNumber)}`}
-                                        className="font-black tabular-nums inline-flex items-center gap-1 transition-colors hover:opacity-80"
-                                        style={{ color: BN.gold }}
-                                        title="Shu raqam bo'yicha boshqa sotuvchilardan qidirish"
-                                    >
-                                        {partNumber}
-                                        <Search className="w-3.5 h-3.5" />
-                                    </BnLink>
-                                </div>
-                            )}
-                            {oemNumbers.length > 0 && (
-                                <div className="flex items-start justify-between gap-3 py-2.5 text-[13px]" style={{ borderBottom: `1px solid ${BN.border}` }}>
-                                    <span style={{ color: BN.text3 }}>Analog raqamlar</span>
-                                    <span className="font-semibold text-right select-all" style={{ color: BN.text2 }}>{oemNumbers.join(", ")}</span>
-                                </div>
-                            )}
-
-                            {universalFit ? (
-                                <div className="flex items-center gap-2 mt-3 px-3 py-2.5 rounded-xl text-[13px] font-bold"
-                                    style={{ background: BN.goldSoft, color: BN.gold }}>
-                                    <Globe className="w-4 h-4" /> Universal — barcha mashinaga to'g'ri keladi
-                                </div>
-                            ) : fits.length > 0 && (
-                                <div className="mt-3">
-                                    <p className="text-[12px] mb-2" style={{ color: BN.text3 }}>Quyidagi mashinalarga to'g'ri keladi:</p>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {fits.map(f => (
-                                            <span
-                                                key={f.modelSlug}
-                                                className="inline-flex items-center h-8 px-3 rounded-full text-[12px] font-bold"
-                                                style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text2 }}
-                                            >
-                                                {f.makeName} {f.modelName}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </Panel>
-                    )}
-
-                    {/* Buy Box — bir xil mahsulot uchun eng arzon+ishonchli sotuvchi */}
-                    <BnBuyBox slug={p.slug} />
-
-                    {/* Narx tarixi grafigi — vaqt bo'yicha narx dinamikasi (BN uniqueness) */}
-                    <div className="mt-4">
-                        <BnPriceChart slug={p.slug} />
-                    </div>
-
-
-                    {/* Boshqa do'konlar — narx solishtirish (BN ning asosiy va'dasi) */}
-                    {others.length > 0 && (
-                        <Panel className="mt-4">
-                            <h2 className="text-[15px] font-black mb-1">{t("othersTitle")}</h2>
-                            <p className="text-[12.5px] mb-3" style={{ color: BN.text3 }}>
-                                {t("othersSub")}
-                            </p>
-                            <div className="space-y-2">
-                                {others.map(o => (
-                                    <BnLink
-                                        key={o.id}
-                                        href={`/p/${o.slug}`}
-                                        className="group flex items-center gap-3 p-2.5 rounded-xl transition-colors"
-                                        style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}` }}
-                                    >
-                                        <span
-                                            className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0"
-                                            style={{ background: BN.surface }}
-                                        >
-                                            {o.images[0] && (
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                <img src={o.images[0]} alt="" className="w-full h-full object-cover" />
-                                            )}
-                                        </span>
-                                        <span className="flex-1 min-w-0">
-                                            <span className="block text-[13px] font-bold truncate transition-colors group-hover:text-[color:var(--bn-gold)]">
-                                                {o.shopName}
-                                            </span>
-                                            <span className="block text-[11.5px]" style={{ color: BN.text3 }}>
-                                                {o.marketName ?? o.city}
-                                            </span>
-                                        </span>
-                                        <span className="text-right flex-shrink-0">
-                                            <span className="block text-[15px] font-black tabular-nums leading-none">
-                                                {fmtPrice(o.price)}
-                                            </span>
-                                            {o.price < p.price && (
-                                                <span className="block text-[10.5px] mt-1" style={{ color: BN.ok }}>
-                                                    {t("othersCheaper", { pct: Math.round(((p.price - o.price) / p.price) * 100) })}
-                                                </span>
-                                            )}
-                                        </span>
-                                    </BnLink>
-                                ))}
-                            </div>
-                        </Panel>
-                    )}
-
-                    {/* Sotuvchi */}
-                    {shop && (
-                        <Panel className="mt-4">
-                            <h2 className="text-[15px] font-black mb-3">{t("seller")}</h2>
-                            <BnLink href={`/d/${shop.slug}`} className="group flex items-center gap-3">
-                                <span
-                                    className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 grid place-items-center"
-                                    style={{ background: BN.surfaceUp }}
-                                >
-                                    {shop.logoUrl ? (
-                                        // eslint-disable-next-line @next/next/no-img-element
-                                        <img src={shop.logoUrl} alt="" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <Store className="w-6 h-6" style={{ color: BN.text3 }} />
-                                    )}
-                                </span>
-                                <span className="flex-1 min-w-0">
-                                    <span className="flex items-center gap-2">
-                                        <span className="text-[14px] font-black truncate transition-colors group-hover:text-[color:var(--bn-gold)]">
-                                            {shop.name}
-                                        </span>
-                                        {tier && shop.tier !== "NEW" && (
-                                            <span
-                                                className="px-1.5 py-0.5 rounded-md text-[9.5px] font-black leading-none flex-shrink-0"
-                                                style={{ background: `${tier.color}1F`, color: tier.color }}
-                                            >
-                                                {tier.label}
-                                            </span>
-                                        )}
-                                    </span>
-                                    <span className="flex items-center gap-1 text-[12px] mt-1" style={{ color: BN.text3 }}>
-                                        {shop.locationType === "IN_MARKET"
-                                            ? <Store className="w-3 h-3 flex-shrink-0" />
-                                            : shop.locationType === "STANDALONE"
-                                                ? <MapPin className="w-3 h-3 flex-shrink-0" />
-                                                : <Globe className="w-3 h-3 flex-shrink-0" />}
-                                        <span className="truncate">{locText(shop)}</span>
-                                    </span>
-                                    {shop.ratingCount > 0 && (
-                                        <span className="flex items-center gap-1 text-[12px] mt-1" style={{ color: BN.gold }}>
-                                            <Star className="w-3 h-3 fill-current" />
-                                            {shop.rating.toFixed(1)}
-                                            <span style={{ color: BN.text3 }}>· {t("sellerRatings", { n: shop.ratingCount, p: shop.productCount })}</span>
-                                        </span>
-                                    )}
-                                </span>
-                                <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: BN.text3 }} />
-                            </BnLink>
-
-                            <div className="grid grid-cols-2 gap-2 mt-4">
-                                <BnSellerCallButton
-                                    sellerId={shop.sellerId}
-                                    shopName={shop.name}
-                                    shopLogo={shop.logoUrl}
-                                    ownerUsername={shop.ownerUsername}
-                                    workHours={shop.workHours}
-                                    product={{ id: p.id, title: p.title, image: p.images?.[0] ?? null }}
-                                />
-                                {shop.ownerUsername ? (
-                                    <a
-                                        href={`https://forhumo.uz/${locale}/nexus?dm=${shop.ownerUsername}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center justify-center gap-2 h-11 rounded-xl text-[13px] font-bold transition-colors"
-                                        style={{ background: BN.gold, color: BN.onGold }}
-                                    >
-                                        <MessageCircle className="w-4 h-4" />
-                                        {t("sellerMessage")}
-                                    </a>
-                                ) : (
-                                    <button
-                                        disabled
-                                        className="flex items-center justify-center gap-2 h-11 rounded-xl text-[13px] font-bold opacity-40"
-                                        style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text3 }}
-                                    >
-                                        <MessageCircle className="w-4 h-4" />
-                                        {t("sellerMessage")}
-                                    </button>
-                                )}
-                            </div>
-                        </Panel>
-                    )}
-                </div>
-
-                {/* ── O'ng: narx va harakat ── */}
-                <div className="lg:sticky lg:top-[132px] lg:self-start">
-                    <Panel>
-                        <h1 className="text-[18px] font-black leading-snug mb-4">{p.title}</h1>
-
-                        {/* Siz kelishgan narx (narx kelishuvi bo'lsa) */}
-                        <BnProductDealChip productSlug={p.slug} />
-
-                        {/* Ulgurji (B2B) belgisi */}
-                        {p.isWholesale && (
-                            <div
-                                className="flex items-center gap-2 rounded-xl px-3 py-2 mb-3 text-[12px] font-black"
-                                style={{ background: BN.goldSoft, color: BN.gold, border: `1px solid ${BN.borderGold}` }}
-                            >
-                                <Package className="w-3.5 h-3.5" />
-                                {t("wholesaleBadge")}
-                                <span style={{ color: BN.text2 }}> · {t("wholesaleMin", { qty: minWholesaleQtyN })}</span>
-                            </div>
-                        )}
-
-                        {/* Narx — ulgurji bo'lsa joriy tier narxi ko'rsatiladi */}
-                        <div className="flex items-baseline gap-2.5 mb-2">
-                            <span className="text-[30px] font-black tabular-nums leading-none">
-                                {fmtPrice(unitPrice)}
-                            </span>
-                            {p.isWholesale ? (
-                                <span className="text-[13px]" style={{ color: BN.text3 }}>{t("perUnit")}</span>
-                            ) : (
-                                p.oldPrice && p.oldPrice > p.price && (
-                                    <span className="text-[15px] line-through tabular-nums" style={{ color: BN.text3 }}>
-                                        {groupThousands(p.oldPrice)}
-                                    </span>
-                                )
-                            )}
+                {/* O'xshash mahsulotlar */}
+                {similar.length > 0 && (
+                    <section className="mt-12">
+                        <BnSectionTitle title={t("similar")} subtitle={t("similarSub")} />
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                            {similar.map(s => <BnProductCard key={s.id} p={s} compact />)}
                         </div>
+                    </section>
+                )}
 
-                        {/* Ulgurji jami summa — qty × unitPrice, joriy tier tanlangan */}
-                        {p.isWholesale && (
-                            <div className="flex items-center gap-2 text-[13px] mb-3" style={{ color: BN.text2 }}>
-                                <span>{qty} × {fmtPrice(unitPrice)} =</span>
-                                <span className="font-black text-[15px]" style={{ color: BN.text }}>
-                                    {fmtPrice(unitPrice * qty)}
-                                </span>
-                            </div>
-                        )}
-
-                        {/* Ulgurji narx pog'onalari jadvali */}
-                        {p.isWholesale && wholesaleTiersSorted.length > 0 && (
-                            <div
-                                className="rounded-2xl p-3 mb-3"
-                                style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}` }}
-                            >
-                                <p className="text-[11px] font-black uppercase tracking-wider mb-2" style={{ color: BN.text3 }}>
-                                    {t("wholesaleTiers")}
-                                </p>
-                                <div className="space-y-1.5">
-                                    {wholesaleTiersSorted.map((tier, i) => {
-                                        const next = wholesaleTiersSorted[i + 1];
-                                        const range = next ? `${tier.minQty}–${next.minQty - 1}` : `${tier.minQty}+`;
-                                        const active = qty >= tier.minQty && (!next || qty < next.minQty);
-                                        return (
-                                            <div
-                                                key={i}
-                                                className="flex items-center justify-between text-[12.5px] rounded-lg px-2 py-1"
-                                                style={{
-                                                    background: active ? BN.goldSoft : "transparent",
-                                                    color: active ? BN.gold : BN.text2,
-                                                    fontWeight: active ? 900 : 500,
-                                                }}
-                                            >
-                                                <span>{range} {t("stockUnit")}</span>
-                                                <span className="tabular-nums">{fmtPrice(tier.price)} / {t("perUnitShort")}</span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Bozor narxi bloki — BN ning asosiy va'dasi */}
-                        {rankMeta && p.marketAvgPrice && (
-                            <div
-                                className="flex items-start gap-2.5 p-3 rounded-xl mb-4"
-                                style={{ background: rankMeta.soft, border: `1px solid ${rankMeta.color}33` }}
-                            >
-                                <TrendingDown
-                                    className="w-4 h-4 flex-shrink-0 mt-0.5"
-                                    style={{ color: rankMeta.color, transform: rank === "expensive" ? "scaleY(-1)" : undefined }}
-                                />
-                                <div className="min-w-0 text-[12.5px] leading-relaxed">
-                                    <p className="font-black" style={{ color: rankMeta.color }}>
-                                        {rank === "fair" ? t("atMarketPrice") : diff}
-                                    </p>
-                                    <p style={{ color: BN.text2 }}>
-                                        {t("marketAvgLabel")}{" "}
-                                        <span className="font-bold tabular-nums" style={{ color: BN.text }}>
-                                            {groupThousands(p.marketAvgPrice)} {t("currencySom")}
-                                        </span>
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-
-                        {p.isNegotiable && (
-                            <div className="mb-4">
-                                <div className="flex items-center gap-1.5 text-[12.5px] mb-1.5" style={{ color: BN.text2 }}>
-                                    <Info className="w-3.5 h-3.5 flex-shrink-0" style={{ color: BN.gold }} />
-                                    {t("negotiableNote")}
-                                </div>
-                                {/* Ichki BnShopChatButton — product konteksti bilan ochilsa Narx taklif qilish tabi paydo bo'ladi */}
-                                <div className="[&>button]:w-full [&>button]:h-11 [&>button]:text-[14px] [&>button]:justify-center [&>button]:gap-2">
-                                    <BnShopChatButton
-                                        shopSlug={p.shopSlug}
-                                        shopName={p.shopName}
-                                        triggerLabel={t("negotiableCta")}
-                                        product={{
-                                            id: p.id,
-                                            title: p.title,
-                                            price: p.price,
-                                            imageUrl: p.images?.[0] ?? null,
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Ijtimoiy proof — prioritet: buyers > sold > viewers.
-                            Buyers (noyob xaridorlar) ijtimoiy signal sifatida "N kishi sotib
-                            oldi" (item count 5 lekin buyer 1 bo'lsa aldash bo'lardi). */}
-                        {buyersRecent >= 3 ? (
-                            <p className="flex items-center gap-1.5 text-[12.5px] mb-3" style={{ color: BN.ok }}>
-                                <TrendingDown className="w-3.5 h-3.5 flex-shrink-0" style={{ transform: "scaleY(-1)" }} />
-                                <strong className="tabular-nums">{buyersRecent}</strong> {t("buyersRecent")}
-                            </p>
-                        ) : soldRecent >= 3 ? (
-                            <p className="flex items-center gap-1.5 text-[12.5px] mb-3" style={{ color: BN.ok }}>
-                                <TrendingDown className="w-3.5 h-3.5 flex-shrink-0" style={{ transform: "scaleY(-1)" }} />
-                                <strong className="tabular-nums">{soldRecent}</strong> {t("soldRecent")}
-                            </p>
-                        ) : viewersRecent >= 20 ? (
-                            <p className="flex items-center gap-1.5 text-[12.5px] mb-3" style={{ color: BN.text2 }}>
-                                <Eye className="w-3.5 h-3.5 flex-shrink-0" style={{ color: BN.gold }} />
-                                <strong className="tabular-nums">{viewersRecent}</strong> {t("viewersRecent")}
-                            </p>
-                        ) : null}
-
-                        <button
-                            onClick={togglePriceWatch}
-                            disabled={pwBusy}
-                            className="flex items-center gap-1.5 mb-4 text-[12px] font-bold transition-colors disabled:opacity-60"
-                            style={{ color: priceWatch ? BN.gold : BN.text3 }}
-                        >
-                            <BellRing className="w-3.5 h-3.5" style={{ fill: priceWatch ? BN.gold : "none" }} />
-                            {priceWatch ? t("watchOn") : t("watchOff")}
-                        </button>
-
-                        {/* Miqdor */}
-                        <div className="flex items-center justify-between mb-4">
-                            <span className="text-[13px]" style={{ color: BN.text2 }}>
-                                {t("stockLabel")} <span className="font-bold" style={{ color: BN.text }}>{p.stock} {t("stockUnit")}</span>
-                            </span>
-                            <div
-                                className="flex items-center rounded-xl overflow-hidden"
-                                style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}` }}
-                            >
-                                <QtyBtn onClick={() => setQty(v => Math.max(minWholesaleQtyN, v - 1))} disabled={qty <= minWholesaleQtyN}>−</QtyBtn>
-                                <span className="w-12 text-center text-[14px] font-black tabular-nums">{qty}</span>
-                                <QtyBtn onClick={() => setQty(v => Math.min(p.stock, v + 1))} disabled={qty >= p.stock}>+</QtyBtn>
-                            </div>
-                        </div>
-
-                        {/* Asosiy harakatlar */}
-                        <button
-                            onClick={addToCart}
-                            disabled={cartBusy || p.stock < 1}
-                            className="flex items-center justify-center gap-2 w-full rounded-2xl text-[15px] font-black transition-transform active:scale-[0.98] disabled:opacity-60"
-                            style={{ height: 52, background: cartDone ? BN.ok : BN.gold, color: BN.onGold }}
-                        >
-                            {cartBusy ? <Loader2 className="w-5 h-5 animate-spin" />
-                                : cartDone ? <><Check className="w-5 h-5" /> {t("addedToCart")}</>
-                                : <><ShoppingCart className="w-5 h-5" /> {t("addToCart")}</>}
-                        </button>
-
-                        {/* Bir bosishda sotib olish (express order) */}
-                        {p.stock > 0 && (
-                            <BnOneClickBuy
-                                productId={p.id}
-                                qty={qty}
-                                disabled={cartBusy}
-                                className="mt-2"
-                            />
-                        )}
-                        {cartDone && (
-                            <BnLink
-                                href="/savat"
-                                className="block w-full text-center mt-2 text-[12.5px] font-bold"
-                                style={{ color: BN.gold }}
-                            >
-                                {t("goToCart")}
-                            </BnLink>
-                        )}
-
-                        {p.allowInspect && (
-                            <button
-                                onClick={startInspect}
-                                disabled={cartBusy}
-                                className="flex items-center justify-center gap-2 w-full h-12 mt-2.5 rounded-2xl text-[14px] font-black transition-transform active:scale-[0.98] disabled:opacity-60"
-                                style={{ background: BN.goldSoft, border: `1px solid ${BN.goldEdge}`, color: BN.gold }}
-                            >
-                                <Eye className="w-[18px] h-[18px]" />
-                                {t("inspectAction")}
-                            </button>
-                        )}
-
-                        {/* Sotuvchi WhatsApp'i verified bo'lsa → 3-tugma qatorida chiqadi.
-                            Aks holda faqat Saqlash+Ulashish qoladi (kengroq bo'ladi). */}
-                        {(() => {
-                            const waPhone = shop?.phoneVerified ? (shop.phone ?? "").replace(/\D/g, "") : "";
-                            const showWa = waPhone.length >= 9;
-                            return (
-                                <div className="flex gap-2 mt-2.5">
-                                    <SecondaryBtn onClick={toggleFav} disabled={favBusy}>
-                                        <Heart className="w-4 h-4" style={{ fill: fav ? BN.err : "none", color: fav ? BN.err : undefined }} />
-                                        {fav ? t("favSaved") : t("fav")}
-                                    </SecondaryBtn>
-                                    <SecondaryBtn onClick={() => navigator.share?.({ title: p.title, url: location.href })}>
-                                        <Share2 className="w-4 h-4" />
-                                        {t("share")}
-                                    </SecondaryBtn>
-                                    {showWa && (
-                                        <a href={`https://wa.me/${waPhone}?text=${encodeURIComponent(`${p.title} — https://bozornarxida.uz/d/${shop?.slug ?? ""}/${p.slug}`)}`}
-                                            target="_blank" rel="noopener noreferrer"
-                                            aria-label="Sotuvchiga WhatsApp orqali yozish"
-                                            className="flex items-center justify-center gap-1.5 h-11 px-3 rounded-2xl text-[12.5px] font-bold transition-transform active:scale-[0.97]"
-                                            style={{ background: "#25D366", color: "#fff" }}>
-                                            <WhatsAppIcon className="w-4 h-4" />
-                                        </a>
-                                    )}
-                                </div>
-                            );
-                        })()}
-
-                        <a
-                            href={`https://forhumo.uz/${locale}/nexus?bnProduct=${p.slug}&text=${encodeURIComponent(p.title)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2 w-full h-11 mt-2.5 rounded-2xl text-[13px] font-bold"
-                            style={{ background: "linear-gradient(90deg, #2B3EE8 0%, #00CEC8 100%)", color: "#fff" }}
-                        >
-                            <HumoNexusLogo size={18} />
-                            {t("shareOnNexus")}
-                        </a>
-
-                        {/* Olish usullari */}
-                        <div className="mt-5 pt-4 space-y-2.5" style={{ borderTop: `1px solid ${BN.border}` }}>
-                            {p.allowPickup && (
-                                <Way icon={<Package className="w-4 h-4" />} title={t("wayPickup")} text={t("wayPickupFree")} />
-                            )}
-                            {p.allowDelivery && (
-                                <Way icon={<Truck className="w-4 h-4" />} title={t("wayDelivery")} text={t("wayDeliveryText")} />
-                            )}
-                            {p.allowInspect && (
-                                <Way
-                                    icon={<Eye className="w-4 h-4" />}
-                                    title={t("wayInspect")}
-                                    text={t("wayInspectText")}
-                                />
-                            )}
-                            <Way
-                                icon={<Shield className="w-4 h-4" />}
-                                title={t("wayEscrow")}
-                                text={t("wayEscrowText")}
-                            />
-                        </div>
-                    </Panel>
-                </div>
+                {/* Cross-shop narx solishtirish — BN'ning asosiy va'dasi */}
+                <BnProductCompareCard productId={p.id} />
             </div>
-
-            {/* Xaridor sharh reels (Nexus) */}
-            {reviewVideos.length > 0 && (
-                <section className="mt-12">
-                    <BnSectionTitle title={t("reviewReels")} subtitle={t("reviewReelsSub")} />
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                        {reviewVideos.map(v => (
-                            <a
-                                key={v.id}
-                                href={`https://forhumo.uz/${locale}/nexus/v/${v.id}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="relative aspect-[9/16] rounded-2xl overflow-hidden group"
-                                style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
-                            >
-                                {v.thumbUrl ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={v.thumbUrl} alt={v.title} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                                ) : (
-                                    <div className="w-full h-full grid place-items-center" style={{ color: BN.text3 }}>
-                                        <Eye className="w-6 h-6" />
-                                    </div>
-                                )}
-                                <div className="absolute inset-x-0 bottom-0 p-2" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85), transparent)" }}>
-                                    <p className="text-[11px] font-bold text-white line-clamp-2">{v.title}</p>
-                                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.7)" }}>
-                                        {groupThousands(v.views)} {t("reviewViews")}
-                                    </p>
-                                </div>
-                            </a>
-                        ))}
-                    </div>
-                </section>
-            )}
-
-            {/* Sharhlar */}
-            <BnReviews kind="product" slug={p.slug} />
-
-            {/* Referral viral loop CTA (M4) */}
-            <BnProductReferralCta productSlug={p.slug} productTitle={p.title} />
-
-            {/* O'xshash mahsulotlar */}
-            {similar.length > 0 && (
-                <section className="mt-12">
-                    <BnSectionTitle title={t("similar")} subtitle={t("similarSub")} />
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                        {similar.map(s => <BnProductCard key={s.id} p={s} compact />)}
-                    </div>
-                </section>
-            )}
-
-            {/* Cross-shop narx solishtirish — BN'ning asosiy va'dasi */}
-            <BnProductCompareCard productId={p.id} />
-
-            {/* Mobile sticky bottom action bar — scroll pastga tushganda ko'rinadi */}
-            <BnMobileActions
-                productId={p.id}
-                price={p.price}
-                stock={p.stock}
-                onAddToCart={addToCart}
-                cartBusy={cartBusy}
-            />
 
             {/* Kun tanlash oynasi — band qilishdan oldin (1 kun bepul, keyingi kunlar +3%) */}
             {inspectDaysOpen && (
@@ -906,56 +495,6 @@ function Panel({ children, className = "" }: { children: React.ReactNode; classN
             style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
         >
             {children}
-        </div>
-    );
-}
-
-function GalleryBtn({ side, onClick, label }: { side: "left" | "right"; onClick: () => void; label: string }) {
-    return (
-        <button
-            onClick={onClick}
-            aria-label={label}
-            className="absolute top-1/2 -translate-y-1/2 w-10 h-10 grid place-items-center rounded-full backdrop-blur-sm transition-transform active:scale-90"
-            style={{ [side]: 12, background: BN.glass } as React.CSSProperties}
-        >
-            {side === "left" ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-        </button>
-    );
-}
-
-function QtyBtn({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
-    return (
-        <button
-            onClick={onClick}
-            disabled={disabled}
-            className="w-9 h-10 grid place-items-center text-[16px] font-black transition-opacity disabled:opacity-30"
-        >
-            {children}
-        </button>
-    );
-}
-
-function SecondaryBtn({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
-    return (
-        <button
-            onClick={onClick}
-            disabled={disabled}
-            className="flex items-center justify-center gap-1.5 flex-1 h-11 rounded-xl text-[13px] font-bold transition-colors disabled:opacity-60"
-            style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text2 }}
-        >
-            {children}
-        </button>
-    );
-}
-
-function Way({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
-    return (
-        <div className="flex items-start gap-2.5">
-            <span className="flex-shrink-0 mt-0.5" style={{ color: BN.gold }}>{icon}</span>
-            <span className="min-w-0 text-[12.5px] leading-snug">
-                <span className="block font-bold">{title}</span>
-                <span className="block mt-0.5" style={{ color: BN.text3 }}>{text}</span>
-            </span>
         </div>
     );
 }

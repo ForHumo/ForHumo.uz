@@ -2,7 +2,7 @@
 // Reja: docs/BN-PLAN.md §6
 //
 // MUHIM: ranglar CSS o'zgaruvchilariga bog'langan — Kunduzgi / Tungi / Tizim
-// rejimlari shu orqali ishlaydi. Qiymatlar `bn-styles.tsx` da e'lon qilinadi.
+// rejimlari shu orqali ishlaydi. Qiymatlar `bn-styles.css` da e'lon qilinadi (server render, BN layout import qiladi).
 // Komponentlarda hech qachon hex yozilmaydi — doim `BN.*` ishlatiladi.
 
 export const BN = {
@@ -57,6 +57,8 @@ export function groupThousands(n: number): string {
     return neg ? `-${s}` : s;
 }
 
+// O'zbekcha qattiq "so'm" — faqat UI bo'lmagan / o'zbekcha joylar uchun (cron, push).
+// Foydalanuvchiga ko'rinadigan narx: useBnFormat().price / getBnFormat(locale).price (bn-format.ts).
 export function fmtPrice(som: number): string {
     return `${groupThousands(som)} so'm`;
 }
@@ -99,7 +101,7 @@ export const PRICE_RANK_META: Record<PriceRank, { label: string; color: string; 
     expensive: { label: "Bozor narxidan qimmat", color: BN.warn, soft: BN.warnSoft },
 };
 
-/** Foiz farqi: -7 → "7% arzon" */
+/** Foiz farqi: -7 → "7% arzon" (o'zbekcha; UI'da — useBnFormat().diff) */
 export function priceDiffLabel(price: number, marketAvg: number | null | undefined): string | null {
     if (!marketAvg || marketAvg <= 0) return null;
     const pct = Math.round(((price - marketAvg) / marketAvg) * 100);
@@ -111,6 +113,7 @@ export function priceDiffLabel(price: number, marketAvg: number | null | undefin
 
 export type ShopTier = "NEW" | "TRUSTED" | "VERIFIED" | "PREMIUM";
 
+// `label` — o'zbekcha (admin uchun). Foydalanuvchi UI'da: useBnFormat().tier / bn.tier.*.
 // Hozircha barcha darajalarda komissiya 0% — "Bozor Narxida" nomi
 // oqlanishi uchun sotuvchi narxiga foizni yashirmasligi shart. Bozor
 // raqamlashgach tier-based komissiya (masalan NEW=5% → PREMIUM=3%) qaytariladi.

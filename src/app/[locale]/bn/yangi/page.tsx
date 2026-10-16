@@ -2,6 +2,8 @@
 // So'nggi 30 kunda qo'shilgan mahsulotlar, yangilikdan boshlab tartiblangan.
 
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { bnPageMeta } from "@/lib/bn-seo";
 import { BnProductCard } from "@/components/bn/bn-product-card";
 import { getMarkets, searchProducts } from "@/lib/bn-data";
 import { getBnAuth } from "@/lib/bn-auth";
@@ -23,11 +25,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
         },
     }).catch(() => 0);
 
+    // Brend — layout shablonida ("| Bozor Narxida"), bu yerda takrorlanmaydi
     const title = locale === "ru"
-        ? `Новые товары — Bozor Narxida (${total})`
+        ? `Новые товары (${total})`
         : locale === "en"
-        ? `New products — Bozor Narxida (${total})`
-        : `Yangi mahsulotlar — Bozor Narxida (${total})`;
+        ? `New products (${total})`
+        : `Yangi mahsulotlar (${total})`;
     const description = locale === "ru"
         ? `${total}+ товаров, добавленных за последние 30 дней. Свежий каталог от продавцов Ташкента.`
         : locale === "en"
@@ -37,25 +40,14 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
     return {
         title,
         description,
-        alternates: {
-            canonical: "https://bozornarxida.uz/yangi",
-            languages: {
-                uz: "https://bozornarxida.uz/uz/yangi",
-                ru: "https://bozornarxida.uz/ru/yangi",
-                en: "https://bozornarxida.uz/en/yangi",
-            },
-        },
-        openGraph: {
-            title, description,
-            url: `https://bozornarxida.uz/${locale}/yangi`,
-            siteName: "Bozor Narxida",
-        },
+        ...bnPageMeta({ locale, path: "/yangi", title, description }),
     };
 }
 
 export default async function Page({ params }: { params: Promise<{ locale: Locale }> }) {
     const { locale } = await params;
     const auth = await getBnAuth();
+    const tFmt = await getTranslations({ locale, namespace: "bn.fmt" });
 
     const [fresh, markets] = await Promise.all([
         // sort=new — searchProducts createdAt DESC bo'yicha qaytaradi
@@ -89,7 +81,7 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
                 <div className="text-right">
                     <div className="text-[24px] font-black" style={{ color: BN.gold }}>{fresh.length}</div>
                     <div className="text-[10px] uppercase" style={{ color: BN.text3 }}>
-                        {locale === "ru" ? "товаров" : locale === "en" ? "items" : "mahsulot"}
+                        {tFmt("productsWord", { n: fresh.length })}
                     </div>
                 </div>
             </div>

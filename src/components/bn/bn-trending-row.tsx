@@ -5,10 +5,11 @@
 // signalidan foydalanadi (social proof + trend discovery).
 
 import { useEffect, useState } from "react";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Flame, Eye, ShoppingBag, ChevronRight } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
+import { useBnFormat } from "./bn-format-hook";
 
 interface TrendingItem {
     slug: string;
@@ -22,18 +23,12 @@ interface TrendingItem {
     ordersRecent: number;
 }
 
-function fmtPrice(n: number, locale: string): string {
-    const bcp = locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : "uz-Latn-UZ";
-    const num = n.toLocaleString(bcp, { maximumFractionDigits: 0 });
-    return locale === "ru" ? `${num} сум` : locale === "en" ? `${num} UZS` : `${num} so'm`;
-}
-
 type Range = "1d" | "7d" | "30d";
 const RANGES: Range[] = ["1d", "7d", "30d"];
 
 export function BnTrendingRow() {
     const t = useTranslations("bn.trending");
-    const locale = useLocale();
+    const fmt = useBnFormat();
     const [items, setItems] = useState<TrendingItem[] | null>(null);
     const [range, setRange] = useState<Range>("7d");
     const [switching, setSwitching] = useState(false);
@@ -127,7 +122,7 @@ export function BnTrendingRow() {
                             <div className="p-2.5">
                                 <p className="text-[12.5px] font-black leading-tight line-clamp-2 min-h-[32px]">{p.title}</p>
                                 <p className="text-[13px] font-black mt-1" style={{ color: BN.gold }}>
-                                    {fmtPrice(p.price, locale)}
+                                    {fmt.price(p.price)}
                                 </p>
                                 <p className="flex items-center gap-2 text-[10px] mt-1.5" style={{ color: BN.text3 }}>
                                     {p.ordersRecent > 0 ? (

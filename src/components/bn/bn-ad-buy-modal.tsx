@@ -10,7 +10,7 @@ import { createPortal } from "react-dom";
 import { useLocale } from "next-intl";
 import { X, Upload, Loader2, CheckCircle2, Sparkles, RotateCw, ZoomIn, ZoomOut, Store as StoreIcon } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
-import { formatMoney } from "@/lib/money";
+import { useBnFormat } from "./bn-format-hook";
 import { BnSelect } from "./bn-select";
 import { BnLink } from "./bn-nav";
 
@@ -36,6 +36,7 @@ interface MyShop { slug: string; name: string; }
 interface MyShopProduct { slug: string; title: string; }
 
 export function BnAdBuyModal({ open, onClose, onSuccess }: Props) {
+    const fmt = useBnFormat();
     const locale = useLocale();
     const [imageUrl, setImageUrl] = useState("");
     const [uploading, setUploading] = useState(false);
@@ -429,12 +430,12 @@ export function BnAdBuyModal({ open, onClose, onSuccess }: Props) {
                                             {t("Jami narx", "Итого", "Total")}
                                         </span>
                                         <span className="text-[22px] font-black" style={{ color: BN.gold }}>
-                                            {formatMoney(price.grossUzsTotal, "UZS")}
+                                            {fmt.price(price.grossUzsTotal)}
                                         </span>
                                     </div>
                                     <div className="text-[11.5px] flex justify-between" style={{ color: BN.text3 }}>
                                         <span>{t("Kunlik", "В день", "Per day")}:</span>
-                                        <span>{formatMoney(price.grossUzsPerDay, "UZS")} × {days} {t("kun", "дн.", "days")}</span>
+                                        <span>{fmt.price(price.grossUzsPerDay)} × {days} {t("kun", "дн.", "days")}</span>
                                     </div>
                                 </div>
                             )}

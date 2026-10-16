@@ -10,7 +10,7 @@ import { useTranslations } from "next-intl";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
-import { formatMoney } from "@/lib/money";
+import { useBnFormat } from "./bn-format-hook";
 
 interface WeekStats {
     rewardedThisWeek: number;
@@ -18,6 +18,7 @@ interface WeekStats {
 }
 
 export function BnReferralStatsChip() {
+    const fmt = useBnFormat();
     const t = useTranslations("bn.refChip");
     const [stats, setStats] = useState<WeekStats | null>(null);
 
@@ -44,7 +45,7 @@ export function BnReferralStatsChip() {
                 <p className="flex-1 min-w-0 text-[12.5px] leading-tight">
                     {t.rich("text", {
                         n: stats.rewardedThisWeek,
-                        amount: formatMoney(stats.totalPaidThisWeek, "UZS"),
+                        amount: fmt.price(stats.totalPaidThisWeek),
                         b: (chunks) => <b style={{ color: BN.gold }}>{chunks}</b>,
                     })}
                 </p>

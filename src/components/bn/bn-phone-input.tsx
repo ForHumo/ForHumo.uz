@@ -83,11 +83,13 @@ export const BnPhoneInput = forwardRef<HTMLInputElement, Props>(function BnPhone
                 placeholder={placeholder ?? "+998 (XX) XXX-XX-XX"}
                 disabled={disabled}
                 autoFocus={autoFocus}
-                className={`w-full rounded-xl pl-10 pr-3 py-2.5 text-[14px] font-mono outline-none transition-colors ${className ?? ""}`}
+                // Rang — BN tokenlari (ilgari #fff: kunduzgi temada ko'rinmas edi).
+                // Shrift — boshqa maydonlar bilan bir xil, raqamlar tabular.
+                className={`w-full rounded-xl pl-10 pr-3 py-2.5 text-[14px] tabular-nums outline-none transition-colors ${className ?? ""}`}
                 style={{
                     background: BN.surfaceUp,
-                    border: `1px solid ${invalid ? "#ef4444" : BN.border}`,
-                    color: "#fff",
+                    border: `1px solid ${invalid ? BN.err : BN.border}`,
+                    color: BN.text,
                 }}
             />
         </div>

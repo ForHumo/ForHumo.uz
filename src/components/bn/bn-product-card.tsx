@@ -5,7 +5,8 @@ import { useSession, signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { BnLink } from "./bn-nav";
 import { Store, ShoppingBasket, Star, Eye, Truck, BadgeCheck, Heart, Package } from "lucide-react";
-import { BN, fmtPrice, groupThousands, priceRankOf, PRICE_RANK_META, priceDiffLabel } from "@/lib/bn-theme";
+import { BN, groupThousands, priceRankOf, PRICE_RANK_META } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
 import { getFavoriteIds, peekFavorite, updateFavorite, subscribeFavorites } from "@/lib/bn-favorites-store";
 
 export interface ProductCardData {
@@ -97,7 +98,8 @@ export function BnProductCard({
 }: { p: ProductCardData; compact?: boolean; initialFavored?: boolean }) {
     const rank = priceRankOf(p.price, p.marketAvgPrice);
     const rankMeta = rank ? PRICE_RANK_META[rank] : null;
-    const diff = priceDiffLabel(p.price, p.marketAvgPrice);
+    const fmt = useBnFormat();
+    const diff = fmt.diff(p.price, p.marketAvgPrice);
     const showDiff = rank === "cheap" && diff;
 
     const t = useTranslations("bn.card");
@@ -281,7 +283,7 @@ export function BnProductCard({
                 {/* Narx — asosiy element */}
                 <div className="flex items-baseline gap-2 mb-1">
                     <span className="text-[16px] font-black tabular-nums leading-none">
-                        {fmtPrice(p.price)}
+                        {fmt.price(p.price)}
                     </span>
                     {p.oldPrice && p.oldPrice > p.price && p.oldPrice <= p.price * 20 && (
                         // Eski narx narxdan 20 barobardan (>95% chegirma) oshsa ko'rsatmaymiz —

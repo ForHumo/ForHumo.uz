@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ChevronRight, Sparkles, Plus } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { BN } from "@/lib/bn-theme";
 import { BnLink, useBnBase } from "./bn-nav";
 import { BnAdBuyModal } from "./bn-ad-buy-modal";
@@ -29,7 +29,7 @@ const PLACEHOLDER_GRADIENTS: [string, string][] = [
 ];
 
 export function BnHeroSlider() {
-    const locale = useLocale();
+    const t = useTranslations("bn.heroAd");
     const { hasShop } = useBnBase();
     const [banners, setBanners] = useState<(Banner | null)[]>(Array(TOTAL_SLOTS).fill(null));
     const [loading, setLoading] = useState(true);
@@ -39,8 +39,6 @@ export function BnHeroSlider() {
     const [buyOpen, setBuyOpen] = useState(false);
     const impressedRef = useRef<Set<string>>(new Set());
     const dragRef = useRef<{ x: number; y: number; active: boolean } | null>(null);
-
-    const t = (u: string, r: string, e: string) => locale === "ru" ? r : locale === "en" ? e : u;
 
     useEffect(() => {
         (async () => {
@@ -156,7 +154,7 @@ export function BnHeroSlider() {
                                             className="inline-flex items-center gap-2 h-11 px-5 rounded-2xl text-[14px] font-black transition-transform active:scale-[0.97] w-max"
                                             style={{ background: BN.gold, color: BN.onGold }}
                                         >
-                                            {t("Batafsil", "Подробнее", "Learn more")}
+                                            {t("learnMore")}
                                             <ChevronRight className="w-4 h-4" />
                                         </a>
                                     </div>
@@ -173,17 +171,15 @@ export function BnHeroSlider() {
                                 >
                                     <div className="min-w-0">
                                         <div className="inline-flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-bold w-max mb-2" style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}>
-                                            SLOT {i + 1} · {t("BO'SH", "СВОБОДНО", "AVAILABLE")}
+                                            {t("slot", { n: i + 1 })} · {t("slotFree")}
                                         </div>
-                                        <h2 className="text-[22px] sm:text-[28px] md:text-[32px] font-black tracking-tight leading-[1.1] mb-2">
-                                            {t("Bu yerda sizning reklamangiz", "Здесь ваша реклама", "Your ad could be here")}
-                                        </h2>
+                                        {/* Sarlavha emas (<p>) — 5 ta bir xil bo'sh slot sahifa
+                                            sarlavhalar tuzilmasini (H2 x5) to'ldirib yubormasin */}
+                                        <p className="text-[22px] sm:text-[28px] md:text-[32px] font-black tracking-tight leading-[1.1] mb-2">
+                                            {t("title")}
+                                        </p>
                                         <p className="text-[13px] sm:text-[14.5px] max-w-[520px] leading-relaxed opacity-90 mb-4">
-                                            {t(
-                                                "Kunlik mijozlar Sizning reklamangizni ko'radi",
-                                                "Ежедневные клиенты увидят вашу рекламу",
-                                                "Daily buyers will see your ad",
-                                            )}
+                                            {t("text")}
                                         </p>
                                         {/* Tugma faqat sotuvchi (do'koni bor) uchun ko'rinadi.
                                             Do'koni yo'q foydalanuvchiga umuman ko'rsatilmaydi — chalg'itmaslik uchun. */}
@@ -194,7 +190,7 @@ export function BnHeroSlider() {
                                                 style={{ background: "#F6F4F0", color: "#1C1913" }}
                                             >
                                                 <Plus className="w-4 h-4" />
-                                                {t("Reklama qo'yish", "Разместить рекламу", "Place an ad")}
+                                                {t("placeAd")}
                                             </button>
                                         )}
                                     </div>
@@ -214,7 +210,7 @@ export function BnHeroSlider() {
                             key={i}
                             type="button"
                             onClick={() => go(i)}
-                            aria-label={`Slot ${i + 1}`}
+                            aria-label={t("slotAria", { n: i + 1 })}
                             className="flex-1 h-1 rounded-full overflow-hidden transition-opacity"
                             style={{ background: "rgba(255,255,255,0.28)" }}
                         >
