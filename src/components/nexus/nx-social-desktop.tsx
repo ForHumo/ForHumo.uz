@@ -645,6 +645,13 @@ export function NxSocialDesktop() {
     const [msgMenuFor, setMsgMenuFor] = useState<string | null>(null);
     // Chat list per-item 3-dot menyu
     const [convMenuFor, setConvMenuFor] = useState<string | null>(null);
+    // Menyu joylashuvi (fixed) — overflow kesmasligi uchun + ekran chetida yuqoriga ochish
+    const [msgMenuPos, setMsgMenuPos] = useState<{ left: number; top?: number; bottom?: number } | null>(null);
+    const [convMenuPos, setConvMenuPos] = useState<{ left: number; top?: number; bottom?: number } | null>(null);
+    // Touch long-press (iPad) — xabar/chat ustida bosib tursa menyu ochiladi
+    const lpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lpStartRef = useRef<{ x: number; y: number } | null>(null);
+    const lpFiredRef = useRef(false);
     // Chatni o'chirish modal — 3 varinat: o'zim uchun / ikkala tomon / vaqtinchalik yashirish
     const [deleteChatFor, setDeleteChatFor] = useState<string | null>(null);
     // Yashirin (vaqtinchalik o'chirilgan) chatlar bo'limi ochilganmi
@@ -761,8 +768,14 @@ export function NxSocialDesktop() {
             if (t.closest("[data-conv-menu]")) return;
             setConvMenuFor(null);
         }
+        function onDownT(e: TouchEvent) {
+            const t = e.target as HTMLElement;
+            if (t.closest("[data-conv-menu]")) return;
+            setConvMenuFor(null);
+        }
         window.addEventListener("mousedown", onDown);
-        return () => window.removeEventListener("mousedown", onDown);
+        window.addEventListener("touchstart", onDownT);
+        return () => { window.removeEventListener("mousedown", onDown); window.removeEventListener("touchstart", onDownT); };
     }, [convMenuFor]);
     useEffect(() => {
         if (!msgMenuFor) return;
@@ -771,9 +784,47 @@ export function NxSocialDesktop() {
             if (t.closest("[data-msg-menu]")) return;
             setMsgMenuFor(null);
         }
+        function onDownT(e: TouchEvent) {
+            const t = e.target as HTMLElement;
+            if (t.closest("[data-msg-menu]")) return;
+            setMsgMenuFor(null);
+        }
         window.addEventListener("mousedown", onDown);
-        return () => window.removeEventListener("mousedown", onDown);
+        window.addEventListener("touchstart", onDownT);
+        return () => { window.removeEventListener("mousedown", onDown); window.removeEventListener("touchstart", onDownT); };
     }, [msgMenuFor]);
+
+    // ── Menyu joylashuvi (fixed) + touch long-press yordamchilari ──
+    function computeMenuPos(el: HTMLElement, menuW = 190, approxH = 320): { left: number; top?: number; bottom?: number } {
+        const r = el.getBoundingClientRect();
+        const left = Math.max(8, Math.min(r.left, window.innerWidth - menuW - 8));
+        const openUp = r.bottom + approxH > window.innerHeight - 8;
+        return openUp ? { left, bottom: Math.max(8, window.innerHeight - r.top + 4) } : { left, top: r.bottom + 4 };
+    }
+    function openMsgMenuAt(id: string, el: HTMLElement) { setMsgMenuPos(computeMenuPos(el, 190, 340)); setMsgMenuFor(id); }
+    function openMsgMenuAtPoint(id: string, x: number, y: number) {
+        const menuW = 190, approxH = 340;
+        const left = Math.max(8, Math.min(x, window.innerWidth - menuW - 8));
+        const openUp = y + approxH > window.innerHeight - 8;
+        setMsgMenuPos(openUp ? { left, bottom: Math.max(8, window.innerHeight - y + 4) } : { left, top: y + 4 });
+        setMsgMenuFor(id);
+    }
+    function openConvMenuAt(id: string, el: HTMLElement) { setConvMenuPos(computeMenuPos(el, 190, 320)); setConvMenuFor(id); }
+    function lpStart(e: React.TouchEvent, fire: () => void) {
+        const t = e.touches[0]; if (!t) return;
+        lpStartRef.current = { x: t.clientX, y: t.clientY };
+        lpFiredRef.current = false;
+        if (lpTimerRef.current) clearTimeout(lpTimerRef.current);
+        lpTimerRef.current = setTimeout(() => { lpFiredRef.current = true; try { navigator.vibrate?.(12); } catch {} fire(); }, 450);
+    }
+    function lpMove(e: React.TouchEvent) {
+        const s = lpStartRef.current; if (!s) return;
+        const t = e.touches[0]; if (!t) return;
+        if (Math.abs(t.clientX - s.x) > 10 || Math.abs(t.clientY - s.y) > 10) {
+            if (lpTimerRef.current) { clearTimeout(lpTimerRef.current); lpTimerRef.current = null; }
+        }
+    }
+    function lpEnd() { if (lpTimerRef.current) { clearTimeout(lpTimerRef.current); lpTimerRef.current = null; } }
     // URL preview: URL → { title, image, description, siteName } (yoki null = topilmadi)
     const [linkPreview, setLinkPreview] = useState<Record<string, { title: string | null; image: string | null; description: string | null; siteName: string | null; url: string } | null>>({});
     // Undo-send: 5 sekundlik grace period
@@ -3239,6 +3290,7 @@ export function NxSocialDesktop() {
                             style={convMenuFor === c.conversationId ? { zIndex: 50 } : undefined}>
                             <button
                                 onClick={() => {
+                                    if (lpFiredRef.current) { lpFiredRef.current = false; return; }  // long-press menyu ochdi — chatni ochmaymiz
                                     // Chat lock — qulflangan bo'lsa avval unlock so'raymiz
                                     if (isLocked(c.conversationId) && !isUnlockedNow(c.conversationId)) {
                                         setLockModal({ convId: c.conversationId, mode: "unlock" });
@@ -3246,7 +3298,10 @@ export function NxSocialDesktop() {
                                     }
                                     setSelectedId(c.conversationId);
                                 }}
-                                onContextMenu={(e) => { e.preventDefault(); toggleConvPin(c.conversationId, !!c.pinned); }}
+                                onContextMenu={(e) => { e.preventDefault(); openConvMenuAt(c.conversationId, e.currentTarget as HTMLElement); }}
+                                onTouchStart={(e) => { const el = e.currentTarget as HTMLElement; lpStart(e, () => openConvMenuAt(c.conversationId, el)); }}
+                                onTouchMove={lpMove}
+                                onTouchEnd={lpEnd}
                                 className="w-full flex items-center gap-3 px-3 py-3 text-left transition-colors border-b"
                                 style={{
                                     borderColor: "rgb(var(--nx-accent-rgb) / 0.06)",
@@ -3332,17 +3387,17 @@ export function NxSocialDesktop() {
                                 Menu ochilganda opacity-100 ushlanadi (aks holda hover chiqishi bilan yopiladi) */}
                             <div className={`absolute right-2 top-1/2 -translate-y-1/2 transition ${convMenuFor === c.conversationId ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`} data-conv-menu>
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); setConvMenuFor(convMenuFor === c.conversationId ? null : c.conversationId); }}
+                                    onClick={(e) => { e.stopPropagation(); if (convMenuFor === c.conversationId) setConvMenuFor(null); else openConvMenuAt(c.conversationId, e.currentTarget as HTMLElement); }}
                                     title="Amallar"
                                     className="w-7 h-7 rounded-lg flex items-center justify-center"
                                     style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 2px 6px rgba(0,0,0,0.40)" }}>
                                     <MoreVertical className="w-3.5 h-3.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.95)" }} />
                                 </button>
                                 {convMenuFor === c.conversationId && (
-                                    <div className="absolute right-0 top-full mt-1 z-40 rounded-xl overflow-hidden min-w-[180px]"
+                                    <div className="rounded-xl overflow-hidden min-w-[190px]"
                                         onClick={e => e.stopPropagation()}
                                         onMouseDown={e => e.stopPropagation()}
-                                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
+                                        style={{ position: "fixed", left: convMenuPos?.left, top: convMenuPos?.top, bottom: convMenuPos?.bottom, zIndex: 60, maxHeight: "72vh", overflowY: "auto", background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
                                         <MsgMenuItem
                                             icon={c.pinned ? PinOff : Pin}
                                             label={c.pinned ? "Pindan olish" : "Pinga qo'yish"}
@@ -4047,8 +4102,12 @@ export function NxSocialDesktop() {
                                         // Right-click -> 3-dot menu (Telegram Web uslub). Select mode'da bloklamaymiz.
                                         if (selectMode) return;
                                         e.preventDefault();
-                                        setMsgMenuFor(msgMenuFor === m.id ? null : m.id);
+                                        if (msgMenuFor === m.id) setMsgMenuFor(null);
+                                        else openMsgMenuAtPoint(m.id, e.clientX, e.clientY);
                                     }}
+                                    onTouchStart={(e) => { if (selectMode) return; const t = e.touches[0]; const px = t?.clientX ?? 0, py = t?.clientY ?? 0; lpStart(e, () => openMsgMenuAtPoint(m.id, px, py)); }}
+                                    onTouchMove={lpMove}
+                                    onTouchEnd={lpEnd}
                                     className={`group flex items-center gap-1 ${m.mine ? "flex-row justify-end" : "flex-row-reverse justify-end"} ${selectMode ? "cursor-pointer" : ""} ${selectedIds.has(m.id) ? "rounded-lg py-1" : ""}`}
                                     style={{
                                         ...(selectedIds.has(m.id) ? { background: "rgb(var(--nx-accent-rgb) / 0.10)" } : {}),
@@ -4105,14 +4164,14 @@ export function NxSocialDesktop() {
                                             <Reply className="w-3 h-3" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                                         </button>
                                         <div className="relative" data-msg-menu>
-                                            <button onClick={() => setMsgMenuFor(msgMenuFor === m.id ? null : m.id)} title="Ko'proq"
+                                            <button onClick={(e) => { if (msgMenuFor === m.id) setMsgMenuFor(null); else openMsgMenuAt(m.id, e.currentTarget as HTMLElement); }} title="Ko'proq"
                                                 className="w-7 h-7 rounded-md flex items-center justify-center"
                                                 style={{ background: msgMenuFor === m.id ? "rgb(var(--nx-accent-rgb) / 0.18)" : "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                                                 <MoreVertical className="w-3 h-3" style={{ color: msgMenuFor === m.id ? "var(--nx-accent)" : "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                                             </button>
                                             {msgMenuFor === m.id && (
-                                                <div className="absolute top-full mt-1 right-0 z-40 rounded-xl overflow-hidden min-w-[180px]"
-                                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
+                                                <div className="rounded-xl overflow-hidden min-w-[190px]"
+                                                    style={{ position: "fixed", left: msgMenuPos?.left, top: msgMenuPos?.top, bottom: msgMenuPos?.bottom, zIndex: 60, maxHeight: "72vh", overflowY: "auto", background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
                                                     <MsgMenuItem icon={Forward} label="Yuborish" onClick={() => { setForwardMsg(m); setMsgMenuFor(null); }} />
                                                     <MsgMenuItem
                                                         icon={m.pinnedAt ? PinOff : Pin}
