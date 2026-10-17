@@ -5822,16 +5822,18 @@ export function NxSocialDesktop() {
                 />
             )}
 
-            {/* ── COL 3 (kanal/guruh): Info paneli ─ faqat lg+ (iPad portraitda yashirin, chat qisilmasin) ── */}
+            {/* ── COL 3: Info paneli ─ lg+ da 3-ustun; <lg da o'ngdan chiqadigan overlay (iPad portrait/telefon) ── */}
+            {showInfo && (selectedChannel || selectedId) && (
+                <div className="fixed inset-0 z-[54] bg-black/50 lg:hidden" onClick={() => setShowInfo(false)} />
+            )}
             {selectedChannel && showInfo && (
-                <div className="hidden lg:contents">
+                <div className="fixed inset-y-0 right-0 z-[55] flex lg:static lg:z-auto lg:contents">
                     <NxChannelInfoPanel id={selectedChannel} />
                 </div>
             )}
 
-            {/* ── COL 3: Peer info (chat info) — faqat DM tanlangan bo'lsa, faqat lg+ ── */}
             {selectedId && !selectedChannel && showInfo && infoView && (
-                <div className="hidden lg:contents">
+                <div className="fixed inset-y-0 right-0 z-[55] flex lg:static lg:z-auto lg:contents">
                     <MediaDetailPanel
                         type={infoView}
                         messages={messages}
@@ -5841,7 +5843,7 @@ export function NxSocialDesktop() {
                 </div>
             )}
             {selectedId && !selectedChannel && showInfo && !infoView && (
-                <div className="w-[320px] flex-shrink-0 hidden lg:flex flex-col border-l overflow-y-auto nx-scrollbar"
+                <div className="w-[320px] max-w-[88vw] flex-shrink-0 flex flex-col border-l overflow-y-auto nx-scrollbar fixed inset-y-0 right-0 z-[55] lg:static lg:z-auto"
                     style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "var(--nx-surface)" }}>
                     <div className="p-5 text-center border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                         <div className="w-24 h-24 rounded-3xl overflow-hidden mx-auto mb-3 flex items-center justify-center"
