@@ -5,7 +5,7 @@ import { nxToast } from "@/components/nexus/ui/nx-toast";
 import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2, Wallet, Star, ShoppingBag, Bookmark, BookmarkCheck, Volume2, VolumeX, Languages, Copy, Pin, Plus, MoreVertical } from "lucide-react";
+import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2, Wallet, Star, ShoppingBag, Bookmark, BookmarkCheck, Volume2, VolumeX, Languages, Copy, Pin, PinOff, Plus, MoreVertical, Reply, Forward, Pencil } from "lucide-react";
 import { UmmiPose } from "@/components/ummi/ummi-pose";
 import { UMMI } from "@/lib/ummi-poses";
 import { formatMoney } from "@/lib/money";
@@ -46,6 +46,18 @@ interface Msg {
     bookmarked?: boolean;
     pinnedAt?: string | null;
     editedAt?: string | null;
+    // Javob (reply) — asl xabar snapshot
+    replyTo?: { id: string; text: string; senderName: string | null; mine: boolean } | null;
+    // Reaksiyalar — bubble ostida chip sifatida
+    reactions?: Array<{ emoji: string; count: number; mine: boolean }>;
+    // Yo'naltirilgan (forward) — asl manba
+    forwardedFromId?: string | null;
+    forwardedFromName?: string | null;
+    forwardedFromUsername?: string | null;
+    forwardedFromImage?: string | null;
+    forwardedChannelId?: string | null;
+    forwardedChannelName?: string | null;
+    forwardedChannelHandle?: string | null;
 }
 interface SUser { name: string | null; username: string | null; image: string | null; verified: boolean; isMe: boolean }
 
@@ -197,6 +209,10 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     }
     // Mobile action sheet — long-press yoki chap ustunga tap bilan tanlangan xabar
     const [actionMsg, setActionMsg] = useState<Msg | null>(null);
+    // Parity: javob / tahrirlash / yo'naltirish holati
+    const [replyTarget, setReplyTarget] = useState<Msg | null>(null);
+    const [editing, setEditing] = useState<Msg | null>(null);
+    const [forwardMsg, setForwardMsg] = useState<Msg | null>(null);
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     function startLongPress(m: Msg) {
         if (longPressTimer.current) clearTimeout(longPressTimer.current);
@@ -245,6 +261,51 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             });
             if (r.ok) { const d = await r.json(); nxToast(`Tarjima:\n\n${d.translated}`); }
         } catch {}
+    }
+    // Qadash / yechish
+    async function actionPin(m: Msg) {
+        const conv = selected?.conversationId; if (!conv) return;
+        const now = !m.pinnedAt;
+        const r = await fetch(`/api/nexus/messages/${conv}/pin${now ? "" : `?messageId=${m.id}`}`,
+            now
+                ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messageId: m.id }) }
+                : { method: "DELETE" }
+        );
+        if (r.ok) setMessages(prev => prev.map(x => x.id === m.id ? { ...x, pinnedAt: now ? new Date().toISOString() : null } : x));
+        setActionMsg(null);
+    }
+    // Javob berishni boshlash
+    function startReply(m: Msg) {
+        setReplyTarget(m); setEditing(null); setActionMsg(null);
+        setTimeout(() => composerInputRef.current?.focus(), 0);
+    }
+    // Tahrirlashni boshlash (faqat o'z matnli xabari)
+    function startEdit(m: Msg) {
+        setEditing(m); setReplyTarget(null); setInput(m.text || ""); setActionMsg(null);
+        setTimeout(() => composerInputRef.current?.focus(), 0);
+    }
+    // Yo'naltirish — tanlangan suhbatga asl manba snapshot bilan yuborish
+    async function doForward(targetConvId: string) {
+        const m = forwardMsg; if (!m) return;
+        setForwardMsg(null);
+        const origId = m.forwardedFromId ?? (m.mine ? myProfileId : selected?.other?.id) ?? undefined;
+        const origName = m.forwardedFromName ?? (m.mine ? myName : (selected?.other?.name ?? selected?.other?.username)) ?? undefined;
+        try {
+            const r = await fetch(`/api/nexus/messages/${targetConvId}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    text: m.text || "",
+                    mediaUrl: m.mediaUrl ?? undefined, mediaType: m.mediaType ?? undefined,
+                    mediaMime: m.mediaMime ?? undefined, mediaName: m.mediaName ?? undefined, mediaSize: m.mediaSize ?? undefined,
+                    forwardedFromId: origId, forwardedFromName: origName,
+                }),
+            });
+            if (r.ok) {
+                nxToast("Yo'naltirildi");
+                if (selected?.conversationId === targetConvId) loadThread(targetConvId);
+                loadConvs();
+            } else { nxToast("Yo'naltirib bo'lmadi"); }
+        } catch { nxToast("Yo'naltirib bo'lmadi"); }
     }
     const [query, setQuery] = useState("");
     const [sending, setSending] = useState(false);
@@ -331,12 +392,34 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
 
     async function send() {
         if (!selected || !input.trim() || sending) return;
-        const text = input.trim(); setInput(""); setSending(true);
-        const temp: Msg = { id: "tmp-" + Date.now(), text, mine: true, createdAt: new Date().toISOString() };
+        const text = input.trim();
+        // ── Tahrirlash rejimi — mavjud xabarni yangilash (POST .../edit) ──
+        if (editing) {
+            const target = editing;
+            setInput(""); setEditing(null); setSending(true);
+            setMessages(m => m.map(x => x.id === target.id ? { ...x, text, editedAt: new Date().toISOString() } : x));
+            try {
+                const res = await fetch(`/api/nexus/messages/${selected.conversationId}/edit`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ messageId: target.id, text }),
+                });
+                if (!res.ok) { nxToast("Tahrirlab bo'lmadi"); loadThread(selected.conversationId); }
+            } catch { loadThread(selected.conversationId); }
+            finally { setSending(false); }
+            return;
+        }
+        // ── Oddiy yuborish (ehtimol javob bilan) ──
+        const rt = replyTarget;
+        setInput(""); setReplyTarget(null); setSending(true);
+        const temp: Msg = {
+            id: "tmp-" + Date.now(), text, mine: true, createdAt: new Date().toISOString(),
+            replyTo: rt ? { id: rt.id, text: rt.text, senderName: rt.mine ? (myName ?? "Siz") : (selected.other?.name ?? null), mine: rt.mine } : null,
+        };
         setMessages(m => [...m, temp]);
         try {
             const res = await fetch(`/api/nexus/messages/${selected.conversationId}`, {
-                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }),
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text, replyToId: rt?.id }),
             });
             if (res.ok) {
                 const d = await res.json();
@@ -907,6 +990,25 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                             onContextMenu={(e) => { e.preventDefault(); setActionMsg(m); }}
                             className={`flex ${m.mine ? "justify-end" : "justify-start"}`}>
                             <div className="flex flex-col gap-0.5 max-w-[75%] lg:max-w-[60%]">
+                                {/* Yo'naltirilgan manba */}
+                                {(m.forwardedFromName || m.forwardedChannelName) && (
+                                    <div className={`flex items-center gap-1 px-1 text-[11px] font-bold ${m.mine ? "justify-end" : "justify-start"}`} style={{ color: "var(--nx-accent)" }}>
+                                        <Forward className="w-3 h-3" />
+                                        <span className="truncate">{m.forwardedChannelName || m.forwardedFromName}</span>
+                                    </div>
+                                )}
+                                {/* Javob iqtibosi */}
+                                {m.replyTo && (
+                                    <div className="px-2.5 py-1.5 rounded-lg border-l-2 max-w-full"
+                                        style={{ borderColor: "var(--nx-accent)", background: "rgb(var(--nx-accent-rgb) / 0.08)" }}>
+                                        <p className="text-[10px] font-black" style={{ color: "var(--nx-accent)" }}>
+                                            {m.replyTo.mine ? "Siz" : (m.replyTo.senderName || "Javob")}
+                                        </p>
+                                        <p className="text-[11px] truncate" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
+                                            {m.replyTo.text || "(media)"}
+                                        </p>
+                                    </div>
+                                )}
                                 {/* Media qism (agar mavjud bo'lsa) */}
                                 {hasMedia && (
                                     <div className="rounded-2xl overflow-hidden mb-0.5" style={m.mine
@@ -1168,6 +1270,21 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                             : <Check className="w-3.5 h-3.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }} strokeWidth={2.5} />
                                     )}
                                 </div>
+                                {/* Reaksiyalar */}
+                                {Array.isArray(m.reactions) && m.reactions.length > 0 && (
+                                    <div className={`flex flex-wrap gap-1 px-1 ${m.mine ? "justify-end" : "justify-start"}`}>
+                                        {m.reactions.map(r => (
+                                            <button key={r.emoji} onClick={() => actionReact(m, r.emoji)}
+                                                className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] active:scale-90 transition-transform"
+                                                style={r.mine
+                                                    ? { background: "rgb(var(--nx-accent-rgb) / 0.25)", border: "1px solid var(--nx-accent)" }
+                                                    : { background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
+                                                <Emoji char={r.emoji} size={13} />
+                                                <span className="tabular-nums font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.9)" }}>{r.count}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );
@@ -1175,6 +1292,25 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 <div ref={endRef} />
             </div>
 
+            {(replyTarget || editing) && (
+                <div className="flex-shrink-0 px-4 pt-2 flex items-center gap-2">
+                    <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: "var(--nx-accent)" }} />
+                    {editing ? <Pencil className="w-4 h-4 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
+                             : <Reply className="w-4 h-4 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
+                    <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-black" style={{ color: "var(--nx-accent)" }}>
+                            {editing ? "Tahrirlanyapti" : (replyTarget?.mine ? "O'zingizga javob" : "Javob")}
+                        </p>
+                        <p className="text-xs truncate" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
+                            {(editing ?? replyTarget)?.text || "(media)"}
+                        </p>
+                    </div>
+                    <button onClick={() => { const wasEdit = !!editing; setReplyTarget(null); setEditing(null); if (wasEdit) setInput(""); }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-white/[0.06]">
+                        <X className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }} />
+                    </button>
+                </div>
+            )}
             <div className="flex-shrink-0 px-4 py-3 flex items-center gap-2" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                 <input ref={fileInputRef} type="file"
                     accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt"
@@ -1468,6 +1604,23 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                         </div>
                         {/* Amallar */}
                         <div className="p-2">
+                            <button onClick={() => startReply(actionMsg)}
+                                className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/[0.05] text-left">
+                                <Reply className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
+                                <span className="text-sm" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>Javob berish</span>
+                            </button>
+                            <button onClick={() => { setForwardMsg(actionMsg); setActionMsg(null); }}
+                                className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/[0.05] text-left">
+                                <Forward className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
+                                <span className="text-sm" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>Yo&apos;naltirish</span>
+                            </button>
+                            {actionMsg.mine && actionMsg.text && (
+                                <button onClick={() => startEdit(actionMsg)}
+                                    className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/[0.05] text-left">
+                                    <Pencil className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
+                                    <span className="text-sm" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>Tahrirlash</span>
+                                </button>
+                            )}
                             {actionMsg.text && (
                                 <>
                                     <button onClick={() => { copyText(actionMsg.text); setActionMsg(null); }}
@@ -1503,6 +1656,16 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                     {actionMsg.bookmarked ? "Saqlashdan olib tashlash" : "Saqlash"}
                                 </span>
                             </button>
+                            <button onClick={() => actionPin(actionMsg)}
+                                className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/[0.05] text-left">
+                                {actionMsg.pinnedAt
+                                    ? <PinOff className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
+                                    : <Pin className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
+                                }
+                                <span className="text-sm" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>
+                                    {actionMsg.pinnedAt ? "Qadashdan olish" : "Qadash"}
+                                </span>
+                            </button>
                             {actionMsg.mine && (
                                 <button onClick={() => actionDelete(actionMsg)}
                                     className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-red-500/10 text-left">
@@ -1516,6 +1679,41 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                 <X className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                                 <span className="text-sm font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>Bekor</span>
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Yo'naltirish — suhbat tanlash */}
+            {forwardMsg && (
+                <div className="fixed inset-0 z-[310] flex items-end sm:items-center justify-center"
+                    style={{ background: "rgba(3,7,25,0.65)", backdropFilter: "blur(4px)" }}
+                    onClick={() => setForwardMsg(null)}>
+                    <div onClick={e => e.stopPropagation()}
+                        className="w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl overflow-hidden flex flex-col"
+                        style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", maxHeight: "70vh" }}>
+                        <div className="px-4 py-3 flex items-center gap-2 border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
+                            <Forward className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
+                            <p className="text-sm font-black text-[var(--nx-text)]">Suhbatga yo&apos;naltirish</p>
+                        </div>
+                        <div className="overflow-y-auto p-2">
+                            {conversations.length === 0 ? (
+                                <p className="text-xs text-center py-8" style={{ color: "rgb(var(--nx-text-2-rgb)/0.6)" }}>Suhbat yo&apos;q</p>
+                            ) : conversations.map(c => (
+                                <button key={c.conversationId} onClick={() => doForward(c.conversationId)}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.05] text-left">
+                                    <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center"
+                                        style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
+                                        {c.other?.image
+                                            ? <img src={c.other.image} alt="" className="w-full h-full object-cover" />
+                                            : <Users className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-bold truncate text-[var(--nx-text)]">{c.other?.name || c.other?.username || "Foydalanuvchi"}</p>
+                                        {c.other?.username && <p className="text-[11px] truncate" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>@{c.other.username}</p>}
+                                    </div>
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>
