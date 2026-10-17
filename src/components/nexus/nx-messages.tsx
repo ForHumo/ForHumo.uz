@@ -64,6 +64,9 @@ interface Msg {
     scheduledFor?: string | null;
     // Albom (Telegram uslub) — bir xil albumId'li ketma-ket xabarlar grid bo'lib render
     albumId?: string | null;
+    // E2E — server shifrlangan payload; e2eDecrypted = client tomon deshifrlangan matn
+    e2ePayload?: { ephemeralPub: string; iv: string; ciphertext: string; v: number } | null;
+    e2eDecrypted?: string | null;
 }
 interface SUser { name: string | null; username: string | null; image: string | null; verified: boolean; isMe: boolean }
 
@@ -73,6 +76,11 @@ import { NxAgentButtons, type AgentButton } from "./nx-agent-buttons";
 import { NxAgentInlineMode } from "./nx-agent-inline-mode";
 import { NxDmSettingsModal } from "./nx-dm-settings-modal";
 import { NxDmMarkdownToolbar } from "./nx-dm-markdown-toolbar";
+import { encryptForRecipient, decryptFromSender } from "@/lib/e2e-crypto";
+import { getMyIdentity } from "@/lib/e2e-storage";
+import { isLocked, isUnlockedNow } from "@/lib/chat-lock";
+import { NxE2eBanner } from "./nx-e2e-banner";
+import { NxChatLockModal } from "./nx-chat-lock-modal";
 import { Settings2, Timer, Bold as BoldIcon } from "lucide-react";
 
 function formatAutoDeleteBadge(sec: number): string {
@@ -228,6 +236,11 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     // Countdown re-render uchun har 1s "tick"
     const [tickSec, setTickSec] = useState(0);
     useEffect(() => { const t = setInterval(() => setTickSec(s => s + 1), 1000); return () => clearInterval(t); }, []);
+    // Parity 3: E2E (peer kaliti + mening identity) + chat-lock re-render tick
+    const [peerE2eKey, setPeerE2eKey] = useState<{ publicKey: string; fingerprint: string; keyId: string } | null>(null);
+    const [myE2eIdentity, setMyE2eIdentity] = useState<{ privateJwk: JsonWebKey; fingerprint: string } | null>(null);
+    const e2eAvailable = !!(peerE2eKey && myE2eIdentity);
+    const [lockTick, setLockTick] = useState(0);
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     function startLongPress(m: Msg) {
         if (longPressTimer.current) clearTimeout(longPressTimer.current);
@@ -380,15 +393,77 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
         return () => clearInterval(t);
     }, [messagesOpen, selected, newOpen, loadConvs]);
 
-    // Thread yuklash + polling
+    // Thread yuklash + polling (chat-lock: qulflangan va ochilmagan bo'lsa yuklamaymiz)
     useEffect(() => {
         if (!selected) return;
+        if (isLocked(selected.conversationId) && !isUnlockedNow(selected.conversationId)) { setMessages([]); return; }
         loadThread(selected.conversationId);
         const t = setInterval(() => loadThread(selected.conversationId), 4000);
         return () => clearInterval(t);
-    }, [selected, loadThread]);
+    }, [selected, loadThread, lockTick]);
 
     useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, selected]);
+
+    // E2E: peer aktiv public kaliti (username bo'yicha)
+    useEffect(() => {
+        let cancelled = false;
+        setPeerE2eKey(null);
+        const u = selected?.other?.username;
+        if (!u) return;
+        fetch(`/api/user/e2e/keys/by-username/${encodeURIComponent(u)}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (!cancelled && d?.publicKey) setPeerE2eKey({ publicKey: d.publicKey, fingerprint: d.fingerprint, keyId: d.keyId }); })
+            .catch(() => {});
+        return () => { cancelled = true; };
+    }, [selected?.other?.username]);
+    // E2E: mening identity (IndexedDB'dan)
+    useEffect(() => {
+        getMyIdentity().then(id => { if (id) setMyE2eIdentity({ privateJwk: id.privateJwk, fingerprint: id.fingerprint }); }).catch(() => {});
+    }, []);
+    // E2E: kelgan shifrlangan xabarlarni client tomon deshifrlash (background)
+    useEffect(() => {
+        if (!myE2eIdentity) return;
+        const toDecrypt = messages.filter(m => m.e2ePayload && m.e2eDecrypted == null);
+        if (toDecrypt.length === 0) return;
+        let cancelled = false;
+        (async () => {
+            for (const m of toDecrypt) {
+                try {
+                    const plain = await decryptFromSender(myE2eIdentity.privateJwk, m.e2ePayload!);
+                    if (cancelled) return;
+                    setMessages(prev => prev.map(x => x.id === m.id ? { ...x, e2eDecrypted: plain } : x));
+                } catch {
+                    if (cancelled) return;
+                    setMessages(prev => prev.map(x => x.id === m.id ? { ...x, e2eDecrypted: "[Deshifrlab bo'lmadi]" } : x));
+                }
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [messages, myE2eIdentity]);
+    // Draft: suhbat ochilganda server'dagi qoralamani yuklash (bo'sh input'ga)
+    const draftConvRef = useRef<string | null>(null);
+    useEffect(() => {
+        const cid = selected?.conversationId ?? null;
+        if (cid === draftConvRef.current) return;
+        draftConvRef.current = cid;
+        if (!cid || editing) return;
+        fetch(`/api/nexus/messages/${cid}/draft`, { cache: "no-store" })
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (d && typeof d.draft === "string" && selected?.conversationId === cid) setInput(prev => prev || d.draft); })
+            .catch(() => {});
+    }, [selected?.conversationId]);  // eslint-disable-line react-hooks/exhaustive-deps
+    // Draft: debounced server saqlash (900ms, tahrir rejimidan tashqari)
+    useEffect(() => {
+        const cid = selected?.conversationId;
+        if (!cid || editing) return;
+        const t = setTimeout(() => {
+            fetch(`/api/nexus/messages/${cid}/draft`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: input.trim() }),
+            }).catch(() => {});
+        }, 900);
+        return () => clearTimeout(t);
+    }, [input, selected?.conversationId, editing]);
 
     // Yangi xabar — foydalanuvchi qidirish
     useEffect(() => {
@@ -434,13 +509,24 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
         };
         setMessages(m => [...m, temp]);
         try {
+            const body: Record<string, unknown> = { replyToId: rt?.id, ...(ttl ? { selfDestructSeconds: ttl } : {}) };
+            let localMirror: string | null = null;
+            if (e2eAvailable && peerE2eKey) {
+                try {
+                    const payload = await encryptForRecipient(peerE2eKey.publicKey, text);
+                    body.e2ePayload = payload;
+                    localMirror = text;   // UI'da o'zimizga ko'rsatish uchun
+                } catch { body.text = text; }   // shifrlash xato — oddiy matn
+            } else {
+                body.text = text;
+            }
             const res = await fetch(`/api/nexus/messages/${selected.conversationId}`, {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text, replyToId: rt?.id, ...(ttl ? { selfDestructSeconds: ttl } : {}) }),
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
             });
             if (res.ok) {
                 const d = await res.json();
-                setMessages(m => m.map(x => x.id === temp.id ? d.message : x));
+                const msgOut = localMirror ? { ...d.message, e2eDecrypted: localMirror } : d.message;
+                setMessages(m => m.map(x => x.id === temp.id ? msgOut : x));
                 loadConvs();
             } else {
                 setMessages(m => m.filter(x => x.id !== temp.id));
@@ -1044,6 +1130,10 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 </button>
             </div>
 
+            {e2eAvailable && peerE2eKey && myE2eIdentity && (
+                <NxE2eBanner peerName={selected.other?.name || selected.other?.username || "Foydalanuvchi"}
+                    peerFingerprint={peerE2eKey.fingerprint} myFingerprint={myE2eIdentity.fingerprint} />
+            )}
             <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2 min-h-0"
                 style={{
                     scrollbarWidth: "none",
@@ -1322,12 +1412,16 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                     </div>
                                 )}
                                 {/* Matn qism (agar bo'lsa) — markdown render bilan */}
-                                {m.text && (
+                                {(m.text || m.e2ePayload) && (
                                     <div className="px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words"
                                         style={m.mine
                                             ? { background: "linear-gradient(135deg,var(--nx-accent),#1a6fcc)", color: "#fff", borderBottomRightRadius: "4px" }
                                             : { background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", color: "rgb(var(--nx-text-rgb)/0.92)", borderBottomLeftRadius: "4px" }}>
-                                        <NxMarkdown text={m.text} />
+                                        {m.e2ePayload
+                                            ? (m.e2eDecrypted != null
+                                                ? <NxMarkdown text={m.e2eDecrypted} />
+                                                : <span className="opacity-60 italic">Shifrlangan…</span>)
+                                            : <NxMarkdown text={m.text} />}
                                         {m.editedAt && <span className="ml-1.5 text-[10px] opacity-50 italic">(tahrirlangan)</span>}
                                     </div>
                                 )}
@@ -1815,6 +1909,16 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Chat-lock — qulflangan suhbatni ochish (PIN/biometrik) */}
+            {selected && isLocked(selected.conversationId) && !isUnlockedNow(selected.conversationId) && (
+                <NxChatLockModal
+                    convId={selected.conversationId}
+                    mode="unlock"
+                    onClose={() => setSelected(null)}
+                    onDone={() => setLockTick(t => t + 1)}
+                />
             )}
 
             {/* O'z-o'zini o'chirish (self-destruct) — muddat tanlash */}
