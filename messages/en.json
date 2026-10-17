@@ -255,7 +255,11 @@
     "humoid_generating": "Generating...",
     "file_invalid": "Please select an image file",
     "file_too_large": "File must be smaller than 8 MB",
-    "upload_error": "Upload failed"
+    "upload_error": "Upload failed",
+    "ummi_step1": "Hi! I'm Ummi. Let's get to know each other.",
+    "ummi_step2": "Great! Here's your Humo ID — one key to the whole ecosystem.",
+    "ummi_step3": "Almost there! Just a couple more details.",
+    "ummi_done": "Congrats! So glad to have you with us."
   },
   "HumoID": {
     "title": "Humo ID",

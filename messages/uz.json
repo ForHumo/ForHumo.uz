@@ -255,7 +255,11 @@
     "humoid_generating": "Yaratilmoqda...",
     "file_invalid": "Rasm fayl tanlang",
     "file_too_large": "Fayl 8 MB dan kichik bo'lishi kerak",
-    "upload_error": "Yuklashda xatolik"
+    "upload_error": "Yuklashda xatolik",
+    "ummi_step1": "Salom! Men Ummi. Keling, tanishamiz.",
+    "ummi_step2": "Ajoyib! Mana sizning Humo ID'ingiz — ekotizimga yagona kalit.",
+    "ummi_step3": "Oz qoldi! Bir-ikki narsa qo'shsangiz bo'ldi.",
+    "ummi_done": "Tabriklayman! Men bilan birga ekaningizdan xursandman."
   },
   "HumoID": {
     "title": "Humo ID",

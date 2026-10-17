@@ -169,15 +169,18 @@ function WizardCard({
     const t = useTranslations("Onboarding");
     return (
         <div className="bg-card/80 backdrop-blur-xl border border-border/60 rounded-2xl p-6 shadow-2xl space-y-5">
-            {/* Yo'l boshlovchi Ummi — har qadamda pozasi o'zgaradi (shaffof) */}
+            {/* Yo'l boshlovchi Ummi + iliq gap pufagi — har qadamda poza va matn o'zgaradi */}
             <motion.div
                 key={step}
-                initial={{ scale: 0.8, opacity: 0, y: -6 }}
+                initial={{ scale: 0.85, opacity: 0, y: -6 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 transition={{ type: "spring", bounce: 0.4, duration: 0.5 }}
-                className="flex justify-center"
+                className="flex items-center gap-3"
             >
-                <UmmiPose pose={STEP_POSE[step] ?? UMMI.welcome} size={76} className="drop-shadow-md" priority />
+                <UmmiPose pose={STEP_POSE[step] ?? UMMI.welcome} size={64} className="shrink-0 drop-shadow-md" priority />
+                <div className="relative flex-1 rounded-2xl rounded-bl-md bg-blue-500/10 border border-blue-500/20 px-3.5 py-2.5">
+                    <p className="text-sm font-semibold text-foreground leading-snug">{t(`ummi_step${step + 1}`)}</p>
+                </div>
             </motion.div>
             <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
@@ -722,6 +725,18 @@ export function OnboardingWizard({ onComplete, locale }: WizardProps) {
                                     <div className="absolute w-28 h-28 rounded-full bg-blue-500/15 blur-xl" />
                                     <UmmiPose pose={UMMI.congrats} size={112} className="relative drop-shadow-md" priority />
                                 </div>
+                            </motion.div>
+
+                            {/* Ummi'ning iliq tabrigi */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                                className="flex justify-center"
+                            >
+                                <p className="inline-block rounded-2xl bg-blue-500/10 border border-blue-500/20 px-4 py-2 text-sm font-semibold text-foreground">
+                                    {t("ummi_done")}
+                                </p>
                             </motion.div>
 
                             <div>
