@@ -5,7 +5,7 @@ import { nxToast } from "@/components/nexus/ui/nx-toast";
 import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2, Wallet, Star, ShoppingBag, Bookmark, BookmarkCheck, Volume2, VolumeX, Languages, Copy, Pin, PinOff, Plus, MoreVertical, Reply, Forward, Pencil } from "lucide-react";
+import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2, Wallet, Star, ShoppingBag, Bookmark, BookmarkCheck, Volume2, VolumeX, Languages, Copy, Pin, PinOff, Plus, MoreVertical, Reply, Forward, Pencil, Clock, Flame } from "lucide-react";
 import { UmmiPose } from "@/components/ummi/ummi-pose";
 import { UMMI } from "@/lib/ummi-poses";
 import { formatMoney } from "@/lib/money";
@@ -58,6 +58,12 @@ interface Msg {
     forwardedChannelId?: string | null;
     forwardedChannelName?: string | null;
     forwardedChannelHandle?: string | null;
+    // O'z-o'zini o'chirish (self-destruct) — shu vaqtda o'chadi
+    expiresAt?: string | null;
+    // Rejalashtirilgan — kelajakda yuboriladi
+    scheduledFor?: string | null;
+    // Albom (Telegram uslub) — bir xil albumId'li ketma-ket xabarlar grid bo'lib render
+    albumId?: string | null;
 }
 interface SUser { name: string | null; username: string | null; image: string | null; verified: boolean; isMe: boolean }
 
@@ -70,6 +76,7 @@ import { NxDmMarkdownToolbar } from "./nx-dm-markdown-toolbar";
 import { Settings2, Timer, Bold as BoldIcon } from "lucide-react";
 
 function formatAutoDeleteBadge(sec: number): string {
+    if (sec < 60) return `${sec}s`;
     if (sec < 3600) return `${Math.floor(sec / 60)}m`;
     if (sec < 86400) return `${Math.floor(sec / 3600)}h`;
     return `${Math.floor(sec / 86400)}d`;
@@ -213,6 +220,14 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     const [replyTarget, setReplyTarget] = useState<Msg | null>(null);
     const [editing, setEditing] = useState<Msg | null>(null);
     const [forwardMsg, setForwardMsg] = useState<Msg | null>(null);
+    // Parity 2: self-destruct (TTL) / rejalashtirish
+    const [nextTtl, setNextTtl] = useState<number | null>(null);
+    const [ttlMenuOpen, setTtlMenuOpen] = useState(false);
+    const [scheduleOpen, setScheduleOpen] = useState(false);
+    const [scheduleDateTime, setScheduleDateTime] = useState("");
+    // Countdown re-render uchun har 1s "tick"
+    const [tickSec, setTickSec] = useState(0);
+    useEffect(() => { const t = setInterval(() => setTickSec(s => s + 1), 1000); return () => clearInterval(t); }, []);
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     function startLongPress(m: Msg) {
         if (longPressTimer.current) clearTimeout(longPressTimer.current);
@@ -408,18 +423,20 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             finally { setSending(false); }
             return;
         }
-        // ── Oddiy yuborish (ehtimol javob bilan) ──
+        // ── Oddiy yuborish (ehtimol javob + self-destruct bilan) ──
         const rt = replyTarget;
-        setInput(""); setReplyTarget(null); setSending(true);
+        const ttl = nextTtl;
+        setInput(""); setReplyTarget(null); setNextTtl(null); setSending(true);
         const temp: Msg = {
             id: "tmp-" + Date.now(), text, mine: true, createdAt: new Date().toISOString(),
             replyTo: rt ? { id: rt.id, text: rt.text, senderName: rt.mine ? (myName ?? "Siz") : (selected.other?.name ?? null), mine: rt.mine } : null,
+            expiresAt: ttl ? new Date(Date.now() + ttl * 1000).toISOString() : null,
         };
         setMessages(m => [...m, temp]);
         try {
             const res = await fetch(`/api/nexus/messages/${selected.conversationId}`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text, replyToId: rt?.id }),
+                body: JSON.stringify({ text, replyToId: rt?.id, ...(ttl ? { selfDestructSeconds: ttl } : {}) }),
             });
             if (res.ok) {
                 const d = await res.json();
@@ -433,6 +450,23 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                     nxToast(e.error || "Jo'natib bo'lmadi");
                 }
             }
+        } finally { setSending(false); }
+    }
+
+    // Rejalashtirilgan yuborish — kelajakdagi vaqtga
+    async function sendScheduled() {
+        if (!selected || !scheduleDateTime) return;
+        const text = input.trim();
+        if (!text) { nxToast("Avval matn kiriting"); return; }
+        const iso = new Date(scheduleDateTime).toISOString();
+        setScheduleOpen(false); setSending(true);
+        try {
+            const res = await fetch(`/api/nexus/messages/${selected.conversationId}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text, scheduledFor: iso }),
+            });
+            if (res.ok) { setInput(""); setScheduleDateTime(""); nxToast("Rejalashtirildi"); loadThread(selected.conversationId); loadConvs(); }
+            else { const e = await res.json().catch(() => ({})); nxToast(e.error || "Rejalashtirib bo'lmadi"); }
         } finally { setSending(false); }
     }
 
@@ -564,6 +598,46 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             setUploading(false); setUploadPct(0);
             if (fileInputRef.current) fileInputRef.current.value = "";
         }
+    }
+
+    // Albom (2-10 rasm/video birga) — har birini blob'ga upload qilib /album API'ga POST
+    async function uploadAlbum(files: File[]) {
+        if (!selected || uploading) return;
+        const allowed = files.filter(f => f.type.startsWith("image/") || f.type.startsWith("video/")).slice(0, 10);
+        if (allowed.length < 2) { if (allowed[0]) sendMedia(allowed[0]); return; }
+        setUploading(true); setUploadPct(0);
+        const albId = "tmp-alb-" + Date.now();
+        const temps: Msg[] = allowed.map((f, i) => ({
+            id: `tmp-${Date.now()}-${i}`, text: "", mine: true, createdAt: new Date().toISOString(),
+            mediaType: f.type.startsWith("video/") ? "video" : "image", mediaMime: f.type, mediaName: f.name, mediaSize: f.size, albumId: albId,
+        }));
+        setMessages(m => [...m, ...temps]);
+        try {
+            let done = 0;
+            const items = await Promise.all(allowed.map(async (f) => {
+                const safeName = f.name.replace(/[^\w.-]/g, "_");
+                const blob = await upload(`nx-dm/${selected.conversationId}/${Date.now()}-${safeName}`, f, {
+                    access: "public", handleUploadUrl: "/api/market/upload/client-token",
+                });
+                done++; setUploadPct(Math.round((done / allowed.length) * 100));
+                return { mediaUrl: blob.url, mediaType: f.type.startsWith("video/") ? "video" : "image", mediaMime: f.type, mediaName: f.name, mediaSize: f.size };
+            }));
+            const r = await fetch(`/api/nexus/messages/${selected.conversationId}/album`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ items, text: "" }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                setMessages(m => [...m.filter(x => x.albumId !== albId), ...((d.messages ?? []).map((x: Msg) => ({ ...x, mine: true })))]);
+                loadConvs();
+            } else {
+                setMessages(m => m.filter(x => x.albumId !== albId));
+                nxToast("Albom yuborilmadi");
+            }
+        } catch {
+            setMessages(m => m.filter(x => x.albumId !== albId));
+            nxToast("Albom yuborilmadi");
+        } finally { setUploading(false); setUploadPct(0); }
     }
 
     // Video circle recorder state
@@ -978,10 +1052,15 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 {messages.length === 0 && (
                     <p className="text-center text-xs py-8" style={{ color: "var(--nx-text-3)" }}>Suhbat boshlang</p>
                 )}
-                {messages.map(m => {
+                {messages.map((m, idx) => {
                     const isRead = m.mine && !m.id.startsWith("tmp-") && peerReadAt && new Date(m.createdAt) <= new Date(peerReadAt);
                     const isTemp = m.id.startsWith("tmp-");
-                    const hasMedia = !!m.mediaType && (m.mediaUrl || isTemp);
+                    // Albom guruhlash — bir xil albumId'li ketma-ket xabarlar bitta grid bo'lib render
+                    const prevM = idx > 0 ? messages[idx - 1] : null;
+                    if (m.albumId && prevM?.albumId === m.albumId && prevM.mine === m.mine) return null;
+                    const albumItems = m.albumId ? messages.filter(it => it.albumId === m.albumId && it.mine === m.mine) : [m];
+                    const isAlbum = !!m.albumId && albumItems.length > 1;
+                    const hasMedia = !isAlbum && !!m.mediaType && (m.mediaUrl || isTemp);
                     return (
                         <div key={m.id}
                             onTouchStart={() => startLongPress(m)}
@@ -1007,6 +1086,21 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                         <p className="text-[11px] truncate" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                                             {m.replyTo.text || "(media)"}
                                         </p>
+                                    </div>
+                                )}
+                                {/* Albom — ko'p rasm/video grid */}
+                                {isAlbum && (
+                                    <div className="grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden mb-0.5" style={{ maxWidth: 280 }}>
+                                        {albumItems.map((it, i) => (
+                                            <a key={it.id} href={it.mediaUrl || "#"} target="_blank" rel="noopener noreferrer"
+                                                className={`block relative ${albumItems.length === 3 && i === 0 ? "col-span-2" : ""}`}>
+                                                {it.mediaType === "video"
+                                                    ? <video src={it.mediaUrl || undefined} className="w-full h-32 object-cover" />
+                                                    : it.mediaUrl
+                                                        ? <img src={it.mediaUrl} alt="" loading="lazy" className="w-full h-32 object-cover" />
+                                                        : <div className="w-full h-32 flex items-center justify-center" style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}><Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>}
+                                            </a>
+                                        ))}
                                     </div>
                                 )}
                                 {/* Media qism (agar mavjud bo'lsa) */}
@@ -1263,6 +1357,23 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                     )}
                                     {m.bookmarked && <BookmarkCheck className="w-3 h-3" style={{ color: "#F59E0B" }} />}
                                     {m.pinnedAt && <Pin className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />}
+                                    {m.scheduledFor && new Date(m.scheduledFor) > new Date() && (
+                                        <span className="text-[9px] flex items-center gap-0.5 font-bold" style={{ color: "var(--nx-accent)" }} title="Rejalashtirilgan">
+                                            <Clock className="w-2.5 h-2.5" />
+                                            {new Date(m.scheduledFor).toLocaleString("uz-UZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                        </span>
+                                    )}
+                                    {m.expiresAt && (() => {
+                                        void tickSec;
+                                        const left = Math.max(0, Math.floor((new Date(m.expiresAt!).getTime() - Date.now()) / 1000));
+                                        if (left === 0) return null;
+                                        const label = left >= 3600 ? `${Math.floor(left / 3600)}s` : left >= 60 ? `${Math.floor(left / 60)}daq` : `${left}s`;
+                                        return (
+                                            <span className="text-[9px] flex items-center gap-0.5 font-bold" style={{ color: "#F97316" }} title="Avtomatik o'chadi">
+                                                <Flame className="w-2.5 h-2.5" />{label}
+                                            </span>
+                                        );
+                                    })()}
                                     <span className="text-[10px]" style={{ color: "var(--nx-text-2)" }}>{timeShort(m.createdAt)}</span>
                                     {m.mine && (
                                         isRead
@@ -1312,17 +1423,20 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 </div>
             )}
             <div className="flex-shrink-0 px-4 py-3 flex items-center gap-2" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
-                <input ref={fileInputRef} type="file"
+                <input ref={fileInputRef} type="file" multiple
                     accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt"
                     onChange={e => {
-                        const f = e.target.files?.[0];
-                        if (f) {
-                            const kind = f.type.startsWith("image/") ? "image"
-                                : f.type.startsWith("video/") ? "video"
-                                : f.type.startsWith("audio/") ? "file"  // .mp3/.wav → file card, voice EMAS
-                                : "file";
-                            sendMedia(f, kind);
-                        }
+                        const files = Array.from(e.target.files ?? []);
+                        e.target.value = "";
+                        if (files.length === 0) return;
+                        const media = files.filter(f => f.type.startsWith("image/") || f.type.startsWith("video/"));
+                        if (media.length > 1) { uploadAlbum(media); return; }   // 2+ rasm/video → albom
+                        const f = files[0];
+                        const kind = f.type.startsWith("image/") ? "image"
+                            : f.type.startsWith("video/") ? "video"
+                            : f.type.startsWith("audio/") ? "file"  // .mp3/.wav → file card, voice EMAS
+                            : "file";
+                        sendMedia(f, kind);
                     }}
                     className="hidden" />
                 {recording ? (
@@ -1427,6 +1541,25 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                                 <Sticker className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.90)" }} />
                                             </span>
                                             <span className="text-[10px] font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>Sticker</span>
+                                        </button>
+                                        <button type="button"
+                                            onClick={() => { setAttachOpen(false); setScheduleOpen(true); }}
+                                            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]">
+                                            <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
+                                                <Clock className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.90)" }} />
+                                            </span>
+                                            <span className="text-[10px] font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>Rejalash</span>
+                                        </button>
+                                        <button type="button"
+                                            onClick={() => { setAttachOpen(false); setTtlMenuOpen(true); }}
+                                            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]">
+                                            <span className="w-9 h-9 rounded-full flex items-center justify-center"
+                                                style={{ background: nextTtl ? "rgba(249,115,22,0.18)" : "rgb(var(--nx-accent-rgb) / 0.14)" }}>
+                                                <Flame className="w-4 h-4" style={{ color: nextTtl ? "#F97316" : "rgb(var(--nx-text-2-rgb)/0.90)" }} />
+                                            </span>
+                                            <span className="text-[10px] font-bold" style={{ color: nextTtl ? "#F97316" : "rgb(var(--nx-text-rgb)/0.85)" }}>
+                                                {nextTtl ? formatAutoDeleteBadge(nextTtl) : "O'z-o'char"}
+                                            </span>
                                         </button>
                                     </div>
                                 </div>
@@ -1679,6 +1812,62 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                 <X className="w-4 h-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }} />
                                 <span className="text-sm font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>Bekor</span>
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* O'z-o'zini o'chirish (self-destruct) — muddat tanlash */}
+            {ttlMenuOpen && (
+                <div className="fixed inset-0 z-[310] flex items-end sm:items-center justify-center"
+                    style={{ background: "rgba(3,7,25,0.65)", backdropFilter: "blur(4px)" }}
+                    onClick={() => setTtlMenuOpen(false)}>
+                    <div onClick={e => e.stopPropagation()}
+                        className="w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl overflow-hidden"
+                        style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
+                        <div className="px-4 py-3 flex items-center gap-2 border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
+                            <Flame className="w-4 h-4" style={{ color: "#F97316" }} />
+                            <p className="text-sm font-black text-[var(--nx-text)]">O&apos;z-o&apos;zini o&apos;chiradigan xabar</p>
+                        </div>
+                        <div className="p-2">
+                            {([["O'chiq", null], ["5 soniya", 5], ["30 soniya", 30], ["1 daqiqa", 60], ["1 soat", 3600], ["1 kun", 86400]] as [string, number | null][]).map(([label, sec]) => (
+                                <button key={label} onClick={() => { setNextTtl(sec); setTtlMenuOpen(false); }}
+                                    className="w-full flex items-center justify-between px-3 py-3 rounded-lg hover:bg-white/[0.05] text-left">
+                                    <span className="text-sm" style={{ color: "rgb(var(--nx-text-rgb)/0.95)" }}>{label}</span>
+                                    {nextTtl === sec && <Check className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Rejalashtirilgan yuborish — vaqt tanlash */}
+            {scheduleOpen && (
+                <div className="fixed inset-0 z-[310] flex items-end sm:items-center justify-center"
+                    style={{ background: "rgba(3,7,25,0.65)", backdropFilter: "blur(4px)" }}
+                    onClick={() => setScheduleOpen(false)}>
+                    <div onClick={e => e.stopPropagation()}
+                        className="w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl overflow-hidden"
+                        style={{ background: "var(--nx-bg)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
+                        <div className="px-4 py-3 flex items-center gap-2 border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.20)" }}>
+                            <Clock className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
+                            <p className="text-sm font-black text-[var(--nx-text)]">Rejalashtirilgan yuborish</p>
+                        </div>
+                        <div className="p-4 space-y-3">
+                            <p className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
+                                Matn qachon yuborilsin? (kamida 1 daqiqadan keyin)
+                            </p>
+                            <input type="datetime-local" value={scheduleDateTime}
+                                onChange={e => setScheduleDateTime(e.target.value)}
+                                className="w-full h-11 rounded-xl px-3 text-sm text-[var(--nx-text)]"
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", colorScheme: "dark" }} />
+                            <button onClick={sendScheduled} disabled={!scheduleDateTime || !input.trim() || sending}
+                                className="w-full h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-black text-[var(--nx-text)] disabled:opacity-40"
+                                style={{ background: "var(--nx-accent)" }}>
+                                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Clock className="w-4 h-4" />}
+                                Rejalashtirish
+                            </button>
+                            {!input.trim() && <p className="text-[11px] text-center" style={{ color: "#F59E0B" }}>Avval pastdagi maydonga matn yozing</p>}
                         </div>
                     </div>
                 </div>
