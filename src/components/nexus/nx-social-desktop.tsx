@@ -9,7 +9,9 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { nxToast } from "@/components/nexus/ui/nx-toast";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare, Sticker, Film, ExternalLink, EyeOff, Eye, AlertTriangle, Play, Pause, RotateCw, ZoomIn, ZoomOut, Maximize2, Minimize2, UserCircle } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, MessageSquare, Users, Megaphone, BookmarkCheck, Search, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare, Sticker, Film, ExternalLink, EyeOff, Eye, AlertTriangle, Play, Pause, RotateCw, ZoomIn, ZoomOut, Maximize2, Minimize2, UserCircle } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxGroupCreateModal } from "./nx-group-create-modal";
@@ -3146,6 +3148,7 @@ export function NxSocialDesktop() {
                                 </div>
                                 {agents.length === 0 ? (
                                     <div className="text-center py-10 px-4 text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>
+                                        <UmmiPose pose={UMMI.idea} size={56} className="mx-auto mb-2 drop-shadow-sm" />
                                         Hali agent yo&apos;q — &quot;Yaratish&quot; tugmasini bosing
                                     </div>
                                 ) : agents.map(a => (
@@ -3556,10 +3559,7 @@ export function NxSocialDesktop() {
                     <NxChannelRoom id={selectedChannel} onBack={() => setSelectedChannel(null)} />
                 ) : !selectedId ? (
                     <div className="flex-1 flex flex-col items-center justify-center gap-3 px-8 text-center">
-                        <div className="w-20 h-20 rounded-3xl flex items-center justify-center"
-                            style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
-                            <MessageSquare className="w-9 h-9" style={{ color: "rgb(var(--nx-accent-rgb) / 0.55)" }} />
-                        </div>
+                        <UmmiPose pose={UMMI.chat} size={88} className="drop-shadow-sm" />
                         <div>
                             <p className="text-base font-black text-[var(--nx-text)] mb-1">
                                 {listTab === "groups" ? "Guruhni tanlang"
@@ -5999,9 +5999,12 @@ export function NxSocialDesktop() {
                         </div>
                         <div className="flex-1 overflow-y-auto">
                             {drafts.length === 0 ? (
-                                <p className="text-xs text-center py-10" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>
-                                    Draft yo&apos;q — barcha xabarlaringiz yuborilgan
-                                </p>
+                                <div className="text-center py-10">
+                                    <UmmiPose pose={UMMI.document} size={56} className="mx-auto mb-2 drop-shadow-sm" />
+                                    <p className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>
+                                        Draft yo&apos;q — barcha xabarlaringiz yuborilgan
+                                    </p>
+                                </div>
                             ) : (
                                 drafts.map(d => (
                                     <div key={`${d.kind}:${d.id}`}
@@ -6511,7 +6514,7 @@ export function NxSocialDesktop() {
                                 <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-[var(--nx-text-3)]" /></div>
                             ) : !chatBookmarksList || chatBookmarksList.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                                    <BookmarkCheck className="w-10 h-10 mb-3" style={{ color: "rgb(var(--nx-text-2-rgb)/0.35)" }} />
+                                    <UmmiPose pose={UMMI.like} size={64} className="mb-3 drop-shadow-sm" />
                                     <p className="text-sm font-bold mb-1" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>Hali yulduzchali xabar yo&apos;q</p>
                                     <p className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>
                                         Xabar ustiga to&apos;g&apos;ridan-to&apos;g&apos;ri &quot;Saqlash&quot; tugmasini bosing
@@ -9315,10 +9318,7 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved, askC
                     <div className="flex-1 flex flex-col min-w-0 overflow-y-auto nx-scrollbar">
                         {!selected ? (
                             <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-3">
-                                <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                                    <FileText className="w-8 h-8" style={{ color: "rgb(var(--nx-text-2-rgb)/0.55)" }} />
-                                </div>
+                                <UmmiPose pose={UMMI.document} size={72} className="drop-shadow-sm" />
                                 <p className="text-sm font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>
                                     Papka yarating yoki mavjudini tanlang
                                 </p>
@@ -9733,7 +9733,7 @@ function NxDiscoverModal({ type, onClose, onJoined, onSelect }: {
                         <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-[var(--nx-text-3)]" /></div>
                     ) : filtered.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                            {type === "CHANNEL" ? <Megaphone className="w-10 h-10 mb-3" style={{ color: "rgb(var(--nx-text-2-rgb)/0.35)" }} /> : <Users className="w-10 h-10 mb-3" style={{ color: "rgb(var(--nx-text-2-rgb)/0.35)" }} />}
+                            <UmmiPose pose={UMMI.chat} size={64} className="mb-3 drop-shadow-sm" />
                             <p className="text-sm font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>
                                 {query.trim() ? "Hech narsa topilmadi" : "Ochiq " + label.toLowerCase() + " yo'q"}
                             </p>
@@ -9853,7 +9853,7 @@ function NxAgentDiscoverModal({ onClose, onSelect }: {
                         <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-[var(--nx-text-3)]" /></div>
                     ) : filtered.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                            <BotIcon className="w-10 h-10 mb-3" style={{ color: "rgb(var(--nx-text-2-rgb)/0.35)" }} />
+                            <UmmiPose pose={UMMI.search} size={64} className="mb-3 drop-shadow-sm" />
                             <p className="text-sm font-bold" style={{ color: "rgb(var(--nx-text-rgb)/0.85)" }}>Agent topilmadi</p>
                         </div>
                     ) : filtered.map(a => {
