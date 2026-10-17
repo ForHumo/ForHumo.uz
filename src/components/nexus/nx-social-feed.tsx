@@ -12,6 +12,8 @@ import {
     MapPin, Lock, Users, BarChart2, CheckCircle2, Star, Pencil,
     ArrowUp, RefreshCw, Compass, UserPlus, Sparkles, Clock, Coins, Play, Maximize2,
 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { useNxPlayer } from "./nx-player-ctx";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 import { NxAdCard } from "./nx-ad-card";
@@ -1010,10 +1012,7 @@ function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explo
     if (profileMode) {
         return (
             <div className="text-center py-16 px-4">
-                <div className="w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center"
-                    style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
-                    <MessageCircle className="w-6 h-6" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }} />
-                </div>
+                <UmmiPose pose={UMMI.empty} size={76} className="mx-auto mb-3 drop-shadow-sm" />
                 <p className="text-sm font-black text-[var(--nx-text)] mb-1">Hali post yo&apos;q</p>
                 <p className="text-xs" style={{ color: "var(--nx-text-3)" }}>Bu foydalanuvchi hali post ulashmagan.</p>
             </div>
@@ -1022,10 +1021,7 @@ function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explo
     if (tab === "following") {
         return (
             <div className="text-center py-14 px-6">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.15),rgb(var(--nx-accent-rgb) / 0.15))", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
-                    <UserPlus className="w-7 h-7" style={{ color: "var(--nx-accent)" }} />
-                </div>
+                <UmmiPose pose={UMMI.discover} size={84} className="mx-auto mb-4 drop-shadow-sm" />
                 <p className="text-base font-black text-[var(--nx-text)] mb-2">Obunalar bo&apos;sh</p>
                 <p className="text-xs mb-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                     Kuzatgan odamlaringizdan hali post yo&apos;q. Qiziqarli mualliflarni Kashfiyot tabidan toping.
@@ -1041,10 +1037,7 @@ function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explo
     if (tab === "explore") {
         return (
             <div className="text-center py-14 px-6">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg,rgba(139,92,246,0.15),rgb(var(--nx-accent-rgb) / 0.15))", border: "1px solid rgba(139,92,246,0.25)" }}>
-                    <Compass className="w-7 h-7" style={{ color: "#8B5CF6" }} />
-                </div>
+                <UmmiPose pose={UMMI.idea} size={84} className="mx-auto mb-4 drop-shadow-sm" />
                 <p className="text-base font-black text-[var(--nx-text)] mb-2">Trending hali bo&apos;sh</p>
                 <p className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                     Bugun trending postlar hali to&apos;planmagan. Birinchi bo&apos;lib mavzu boshlang!
@@ -1054,10 +1047,7 @@ function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explo
     }
     return (
         <div className="text-center py-14 px-6">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-                style={{ background: "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.15),rgb(var(--nx-accent-rgb) / 0.15))", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
-                <Sparkles className="w-7 h-7" style={{ color: "var(--nx-accent)" }} />
-            </div>
+            <UmmiPose pose={UMMI.chat} size={84} className="mx-auto mb-4 drop-shadow-sm" />
             <p className="text-base font-black text-[var(--nx-text)] mb-2">Feed bo&apos;sh</p>
             <p className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                 Birinchi bo&apos;lib post ulashing yoki qiziqarli odamlarni kuzata boshlang.

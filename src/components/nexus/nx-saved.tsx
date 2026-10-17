@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
 import { X, Bookmark, History, Loader2, Trash2, Play, Clock, Film, Search } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -174,7 +176,7 @@ export function NxSaved() {
                         </div>
                     ) : tab === "all" ? (
                         filteredPosts.length === 0 ? (
-                            <Empty icon={Bookmark} text={q ? `"${query}" bo'yicha topilmadi` : "Saqlangan post yo'q — lentada bookmark belgisini bosing"} />
+                            <Empty pose={UMMI.like} text={q ? `"${query}" bo'yicha topilmadi` : "Saqlangan post yo'q — lentada bookmark belgisini bosing"} />
                         ) : (
                             <>
                                 <div className="flex flex-col gap-2">
@@ -217,7 +219,7 @@ export function NxSaved() {
                         )
                     ) : tab === "videos" ? (
                         filteredVideos.length === 0 ? (
-                            <Empty icon={Film} text={q ? `"${query}" bo'yicha topilmadi` : "Belgilangan video yo'q — video kartochkasidagi belgilash tugmasini bosing"} />
+                            <Empty pose={UMMI.video} text={q ? `"${query}" bo'yicha topilmadi` : "Belgilangan video yo'q — video kartochkasidagi belgilash tugmasini bosing"} />
                         ) : (
                             <div className="grid grid-cols-2 gap-3">
                                 {filteredVideos.map(v => (
@@ -246,7 +248,7 @@ export function NxSaved() {
                         )
                     ) : (
                         filteredHistory.length === 0 ? (
-                            <Empty icon={History} text={q ? `"${query}" bo'yicha topilmadi` : "Hali video ko'rmadingiz"} />
+                            <Empty pose={UMMI.discover} text={q ? `"${query}" bo'yicha topilmadi` : "Hali video ko'rmadingiz"} />
                         ) : (
                             <>
                                 <div className="flex justify-end mb-2">
@@ -292,12 +294,10 @@ function SavedSkeleton() {
     );
 }
 
-function Empty({ icon: Icon, text }: { icon: React.ElementType; text: string }) {
+function Empty({ pose, text }: { pose: number; text: string }) {
     return (
         <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                <Icon className="w-5 h-5" style={{ color: "rgb(var(--nx-accent-rgb) / 0.45)" }} />
-            </div>
+            <UmmiPose pose={pose} size={72} className="mb-3 drop-shadow-sm" />
             <p className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>{text}</p>
         </div>
     );

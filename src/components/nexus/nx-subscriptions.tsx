@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
 import { X, Users, Loader2, UserMinus, UserPlus, Search, UserCheck } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -133,7 +135,7 @@ export function NxSubscriptions() {
                         </div>
                     ) : filtered.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-                            <Users className="w-10 h-10 mb-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.40)" }} />
+                            <UmmiPose pose={UMMI.discover} size={72} className="mb-3 drop-shadow-sm" />
                             <p className="text-sm font-bold text-[var(--nx-text-2)] mb-1">
                                 {q ? `"${query}" bo'yicha topilmadi`
                                    : tab === "following" ? "Hali hech kimni kuzatmaysiz"
