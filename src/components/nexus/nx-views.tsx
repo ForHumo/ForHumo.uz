@@ -139,12 +139,13 @@ interface UserFolder {
 export function SocialView() {
     return (
         <>
-            {/* PC (lg+) — 3-ustunli Telegram uslubidagi layout, to'liq width/height */}
-            <div className="hidden lg:block absolute inset-0">
+            {/* Planshet+ (md+, iPad portrait ~768px ham) — Telegram uslubidagi to'liq layout.
+                 iPad gorizontal/vertikal farq qilmasligi uchun breakpoint lg→md tushirildi. */}
+            <div className="hidden md:block absolute inset-0">
                 <NxSocialDesktop />
             </div>
-            {/* Mobile / tablet — mavjud tabsli UI */}
-            <div className="lg:hidden">
+            {/* Faqat telefon (md'dan kichik) — tabsli UI */}
+            <div className="md:hidden">
                 <SocialViewMobile />
             </div>
         </>
