@@ -654,6 +654,13 @@ export function NxSocialDesktop() {
     const lpFiredRef = useRef(false);
     // Xabarni chapga surish → javob (swipe-to-reply)
     const swipeRef = useRef<{ id: string; startX: number; startY: number; dx: number; el: HTMLElement; horizontal: boolean } | null>(null);
+    // Chatni o'ngdan chapga surish → bosqichli amallar (ovozsiz/o'chirish/arxiv)
+    const chatSwipeRef = useRef<{ id: string; startX: number; startY: number; el: HTMLElement; horizontal: boolean; dx: number; armed: "mute" | "delete" | "archive" | null } | null>(null);
+    const [chatSwipe, setChatSwipe] = useState<{ id: string; armed: "mute" | "delete" | "archive" | null; open: boolean } | null>(null);
+    // Swipe-delete → 5 soniya undo (hide = qaytariladigan)
+    const [pendingHide, setPendingHide] = useState<{ convId: string; name: string } | null>(null);
+    const pendingHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [locallyHidden, setLocallyHidden] = useState<Set<string>>(new Set());
     // Chatni o'chirish modal — 3 varinat: o'zim uchun / ikkala tomon / vaqtinchalik yashirish
     const [deleteChatFor, setDeleteChatFor] = useState<string | null>(null);
     // Yashirin (vaqtinchalik o'chirilgan) chatlar bo'limi ochilganmi
@@ -827,6 +834,39 @@ export function NxSocialDesktop() {
         }
     }
     function lpEnd() { if (lpTimerRef.current) { clearTimeout(lpTimerRef.current); lpTimerRef.current = null; } }
+
+    // ── Chat swipe (o'ngdan chapga) bosqichli amallar ──
+    const SW_MUTE = 48, SW_DELETE = 108, SW_ARCHIVE = 168, SW_OPEN = 228, SW_MAX = 252;
+    function swipeArmed(a: number): "mute" | "delete" | "archive" | null {
+        if (a >= SW_ARCHIVE) return "archive";
+        if (a >= SW_DELETE) return "delete";
+        if (a >= SW_MUTE) return "mute";
+        return null;
+    }
+    function closeChatSwipe() {
+        const s = chatSwipeRef.current;
+        if (s) { s.el.style.transition = "transform 180ms"; s.el.style.transform = ""; }
+        chatSwipeRef.current = null;
+        setChatSwipe(null);
+    }
+    function startHideWithUndo(convId: string, name: string) {
+        if (pendingHideTimerRef.current) clearTimeout(pendingHideTimerRef.current);
+        setLocallyHidden(prev => { const n = new Set(prev); n.add(convId); return n; });
+        setPendingHide({ convId, name });
+        pendingHideTimerRef.current = setTimeout(async () => {
+            try { await fetch(`/api/nexus/messages/${convId}/hide`, { method: "POST" }); } catch {}
+            setPendingHide(null);
+            setLocallyHidden(prev => { const n = new Set(prev); n.delete(convId); return n; });
+            if (selectedIdRef.current === convId) setSelectedId(null);
+            loadConvs();
+        }, 5000);
+    }
+    function undoHide() {
+        if (pendingHideTimerRef.current) { clearTimeout(pendingHideTimerRef.current); pendingHideTimerRef.current = null; }
+        const cid = pendingHide?.convId;
+        setPendingHide(null);
+        if (cid) setLocallyHidden(prev => { const n = new Set(prev); n.delete(cid); return n; });
+    }
     // URL preview: URL → { title, image, description, siteName } (yoki null = topilmadi)
     const [linkPreview, setLinkPreview] = useState<Record<string, { title: string | null; image: string | null; description: string | null; siteName: string | null; url: string } | null>>({});
     // Undo-send: 5 sekundlik grace period
@@ -3177,7 +3217,7 @@ export function NxSocialDesktop() {
                         </div>
                     </button>
                 )}
-                <div className="flex-1 overflow-y-auto nx-scrollbar">
+                <div className="flex-1 overflow-y-auto nx-scrollbar" onScroll={() => { if (chatSwipe) closeChatSwipe(); }}>
                     {listTab === "agents" ? (
                         // Agents ro'yxati
                         loadingAgents ? (
@@ -3287,11 +3327,35 @@ export function NxSocialDesktop() {
                         <div className="text-center py-10 text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>
                             Suhbatlar yo&apos;q
                         </div>
-                    ) : filteredConvs.map(c => (
-                        <div key={c.conversationId} className="group relative"
+                    ) : filteredConvs.filter(c => !locallyHidden.has(c.conversationId)).map(c => (
+                        <div key={c.conversationId} className="group relative overflow-hidden"
                             style={convMenuFor === c.conversationId ? { zIndex: 50 } : undefined}>
+                            {/* Swipe amal foni (o'ngda, surilganda ochiladi) */}
+                            {chatSwipe?.id === c.conversationId && (
+                                <div className="absolute inset-y-0 right-0 flex items-stretch z-0">
+                                    {chatSwipe.open ? (
+                                        <>
+                                            <SwipeAct color="#64748B" icon={c.muted ? Bell : BellOff} label={c.muted ? "Ovozli" : "Ovozsiz"}
+                                                onClick={() => { toggleConvMute(c.conversationId, !!c.muted); closeChatSwipe(); }} />
+                                            <SwipeAct color="#EF4444" icon={Trash2} label="O'chirish"
+                                                onClick={() => { startHideWithUndo(c.conversationId, c.other?.name || c.other?.username || "Chat"); closeChatSwipe(); }} />
+                                            <SwipeAct color="var(--nx-accent)" icon={showArchived ? ArchiveRestore : Archive} label={showArchived ? "Chiqar" : "Arxiv"}
+                                                onClick={() => { toggleConvArchive(c.conversationId, !!c.archived || showArchived); closeChatSwipe(); }} />
+                                        </>
+                                    ) : (
+                                        <div className="flex items-center justify-end pr-7" style={{ width: 260,
+                                            background: chatSwipe.armed === "delete" ? "#EF4444" : chatSwipe.armed === "archive" ? "var(--nx-accent)" : chatSwipe.armed === "mute" ? "#64748B" : "transparent" }}>
+                                            {chatSwipe.armed === "delete" ? <Trash2 className="w-5 h-5 text-white" />
+                                                : chatSwipe.armed === "archive" ? (showArchived ? <ArchiveRestore className="w-5 h-5 text-white" /> : <Archive className="w-5 h-5 text-white" />)
+                                                : chatSwipe.armed === "mute" ? (c.muted ? <Bell className="w-5 h-5 text-white" /> : <BellOff className="w-5 h-5 text-white" />)
+                                                : null}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             <button
                                 onClick={() => {
+                                    if (chatSwipe) { closeChatSwipe(); return; }  // ochiq swipe'ni bekor qiladi
                                     if (lpFiredRef.current) { lpFiredRef.current = false; return; }  // long-press menyu ochdi — chatni ochmaymiz
                                     // Chat lock — qulflangan bo'lsa avval unlock so'raymiz
                                     if (isLocked(c.conversationId) && !isUnlockedNow(c.conversationId)) {
@@ -3301,15 +3365,53 @@ export function NxSocialDesktop() {
                                     setSelectedId(c.conversationId);
                                 }}
                                 onContextMenu={(e) => { e.preventDefault(); openConvMenuAt(c.conversationId, e.currentTarget as HTMLElement); }}
-                                onTouchStart={(e) => { const el = e.currentTarget as HTMLElement; lpStart(e, () => openConvMenuAt(c.conversationId, el)); }}
-                                onTouchMove={lpMove}
-                                onTouchEnd={lpEnd}
-                                className="w-full flex items-center gap-3 px-3 py-3 text-left transition-colors border-b"
+                                onTouchStart={(e) => {
+                                    const t = e.touches[0]; if (!t) return;
+                                    const el = e.currentTarget as HTMLElement;
+                                    chatSwipeRef.current = { id: c.conversationId, startX: t.clientX, startY: t.clientY, el, horizontal: false, dx: 0, armed: null };
+                                    lpStart(e, () => openConvMenuAt(c.conversationId, el));
+                                }}
+                                onTouchMove={(e) => {
+                                    const s = chatSwipeRef.current; const t = e.touches[0];
+                                    if (!s || !t) { lpMove(e); return; }
+                                    const dx = t.clientX - s.startX, dy = t.clientY - s.startY;
+                                    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) lpEnd();
+                                    if (!s.horizontal && Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) + 4) s.horizontal = true;
+                                    if (s.horizontal) {
+                                        const d = Math.max(Math.min(dx, 8), -SW_MAX);
+                                        s.dx = d; s.el.style.transition = "none"; s.el.style.transform = `translateX(${d}px)`;
+                                        const a = -d;
+                                        const armed = a >= SW_OPEN ? null : swipeArmed(a);
+                                        if (armed !== s.armed) { s.armed = armed; setChatSwipe({ id: s.id, armed, open: false }); }
+                                    }
+                                }}
+                                onTouchEnd={() => {
+                                    const s = chatSwipeRef.current; lpEnd();
+                                    if (!s || !s.horizontal) { if (s) closeChatSwipe(); return; }
+                                    const a = -s.dx;
+                                    if (a >= SW_OPEN) {
+                                        s.el.style.transition = "transform 180ms"; s.el.style.transform = "translateX(-216px)";  // 3×72 tugma — tekis
+                                        s.dx = -216; s.armed = null;
+                                        setChatSwipe({ id: s.id, armed: null, open: true });
+                                        return;
+                                    }
+                                    const armed = swipeArmed(a);
+                                    chatSwipeRef.current = null;
+                                    s.el.style.transition = "transform 180ms"; s.el.style.transform = "";
+                                    setChatSwipe(null);
+                                    if (armed === "mute") toggleConvMute(c.conversationId, !!c.muted);
+                                    else if (armed === "archive") toggleConvArchive(c.conversationId, !!c.archived || showArchived);
+                                    else if (armed === "delete") startHideWithUndo(c.conversationId, c.other?.name || c.other?.username || "Chat");
+                                }}
+                                className="relative z-10 w-full flex items-center gap-3 px-3 py-3 text-left transition-colors border-b"
                                 style={{
                                     borderColor: "rgb(var(--nx-accent-rgb) / 0.06)",
+                                    touchAction: "pan-y",
                                     background: selectedId === c.conversationId
-                                        ? "rgb(var(--nx-accent-rgb) / 0.18)"
-                                        : c.pinned ? "rgb(var(--nx-accent-rgb) / 0.04)" : "transparent",
+                                        ? "linear-gradient(0deg, rgb(var(--nx-accent-rgb) / 0.18), rgb(var(--nx-accent-rgb) / 0.18)), var(--nx-surface)"
+                                        : c.pinned
+                                            ? "linear-gradient(0deg, rgb(var(--nx-accent-rgb) / 0.04), rgb(var(--nx-accent-rgb) / 0.04)), var(--nx-surface)"
+                                            : "var(--nx-surface)",
                                 }}>
                                 {(() => {
                                     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -6421,6 +6523,16 @@ export function NxSocialDesktop() {
                     onClose={() => setDatePickerOpen(false)}
                 />
             )}
+            {/* Swipe-delete 5s undo snackbar */}
+            {pendingHide && (
+                <div className="fixed left-4 z-[70] flex items-center gap-3 px-4 py-3 rounded-2xl"
+                    style={{ bottom: 110, background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.6)", maxWidth: 340 }}>
+                    <Trash2 className="w-4 h-4 flex-shrink-0" style={{ color: "#EF4444" }} />
+                    <span className="text-sm text-[var(--nx-text)] truncate flex-1">«{pendingHide.name}» o&apos;chirildi</span>
+                    <button onClick={undoHide} className="text-sm font-black whitespace-nowrap active:scale-95" style={{ color: "var(--nx-accent)" }}>Bekor qilish</button>
+                </div>
+            )}
+
             {/* Chat lock modal (setup / unlock / remove) */}
             {lockModal && (
                 <NxChatLockModal
@@ -7746,6 +7858,20 @@ function MsgMenuItem({ icon: Icon, label, onClick, accent, danger }: {
             style={{ color }}>
             <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: iconColor }} />
             <span className="flex-1 truncate">{label}</span>
+        </button>
+    );
+}
+
+// Chat swipe ochiq rejimida ko'rinadigan amal tugmasi (ovozsiz/o'chirish/arxiv)
+function SwipeAct({ color, icon: Icon, label, onClick }: {
+    color: string; icon: React.ElementType; label: string; onClick: () => void;
+}) {
+    return (
+        <button type="button" onClick={onClick}
+            className="flex flex-col items-center justify-center gap-0.5 active:brightness-110"
+            style={{ background: color, width: 72, color: "#fff" }}>
+            <Icon className="w-5 h-5" />
+            <span className="text-[9px] font-black">{label}</span>
         </button>
     );
 }
