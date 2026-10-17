@@ -5632,22 +5632,26 @@ export function NxSocialDesktop() {
                 />
             )}
 
-            {/* ── COL 3 (kanal/guruh): Info paneli ─────────────── */}
+            {/* ── COL 3 (kanal/guruh): Info paneli ─ faqat lg+ (iPad portraitda yashirin, chat qisilmasin) ── */}
             {selectedChannel && showInfo && (
-                <NxChannelInfoPanel id={selectedChannel} />
+                <div className="hidden lg:contents">
+                    <NxChannelInfoPanel id={selectedChannel} />
+                </div>
             )}
 
-            {/* ── COL 3: Peer info (chat info) — faqat DM tanlangan bo'lsa ── */}
+            {/* ── COL 3: Peer info (chat info) — faqat DM tanlangan bo'lsa, faqat lg+ ── */}
             {selectedId && !selectedChannel && showInfo && infoView && (
-                <MediaDetailPanel
-                    type={infoView}
-                    messages={messages}
-                    onBack={() => setInfoView(null)}
-                    onOpenImage={i => setGalleryIdx(i)}
-                />
+                <div className="hidden lg:contents">
+                    <MediaDetailPanel
+                        type={infoView}
+                        messages={messages}
+                        onBack={() => setInfoView(null)}
+                        onOpenImage={i => setGalleryIdx(i)}
+                    />
+                </div>
             )}
             {selectedId && !selectedChannel && showInfo && !infoView && (
-                <div className="w-[320px] flex-shrink-0 flex flex-col border-l overflow-y-auto nx-scrollbar"
+                <div className="w-[320px] flex-shrink-0 hidden lg:flex flex-col border-l overflow-y-auto nx-scrollbar"
                     style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "var(--nx-surface)" }}>
                     <div className="p-5 text-center border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                         <div className="w-24 h-24 rounded-3xl overflow-hidden mx-auto mb-3 flex items-center justify-center"
