@@ -8,6 +8,8 @@ import "@livekit/components-styles";
 import { useCallback, useEffect, useState } from "react";
 import { LiveKitRoom, VideoConference, RoomAudioRenderer } from "@livekit/components-react";
 import { Loader2, X, Check, PhoneOff, Users, Plus, Link as LinkIcon, UserPlus, Search, BadgeCheck, MessageSquare } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { NxGroupChat } from "./nx-group-chat";
 import { NxGroupParticipants } from "./nx-group-participants";
 import { NxGroupRecord } from "./nx-group-record";
@@ -371,7 +373,7 @@ export function NxGroupCall() {
                                 <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" style={{ color: "rgba(140,160,210,0.6)" }} /></div>
                             ) : calls.length === 0 ? (
                                 <div className="py-10 text-center">
-                                    <Users className="mx-auto mb-3 h-8 w-8" style={{ color: "rgba(80,100,150,0.5)" }} />
+                                    <UmmiPose pose={UMMI.empty} size={56} className="mx-auto mb-3 drop-shadow-sm" />
                                     <p className="text-sm" style={{ color: "rgba(120,140,185,0.7)" }}>Guruh chaqiruvlar yo'q</p>
                                     <p className="mt-1 text-[11px]" style={{ color: "rgba(80,100,150,0.5)" }}>Yuqoridagi tugma bilan yarating</p>
                                 </div>

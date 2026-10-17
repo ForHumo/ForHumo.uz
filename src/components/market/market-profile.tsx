@@ -14,6 +14,8 @@ import { VerifiedBadge } from "./verified-badge";
 import { formatMoney, currencyForCountry, type Currency } from "@/lib/money";
 import { invalidateUserPref } from "@/lib/user-pref";
 import { DollarSign } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 
 interface BrandRow {
     id: string; slug: string; name: string; logo: string | null; verified: boolean;
@@ -45,7 +47,7 @@ export function MarketProfile() {
     if (loading) return <div className="flex justify-center py-32"><Loader2 size={28} className="animate-spin text-green-500" /></div>;
     if (!data) return (
         <div className="text-center py-32">
-            <Store size={48} className="text-gray-200 dark:text-white/10 mx-auto mb-4" />
+            <UmmiPose pose={UMMI.id} size={88} className="mx-auto mb-4 drop-shadow-sm" />
             <p className="text-gray-500 dark:text-white/40 mb-4">Profilni ko&apos;rish uchun tizimga kiring</p>
             <Link href="/id" className="text-green-600 dark:text-green-400 font-semibold text-sm">Humo ID</Link>
         </div>
@@ -177,7 +179,7 @@ export function MarketProfile() {
 
                 {!brands.length ? (
                     <div className="text-center py-12 bg-white/60 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06] rounded-2xl mb-10">
-                        <Store size={36} className="text-gray-200 dark:text-white/10 mx-auto mb-3" />
+                        <UmmiPose pose={UMMI.market} size={72} className="mx-auto mb-3 drop-shadow-sm" />
                         <p className="text-gray-400 dark:text-white/30 text-sm mb-4">Hali brendingiz yo&apos;q</p>
                         <Link href="/market/brand/manage"
                             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold text-sm">

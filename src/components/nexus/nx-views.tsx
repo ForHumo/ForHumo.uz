@@ -12,6 +12,8 @@ import {
     Bookmark, ShoppingBag, Wallet, Play, ExternalLink,
     Sparkles, Circle, Plus, Folder,
 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
 import { NxStories } from "./nx-stories";
@@ -397,7 +399,7 @@ function AgentsTab() {
             ) : filtered.length === 0 ? (
                 <div className="p-8 rounded-2xl text-center"
                     style={{ background: "var(--nx-surface)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.20)" }}>
-                    <Bot className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "var(--nx-accent)" }} />
+                    <UmmiPose pose={UMMI.search} size={56} className="mx-auto mb-3 drop-shadow-sm" />
                     <p className="text-sm" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                         {scope === "mine" ? "Sizda bot yo'q" : "Bot topilmadi"}
                     </p>

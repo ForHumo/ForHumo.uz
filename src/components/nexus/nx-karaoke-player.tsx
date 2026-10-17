@@ -9,6 +9,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { upload } from "@vercel/blob/client";
 import { X, Play, Pause, Volume2, VolumeX, Mic2, Music2, SkipBack, SkipForward, Circle, Square, Loader2, Send, Sparkles } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { activeLyricIndex, type LrcLine } from "@/lib/nexus-lrc";
 import { startKaraokeRecorder, type RecorderHandle } from "@/lib/nexus-karaoke-recorder";
 
@@ -258,7 +260,7 @@ export function NxKaraokePlayer(p: Props) {
                     </div>
                 ) : !hasLines ? (
                     <div className="flex items-center justify-center h-full flex-col gap-3 text-center px-4">
-                        <Mic2 className="w-12 h-12" style={{ color: "rgba(139,92,246,0.30)" }} />
+                        <UmmiPose pose={UMMI.music} size={72} className="mx-auto mb-3 drop-shadow-sm" />
                         <p className="text-sm font-black text-white">Lyrics mavjud emas</p>
                         <p className="text-xs" style={{ color: "rgba(180,150,220,0.65)" }}>
                             Trek egasi hali karaoke lyrics qo&apos;shmagan.

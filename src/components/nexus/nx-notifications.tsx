@@ -8,6 +8,8 @@ import {
     CheckCheck, Loader2, Flame, Music2, Coins, Radio, Gift, AtSign, BellRing, BellOff, Star, PhoneMissed,
     Settings2, Check, ShieldAlert, Circle, Trash2, LifeBuoy,
 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { NOTIF_TYPES, NOTIF_LABELS, type NotifTypeKey } from "@/lib/notif-types";
 import { formatMoney, type Currency } from "@/lib/money";
 import { getPushState, subscribePush, unsubscribePush, type PushState } from "@/lib/push-client";
@@ -365,7 +367,7 @@ export function NxNotifications() {
                         </div>
                     ) : filtered.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                            <Bell className="w-12 h-12 mb-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.25)" }} />
+                            <UmmiPose pose={UMMI.notification} size={72} className="mx-auto mb-3 drop-shadow-sm" />
                             <p className="text-sm font-bold text-[var(--nx-text-2)] mb-1">
                                 {filter === "unread" ? "O'qilmagan bildirishnoma yo'q" : "Bildirishnoma yo'q"}
                             </p>

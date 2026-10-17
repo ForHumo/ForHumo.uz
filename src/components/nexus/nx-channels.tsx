@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { nxToast } from "@/components/nexus/ui/nx-toast";
-import {
-    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff, Edit3, Smile, Reply, Forward, Bookmark, BookmarkCheck, Search, Volume2, VolumeX, Languages, Copy, History, Clock, MoreVertical, LogOut, Eye,
-} from "lucide-react";
+import { Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff, Edit3, Smile, Reply, Forward, Bookmark, BookmarkCheck, Search, Volume2, VolumeX, Languages, Copy, History, Clock, MoreVertical, LogOut, Eye } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { useSession } from "next-auth/react";
 import { NxPollCreate } from "./nx-poll-create";
 import { NxMarkdown } from "./nx-markdown";
@@ -168,9 +168,7 @@ export function NxChannels({ type }: { type: ChType }) {
                 <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
             ) : list.length === 0 ? (
                 <div className="flex flex-col items-center py-12 text-center">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                        {type === "CHANNEL" ? <Hash className="w-5 h-5" style={{ color: "rgb(var(--nx-accent-rgb) / 0.5)" }} /> : <Users className="w-5 h-5" style={{ color: "rgb(var(--nx-accent-rgb) / 0.5)" }} />}
-                    </div>
+                    <UmmiPose pose={UMMI.chat} size={64} className="mx-auto mb-3 drop-shadow-sm" />
                     <p className="text-sm font-bold text-[var(--nx-text-2)]">{scope === "mine" ? `Hali ${label.toLowerCase()} yo'q` : "Kashf qilish uchun yo'q"}</p>
                     <p className="text-xs mt-1" style={{ color: "var(--nx-text-3)" }}>{scope === "mine" ? `Yangi ${label.toLowerCase()} yarating` : "Birinchi bo'lib yarating"}</p>
                 </div>

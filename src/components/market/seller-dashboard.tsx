@@ -4,10 +4,9 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "@/i18n/routing";
 import Image from "next/image";
-import {
-    LayoutDashboard, TrendingUp, ShoppingBag, Package, Inbox, Store,
-    Box, Loader2, ChevronRight, Crown,
-} from "lucide-react";
+import { LayoutDashboard, TrendingUp, ShoppingBag, Inbox, Store, Box, Loader2, ChevronRight, Crown } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { formatMoney } from "@/lib/money";
 
 interface TopProduct { name: string; slug: string; image: string | null; qty: number; revenue: number }
@@ -100,7 +99,7 @@ export function SellerDashboard() {
             </div>
             {!topProducts.length ? (
                 <div className="text-center py-12 bg-gray-50/70 dark:bg-white/[0.02] rounded-2xl">
-                    <Package size={36} className="text-gray-200 dark:text-white/10 mx-auto mb-3" />
+                    <UmmiPose pose={UMMI.order} size={72} className="mx-auto mb-3 drop-shadow-sm" />
                     <p className="text-gray-400 dark:text-white/30 text-sm">Hali sotuvlar yo&apos;q</p>
                 </div>
             ) : (

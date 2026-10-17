@@ -6,6 +6,8 @@ import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
 import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2, Wallet, Star, ShoppingBag, Bookmark, BookmarkCheck, Volume2, VolumeX, Languages, Copy, Pin, Plus, MoreVertical } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { formatMoney } from "@/lib/money";
 import Image from "next/image";
 import { NxVerifiedBadge } from "./nx-verified-badge";
@@ -751,9 +753,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
                 {filteredConvs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 gap-3 px-6 text-center">
-                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                            <PenSquare className="w-6 h-6" style={{ color: "rgb(var(--nx-accent-rgb) / 0.40)" }} />
-                        </div>
+                        <UmmiPose pose={UMMI.chat} size={72} className="drop-shadow-sm" />
                         <p className="text-sm font-bold text-[var(--nx-text)]">Hali suhbat yo&apos;q</p>
                         <button onClick={() => setNewOpen(true)} className="px-4 py-2 rounded-xl text-xs font-black text-[var(--nx-text)]" style={{ background: "var(--nx-accent)" }}>Yangi xabar boshlang</button>
                     </div>

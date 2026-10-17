@@ -4,9 +4,9 @@
 // Kind (audio/video) + yo'nalish (kelayotgan/chiquvchi) + status + duration.
 
 import { useEffect, useState } from "react";
-import {
-    X, Loader2, Phone, Video, PhoneIncoming, PhoneOutgoing, PhoneMissed, PhoneOff,
-} from "lucide-react";
+import { X, Loader2, Phone, Video, PhoneIncoming, PhoneOutgoing, PhoneMissed } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 
 type CallItem = {
     id: string;
@@ -82,7 +82,7 @@ export function NxDmCallHistoryModal({
                         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                     ) : items.length === 0 ? (
                         <div className="text-center py-12">
-                            <PhoneOff className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: "var(--nx-accent)" }} />
+                            <UmmiPose pose={UMMI.empty} size={64} className="mx-auto mb-3 drop-shadow-sm" />
                             <p className="text-sm" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>Chaqiruv tarixi yo&apos;q</p>
                         </div>
                     ) : (

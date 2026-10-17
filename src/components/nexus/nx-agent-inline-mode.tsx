@@ -4,7 +4,9 @@
 // Foydalanuvchi natijani tanlaydi -> DM'ga xabar sifatida yuboriladi.
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Sparkles, Bot } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 
 type InlineResult = {
     id: string;
@@ -81,7 +83,7 @@ export function NxAgentInlineMode({
                 </div>
             ) : results.length === 0 ? (
                 <div className="p-4 text-center">
-                    <Bot className="w-6 h-6 mx-auto mb-1 opacity-40" style={{ color: "var(--nx-accent)" }} />
+                    <UmmiPose pose={UMMI.search} size={48} className="mx-auto mb-3 drop-shadow-sm" />
                     <p className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                         {query ? "Natija yo'q" : "So'rov yozing..."}
                     </p>

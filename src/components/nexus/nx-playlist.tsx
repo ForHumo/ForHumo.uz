@@ -6,6 +6,8 @@ import {
     X, Plus, Play, Music2, Trash2, ListMusic,
     Clock, MoreHorizontal, Check,
 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock treklarlar va playlistlar
@@ -275,7 +277,7 @@ export function NxPlaylist() {
                             </p>
                             {selected.tracks.length === 0 ? (
                                 <div className="flex flex-col items-center py-10">
-                                    <Music2 className="w-12 h-12 mb-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.25)" }} />
+                                    <UmmiPose pose={UMMI.music} size={72} className="mx-auto mb-3 drop-shadow-sm" />
                                     <p className="text-sm text-[var(--nx-text-3)]">Bu playlist bo'sh</p>
                                     <p className="text-xs mt-1" style={{ color: "var(--nx-text-2)" }}>Yuqoridan trek qo'shing</p>
                                 </div>

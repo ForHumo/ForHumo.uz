@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import { Store, Package, MessageSquare, Loader2, ChevronRight, Calendar, Box } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { VerifiedBadge } from "./verified-badge";
 
 interface Brand {
@@ -97,7 +99,7 @@ export function PublicProfile({ username }: { username: string }) {
             </div>
             {!brands.length ? (
                 <div className="text-center py-12 bg-gray-50/70 dark:bg-white/[0.02] rounded-2xl">
-                    <Store size={36} className="text-gray-200 dark:text-white/10 mx-auto mb-3" />
+                    <UmmiPose pose={UMMI.market} size={72} className="mx-auto mb-3 drop-shadow-sm" />
                     <p className="text-gray-400 dark:text-white/30 text-sm">Hali brend yo&apos;q</p>
                 </div>
             ) : (

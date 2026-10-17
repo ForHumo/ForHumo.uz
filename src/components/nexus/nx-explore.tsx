@@ -8,6 +8,8 @@ import {
     UserPlus, UserCheck, Play, Music2, Radio, Eye,
     RefreshCw, Sparkles, MessageCircle, Heart,
 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 
 interface DUser { name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null }
@@ -366,7 +368,7 @@ export function NxExplore() {
 
                             {tags.length === 0 && users.length === 0 && videos.length === 0 && tracks.length === 0 && lives.length === 0 && posts.length === 0 && (
                                 <div className="text-center py-16 px-6">
-                                    <Sparkles className="w-10 h-10 mx-auto mb-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.25)" }} />
+                                    <UmmiPose pose={UMMI.discover} size={64} className="mx-auto mb-3 drop-shadow-sm" />
                                     <p className="text-sm font-black text-[var(--nx-text-2)] mb-1">Kashfiyot hozircha bo&apos;sh</p>
                                     <p className="text-xs" style={{ color: "var(--nx-text-2)" }}>Birinchi bo&apos;lib kontent qo&apos;shing yoki keyinroq qayta tekshiring.</p>
                                 </div>

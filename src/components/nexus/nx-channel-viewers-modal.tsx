@@ -4,6 +4,8 @@
 
 import { useEffect, useState } from "react";
 import { X, Loader2, Eye } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 
 type Viewer = {
     id: string; name: string | null; username: string | null; image: string | null;
@@ -65,7 +67,7 @@ export function NxChannelViewersModal({
                     <div className="flex justify-center py-12 flex-1"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                 ) : viewers.length === 0 ? (
                     <div className="text-center py-12">
-                        <Eye className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: "var(--nx-accent)" }} />
+                        <UmmiPose pose={UMMI.empty} size={64} className="mx-auto mb-3 drop-shadow-sm" />
                         <p className="text-sm" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>Hali hech kim ko&apos;rmagan</p>
                     </div>
                 ) : (

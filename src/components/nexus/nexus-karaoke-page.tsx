@@ -4,6 +4,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "@/i18n/routing";
 import { ArrowLeft, Trophy, Sparkles, User, Loader2 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { NxPlayerProvider } from "./nx-player-ctx";
 import { NxShare } from "./nx-share";
 import { KaraokePerformanceCard, type KaraokePerformance } from "./nx-karaoke-performances";
@@ -86,7 +88,7 @@ function KaraokePageInner() {
                     </div>
                 ) : items.length === 0 ? (
                     <div className="text-center py-16">
-                        <Trophy className="w-12 h-12 mx-auto mb-3" style={{ color: "rgba(236,72,153,0.30)" }} />
+                        <UmmiPose pose={UMMI.music} size={72} className="mx-auto mb-3 drop-shadow-sm" />
                         <p className="text-sm font-black text-[var(--nx-text-2)] mb-1">
                             {scope === "mine" ? "Hali karaoke qilmadingiz" : "Hozircha ijrolar yo'q"}
                         </p>

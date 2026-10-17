@@ -4,9 +4,9 @@
 // 3 tab: Aktiv / Yashirilgan / Muddati o'tgan.
 
 import { useState, useEffect, useCallback } from "react";
-import {
-    ImageIcon, EyeOff, Eye, Loader2, ExternalLink, TrendingUp, MousePointerClick, AlertTriangle, Clock, X, Sparkles,
-} from "lucide-react";
+import { EyeOff, Eye, Loader2, ExternalLink, TrendingUp, MousePointerClick, AlertTriangle, Clock, X, Sparkles } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 
 const NX_GRADIENT = "linear-gradient(135deg, var(--nx-accent) 0%, #6D28D9 50%, #EC4899 100%)";
 const NX_BG = "rgba(255,255,255,0.05)";
@@ -127,7 +127,7 @@ export function NxAdminAds() {
                     className="p-8 rounded-3xl text-center text-[13px] text-[var(--nx-text-2)]"
                     style={{ background: NX_BG, border: `1px solid ${NX_BORDER}` }}
                 >
-                    <ImageIcon className="w-10 h-10 mx-auto mb-2 opacity-40" />
+                    <UmmiPose pose={UMMI.empty} size={64} className="mx-auto mb-3 drop-shadow-sm" />
                     Hozircha bo&apos;sh
                 </div>
             )}
