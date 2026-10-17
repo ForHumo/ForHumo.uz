@@ -5,7 +5,7 @@ import { nxToast } from "@/components/nexus/ui/nx-toast";
 import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2, Wallet, Star, ShoppingBag, Bookmark, BookmarkCheck, Volume2, VolumeX, Languages, Copy, Pin, PinOff, Plus, MoreVertical, Reply, Forward, Pencil, Clock, Flame } from "lucide-react";
+import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2, Wallet, Star, ShoppingBag, Bookmark, BookmarkCheck, Volume2, VolumeX, Languages, Copy, Pin, PinOff, Plus, MoreVertical, Reply, Forward, Pencil, Clock, Flame, BellOff } from "lucide-react";
 import { UmmiPose } from "@/components/ummi/ummi-pose";
 import { UMMI } from "@/lib/ummi-poses";
 import { formatMoney } from "@/lib/money";
@@ -241,6 +241,11 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     const [myE2eIdentity, setMyE2eIdentity] = useState<{ privateJwk: JsonWebKey; fingerprint: string } | null>(null);
     const e2eAvailable = !!(peerE2eKey && myE2eIdentity);
     const [lockTick, setLockTick] = useState(0);
+    // Parity jilo: sokin yuborish / pin-banner indeks / global xabar qidiruv
+    const [nextSilent, setNextSilent] = useState(false);
+    const [pinnedIndex, setPinnedIndex] = useState(0);
+    const [msgResults, setMsgResults] = useState<Array<{ messageId: string; convId: string; text: string; mine: boolean; mediaType: string | null; peer: { id: string; name: string | null; username: string | null; image: string | null } | null }>>([]);
+    const [msgSearchBusy, setMsgSearchBusy] = useState(false);
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     function startLongPress(m: Msg) {
         if (longPressTimer.current) clearTimeout(longPressTimer.current);
@@ -334,6 +339,18 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 loadConvs();
             } else { nxToast("Yo'naltirib bo'lmadi"); }
         } catch { nxToast("Yo'naltirib bo'lmadi"); }
+    }
+    // Xabarga sakrash (global qidiruv natijasidan)
+    function jumpToMessage(messageId: string) {
+        setTimeout(() => {
+            const el = document.getElementById(`nxmsg-${messageId}`);
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 450);
+    }
+    function openMsgResult(r: { convId: string; messageId: string; peer: { id: string; name: string | null; username: string | null; image: string | null } | null }) {
+        setSelected({ conversationId: r.convId, other: r.peer ? { id: r.peer.id, name: r.peer.name, username: r.peer.username, image: r.peer.image, verified: false } : null });
+        setQuery("");
+        jumpToMessage(r.messageId);
     }
     const [query, setQuery] = useState("");
     const [sending, setSending] = useState(false);
@@ -477,6 +494,21 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
         return () => clearTimeout(t);
     }, [newOpen, newQuery]);
 
+    // Global xabar qidiruv — suhbat ro'yxatida query>=2 bo'lsa barcha DM matnидан
+    useEffect(() => {
+        if (newOpen || selected) { setMsgResults([]); return; }
+        const q = query.trim();
+        if (q.length < 2) { setMsgResults([]); return; }
+        setMsgSearchBusy(true);
+        const t = setTimeout(async () => {
+            try {
+                const d = await fetch(`/api/nexus/messages/search-global?q=${encodeURIComponent(q)}`).then(r => r.json());
+                setMsgResults(Array.isArray(d.dm) ? d.dm : []);
+            } catch { setMsgResults([]); } finally { setMsgSearchBusy(false); }
+        }, 350);
+        return () => clearTimeout(t);
+    }, [query, newOpen, selected]);
+
     // MUHIM: early return quyida (barcha hook'lardan keyin) qilinadi,
     // aks holda React error #310 "Rendered fewer hooks" chiqadi.
 
@@ -501,7 +533,8 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
         // ── Oddiy yuborish (ehtimol javob + self-destruct bilan) ──
         const rt = replyTarget;
         const ttl = nextTtl;
-        setInput(""); setReplyTarget(null); setNextTtl(null); setSending(true);
+        const silent = nextSilent;
+        setInput(""); setReplyTarget(null); setNextTtl(null); setNextSilent(false); setSending(true);
         const temp: Msg = {
             id: "tmp-" + Date.now(), text, mine: true, createdAt: new Date().toISOString(),
             replyTo: rt ? { id: rt.id, text: rt.text, senderName: rt.mine ? (myName ?? "Siz") : (selected.other?.name ?? null), mine: rt.mine } : null,
@@ -509,7 +542,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
         };
         setMessages(m => [...m, temp]);
         try {
-            const body: Record<string, unknown> = { replyToId: rt?.id, ...(ttl ? { selfDestructSeconds: ttl } : {}) };
+            const body: Record<string, unknown> = { replyToId: rt?.id, ...(ttl ? { selfDestructSeconds: ttl } : {}), ...(silent ? { silent: true } : {}) };
             let localMirror: string | null = null;
             if (e2eAvailable && peerE2eKey) {
                 try {
@@ -994,6 +1027,30 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 </div>
             </div>
             <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+                {query.trim().length >= 2 && (msgSearchBusy || msgResults.length > 0) && (
+                    <div className="border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
+                        <div className="px-4 pt-2 pb-1 flex items-center gap-1.5">
+                            <Search className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />
+                            <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>Xabarlarda</span>
+                            {msgSearchBusy && <Loader2 className="w-3 h-3 animate-spin" style={{ color: "var(--nx-accent)" }} />}
+                        </div>
+                        {msgResults.map(r => (
+                            <button key={r.messageId} onClick={() => openMsgResult(r)}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/[0.04]">
+                                <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
+                                    {r.peer?.image ? <img src={r.peer.image} alt="" className="w-full h-full object-cover" /> : <Users className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-bold truncate text-[var(--nx-text)]">{r.peer?.name || r.peer?.username || "Foydalanuvchi"}</p>
+                                    <p className="text-[11px] truncate" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>{r.mine ? "Siz: " : ""}{r.text || (r.mediaType ? `[${r.mediaType}]` : "(media)")}</p>
+                                </div>
+                            </button>
+                        ))}
+                        {!msgSearchBusy && msgResults.length === 0 && (
+                            <p className="px-4 py-2 text-[11px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.55)" }}>Xabar topilmadi</p>
+                        )}
+                    </div>
+                )}
                 {filteredConvs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 gap-3 px-6 text-center">
                         <UmmiPose pose={UMMI.chat} size={72} className="drop-shadow-sm" />
@@ -1038,6 +1095,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     );
 
     /* ── O'ng ustun: Thread YOKI bo'sh holat (faqat lg+) ── */
+    const pinnedMsgs = messages.filter(m => !!m.pinnedAt);
     const rightPanel = selected ? (
         <>
             <div className="flex items-center gap-3 px-4 py-3 flex-shrink-0" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
@@ -1134,6 +1192,29 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 <NxE2eBanner peerName={selected.other?.name || selected.other?.username || "Foydalanuvchi"}
                     peerFingerprint={peerE2eKey.fingerprint} myFingerprint={myE2eIdentity.fingerprint} />
             )}
+            {pinnedMsgs.length > 0 && (() => {
+                const idx = pinnedIndex % pinnedMsgs.length;
+                const pm = pinnedMsgs[idx];
+                return (
+                    <div className="flex items-center gap-2 px-4 py-2 flex-shrink-0 border-b cursor-pointer"
+                        style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)", background: "rgb(var(--nx-accent-rgb) / 0.05)" }}
+                        onClick={() => { jumpToMessage(pm.id); if (pinnedMsgs.length > 1) setPinnedIndex(i => i + 1); }}>
+                        <Pin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-black" style={{ color: "var(--nx-accent)" }}>
+                                Pinlangan xabar{pinnedMsgs.length > 1 ? ` · ${idx + 1}/${pinnedMsgs.length}` : ""}
+                            </p>
+                            <p className="text-xs truncate" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
+                                {pm.text || pm.e2eDecrypted || (pm.mediaType ? `[${pm.mediaType}]` : "(media)")}
+                            </p>
+                        </div>
+                        <button onClick={(e) => { e.stopPropagation(); actionPin(pm); }}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-white/[0.06]" title="Yechish">
+                            <PinOff className="w-3.5 h-3.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }} />
+                        </button>
+                    </div>
+                );
+            })()}
             <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2 min-h-0"
                 style={{
                     scrollbarWidth: "none",
@@ -1153,6 +1234,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                     const hasMedia = !isAlbum && !!m.mediaType && (m.mediaUrl || isTemp);
                     return (
                         <div key={m.id}
+                            id={`nxmsg-${m.id}`}
                             onTouchStart={() => startLongPress(m)}
                             onTouchEnd={cancelLongPress}
                             onTouchMove={cancelLongPress}
@@ -1178,19 +1260,28 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                         </p>
                                     </div>
                                 )}
-                                {/* Albom — ko'p rasm/video grid */}
+                                {/* Albom — ko'p rasm/video grid (maks 4 ko'rsatiladi, ortig'i +N) */}
                                 {isAlbum && (
                                     <div className="grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden mb-0.5" style={{ maxWidth: 280 }}>
-                                        {albumItems.map((it, i) => (
-                                            <a key={it.id} href={it.mediaUrl || "#"} target="_blank" rel="noopener noreferrer"
-                                                className={`block relative ${albumItems.length === 3 && i === 0 ? "col-span-2" : ""}`}>
-                                                {it.mediaType === "video"
-                                                    ? <video src={it.mediaUrl || undefined} className="w-full h-32 object-cover" />
-                                                    : it.mediaUrl
-                                                        ? <img src={it.mediaUrl} alt="" loading="lazy" className="w-full h-32 object-cover" />
-                                                        : <div className="w-full h-32 flex items-center justify-center" style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}><Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>}
-                                            </a>
-                                        ))}
+                                        {albumItems.slice(0, 4).map((it, i) => {
+                                            const extra = albumItems.length - 4;
+                                            const showPlus = i === 3 && extra > 0;
+                                            return (
+                                                <a key={it.id} href={it.mediaUrl || "#"} target="_blank" rel="noopener noreferrer"
+                                                    className={`block relative ${albumItems.length === 3 && i === 0 ? "col-span-2" : ""}`}>
+                                                    {it.mediaType === "video"
+                                                        ? <video src={it.mediaUrl || undefined} className="w-full h-32 object-cover" />
+                                                        : it.mediaUrl
+                                                            ? <img src={it.mediaUrl} alt="" loading="lazy" className="w-full h-32 object-cover" />
+                                                            : <div className="w-full h-32 flex items-center justify-center" style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}><Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>}
+                                                    {showPlus && (
+                                                        <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(3,7,25,0.55)" }}>
+                                                            <span className="text-lg font-black text-white">+{extra}</span>
+                                                        </div>
+                                                    )}
+                                                </a>
+                                            );
+                                        })}
                                     </div>
                                 )}
                                 {/* Media qism (agar mavjud bo'lsa) */}
@@ -1654,6 +1745,15 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                             <span className="text-[10px] font-bold" style={{ color: nextTtl ? "#F97316" : "rgb(var(--nx-text-rgb)/0.85)" }}>
                                                 {nextTtl ? formatAutoDeleteBadge(nextTtl) : "O'z-o'char"}
                                             </span>
+                                        </button>
+                                        <button type="button"
+                                            onClick={() => { setAttachOpen(false); setNextSilent(v => !v); }}
+                                            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]">
+                                            <span className="w-9 h-9 rounded-full flex items-center justify-center"
+                                                style={{ background: nextSilent ? "rgb(var(--nx-accent-rgb) / 0.28)" : "rgb(var(--nx-accent-rgb) / 0.14)" }}>
+                                                <BellOff className="w-4 h-4" style={{ color: nextSilent ? "var(--nx-accent)" : "rgb(var(--nx-text-2-rgb)/0.90)" }} />
+                                            </span>
+                                            <span className="text-[10px] font-bold" style={{ color: nextSilent ? "var(--nx-accent)" : "rgb(var(--nx-text-rgb)/0.85)" }}>Sokin</span>
                                         </button>
                                     </div>
                                 </div>
