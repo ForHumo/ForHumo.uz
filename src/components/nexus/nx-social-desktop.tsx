@@ -652,6 +652,8 @@ export function NxSocialDesktop() {
     const lpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lpStartRef = useRef<{ x: number; y: number } | null>(null);
     const lpFiredRef = useRef(false);
+    // Xabarni chapga surish → javob (swipe-to-reply)
+    const swipeRef = useRef<{ id: string; startX: number; startY: number; dx: number; el: HTMLElement; horizontal: boolean } | null>(null);
     // Chatni o'chirish modal — 3 varinat: o'zim uchun / ikkala tomon / vaqtinchalik yashirish
     const [deleteChatFor, setDeleteChatFor] = useState<string | null>(null);
     // Yashirin (vaqtinchalik o'chirilgan) chatlar bo'limi ochilganmi
@@ -4105,9 +4107,29 @@ export function NxSocialDesktop() {
                                         if (msgMenuFor === m.id) setMsgMenuFor(null);
                                         else openMsgMenuAtPoint(m.id, e.clientX, e.clientY);
                                     }}
-                                    onTouchStart={(e) => { if (selectMode) return; const t = e.touches[0]; const px = t?.clientX ?? 0, py = t?.clientY ?? 0; lpStart(e, () => openMsgMenuAtPoint(m.id, px, py)); }}
-                                    onTouchMove={lpMove}
-                                    onTouchEnd={lpEnd}
+                                    onTouchStart={(e) => {
+                                        if (selectMode) return;
+                                        const t = e.touches[0]; if (!t) return;
+                                        const el = e.currentTarget as HTMLElement;
+                                        const px = t.clientX, py = t.clientY;
+                                        swipeRef.current = { id: m.id, startX: px, startY: py, dx: 0, el, horizontal: false };
+                                        lpStart(e, () => openMsgMenuAtPoint(m.id, px, py));
+                                    }}
+                                    onTouchMove={(e) => {
+                                        const s = swipeRef.current; const t = e.touches[0];
+                                        if (!s || !t) { lpMove(e); return; }
+                                        const dx = t.clientX - s.startX, dy = t.clientY - s.startY;
+                                        if (Math.abs(dx) > 10 || Math.abs(dy) > 10) lpEnd();
+                                        if (!s.horizontal && Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) + 4) s.horizontal = true;
+                                        if (s.horizontal && dx < 0) { s.dx = Math.max(dx, -90); s.el.style.transition = "none"; s.el.style.transform = `translateX(${s.dx}px)`; }
+                                        else if (s.horizontal) { s.dx = 0; s.el.style.transform = ""; }
+                                    }}
+                                    onTouchEnd={() => {
+                                        const s = swipeRef.current; swipeRef.current = null; lpEnd();
+                                        if (!s) return;
+                                        s.el.style.transition = "transform 160ms"; s.el.style.transform = "";
+                                        if (s.horizontal && s.dx < -55) setReplyTo(m);
+                                    }}
                                     className={`group flex items-center gap-1 ${m.mine ? "flex-row justify-end" : "flex-row-reverse justify-end"} ${selectMode ? "cursor-pointer" : ""} ${selectedIds.has(m.id) ? "rounded-lg py-1" : ""}`}
                                     style={{
                                         ...(selectedIds.has(m.id) ? { background: "rgb(var(--nx-accent-rgb) / 0.10)" } : {}),
@@ -4116,6 +4138,7 @@ export function NxSocialDesktop() {
                                         // Optimistic UI: pending — biroz shaffof; failed — qizil orqa
                                         opacity: m._pending ? 0.65 : 1,
                                         transition: "opacity 180ms",
+                                        touchAction: "pan-y",   // gorizontal swipe (javob) — scroll emas
                                     }}>
                                     {selectMode && (
                                         <div className="flex-shrink-0 flex items-center justify-center w-6 h-6">
