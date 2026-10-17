@@ -2826,8 +2826,8 @@ export function NxSocialDesktop() {
 
     return (
         <div className="flex w-full h-full min-h-0 pb-[88px]" style={{ background: "var(--nx-bg)" }}>
-            {/* ── COL 1: Chat list ─────────────────────────────────────── */}
-            <div className="w-[380px] flex-shrink-0 flex flex-col border-r"
+            {/* ── COL 1: Chat list ── telefonda to'liq kenglik; chat ochilsa yashirin (md+ da doim 380px) */}
+            <div className={`w-full md:w-[380px] flex-shrink-0 flex-col border-r ${(selectedId || selectedChannel) ? "hidden md:flex" : "flex"}`}
                 style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "var(--nx-surface)" }}>
                 {/* Tab bar (6 majburiy tab: All/Unread/DM/Groups/Channels/Agents) — 6-ustunli grid, swipe kerak emas */}
                 <div className="p-2 flex-shrink-0"
@@ -3704,8 +3704,8 @@ export function NxSocialDesktop() {
                 </div>
             </div>
 
-            {/* ── COL 2: Selected chat/channel ─────────────────────────── */}
-            <div className="flex-1 flex flex-col min-w-0"
+            {/* ── COL 2: Selected chat/channel ── telefonda chat ochilganda to'liq; aks holda yashirin (md+ da doim) */}
+            <div className={`flex-1 flex-col min-w-0 ${(selectedId || selectedChannel) ? "flex" : "hidden md:flex"}`}
                 style={{
                     background: (selectedId && !selectedChannel)
                         ? (customWallpaperUrl
@@ -3767,6 +3767,12 @@ export function NxSocialDesktop() {
                         ) : (
                         <div className="px-4 py-3 flex items-center gap-3 flex-shrink-0"
                             style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", background: "var(--nx-surface)" }}>
+                            {/* Telefonda orqaga (ro'yxatga qaytish) */}
+                            <button type="button" onClick={() => setSelectedId(null)}
+                                className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
+                                style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }} title="Ortga">
+                                <ChevronLeft className="w-5 h-5 text-[var(--nx-text)]" />
+                            </button>
                             {/* Telegram uslub — avatar+nom bosilsa info paneli ochiladi/yopiladi */}
                             <button
                                 type="button"
