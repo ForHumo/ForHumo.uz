@@ -12,6 +12,11 @@ import { ImageCropModal } from "@/components/ui/image-crop-modal";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { signOut } from "next-auth/react";
 import { LogOut } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
+
+// Har qadamга mos Ummi pozasi — yo'l boshlovchi mascot (shaffof).
+const STEP_POSE = [UMMI.welcome, UMMI.id, UMMI.idea];
 
 // ─── Country data ─────────────────────────────────────────────────────────────
 const COUNTRIES_RAW = [
@@ -164,6 +169,16 @@ function WizardCard({
     const t = useTranslations("Onboarding");
     return (
         <div className="bg-card/80 backdrop-blur-xl border border-border/60 rounded-2xl p-6 shadow-2xl space-y-5">
+            {/* Yo'l boshlovchi Ummi — har qadamda pozasi o'zgaradi (shaffof) */}
+            <motion.div
+                key={step}
+                initial={{ scale: 0.8, opacity: 0, y: -6 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                transition={{ type: "spring", bounce: 0.4, duration: 0.5 }}
+                className="flex justify-center"
+            >
+                <UmmiPose pose={STEP_POSE[step] ?? UMMI.welcome} size={76} className="drop-shadow-md" priority />
+            </motion.div>
             <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                     <p className="text-xs font-medium text-muted-foreground mb-1">
@@ -702,10 +717,10 @@ export function OnboardingWizard({ onComplete, locale }: WizardProps) {
                                 transition={{ delay: 0.15, type: "spring", bounce: 0.5 }}
                                 className="flex justify-center"
                             >
-                                <div className="w-20 h-20 rounded-full bg-blue-500/15 border border-blue-500/30 flex items-center justify-center">
-                                    <svg className="w-10 h-10 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
+                                <div className="relative flex items-center justify-center">
+                                    {/* Yumshoq nur — tabriklayotgan Ummi */}
+                                    <div className="absolute w-28 h-28 rounded-full bg-blue-500/15 blur-xl" />
+                                    <UmmiPose pose={UMMI.congrats} size={112} className="relative drop-shadow-md" priority />
                                 </div>
                             </motion.div>
 
