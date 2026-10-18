@@ -79,7 +79,7 @@ export async function GET(req: Request) {
             id: s.id, title: s.title, category: s.category, status: s.status,
             scheduledAt: s.scheduledAt, startedAt: s.startedAt, endedAt: s.endedAt,
             viewers: viewerCounts[s.id] ?? 0, peakViewers: s.peakViewers, likes: s.likes,
-            createdAt: s.createdAt,
+            createdAt: s.createdAt, thumbUrl: s.thumbUrl,
             recordingUrl: s.recordingUrl, recordingDurationSec: s.recordingDurationSec,
             isMine: s.profileId === meId,
             author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p), verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null } : null,
@@ -96,8 +96,9 @@ export async function POST(req: Request) {
     const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
-    const { title, category, privacy, scheduledAt, crossToChannel } = await req.json();
+    const { title, category, privacy, scheduledAt, crossToChannel, thumbUrl } = await req.json();
     if (!title?.trim()) return NextResponse.json({ error: "Sarlavha kerak" }, { status: 400 });
+    const cover = typeof thumbUrl === "string" && /^https?:\/\//.test(thumbUrl) && thumbUrl.length < 1000 ? thumbUrl : null;
     if (await nexusRateLimited(me.id, "live")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     // Bitta odamda bitta faol efir
@@ -118,6 +119,7 @@ export async function POST(req: Request) {
             status: isUpcoming ? "UPCOMING" : "LIVE",
             scheduledAt: sched,
             startedAt: isUpcoming ? null : new Date(),
+            ...(cover ? { thumbUrl: cover } : {}),
         },
     });
 
@@ -165,7 +167,7 @@ export async function POST(req: Request) {
         if (!shouldSend) return;
         await crossPostToOwnChannel({
             authorId: me.id, type: "live", id: stream.id,
-            title: stream.title, thumb: null,
+            title: stream.title, thumb: stream.thumbUrl,
             description: stream.category ? `Kategoriya: ${stream.category}` : null,
         });
     });

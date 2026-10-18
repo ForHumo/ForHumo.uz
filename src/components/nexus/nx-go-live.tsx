@@ -6,6 +6,7 @@ import {
     X, Radio, Mic, MicOff, Camera, CameraOff, Eye, Loader2,
     Send, Globe, Users, Lock, StopCircle, Clock, MessageSquare,
     Monitor, MonitorOff, Layout, User, Sparkles, Gift,
+    Image as ImageIcon, Plus,
 } from "lucide-react";
 import { Room, LocalVideoTrack, LocalAudioTrack, Track } from "livekit-client";
 import { upload } from "@vercel/blob/client";
@@ -86,6 +87,14 @@ export function NxGoLive() {
     const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
     const [currency, setCurrency] = useState<Currency>("UZS");
     const [totalTips, setTotalTips] = useState(0);
+    // Cover (oblojka) — Humo AI yoki qurilmadan
+    const [coverUrl, setCoverUrl] = useState<string | null>(null);
+    const [coverBusy, setCoverBusy] = useState(false);          // qurilmadan yuklanyapti
+    const [coverErr, setCoverErr] = useState<string | null>(null);
+    const [aiOpen, setAiOpen] = useState(false);                // AI panel ochiq
+    const [aiPrompt, setAiPrompt] = useState("");
+    const [aiRefs, setAiRefs] = useState<string[]>([]);         // reference rasm data URL'lari (maks 3)
+    const [aiGenning, setAiGenning] = useState(false);
     // Batch B + C + D: PiP position/size/frame/transition
     const [pipCorner, setPipCorner] = useState<PipCorner>("br");
     const [pipSize, setPipSize] = useState<PipSize>("md");
@@ -167,6 +176,8 @@ export function NxGoLive() {
             setMicOn(true); setCamOn(true); setStarting(false); setErr(null);
             setStreamId(null); setViewers(0); setPeak(0); setDuration(0);
             setMsgs([]); setChatIn(""); lastTsRef.current = null;
+            setCoverUrl(null); setCoverBusy(false); setCoverErr(null);
+            setAiOpen(false); setAiPrompt(""); setAiRefs([]); setAiGenning(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [goLiveOpen]);
@@ -295,7 +306,7 @@ export function NxGoLive() {
         try {
             const r = await fetch("/api/nexus/live", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title, category, privacy, crossToChannel }),
+                body: JSON.stringify({ title, category, privacy, crossToChannel, thumbUrl: coverUrl }),
             });
             const d = await r.json().catch(() => ({}));
             if (!r.ok || !d.stream) { setErr(d.error || "Efir boshlanmadi"); return; }
@@ -442,6 +453,51 @@ export function NxGoLive() {
         } finally { setChatBusy(false); }
     }
 
+    // ── Cover (oblojka) ──
+    function fileToDataUrl(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const r = new FileReader();
+            r.onload = () => resolve(String(r.result));
+            r.onerror = () => reject(new Error("read"));
+            r.readAsDataURL(file);
+        });
+    }
+
+    async function pickCoverFromDevice(file: File) {
+        if (!file.type.startsWith("image/")) { setCoverErr("Faqat rasm fayli"); return; }
+        if (file.size > 10 * 1024 * 1024) { setCoverErr("Rasm 10MB dan kichik bo'lsin"); return; }
+        setCoverBusy(true); setCoverErr(null);
+        try {
+            const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+            const up = await upload(`nexus/live-cover/${Date.now()}.${ext}`, file, {
+                access: "public", handleUploadUrl: "/api/market/upload/client-token",
+            });
+            setCoverUrl(up.url); setAiOpen(false);
+        } catch { setCoverErr("Yuklashda xato — qayta urinib ko'ring"); }
+        finally { setCoverBusy(false); }
+    }
+
+    async function addAiRef(file: File) {
+        if (!file.type.startsWith("image/")) return;
+        if (file.size > 6 * 1024 * 1024) { setCoverErr("Reference rasm 6MB dan kichik bo'lsin"); return; }
+        try { const u = await fileToDataUrl(file); setAiRefs(r => [...r, u].slice(0, 3)); } catch { /* ignore */ }
+    }
+
+    async function generateAiCover() {
+        if (aiPrompt.trim().length < 2 || aiGenning) return;
+        setAiGenning(true); setCoverErr(null);
+        try {
+            const r = await fetch("/api/nexus/live/cover", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prompt: aiPrompt.trim(), images: aiRefs }),
+            });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok || !d.url) { setCoverErr(d.error === "prompt_required" ? "Tavsif yozing" : (d.error || "Rasm yaratilmadi")); return; }
+            setCoverUrl(d.url); setAiOpen(false);
+        } catch { setCoverErr("Tarmoq xatosi"); }
+        finally { setAiGenning(false); }
+    }
+
     // ── Kamera preview bloki (setup va live'da umumiy) ──
     const cameraBlock = (
         <div className="relative w-full aspect-video rounded-2xl overflow-hidden"
@@ -517,6 +573,94 @@ export function NxGoLive() {
                                 placeholder="Efir haqida bir necha jumla..."
                                 className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none resize-y"
                                 style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "#F97316" }} />
+                        </div>
+
+                        {/* Cover (oblojka) — AI yoki qurilmadan */}
+                        <div>
+                            <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>
+                                <ImageIcon className="w-3 h-3 inline mr-1" />Oblojka (ixtiyoriy)
+                            </p>
+
+                            {/* Preview */}
+                            <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-2"
+                                style={{ background: "rgba(5,8,24,0.6)", border: "1px dashed rgba(239,68,68,0.28)" }}>
+                                {coverUrl ? (
+                                    <>
+                                        <img src={coverUrl} alt="" className="w-full h-full object-cover" />
+                                        <button onClick={() => setCoverUrl(null)}
+                                            className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-lg"
+                                            style={{ background: "rgba(5,8,24,0.78)" }} title="O'chirish">
+                                            <X className="w-3.5 h-3.5 text-white" />
+                                        </button>
+                                    </>
+                                ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center flex-col gap-1">
+                                        <ImageIcon className="w-7 h-7" style={{ color: "rgba(239,68,68,0.35)" }} />
+                                        <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.6)" }}>Efir kartasida ko&apos;rinadi</p>
+                                    </div>
+                                )}
+                                {(coverBusy || aiGenning) && (
+                                    <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(5,8,24,0.65)" }}>
+                                        <Loader2 className="w-6 h-6 animate-spin text-white" />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Manba tanlash */}
+                            <div className="grid grid-cols-2 gap-2">
+                                <button onClick={() => setAiOpen(o => !o)} disabled={coverBusy || aiGenning}
+                                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black transition active:scale-95 disabled:opacity-50"
+                                    style={aiOpen
+                                        ? { background: "linear-gradient(135deg,#8B5CF6,#6366F1)", color: "#fff" }
+                                        : { background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.35)", color: "rgba(190,170,240,0.95)" }}>
+                                    <Sparkles className="w-3.5 h-3.5" />Humo AI
+                                </button>
+                                <label className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black transition active:scale-95 cursor-pointer"
+                                    style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "rgba(220,160,150,0.9)" }}>
+                                    <ImageIcon className="w-3.5 h-3.5" />Qurilmadan
+                                    <input type="file" accept="image/*" className="hidden"
+                                        onChange={e => { const f = e.target.files?.[0]; if (f) pickCoverFromDevice(f); e.currentTarget.value = ""; }} />
+                                </label>
+                            </div>
+
+                            {/* AI panel */}
+                            {aiOpen && (
+                                <div className="mt-2 p-3 rounded-xl space-y-2" style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.25)" }}>
+                                    <textarea value={aiPrompt} onChange={e => setAiPrompt(e.target.value.slice(0, 500))} rows={2}
+                                        placeholder="Qanday oblojka? Masalan: kechki shahar fonida gaming setup, neon yorug'lik"
+                                        className="w-full px-3 py-2 rounded-lg text-xs text-white outline-none resize-y"
+                                        style={{ background: "rgba(5,8,24,0.55)", border: "1px solid rgba(139,92,246,0.3)", caretColor: "#8B5CF6" }} />
+
+                                    {/* Reference rasmlar (ixtiyoriy, maks 3) */}
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        {aiRefs.map((src, i) => (
+                                            <div key={i} className="relative w-12 h-12 rounded-lg overflow-hidden" style={{ border: "1px solid rgba(139,92,246,0.4)" }}>
+                                                <img src={src} alt="" className="w-full h-full object-cover" />
+                                                <button onClick={() => setAiRefs(r => r.filter((_, j) => j !== i))}
+                                                    className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center rounded-full" style={{ background: "#EF4444" }}>
+                                                    <X className="w-2.5 h-2.5 text-white" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {aiRefs.length < 3 && (
+                                            <label className="w-12 h-12 flex items-center justify-center rounded-lg cursor-pointer" style={{ background: "rgba(139,92,246,0.1)", border: "1px dashed rgba(139,92,246,0.4)" }} title="Reference rasm">
+                                                <Plus className="w-4 h-4" style={{ color: "rgba(190,170,240,0.9)" }} />
+                                                <input type="file" accept="image/*" className="hidden"
+                                                    onChange={e => { const f = e.target.files?.[0]; if (f) addAiRef(f); e.currentTarget.value = ""; }} />
+                                            </label>
+                                        )}
+                                    </div>
+                                    <p className="text-[9px]" style={{ color: "rgba(150,140,190,0.7)" }}>Rasm qo&apos;shsangiz — AI ularni uslub/manba sifatida ishlatadi. Kuniga 20 ta.</p>
+
+                                    <button onClick={generateAiCover} disabled={aiGenning || aiPrompt.trim().length < 2}
+                                        className="w-full h-10 rounded-lg text-xs font-black text-white flex items-center justify-center gap-2 disabled:opacity-50"
+                                        style={{ background: "linear-gradient(135deg,#8B5CF6,#6366F1)" }}>
+                                        {aiGenning ? <><Loader2 className="w-4 h-4 animate-spin" />Yaratilyapti...</> : <><Sparkles className="w-4 h-4" />Rasm yaratish</>}
+                                    </button>
+                                </div>
+                            )}
+
+                            {coverErr && <p className="text-[11px] text-red-400 font-bold mt-1.5">{coverErr}</p>}
                         </div>
 
                         {/* Scene layout — Solo/Podkast/PiP/Ekran */}
