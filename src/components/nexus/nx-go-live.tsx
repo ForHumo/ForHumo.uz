@@ -6,7 +6,7 @@ import {
     X, Radio, Mic, MicOff, Camera, CameraOff, Eye, Loader2,
     Send, Globe, Users, Lock, StopCircle, Clock, MessageSquare,
     Monitor, MonitorOff, Layout, User, Sparkles, Gift,
-    Image as ImageIcon, Plus,
+    Image as ImageIcon, Plus, CalendarClock,
 } from "lucide-react";
 import { Room, LocalVideoTrack, LocalAudioTrack, Track } from "livekit-client";
 import { upload } from "@vercel/blob/client";
@@ -95,6 +95,11 @@ export function NxGoLive() {
     const [aiPrompt, setAiPrompt] = useState("");
     const [aiRefs, setAiRefs] = useState<string[]>([]);         // reference rasm data URL'lari (maks 3)
     const [aiGenning, setAiGenning] = useState(false);
+    // Rejalashtirish (UPCOMING efir)
+    const [scheduleLater, setScheduleLater] = useState(false);
+    const [scheduleAt, setScheduleAt] = useState("");           // datetime-local qiymati (local vaqt)
+    const [scheduling, setScheduling] = useState(false);
+    const [scheduledOk, setScheduledOk] = useState(false);
     // Batch B + C + D: PiP position/size/frame/transition
     const [pipCorner, setPipCorner] = useState<PipCorner>("br");
     const [pipSize, setPipSize] = useState<PipSize>("md");
@@ -178,6 +183,7 @@ export function NxGoLive() {
             setMsgs([]); setChatIn(""); lastTsRef.current = null;
             setCoverUrl(null); setCoverBusy(false); setCoverErr(null);
             setAiOpen(false); setAiPrompt(""); setAiRefs([]); setAiGenning(false);
+            setScheduleLater(false); setScheduleAt(""); setScheduling(false); setScheduledOk(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [goLiveOpen]);
@@ -363,6 +369,33 @@ export function NxGoLive() {
         finally { setStarting(false); }
     }
 
+    // Rejalashtirilgan efir yaratish (UPCOMING — darhol jonli emas)
+    async function createScheduled() {
+        if (!title.trim() || scheduling) return;
+        const when = scheduleAt ? new Date(scheduleAt) : null;
+        if (!when || isNaN(when.getTime()) || when.getTime() < Date.now() + 60_000) {
+            setErr("Kelajakdagi vaqtni tanlang (kamida 1 daqiqa keyin)");
+            return;
+        }
+        setScheduling(true); setErr(null);
+        try {
+            const r = await fetch("/api/nexus/live", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, category, privacy, crossToChannel, thumbUrl: coverUrl, scheduledAt: when.toISOString() }),
+            });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok || !d.stream) { setErr(d.error || "Rejalashtirilmadi"); return; }
+            if (description.trim()) {
+                fetch(`/api/nexus/live/${d.stream.id}`, {
+                    method: "PATCH", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "update", description }),
+                }).catch(() => { });
+            }
+            setScheduledOk(true);
+        } catch { setErr("Tarmoq xatosi"); }
+        finally { setScheduling(false); }
+    }
+
     // Screen share toggle
     async function toggleScreen() {
         if (screenOn) {
@@ -537,6 +570,28 @@ export function NxGoLive() {
         </div>
     );
 
+    /* ── Rejalashtirildi — tasdiq ── */
+    if (stage === "setup" && scheduledOk) {
+        return createPortal(
+            <>
+                <div className="fixed inset-0 z-[200]" style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(8px)" }} onClick={close} />
+                <div className="fixed inset-x-0 bottom-0 z-[200] flex flex-col rounded-t-3xl overflow-hidden md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[400px] md:rounded-3xl"
+                    style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(16,185,129,0.30)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)" }}
+                    onClick={e => e.stopPropagation()}>
+                    <div className="p-8 flex flex-col items-center gap-3 text-center">
+                        <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.40)" }}>
+                            <CalendarClock className="w-7 h-7" style={{ color: "#10B981" }} />
+                        </div>
+                        <h2 className="text-lg font-black text-white">Efir rejalashtirildi</h2>
+                        <p className="text-xs leading-relaxed" style={{ color: "rgba(140,160,210,0.8)" }}>Belgilangan vaqtda &quot;Tez kunda boshlanadi&quot; ro&apos;yxatida ko&apos;rinadi. Tomoshabinlar eslatma yoqib qo&apos;yishi mumkin.</p>
+                        <button onClick={close} className="mt-2 px-6 h-10 rounded-xl text-sm font-black text-white" style={{ background: "linear-gradient(135deg,#10B981,#059669)" }}>Tayyor</button>
+                    </div>
+                </div>
+            </>,
+            document.body,
+        );
+    }
+
     /* ── SETUP ── */
     if (stage === "setup") {
         return createPortal(
@@ -558,13 +613,42 @@ export function NxGoLive() {
                     </div>
 
                     <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-4" style={{ scrollbarWidth: "none" }}>
-                        {cameraBlock}
+                        {!scheduleLater && cameraBlock}
 
                         <div>
                             <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>Efir sarlavhasi</p>
                             <input value={title} onChange={e => setTitle(e.target.value.slice(0, 120))} placeholder="Bu efirda nima bo'ladi?"
                                 className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none"
                                 style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "#F97316" }} />
+                        </div>
+
+                        {/* Qachon — hozir yoki keyinroq rejalashtirish */}
+                        <div>
+                            <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>
+                                <Clock className="w-3 h-3 inline mr-1" />Qachon
+                            </p>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button onClick={() => setScheduleLater(false)}
+                                    className="py-2.5 rounded-xl text-xs font-black transition active:scale-95"
+                                    style={!scheduleLater
+                                        ? { background: "linear-gradient(135deg,#EF4444,#F97316)", color: "#fff" }
+                                        : { background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.20)", color: "rgba(220,160,150,0.85)" }}>
+                                    Hozir boshlash
+                                </button>
+                                <button onClick={() => setScheduleLater(true)}
+                                    className="py-2.5 rounded-xl text-xs font-black transition active:scale-95"
+                                    style={scheduleLater
+                                        ? { background: "linear-gradient(135deg,#10B981,#059669)", color: "#fff" }
+                                        : { background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.22)", color: "rgba(160,220,190,0.9)" }}>
+                                    Keyinroq rejalashtirish
+                                </button>
+                            </div>
+                            {scheduleLater && (
+                                <input type="datetime-local" value={scheduleAt}
+                                    onChange={e => setScheduleAt(e.target.value)}
+                                    className="w-full mt-2 px-4 py-3 rounded-xl text-sm text-white outline-none"
+                                    style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.28)", colorScheme: "dark", caretColor: "#10B981" }} />
+                            )}
                         </div>
 
                         <div>
@@ -663,6 +747,8 @@ export function NxGoLive() {
                             {coverErr && <p className="text-[11px] text-red-400 font-bold mt-1.5">{coverErr}</p>}
                         </div>
 
+                        {/* Sahna sxemasi + ekran — faqat "hozir boshlash"da (rejalashtirishda kerak emas) */}
+                        {!scheduleLater && (<>
                         {/* Scene layout — Solo/Podkast/PiP/Ekran */}
                         <div>
                             <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>
@@ -695,6 +781,7 @@ export function NxGoLive() {
                                           : <><Monitor className="w-3.5 h-3.5" />Ekranni ulash</>}
                             </button>
                         )}
+                        </>)}
 
                         <div>
                             <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>Kategoriya</p>
@@ -729,10 +816,13 @@ export function NxGoLive() {
 
                         {err && <p className="text-xs text-red-400 font-bold">{err}</p>}
 
-                        <button onClick={startLive} disabled={starting || !title.trim()}
+                        <button onClick={scheduleLater ? createScheduled : startLive}
+                            disabled={starting || scheduling || !title.trim() || (scheduleLater && !scheduleAt)}
                             className="w-full h-12 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-50"
-                            style={{ background: "linear-gradient(135deg,#EF4444,#F97316)", boxShadow: "0 4px 20px rgba(239,68,68,0.35)" }}>
-                            {starting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Radio className="w-4 h-4" /> Efirni boshlash</>}
+                            style={{ background: scheduleLater ? "linear-gradient(135deg,#10B981,#059669)" : "linear-gradient(135deg,#EF4444,#F97316)", boxShadow: scheduleLater ? "0 4px 20px rgba(16,185,129,0.35)" : "0 4px 20px rgba(239,68,68,0.35)" }}>
+                            {(starting || scheduling) ? <Loader2 className="w-4 h-4 animate-spin" />
+                                : scheduleLater ? <><CalendarClock className="w-4 h-4" /> Rejalashtirish</>
+                                : <><Radio className="w-4 h-4" /> Efirni boshlash</>}
                         </button>
                     </div>
                 </div>
