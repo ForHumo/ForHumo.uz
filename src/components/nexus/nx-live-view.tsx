@@ -98,6 +98,22 @@ export function LiveView() {
         }
     }
 
+    // Rejalangan efirni hozir boshlash — go-live oynasini prefill bilan ochadi
+    async function startScheduled(id: string) {
+        const d = await fetch(`/api/nexus/live/${id}`).then(r => r.json()).catch(() => null);
+        const s = d?.stream;
+        window.dispatchEvent(new CustomEvent("nexus:go-live-resume", {
+            detail: {
+                id,
+                title: s?.title ?? "",
+                category: s?.category ?? "",
+                privacy: s?.privacy ?? "PUBLIC",
+                description: s?.description ?? "",
+                thumbUrl: s?.thumbUrl ?? null,
+            },
+        }));
+    }
+
     const load = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
         try {
@@ -262,11 +278,37 @@ export function LiveView() {
                         <Section title="Tez kunda boshlanadi" accent="#10B981">
                             <div className="px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {upcoming.map(s => {
+                                    const badge = <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-[var(--nx-text)]" style={{ background: "#10B981" }}><CalendarClock className="w-3 h-3" />REJADA</span>;
+                                    const meta = <><Clock className="w-3 h-3" />{fmtWhen(s.scheduledAt)}</>;
+                                    // Ega — "Hozir boshlash" + o'chirish; boshqalar — eslatma toggle
+                                    if (s.isMine) {
+                                        return (
+                                            <StreamCard key={s.id} s={s} onOpen={() => setRoomId(s.id)} badge={badge} meta={meta}
+                                                corner={
+                                                    <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1.5">
+                                                        <button type="button"
+                                                            onMouseDown={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()}
+                                                            onClick={e => { e.stopPropagation(); e.preventDefault(); startScheduled(s.id); }}
+                                                            title="Hozir boshlash"
+                                                            className="flex items-center gap-1 px-2.5 h-8 rounded-lg text-[11px] font-black text-white active:scale-95"
+                                                            style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>
+                                                            <Radio className="w-3 h-3" />Boshlash
+                                                        </button>
+                                                        <button type="button"
+                                                            onMouseDown={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()}
+                                                            onClick={e => { e.stopPropagation(); e.preventDefault(); setDeleteId(s.id); }}
+                                                            title="O'chirish"
+                                                            className="w-8 h-8 flex items-center justify-center rounded-lg"
+                                                            style={{ background: "rgba(239,68,68,0.85)", backdropFilter: "blur(6px)" }}>
+                                                            <Trash2 className="w-3.5 h-3.5 text-white" />
+                                                        </button>
+                                                    </div>
+                                                } />
+                                        );
+                                    }
                                     const rem = reminders.has(s.id);
                                     return (
-                                        <StreamCard key={s.id} s={s} onOpen={() => setRoomId(s.id)}
-                                            badge={<span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-[var(--nx-text)]" style={{ background: "#10B981" }}><CalendarClock className="w-3 h-3" />REJADA</span>}
-                                            meta={<><Clock className="w-3 h-3" />{fmtWhen(s.scheduledAt)}</>}
+                                        <StreamCard key={s.id} s={s} onOpen={() => setRoomId(s.id)} badge={badge} meta={meta}
                                             corner={
                                                 <button onClick={e => { e.stopPropagation(); toggleReminder(s.id); }}
                                                     title={rem ? "Eslatma yoqilgan" : "Eslatma qo'shish"}

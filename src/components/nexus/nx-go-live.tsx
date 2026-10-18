@@ -100,6 +100,7 @@ export function NxGoLive() {
     const [scheduleAt, setScheduleAt] = useState("");           // datetime-local qiymati (local vaqt)
     const [scheduling, setScheduling] = useState(false);
     const [scheduledOk, setScheduledOk] = useState(false);
+    const [resumeId, setResumeId] = useState<string | null>(null);   // rejalangan efirni boshlash
     // Batch B + C + D: PiP position/size/frame/transition
     const [pipCorner, setPipCorner] = useState<PipCorner>("br");
     const [pipSize, setPipSize] = useState<PipSize>("md");
@@ -108,6 +109,23 @@ export function NxGoLive() {
     const [studioPanelOpen, setStudioPanelOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     useEffect(() => { setMounted(true); }, []);
+    // Rejalangan efirni "Hozir boshlash" — LiveView event yuboradi: prefill + ochish
+    useEffect(() => {
+        const h = (e: Event) => {
+            const d = (e as CustomEvent).detail || {};
+            if (!d.id) return;
+            setResumeId(String(d.id));
+            setTitle(String(d.title || ""));
+            setCategory(String(d.category || ""));
+            setPrivacy(d.privacy === "FRIENDS" ? "FRIENDS" : d.privacy === "PRIVATE" ? "PRIVATE" : "PUBLIC");
+            setDescription(String(d.description || ""));
+            setCoverUrl(d.thumbUrl ? String(d.thumbUrl) : null);
+            setScheduleLater(false); setScheduledOk(false);
+            setGoLiveOpen(true);
+        };
+        window.addEventListener("nexus:go-live-resume", h);
+        return () => window.removeEventListener("nexus:go-live-resume", h);
+    }, [setGoLiveOpen]);
     useEffect(() => {
         if (!goLiveOpen) return;
         fetch("/api/pay/wallet").then(r => r.json()).then(d => setCurrency(d.currency === "USD" ? "USD" : "UZS")).catch(() => {});
@@ -184,6 +202,7 @@ export function NxGoLive() {
             setCoverUrl(null); setCoverBusy(false); setCoverErr(null);
             setAiOpen(false); setAiPrompt(""); setAiRefs([]); setAiGenning(false);
             setScheduleLater(false); setScheduleAt(""); setScheduling(false); setScheduledOk(false);
+            setResumeId(null);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [goLiveOpen]);
@@ -310,13 +329,29 @@ export function NxGoLive() {
         if (!title.trim() || starting) return;
         setStarting(true); setErr(null);
         try {
-            const r = await fetch("/api/nexus/live", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title, category, privacy, crossToChannel, thumbUrl: coverUrl }),
-            });
-            const d = await r.json().catch(() => ({}));
-            if (!r.ok || !d.stream) { setErr(d.error || "Efir boshlanmadi"); return; }
-            const newId: string = d.stream.id;
+            let newId: string;
+            if (resumeId) {
+                // Rejalangan (UPCOMING) efir — tahrirlangan meta'ni yangilab, keyin boshlash (LIVE)
+                await fetch(`/api/nexus/live/${resumeId}`, {
+                    method: "PATCH", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "update", title, category, privacy, description, thumbUrl: coverUrl }),
+                }).catch(() => { });
+                const r = await fetch(`/api/nexus/live/${resumeId}`, {
+                    method: "PATCH", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "start" }),
+                });
+                const d = await r.json().catch(() => ({}));
+                if (!r.ok || !d.stream) { setErr(d.error || "Efir boshlanmadi"); return; }
+                newId = resumeId;
+            } else {
+                const r = await fetch("/api/nexus/live", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title, category, privacy, crossToChannel, thumbUrl: coverUrl }),
+                });
+                const d = await r.json().catch(() => ({}));
+                if (!r.ok || !d.stream) { setErr(d.error || "Efir boshlanmadi"); return; }
+                newId = d.stream.id;
+            }
 
             // Studio composer — VOD recording uchun (LIVE broadcast dual-track)
             const studio = createStudio({
@@ -356,8 +391,8 @@ export function NxGoLive() {
                 }
             }
 
-            // Description agar bor bo'lsa — meta update
-            if (description.trim()) {
+            // Description agar bor bo'lsa — meta update (resume'da yuqorida allaqachon yangilangan)
+            if (!resumeId && description.trim()) {
                 fetch(`/api/nexus/live/${newId}`, {
                     method: "PATCH", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ action: "update", description }),
@@ -605,7 +640,7 @@ export function NxGoLive() {
                             <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>
                                 <Radio className="w-4 h-4 text-white" />
                             </div>
-                            <h2 className="text-base font-black text-white">Jonli efir boshlash</h2>
+                            <h2 className="text-base font-black text-white">{resumeId ? "Rejalangan efirni boshlash" : "Jonli efir boshlash"}</h2>
                         </div>
                         <button onClick={close} className="w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                             <X className="w-4 h-4 text-white" />
@@ -622,8 +657,8 @@ export function NxGoLive() {
                                 style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "#F97316" }} />
                         </div>
 
-                        {/* Qachon — hozir yoki keyinroq rejalashtirish */}
-                        <div>
+                        {/* Qachon — hozir/keyinroq (rejalangan efirni boshlashda yashirin) */}
+                        {!resumeId && (<div>
                             <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>
                                 <Clock className="w-3 h-3 inline mr-1" />Qachon
                             </p>
@@ -649,7 +684,7 @@ export function NxGoLive() {
                                     className="w-full mt-2 px-4 py-3 rounded-xl text-sm text-white outline-none"
                                     style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.28)", colorScheme: "dark", caretColor: "#10B981" }} />
                             )}
-                        </div>
+                        </div>)}
 
                         <div>
                             <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>Tavsif (ixtiyoriy)</p>

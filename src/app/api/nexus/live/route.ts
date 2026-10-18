@@ -42,10 +42,12 @@ export async function GET(req: Request) {
     const qFilter = q
         ? { OR: [{ title: { contains: q, mode: "insensitive" as const } }, { category: { contains: q, mode: "insensitive" as const } }] }
         : {};
+    // Eskirgan rejalangan efirlar ro'yxatni to'ldirmasin (boshlanmagan, 3 soatdan ko'p o'tgan)
+    const upcomingFresh = status === "UPCOMING" ? { scheduledAt: { gt: new Date(Date.now() - 3 * 60 * 60 * 1000) } } : {};
     const streams = await prisma.nexusLiveStream.findMany({
         where: authorId
             ? { profileId: authorId, privacy: "PUBLIC", hidden: false }
-            : { status, privacy: "PUBLIC", hidden: false, ...(category ? { category } : {}), ...notHidden, ...qFilter },
+            : { status, privacy: "PUBLIC", hidden: false, ...(category ? { category } : {}), ...notHidden, ...qFilter, ...upcomingFresh },
         orderBy: authorId
             ? { createdAt: "desc" }
             : status === "UPCOMING" ? { scheduledAt: "asc" }

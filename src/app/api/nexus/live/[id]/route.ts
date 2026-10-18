@@ -72,7 +72,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const { id } = await params;
     const body = await req.json();
-    const { action, recordingUrl, recordingDurationSec, description, thumbUrl, raidToUsername, watermarkUrl, soundAlertUrl } = body;
+    const { action, recordingUrl, recordingDurationSec, description, thumbUrl, raidToUsername, watermarkUrl, soundAlertUrl, title, category, privacy } = body;
     const stream = await prisma.nexusLiveStream.findFirst({ where: { id, profileId: me.id } });
     if (!stream) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
 
@@ -133,6 +133,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         const updated = await prisma.nexusLiveStream.update({
             where: { id },
             data: {
+                ...(typeof title === "string" && title.trim() ? { title: title.trim().slice(0, 200) } : {}),
+                ...(typeof category === "string" ? { category: category || null } : {}),
+                ...(privacy === "PUBLIC" || privacy === "FRIENDS" || privacy === "PRIVATE" ? { privacy } : {}),
                 ...(typeof description === "string" ? { description: description.slice(0, 2000) || null } : {}),
                 ...(typeof thumbUrl === "string" ? { thumbUrl: thumbUrl || null } : {}),
                 ...(typeof recordingUrl === "string" ? { recordingUrl: recordingUrl || null } : {}),
