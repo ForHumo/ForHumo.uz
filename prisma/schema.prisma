@@ -4832,3 +4832,100 @@ model BelisItemBooking {
   @@index([bookingId])
 }
 
+// ── YukGo — logistika marketplace (alohida brend, For Humo infra ustida) ─────
+enum YukListingType {
+  CARGO    // yuk egasi mashina qidiryapti ("yuk bor")
+  TRUCK    // haydovchi bo'sh mashina, yuk qidiryapti
+  LOGIST   // dispetcher/vositachi reklama
+  OTHER    // yuk tashishga aloqasiz (mashina sotuvi, spam)
+}
+
+enum YukListingStatus {
+  ACTIVE   // ko'rinadi
+  EXPIRED  // eskirgan (vaqti o'tgan)
+  HIDDEN   // moderatsiya/shikoyat/manba o'chirish so'rovi
+}
+
+enum YukSourceKind {
+  TELEGRAM // guruh/kanaldan yig'ilgan (vaqtinchalik "seed")
+  NATIVE   // YukGo'da to'g'ridan joylangan (tasdiqlangan)
+}
+
+// E'lon manbai (Telegram guruh/kanal yoki native)
+model YukSource {
+  id         String        @id @default(cuid())
+  kind       YukSourceKind @default(TELEGRAM)
+  tgChatId   String?       @unique  // Telegram chat id (guruh/kanal)
+  title      String?                 // guruh nomi
+  username   String?                 // @username (public bo'lsa — deep link uchun)
+  active     Boolean       @default(true)
+  addedById  String?                 // kim qo'shgan (UserProfile.id)
+  createdAt  DateTime      @default(now())
+  listings   YukListing[]
+
+  @@index([active])
+}
+
+// Yuk e'loni (parserdan strukturalangan)
+model YukListing {
+  id              String           @id @default(cuid())
+  type            YukListingType
+  status          YukListingStatus @default(ACTIVE)
+
+  // Manba
+  sourceId        String?
+  source          YukSource?       @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  tgMessageId     String?          // original xabar id
+  sourceLink      String?          // https://t.me/<username>/<msgId> (telefonni qayta nashr o'rniga manbaga yo'naltirish)
+  postedById      String?          // NATIVE bo'lsa — UserProfile.id
+
+  // Strukturalangan (lib/yukgo-parse.ts)
+  fromText        String?
+  fromCity        String?
+  fromCountry     String?
+  toText          String?
+  toCity          String?
+  toCountry       String?
+  cargo           String?
+  weightTons      Float?
+  truckTypes      String[]         @default([])
+  quantityTrucks  Int?
+  priceAmount     Decimal?         @db.Decimal(16, 2)
+  priceCurrency   String?          // UZS/RUB/USD
+  priceNegotiable Boolean          @default(false)
+
+  // Kontakt — GATED (API/UI login/obuna ortida ochiladi, ochiq nashr qilinmaydi)
+  phones          String[]         @default([])  // +998... normalizatsiya
+
+  lang            String?          // uz/ru/mixed
+  confidence      Float            @default(0.5)
+  rawText         String                        // xom e'lon matni
+  dedupKey        String?                        // cross-guruh takror aniqlash (route+phone+weight)
+
+  boostedUntil    DateTime?                      // "ko'tarilgan" (monetizatsiya)
+  createdAt       DateTime         @default(now())
+  expiresAt       DateTime?                      // eskirgan e'lon (query'da filtr — cron kerak emas)
+
+  @@index([type, status, createdAt])
+  @@index([fromCity, toCity])
+  @@index([dedupKey])
+  @@index([status, expiresAt])
+}
+
+// Haydovchi profili (Humo ID ustida)
+model YukDriver {
+  id              String    @id @default(cuid())
+  profileId       String    @unique  // UserProfile.id
+  phone           String?             // OTP tasdiqlangan
+  phoneVerifiedAt DateTime?
+  vehicleType     String?             // tent/ref/open_top/fura/isuzu...
+  capacityTons    Float?
+  routeFromCity   String?             // mos e'lon uchun afzal yo'nalish
+  routeToCity     String?
+  notifyOnMatch   Boolean   @default(true)
+  subActiveUntil  DateTime?           // obuna (monetizatsiya)
+  createdAt       DateTime  @default(now())
+
+  @@index([routeFromCity, routeToCity])
+}
+
