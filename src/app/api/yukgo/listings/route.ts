@@ -50,7 +50,7 @@ export async function GET(req: Request) {
         createdAt: r.createdAt,
         boosted: !!(r.boostedUntil && r.boostedUntil > now),
         hasContact: (r.phones?.length ?? 0) > 0 || !!r.sourceLink,
-        sourceKind: r.source?.kind ?? "TELEGRAM",
+        sourceKind: r.source?.kind ?? "NATIVE",
         sourceTitle: r.source?.title ?? null,
         // ⚠️ phones / sourceLink QAYTMAYDI — gated (contact endpoint)
     }));

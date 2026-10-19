@@ -20,7 +20,11 @@ const DEDUP_WINDOW_MS = 48 * 60 * 60 * 1000;   // bir xil e'lon 48 soat ichida t
 const EXPIRE_MS = 48 * 60 * 60 * 1000;          // e'lon 48 soatdan keyin eskiradi
 
 interface TgChat { id: number; title?: string; username?: string; type?: string }
-interface TgMsg { message_id: number; text?: string; caption?: string; chat: TgChat }
+interface TgMsg {
+    message_id: number; text?: string; caption?: string; chat: TgChat;
+    forward_from_chat?: TgChat; forward_from_message_id?: number;          // eski Bot API
+    forward_origin?: { type?: string; chat?: TgChat; message_id?: number }; // Bot API 7.0+
+}
 interface TgUpdate { message?: TgMsg; channel_post?: TgMsg; edited_message?: TgMsg; edited_channel_post?: TgMsg }
 
 export async function POST(req: Request) {
@@ -48,17 +52,29 @@ async function ingest(msg: TgMsg, text: string) {
     if (parsed.type !== "CARGO" && parsed.type !== "TRUCK") return;
     if (parsed.confidence < 0.5) return;
 
+    // Manba aniqlash: (a) bot guruhda, (b) shaxsiy chatga forward qilingan (asl guruh),
+    // (c) shaxsiy chatda to'g'ridan yuborilgan (foydalanuvchi o'zi joyladi = NATIVE, roziligi bilan)
     const chat = msg.chat;
-    const tgChatId = String(chat.id);
+    const fwdChat = msg.forward_from_chat || msg.forward_origin?.chat;
+    let srcChatId: string | null = null, srcTitle: string | null = null, srcUsername: string | null = null, origMsgId: number | null = null;
+    if (chat.type === "group" || chat.type === "supergroup" || chat.type === "channel") {
+        srcChatId = String(chat.id); srcTitle = chat.title ?? null; srcUsername = chat.username ?? null; origMsgId = msg.message_id;
+    } else if (fwdChat) {
+        srcChatId = String(fwdChat.id); srcTitle = fwdChat.title ?? null; srcUsername = fwdChat.username ?? null;
+        origMsgId = msg.forward_from_message_id ?? msg.forward_origin?.message_id ?? null;
+    }
+    // (c) private + forward emas → srcChatId null → NATIVE (sourceId null)
 
-    // Manba (guruh) — upsert
-    const source = await prisma.yukSource.upsert({
-        where: { tgChatId },
-        update: { title: chat.title ?? undefined, username: chat.username ?? undefined },
-        create: { kind: "TELEGRAM", tgChatId, title: chat.title ?? null, username: chat.username ?? null },
-    });
-
-    const sourceLink = chat.username ? `https://t.me/${chat.username}/${msg.message_id}` : null;
+    let sourceId: string | null = null;
+    if (srcChatId) {
+        const source = await prisma.yukSource.upsert({
+            where: { tgChatId: srcChatId },
+            update: { title: srcTitle ?? undefined, username: srcUsername ?? undefined },
+            create: { kind: "TELEGRAM", tgChatId: srcChatId, title: srcTitle, username: srcUsername },
+        });
+        sourceId = source.id;
+    }
+    const sourceLink = srcUsername && origMsgId ? `https://t.me/${srcUsername}/${origMsgId}` : null;
 
     // Cross-guruh dedup (bir xil e'lon o'nlab guruhda) — 48s oynada
     const dedupKey = [
@@ -78,8 +94,8 @@ async function ingest(msg: TgMsg, text: string) {
         data: {
             type: parsed.type,
             status: "ACTIVE",
-            sourceId: source.id,
-            tgMessageId: String(msg.message_id),
+            sourceId,
+            tgMessageId: String(origMsgId ?? msg.message_id),
             sourceLink,
             fromText: parsed.fromText, fromCity: parsed.fromCity, fromCountry: parsed.fromCountry,
             toText: parsed.toText, toCity: parsed.toCity, toCountry: parsed.toCountry,
