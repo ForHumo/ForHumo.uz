@@ -16,8 +16,27 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SECRET = process.env.YUKGO_WEBHOOK_SECRET;
+const BOT_TOKEN = process.env.TELEGRAM_YUKGO_BOT_TOKEN;
 const DEDUP_WINDOW_MS = 48 * 60 * 60 * 1000;   // bir xil e'lon 48 soat ichida takrorlanmaydi
 const EXPIRE_MS = 48 * 60 * 60 * 1000;          // e'lon 48 soatdan keyin eskiradi
+const FEED_URL = "https://www.forhumo.uz/uz/yukgo";
+
+const WELCOME =
+    "Salom! Men YukGo botiman.\n\n" +
+    "Yuk yoki bo'sh mashina e'loningizni shu yerga yuboring — yoki guruhdagi e'lonni forward qiling. " +
+    "Men uni avtomatik ajratib YukGo'ga joylayman.\n\n" +
+    "Barcha e'lonlar: " + FEED_URL;
+
+// Botdan foydalanuvchiga javob (faqat shaxsiy chatda — guruhda spam qilmaymiz)
+async function reply(chatId: number, text: string) {
+    if (!BOT_TOKEN) return;
+    try {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
+        });
+    } catch { /* ignore */ }
+}
 
 interface TgChat { id: number; title?: string; username?: string; type?: string }
 interface TgMsg {
@@ -36,21 +55,30 @@ export async function POST(req: Request) {
 
     const update = await req.json().catch(() => null) as TgUpdate | null;
     const msg = update?.message || update?.channel_post || update?.edited_message || update?.edited_channel_post;
-    const text = (msg?.text || msg?.caption || "").trim();
+    if (!msg) return NextResponse.json({ ok: true });
+    const text = (msg.text || msg.caption || "").trim();
+    const isPrivate = !["group", "supergroup", "channel"].includes(msg.chat.type || "private");
+
+    // Shaxsiy chatdagi komandalar (/start, /help) — yo'riqnoma
+    if (isPrivate && text.startsWith("/")) {
+        after(() => reply(msg.chat.id, WELCOME));
+        return NextResponse.json({ ok: true });
+    }
 
     // Telegram'ga DARHOL 200 qaytaramiz; og'ir ish (Gemini + DB) after()da
-    if (msg && text.length >= 5) {
-        after(() => ingest(msg, text).catch(e => console.error("[yukgo-ingest]", e)));
+    if (text.length >= 5) {
+        after(() => ingest(msg, text, isPrivate).catch(e => console.error("[yukgo-ingest]", e)));
     }
     return NextResponse.json({ ok: true });
 }
 
-async function ingest(msg: TgMsg, text: string) {
+async function ingest(msg: TgMsg, text: string, isPrivate: boolean) {
     const parsed = await parseYukListing(text);
-    if (!parsed) return;
     // Faqat haqiqiy yuk e'lonlari (LOGIST reklama / OTHER spam saqlanmaydi)
-    if (parsed.type !== "CARGO" && parsed.type !== "TRUCK") return;
-    if (parsed.confidence < 0.5) return;
+    if (!parsed || (parsed.type !== "CARGO" && parsed.type !== "TRUCK") || parsed.confidence < 0.5) {
+        if (isPrivate) await reply(msg.chat.id, "Bu matndan yuk yoki mashina e'lonini ajrata olmadim. To'liqroq yuboring: yo'nalish (qayerdan→qayerga), yuk/mashina, telefon.");
+        return;
+    }
 
     // Manba aniqlash: (a) bot guruhda, (b) shaxsiy chatga forward qilingan (asl guruh),
     // (c) shaxsiy chatda to'g'ridan yuborilgan (foydalanuvchi o'zi joyladi = NATIVE, roziligi bilan)
@@ -88,7 +116,10 @@ async function ingest(msg: TgMsg, text: string) {
         where: { dedupKey, createdAt: { gt: new Date(Date.now() - DEDUP_WINDOW_MS) } },
         select: { id: true },
     });
-    if (dup) return;
+    if (dup) {
+        if (isPrivate) await reply(msg.chat.id, "Bu e'lon allaqachon YukGo'da bor.");
+        return;
+    }
 
     await prisma.yukListing.create({
         data: {
@@ -114,4 +145,10 @@ async function ingest(msg: TgMsg, text: string) {
             expiresAt: new Date(Date.now() + EXPIRE_MS),
         },
     });
+
+    if (isPrivate) {
+        const route = [parsed.fromCity || parsed.fromText, parsed.toCity || parsed.toText].filter(Boolean).join(" → ");
+        const kind = parsed.type === "CARGO" ? "Yuk" : "Mashina";
+        await reply(msg.chat.id, `Joylandi — ${kind}${route ? `: ${route}` : ""}\n${FEED_URL}`);
+    }
 }
