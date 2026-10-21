@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { signIn } from "next-auth/react";
 import {
     Truck, Package, MapPin, ArrowRight, Phone, ExternalLink,
-    Search, Loader2, Clock, Weight, X,
+    Search, Loader2, Clock, Weight, X, Bell, BellRing, Check,
 } from "lucide-react";
+import { subscribePush, getPushState, type PushState } from "@/lib/push-client";
 
 type LType = "CARGO" | "TRUCK";
 interface Listing {
@@ -54,6 +55,15 @@ export function YukGoFeed() {
     const [contacts, setContacts] = useState<Record<string, Contact>>({});
     const [revealing, setRevealing] = useState<string | null>(null);
     const [needLogin, setNeedLogin] = useState(false);
+    // Haydovchi profili (onboarding + bildirishnoma)
+    const [driverOpen, setDriverOpen] = useState(false);
+    const [dFrom, setDFrom] = useState("");
+    const [dTo, setDTo] = useState("");
+    const [dVehicle, setDVehicle] = useState("");
+    const [dCapacity, setDCapacity] = useState("");
+    const [dNotify, setDNotify] = useState(true);
+    const [savingDriver, setSavingDriver] = useState(false);
+    const [pushState, setPushState] = useState<PushState>("default");
 
     const qs = useCallback((offset: number) => {
         const p = new URLSearchParams();
@@ -111,6 +121,40 @@ export function YukGoFeed() {
         } catch { /* ignore */ }
     }
 
+    // Haydovchi profili — ochish (mavjudini yuklaydi) / saqlash / push yoqish
+    async function openDriver() {
+        try {
+            const r = await fetch("/api/yukgo/driver");
+            if (r.status === 401) { setNeedLogin(true); return; }
+            const d = await r.json().catch(() => ({}));
+            const dr = d.driver;
+            if (dr) {
+                setDFrom(dr.routeFromCity || ""); setDTo(dr.routeToCity || "");
+                setDVehicle(dr.vehicleType || ""); setDCapacity(dr.capacityTons != null ? String(dr.capacityTons) : "");
+                setDNotify(dr.notifyOnMatch !== false);
+            }
+        } catch { /* ignore */ }
+        try { setPushState(await getPushState()); } catch { /* ignore */ }
+        setDriverOpen(true);
+    }
+    async function saveDriver() {
+        setSavingDriver(true);
+        try {
+            const r = await fetch("/api/yukgo/driver", {
+                method: "PUT", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    routeFromCity: dFrom, routeToCity: dTo, vehicleType: dVehicle,
+                    capacityTons: dCapacity ? Number(dCapacity) : null, notifyOnMatch: dNotify,
+                }),
+            });
+            if (r.status === 401) { setNeedLogin(true); return; }
+            if (r.ok) setDriverOpen(false);
+        } finally { setSavingDriver(false); }
+    }
+    async function enablePush() {
+        try { setPushState(await subscribePush()); } catch { /* ignore */ }
+    }
+
     return (
         <div className="min-h-full pb-28">
             {/* Header / brend */}
@@ -125,6 +169,9 @@ export function YukGoFeed() {
                         </h1>
                         <p className="text-[10px] mt-1" style={{ color: "#6B7A99" }}>Yuk va mashina e'lonlari — bir joyda</p>
                     </div>
+                    <button onClick={openDriver} className="ml-auto w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95" style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.3)" }} title="Haydovchi profili va bildirishnoma">
+                        <Bell className="w-5 h-5" style={{ color: CYAN }} />
+                    </button>
                 </div>
 
                 {/* Tur tablari */}
@@ -249,6 +296,60 @@ export function YukGoFeed() {
                     </button>
                 )}
             </div>
+
+            {/* Haydovchi profili / onboarding modal */}
+            {driverOpen && (
+                <>
+                    <div className="fixed inset-0 z-[110]" style={{ background: "rgba(5,8,20,0.8)", backdropFilter: "blur(6px)" }} onClick={() => setDriverOpen(false)} />
+                    <div className="fixed inset-x-4 bottom-4 z-[110] rounded-2xl p-5 max-h-[88vh] overflow-y-auto md:inset-x-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[380px]"
+                        style={{ background: "#0E1528", border: "1px solid rgba(37,99,235,0.35)" }}>
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-base font-black text-white">Haydovchi profili</h3>
+                            <button onClick={() => setDriverOpen(false)}><X className="w-5 h-5" style={{ color: "#6B7A99" }} /></button>
+                        </div>
+                        <p className="text-[11px] mb-3" style={{ color: "#9FB3D9" }}>Yo&apos;nalishingizni qo&apos;ying — mos yuk chiqsa darhol bildirishnoma olasiz.</p>
+
+                        <label className="text-[10px] font-bold" style={{ color: "#6B7A99" }}>Yo&apos;nalish</label>
+                        <div className="flex items-center gap-2 mb-3 mt-1">
+                            <input value={dFrom} onChange={e => setDFrom(e.target.value)} placeholder="Qayerdan" className="flex-1 h-9 rounded-lg px-3 text-xs outline-none" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(37,99,235,0.22)", color: "#E8EDF7" }} />
+                            <ArrowRight className="w-4 h-4 flex-shrink-0" style={{ color: "#4B5B7A" }} />
+                            <input value={dTo} onChange={e => setDTo(e.target.value)} placeholder="Qayerga" className="flex-1 h-9 rounded-lg px-3 text-xs outline-none" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(37,99,235,0.22)", color: "#E8EDF7" }} />
+                        </div>
+
+                        <label className="text-[10px] font-bold" style={{ color: "#6B7A99" }}>Mashina turi</label>
+                        <div className="flex flex-wrap gap-1.5 mb-3 mt-1">
+                            {Object.entries(TRUCK_LABELS).map(([v, label]) => (
+                                <button key={v} onClick={() => setDVehicle(dVehicle === v ? "" : v)} className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold active:scale-95"
+                                    style={dVehicle === v ? { background: `linear-gradient(135deg,${BLUE},${CYAN})`, color: "#fff" } : { background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.2)", color: "#9FB3D9" }}>{label}</button>
+                            ))}
+                        </div>
+
+                        <label className="text-[10px] font-bold" style={{ color: "#6B7A99" }}>Sig&apos;imi (tonna)</label>
+                        <input value={dCapacity} onChange={e => setDCapacity(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="masalan 20"
+                            className="w-full h-9 rounded-lg px-3 text-xs outline-none mb-3 mt-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(37,99,235,0.22)", color: "#E8EDF7" }} />
+
+                        <button onClick={enablePush} disabled={pushState === "subscribed" || pushState === "denied" || pushState === "unsupported"}
+                            className="w-full h-10 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 mb-3 disabled:opacity-70"
+                            style={pushState === "subscribed" ? { background: "rgba(16,185,129,0.15)", color: "#34D399", border: "1px solid rgba(16,185,129,0.3)" } : { background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.3)", color: "#9FB3D9" }}>
+                            {pushState === "subscribed" ? <><Check className="w-3.5 h-3.5" />Bildirishnoma yoqilgan</>
+                                : pushState === "denied" ? "Brauzerda bloklangan"
+                                : pushState === "unsupported" ? "Bu qurilmada push yo'q"
+                                : <><BellRing className="w-3.5 h-3.5" />Bildirishnomani yoqish</>}
+                        </button>
+
+                        <div className="flex items-center justify-between py-1 mb-3">
+                            <span className="text-xs" style={{ color: "#9FB3D9" }}>Mos yuk chiqsa xabar ber</span>
+                            <button onClick={() => setDNotify(v => !v)} className="w-11 h-6 rounded-full relative transition flex-shrink-0" style={{ background: dNotify ? CYAN : "rgba(255,255,255,0.1)" }}>
+                                <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style={{ left: dNotify ? "22px" : "2px" }} />
+                            </button>
+                        </div>
+
+                        <button onClick={saveDriver} disabled={savingDriver} className="w-full h-11 rounded-xl text-sm font-black text-white disabled:opacity-60" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
+                            {savingDriver ? <Loader2 className="w-4 h-4 animate-spin inline" /> : "Saqlash"}
+                        </button>
+                    </div>
+                </>
+            )}
 
             {/* Login modal (kontakt ko'rish uchun) */}
             {needLogin && (

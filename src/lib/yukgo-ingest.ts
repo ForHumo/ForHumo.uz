@@ -2,7 +2,7 @@
 // endpoint ham shuni chaqiradi. Parse → manba → dedup → YukListing.
 
 import { prisma } from "@/lib/prisma";
-import { parseYukListing } from "@/lib/yukgo-parse";
+import { parseYukListing, type YukParsed } from "@/lib/yukgo-parse";
 
 const DEDUP_WINDOW_MS = 48 * 60 * 60 * 1000;   // bir xil e'lon 48 soat ichida takrorlanmaydi
 const EXPIRE_MS = 48 * 60 * 60 * 1000;          // e'lon 48 soatdan keyin eskiradi
@@ -83,6 +83,41 @@ export async function storeYukListing(input: StoreInput): Promise<StoreResult> {
         },
     });
 
+    // Mos haydovchilarga darhol push (tezlik leveri) — fail-safe
+    try { await matchAndNotify(parsed); } catch (e) { console.error("[yukgo-match]", e); }
+
     const route = [parsed.fromCity || parsed.fromText, parsed.toCity || parsed.toText].filter(Boolean).join(" → ");
     return { stored: true, reason: "ok", type: parsed.type, route };
+}
+
+// Yangi CARGO e'lon → yo'nalishi mos haydovchilarga Web Push.
+async function matchAndNotify(p: YukParsed) {
+    if (p.type !== "CARGO") return;   // truckerlar yuk qidiradi
+    const lf = (p.fromCity || "").toLowerCase().trim();
+    const lt = (p.toCity || "").toLowerCase().trim();
+    if (!lf || !lt) return;
+
+    const drivers = await prisma.yukDriver.findMany({
+        where: { notifyOnMatch: true, routeFromCity: { not: null }, routeToCity: { not: null } },
+        select: { profileId: true, routeFromCity: true, routeToCity: true, capacityTons: true },
+        take: 1000,
+    });
+    const matched = drivers.filter(d => {
+        const df = (d.routeFromCity || "").toLowerCase().trim();
+        const dt = (d.routeToCity || "").toLowerCase().trim();
+        if (!df || !dt) return false;
+        const fromOk = lf.includes(df) || df.includes(lf);
+        const toOk = lt.includes(dt) || dt.includes(lt);
+        if (!fromOk || !toOk) return false;
+        if (d.capacityTons != null && p.weightTons != null && d.capacityTons < p.weightTons) return false; // sig'maydi
+        return true;
+    });
+    if (!matched.length) return;
+
+    const title = `Yangi yuk: ${p.fromCity} → ${p.toCity}`;
+    const body = [p.weightTons ? `${p.weightTons} t` : null, p.cargo].filter(Boolean).join(" · ") || "Mos yuk topildi";
+    const { sendPushToProfile } = await import("@/lib/push");
+    await Promise.all(matched.slice(0, 300).map(d =>
+        sendPushToProfile(d.profileId, { title, body, url: "/uz/yukgo", tag: "yukgo-match" }).catch(() => null),
+    ));
 }
