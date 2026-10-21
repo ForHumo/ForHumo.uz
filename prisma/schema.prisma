@@ -4901,6 +4901,7 @@ model YukListing {
   confidence      Float            @default(0.5)
   rawText         String                        // xom e'lon matni
   dedupKey        String?                        // cross-guruh takror aniqlash (route+phone+weight)
+  reportedBy      String[]         @default([])  // "band bo'ldi" shikoyat qilgan profileId'lar (>=2 → yashiriladi)
 
   boostedUntil    DateTime?                      // "ko'tarilgan" (monetizatsiya)
   createdAt       DateTime         @default(now())

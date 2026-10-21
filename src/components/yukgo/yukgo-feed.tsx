@@ -101,6 +101,16 @@ export function YukGoFeed() {
         } finally { setRevealing(null); }
     }
 
+    // "Band bo'ldi" — login'li user belgilaydi; muvaffaqiyatda o'zidan yashiriladi
+    // (backend: 2 xil user belgilasa butunlay yashiriladi)
+    async function reportTaken(id: string) {
+        try {
+            const r = await fetch(`/api/yukgo/listings/${id}/report`, { method: "POST" });
+            if (r.status === 401) { setNeedLogin(true); return; }
+            if (r.ok) setItems(prev => prev.filter(x => x.id !== id));
+        } catch { /* ignore */ }
+    }
+
     return (
         <div className="min-h-full pb-28">
             {/* Header / brend */}
@@ -219,6 +229,15 @@ export function YukGoFeed() {
                                         {it.sourceKind === "TELEGRAM" && <span className="text-[9px]" style={{ color: "#3C4A67" }}>Manba: Telegram</span>}
                                     </div>
                                 )}
+
+                                <div className="mt-2 flex justify-end">
+                                    <button onClick={() => reportTaken(it.id)}
+                                        className="text-[10px] px-2 py-1 rounded-md active:scale-95"
+                                        style={{ color: "#6B7A99", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(37,99,235,0.12)" }}
+                                        title="Band bo'lgan bo'lsa belgilang — boshqalar vaqt yo'qotmasin">
+                                        Band bo&apos;ldi?
+                                    </button>
+                                </div>
                             </div>
                         );
                     })
