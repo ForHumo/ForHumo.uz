@@ -64,6 +64,9 @@ export function YukGoFeed() {
     const [dNotify, setDNotify] = useState(true);
     const [savingDriver, setSavingDriver] = useState(false);
     const [pushState, setPushState] = useState<PushState>("default");
+    const [dProUntil, setDProUntil] = useState<string | null>(null);   // Pro obuna muddati
+    const [proOpen, setProOpen] = useState(false);                     // Pro upsell modal
+    const [proLimit, setProLimit] = useState(10);
 
     const qs = useCallback((offset: number) => {
         const p = new URLSearchParams();
@@ -107,6 +110,7 @@ export function YukGoFeed() {
             const r = await fetch(`/api/yukgo/listings/${id}/contact`);
             if (r.status === 401) { setNeedLogin(true); return; }
             const d = await r.json();
+            if (r.status === 402) { setProLimit(d.limit ?? 10); setProOpen(true); return; }
             if (r.ok) setContacts(prev => ({ ...prev, [id]: { phones: d.phones ?? [], sourceLink: d.sourceLink ?? null } }));
         } finally { setRevealing(null); }
     }
@@ -132,6 +136,7 @@ export function YukGoFeed() {
                 setDFrom(dr.routeFromCity || ""); setDTo(dr.routeToCity || "");
                 setDVehicle(dr.vehicleType || ""); setDCapacity(dr.capacityTons != null ? String(dr.capacityTons) : "");
                 setDNotify(dr.notifyOnMatch !== false);
+                setDProUntil(dr.subActiveUntil || null);
             }
         } catch { /* ignore */ }
         try { setPushState(await getPushState()); } catch { /* ignore */ }
@@ -309,6 +314,12 @@ export function YukGoFeed() {
                         </div>
                         <p className="text-[11px] mb-3" style={{ color: "#9FB3D9" }}>Yo&apos;nalishingizni qo&apos;ying — mos yuk chiqsa darhol bildirishnoma olasiz.</p>
 
+                        {dProUntil && new Date(dProUntil) > new Date() && (
+                            <div className="mb-3 px-3 py-2 rounded-lg text-[11px] font-black flex items-center gap-1.5" style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#34D399" }}>
+                                <Check className="w-3.5 h-3.5" />Pro faol — {new Date(dProUntil).toLocaleDateString("uz-UZ", { day: "numeric", month: "short", year: "numeric" })}gacha
+                            </div>
+                        )}
+
                         <label className="text-[10px] font-bold" style={{ color: "#6B7A99" }}>Yo&apos;nalish</label>
                         <div className="flex items-center gap-2 mb-3 mt-1">
                             <input value={dFrom} onChange={e => setDFrom(e.target.value)} placeholder="Qayerdan" className="flex-1 h-9 rounded-lg px-3 text-xs outline-none" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(37,99,235,0.22)", color: "#E8EDF7" }} />
@@ -347,6 +358,28 @@ export function YukGoFeed() {
                         <button onClick={saveDriver} disabled={savingDriver} className="w-full h-11 rounded-xl text-sm font-black text-white disabled:opacity-60" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
                             {savingDriver ? <Loader2 className="w-4 h-4 animate-spin inline" /> : "Saqlash"}
                         </button>
+                    </div>
+                </>
+            )}
+
+            {/* Pro upsell modal (bepul limit tugaganda) */}
+            {proOpen && (
+                <>
+                    <div className="fixed inset-0 z-[110]" style={{ background: "rgba(5,8,20,0.8)", backdropFilter: "blur(6px)" }} onClick={() => setProOpen(false)} />
+                    <div className="fixed inset-x-4 bottom-4 z-[110] rounded-2xl p-5 md:inset-x-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[360px]"
+                        style={{ background: "#0E1528", border: "1px solid rgba(34,211,238,0.35)" }}>
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-base font-black"><span className="text-white">YukGo </span><span style={{ color: CYAN }}>Pro</span></h3>
+                            <button onClick={() => setProOpen(false)}><X className="w-5 h-5" style={{ color: "#6B7A99" }} /></button>
+                        </div>
+                        <p className="text-xs mb-3" style={{ color: "#9FB3D9" }}>Bugungi bepul limit tugadi ({proLimit} kontakt/kun). Pro bilan:</p>
+                        <ul className="space-y-2 mb-4 text-xs" style={{ color: "#E8EDF7" }}>
+                            <li className="flex items-center gap-2"><Check className="w-4 h-4" style={{ color: "#34D399" }} />Cheksiz kontakt</li>
+                            <li className="flex items-center gap-2"><Check className="w-4 h-4" style={{ color: "#34D399" }} />Ustuvor bildirishnoma</li>
+                            <li className="flex items-center gap-2"><Check className="w-4 h-4" style={{ color: "#34D399" }} />Barcha yo&apos;nalishlar</li>
+                        </ul>
+                        <p className="text-[11px] mb-3" style={{ color: "#6B7A99" }}>To&apos;lov tizimi tez orada ulanadi. Hozircha Pro faollashtirish uchun biz bilan bog&apos;laning.</p>
+                        <button onClick={() => setProOpen(false)} className="w-full h-11 rounded-xl text-sm font-black text-white" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>Tushundim</button>
                     </div>
                 </>
             )}

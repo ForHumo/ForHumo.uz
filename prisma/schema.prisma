@@ -4913,6 +4913,17 @@ model YukListing {
   @@index([status, expiresAt])
 }
 
+// Kontakt ko'rish hisobi — kunlik bepul limit + Pro (cheksiz)
+model YukContactView {
+  id         String   @id @default(cuid())
+  profileId  String
+  listingId  String
+  createdAt  DateTime @default(now())
+
+  @@unique([profileId, listingId])        // bir e'lon qayta ko'rilsa, limitga 2 marta sanalmaydi
+  @@index([profileId, createdAt])          // kunlik hisob uchun
+}
+
 // Haydovchi profili (Humo ID ustida)
 model YukDriver {
   id              String    @id @default(cuid())
