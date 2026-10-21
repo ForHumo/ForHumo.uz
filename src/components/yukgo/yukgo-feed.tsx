@@ -19,6 +19,7 @@ interface Listing {
     hasContact: boolean; sourceKind: string; sourceTitle: string | null;
 }
 interface Contact { phones: string[]; sourceLink: string | null }
+interface BIPEvent extends Event { prompt: () => void; userChoice: Promise<{ outcome: string }> }
 
 const BLUE = "#2563EB", CYAN = "#22D3EE";
 const TRUCK_LABELS: Record<string, string> = {
@@ -67,6 +68,10 @@ export function YukGoFeed() {
     const [dProUntil, setDProUntil] = useState<string | null>(null);   // Pro obuna muddati
     const [proOpen, setProOpen] = useState(false);                     // Pro upsell modal
     const [proLimit, setProLimit] = useState(10);
+    // PWA o'rnatish
+    const [installEvt, setInstallEvt] = useState<BIPEvent | null>(null);
+    const [showInstall, setShowInstall] = useState(false);
+    const [iosInstall, setIosInstall] = useState(false);
 
     const qs = useCallback((offset: number) => {
         const p = new URLSearchParams();
@@ -160,6 +165,32 @@ export function YukGoFeed() {
         try { setPushState(await subscribePush()); } catch { /* ignore */ }
     }
 
+    // PWA o'rnatish tavsiyasi (Android/Chrome beforeinstallprompt + iOS qo'lda)
+    useEffect(() => {
+        try { if (localStorage.getItem("yukgo-install-dismissed")) return; } catch { /* */ }
+        const nav = window.navigator as unknown as { standalone?: boolean };
+        const standalone = (window.matchMedia?.("(display-mode: standalone)")?.matches) || nav.standalone === true;
+        if (standalone) return;
+        const onBip = (e: Event) => { e.preventDefault(); setInstallEvt(e as BIPEvent); setShowInstall(true); };
+        window.addEventListener("beforeinstallprompt", onBip);
+        const ua = navigator.userAgent || "";
+        const isIOS = /iphone|ipad|ipod/i.test(ua);
+        const isSafari = /safari/i.test(ua) && !/crios|fxios|edgios/i.test(ua);
+        if (isIOS && isSafari) { setIosInstall(true); setShowInstall(true); }
+        return () => window.removeEventListener("beforeinstallprompt", onBip);
+    }, []);
+
+    async function doInstall() {
+        if (!installEvt) return;
+        installEvt.prompt();
+        try { await installEvt.userChoice; } catch { /* */ }
+        setInstallEvt(null); setShowInstall(false);
+    }
+    function dismissInstall() {
+        setShowInstall(false);
+        try { localStorage.setItem("yukgo-install-dismissed", "1"); } catch { /* */ }
+    }
+
     return (
         <div className="min-h-full pb-28">
             {/* Header / brend */}
@@ -214,6 +245,23 @@ export function YukGoFeed() {
                     )}
                 </div>
             </div>
+
+            {/* PWA o'rnatish banneri */}
+            {showInstall && (
+                <div className="mx-4 mt-2 p-3 rounded-2xl flex items-center gap-3" style={{ background: "rgba(37,99,235,0.1)", border: "1px solid rgba(37,99,235,0.3)" }}>
+                    <img src="/yukgo/icon-192.png" alt="" className="w-10 h-10 rounded-xl flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                        <p className="text-xs font-black text-white">YukGo&apos;ni o&apos;rnating</p>
+                        <p className="text-[10px]" style={{ color: "#9FB3D9" }}>
+                            {iosInstall ? "Ulashish → “Bosh ekranga qo’shish”" : "Tez kirish uchun bosh ekranga qo’shing"}
+                        </p>
+                    </div>
+                    {!iosInstall && installEvt && (
+                        <button onClick={doInstall} className="px-3 h-8 rounded-lg text-[11px] font-black text-white flex-shrink-0" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>O&apos;rnatish</button>
+                    )}
+                    <button onClick={dismissInstall} className="flex-shrink-0"><X className="w-4 h-4" style={{ color: "#6B7A99" }} /></button>
+                </div>
+            )}
 
             {/* Lenta */}
             <div className="px-4 mt-2 space-y-2.5">
