@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
+import { cityVariants } from "@/lib/yukgo-cities";
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +20,15 @@ export async function GET(req: Request) {
     const now = new Date();
     // from/to filtrlarini AND bilan birlashtiramiz (har biri shahar/matn OR'i)
     const and: Prisma.YukListingWhereInput[] = [];
-    if (from) and.push({ OR: [{ fromCity: { contains: from, mode: "insensitive" } }, { fromText: { contains: from, mode: "insensitive" } }] });
-    if (to) and.push({ OR: [{ toCity: { contains: to, mode: "insensitive" } }, { toText: { contains: to, mode: "insensitive" } }] });
+    // Shahar variantlari bilan kengaytiramiz: "Toshkent" → "Тошкент"/"Ташкент" ham topiladi
+    if (from) {
+        const vs = cityVariants(from);
+        and.push({ OR: vs.flatMap(v => [{ fromCity: { contains: v, mode: "insensitive" as const } }, { fromText: { contains: v, mode: "insensitive" as const } }]) });
+    }
+    if (to) {
+        const vs = cityVariants(to);
+        and.push({ OR: vs.flatMap(v => [{ toCity: { contains: v, mode: "insensitive" as const } }, { toText: { contains: v, mode: "insensitive" as const } }]) });
+    }
     const finalWhere: Prisma.YukListingWhereInput = {
         status: "ACTIVE",
         AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }, ...and],

@@ -3,6 +3,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { parseYukListing, type YukParsed } from "@/lib/yukgo-parse";
+import { sameCity } from "@/lib/yukgo-cities";
 
 const DEDUP_WINDOW_MS = 48 * 60 * 60 * 1000;   // bir xil e'lon 48 soat ichida takrorlanmaydi
 const EXPIRE_MS = 48 * 60 * 60 * 1000;          // e'lon 48 soatdan keyin eskiradi
@@ -93,8 +94,7 @@ export async function storeYukListing(input: StoreInput): Promise<StoreResult> {
 // Yangi CARGO e'lon → yo'nalishi mos haydovchilarga Web Push.
 async function matchAndNotify(p: YukParsed) {
     if (p.type !== "CARGO") return;   // truckerlar yuk qidiradi
-    const lf = (p.fromCity || "").toLowerCase().trim();
-    const lt = (p.toCity || "").toLowerCase().trim();
+    const lf = p.fromCity || "", lt = p.toCity || "";
     if (!lf || !lt) return;
 
     const drivers = await prisma.yukDriver.findMany({
@@ -103,12 +103,9 @@ async function matchAndNotify(p: YukParsed) {
         take: 1000,
     });
     const matched = drivers.filter(d => {
-        const df = (d.routeFromCity || "").toLowerCase().trim();
-        const dt = (d.routeToCity || "").toLowerCase().trim();
-        if (!df || !dt) return false;
-        const fromOk = lf.includes(df) || df.includes(lf);
-        const toOk = lt.includes(dt) || dt.includes(lt);
-        if (!fromOk || !toOk) return false;
+        if (!d.routeFromCity || !d.routeToCity) return false;
+        // Shahar nomi lotin/kirill/ruscha farqli bo'lsa ham mos keladi (yukgo-cities)
+        if (!sameCity(lf, d.routeFromCity) || !sameCity(lt, d.routeToCity)) return false;
         if (d.capacityTons != null && p.weightTons != null && d.capacityTons < p.weightTons) return false; // sig'maydi
         return true;
     });
