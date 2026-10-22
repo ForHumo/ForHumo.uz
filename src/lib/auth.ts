@@ -1,9 +1,14 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { headers } from "next/headers";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { isJtiRevoked, bumpLastSeenAt } from "@/lib/auth-session-cache";
+import { normalizePhone, hashPhone } from "@/lib/phone-hash";
+import { encryptPhone } from "@/lib/crypto";
+import { checkCode } from "@/lib/telegram-gateway";
+import { generateHumoId } from "@/lib/humo-id";
 
 export const authOptions: NextAuthOptions = {
     // Explicit secret — env yo'q bo'lsa NextAuth 500 beradi
@@ -23,6 +28,47 @@ export const authOptions: NextAuthOptions = {
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        }),
+        // Telegram-telefon: raqam + Gateway kod → Humo ID avtomatik (ism so'ralmaydi).
+        // Email'siz foydalanuvchi. YukGo friksiyasiz onboarding uchun.
+        CredentialsProvider({
+            id: "telegram-phone",
+            name: "Telegram",
+            credentials: { phone: {}, requestId: {}, code: {} },
+            async authorize(credentials) {
+                const e164 = normalizePhone(String(credentials?.phone || ""));
+                const requestId = String(credentials?.requestId || "");
+                const code = String(credentials?.code || "");
+                if (!e164 || !requestId || !/^\d{4,8}$/.test(code)) return null;
+
+                // Kod Telegram Gateway orqali tasdiqlanadi
+                const res = await checkCode(requestId, code);
+                if (!res.verified) return null;
+
+                const phoneHash = hashPhone(e164);
+                // Davlat (IP geolokatsiya) → Humo ID prefiks
+                let country = "UZ";
+                try { const h = await headers(); country = (h.get("x-vercel-ip-country") || "UZ").toUpperCase(); } catch { /* noop */ }
+
+                const sel = { id: true, humoId: true, username: true, onboardingDone: true, image: true, name: true } as const;
+                let profile = await prisma.userProfile.findUnique({ where: { phoneHash }, select: sel });
+                if (!profile) {
+                    const humoId = await generateHumoId(country);
+                    const { encrypted, iv } = encryptPhone(e164);
+                    profile = await prisma.userProfile.create({
+                        data: { humoId, country, phoneHash, phoneEnc: encrypted, phoneIv: iv, emailVerified: false, level: 1, lastLoginAt: new Date() },
+                        select: sel,
+                    });
+                } else {
+                    await prisma.userProfile.update({ where: { id: profile.id }, data: { lastLoginAt: new Date() } }).catch(() => { });
+                }
+                // NextAuth user (custom maydonlar jwt callback'da token'ga ko'chiriladi)
+                return {
+                    id: profile.id, name: profile.name ?? null, email: null, image: profile.image ?? null,
+                    profileId: profile.id, humoId: profile.humoId ?? null,
+                    username: profile.username ?? null, onboardingDone: profile.onboardingDone ?? false,
+                } as unknown as { id: string };
+            },
         }),
     ],
     pages: {
@@ -127,6 +173,17 @@ export const authOptions: NextAuthOptions = {
             if (!token.email && user?.email) token.email = user.email;
             if (!token.name && user?.name)   token.name  = user.name;
             if (!token.picture && user?.image) token.picture = user.image;
+
+            // Telegram-telefon (credentials) login: user obyektida profileId keladi (email yo'q).
+            // Google login'да bu maydonlar yo'q → shox o'tkazib yuboriladi (Google buzilmaydi).
+            const cu = user as unknown as { profileId?: string; humoId?: string | null; username?: string | null; onboardingDone?: boolean } | undefined;
+            if (cu?.profileId) {
+                token.profileId = cu.profileId;
+                token.humoId = cu.humoId ?? null;
+                token.username = cu.username ?? null;
+                token.onboardingDone = cu.onboardingDone ?? false;
+                token.coverImage = token.coverImage ?? null;
+            }
 
             if (trigger === "signIn" || trigger === "update" || !token.onboardingDone || token.coverImage === undefined) {
                 if (token.email) {

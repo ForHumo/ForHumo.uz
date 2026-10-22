@@ -15,9 +15,9 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) return NextResponse.json({ error: "auth_required" }, { status: 401 });
-    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
-    if (!me) return NextResponse.json({ error: "profile_not_found" }, { status: 404 });
+    const meId = (session?.user as { profileId?: string } | undefined)?.profileId;
+    if (!meId) return NextResponse.json({ error: "auth_required" }, { status: 401 });
+    const me = { id: meId };
 
     const { id } = await params;
     const listing = await prisma.yukListing.findFirst({

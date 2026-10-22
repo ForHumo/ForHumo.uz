@@ -10,9 +10,7 @@ export const dynamic = "force-dynamic";
 
 async function meId(): Promise<string | null> {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) return null;
-    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
-    return me?.id ?? null;
+    return (session?.user as { profileId?: string } | undefined)?.profileId ?? null;
 }
 
 export async function GET() {
