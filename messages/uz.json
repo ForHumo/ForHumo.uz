@@ -1604,6 +1604,15 @@
     "gotIt": "Tushundim",
     "loginTitle": "Kontaktni ko'rish",
     "loginHint": "Telefon raqamini ko'rish uchun Humo ID bilan kiring.",
-    "login": "Kirish"
+    "login": "Kirish",
+    "loginPhoneHint": "Telefon raqamingizni kiriting — Telegram orqali kod keladi (SMS emas).",
+    "phonePh": "+998 90 123 45 67",
+    "sendCode": "Kod yuborish",
+    "codeSentHint": "{phone} Telegramiga kod yuborildi. Kodni kiriting.",
+    "codePh": "Kod",
+    "verify": "Kirish",
+    "changePhone": "Raqamni o'zgartirish",
+    "codeError": "Kod noto'g'ri yoki eskirgan",
+    "orGoogle": "yoki Google bilan kirish"
   }
 }

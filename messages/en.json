@@ -1604,6 +1604,15 @@
     "gotIt": "Got it",
     "loginTitle": "Show contact",
     "loginHint": "Sign in with Humo ID to see the phone number.",
-    "login": "Sign in"
+    "login": "Sign in",
+    "loginPhoneHint": "Enter your phone number — the code arrives in Telegram (not SMS).",
+    "phonePh": "+998 90 123 45 67",
+    "sendCode": "Send code",
+    "codeSentHint": "Code sent to your Telegram ({phone}). Enter the code.",
+    "codePh": "Code",
+    "verify": "Sign in",
+    "changePhone": "Change number",
+    "codeError": "Invalid or expired code",
+    "orGoogle": "or sign in with Google"
   }
 }

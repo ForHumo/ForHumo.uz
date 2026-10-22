@@ -59,6 +59,14 @@ export function YukGoFeed() {
     const [contacts, setContacts] = useState<Record<string, Contact>>({});
     const [revealing, setRevealing] = useState<string | null>(null);
     const [needLogin, setNeedLogin] = useState(false);
+    // Telefon+kod login oqimi
+    const [loginStep, setLoginStep] = useState<"phone" | "code">("phone");
+    const [loginPhone, setLoginPhone] = useState("");
+    const [loginCode, setLoginCode] = useState("");
+    const [loginReqId, setLoginReqId] = useState("");
+    const [loginBusy, setLoginBusy] = useState(false);
+    const [loginErr, setLoginErr] = useState<string | null>(null);
+    const [pendingReveal, setPendingReveal] = useState<string | null>(null);
     // Haydovchi profili (onboarding + bildirishnoma)
     const [driverOpen, setDriverOpen] = useState(false);
     const [dFrom, setDFrom] = useState("");
@@ -116,7 +124,7 @@ export function YukGoFeed() {
         setRevealing(id);
         try {
             const r = await fetch(`/api/yukgo/listings/${id}/contact`);
-            if (r.status === 401) { setNeedLogin(true); return; }
+            if (r.status === 401) { setPendingReveal(id); setNeedLogin(true); return; }
             const d = await r.json();
             if (r.status === 402) { setProLimit(d.limit ?? 10); setProOpen(true); return; }
             if (r.ok) setContacts(prev => ({ ...prev, [id]: { phones: d.phones ?? [], sourceLink: d.sourceLink ?? null } }));
@@ -166,6 +174,41 @@ export function YukGoFeed() {
     }
     async function enablePush() {
         try { setPushState(await subscribePush()); } catch { /* ignore */ }
+    }
+
+    // ── Telefon + kod login (Telegram Gateway) ──
+    function resetLogin() { setLoginStep("phone"); setLoginCode(""); setLoginReqId(""); setLoginErr(null); }
+    async function sendLoginCode() {
+        if (loginBusy || loginPhone.trim().length < 7) return;
+        setLoginBusy(true); setLoginErr(null);
+        try {
+            const r = await fetch("/api/auth/telegram/send-code", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phone: loginPhone }),
+            });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok || !d.requestId) {
+                setLoginErr(d.error === "invalid_phone" ? "Raqam noto'g'ri" : d.error === "too_soon" ? "Biroz kuting" : d.error === "not_configured" ? "Telegram login hali sozlanmagan" : "Kod yuborilmadi");
+                return;
+            }
+            setLoginReqId(d.requestId); setLoginStep("code");
+        } catch { setLoginErr("Tarmoq xatosi"); }
+        finally { setLoginBusy(false); }
+    }
+    async function verifyLoginCode() {
+        if (loginBusy || loginCode.trim().length < 4) return;
+        setLoginBusy(true); setLoginErr(null);
+        try {
+            const res = await signIn("telegram-phone", { phone: loginPhone, requestId: loginReqId, code: loginCode, redirect: false });
+            if (res?.ok) {
+                setNeedLogin(false); resetLogin();
+                const pend = pendingReveal; setPendingReveal(null);
+                if (pend) setTimeout(() => reveal(pend), 300);   // login bo'lgach kontaktni avtomatik ochamiz
+            } else {
+                setLoginErr(t("codeError"));
+            }
+        } catch { setLoginErr(t("codeError")); }
+        finally { setLoginBusy(false); }
     }
 
     // PWA o'rnatish tavsiyasi (Android/Chrome beforeinstallprompt + iOS qo'lda)
@@ -465,13 +508,35 @@ export function YukGoFeed() {
                         style={{ background: "#0E1528", border: "1px solid rgba(37,99,235,0.35)" }}>
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="text-base font-black text-white">{t("loginTitle")}</h3>
-                            <button onClick={() => setNeedLogin(false)}><X className="w-5 h-5" style={{ color: "#6B7A99" }} /></button>
+                            <button onClick={() => { setNeedLogin(false); resetLogin(); }}><X className="w-5 h-5" style={{ color: "#6B7A99" }} /></button>
                         </div>
-                        <p className="text-xs mb-4" style={{ color: "#9FB3D9" }}>{t("loginHint")}</p>
-                        <button onClick={() => signIn("google", { callbackUrl: "/yukgo" })}
-                            className="w-full h-11 rounded-xl text-sm font-black text-white" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
-                            {t("login")}
-                        </button>
+
+                        {loginStep === "phone" ? (
+                            <>
+                                <p className="text-xs mb-3" style={{ color: "#9FB3D9" }}>{t("loginPhoneHint")}</p>
+                                <input value={loginPhone} onChange={e => setLoginPhone(e.target.value)} type="tel" inputMode="tel" placeholder={t("phonePh")}
+                                    className="w-full h-11 rounded-xl px-4 text-sm outline-none mb-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(37,99,235,0.28)", color: "#E8EDF7", caretColor: CYAN }} />
+                                {loginErr && <p className="text-[11px] text-red-400 mb-2">{loginErr}</p>}
+                                <button onClick={sendLoginCode} disabled={loginBusy || loginPhone.trim().length < 7}
+                                    className="w-full h-11 rounded-xl text-sm font-black text-white disabled:opacity-60" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
+                                    {loginBusy ? <Loader2 className="w-4 h-4 animate-spin inline" /> : t("sendCode")}
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-xs mb-3" style={{ color: "#9FB3D9" }}>{t("codeSentHint", { phone: loginPhone })}</p>
+                                <input value={loginCode} onChange={e => setLoginCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" placeholder={t("codePh")}
+                                    className="w-full h-12 rounded-xl px-4 text-center text-lg font-black tracking-[0.3em] outline-none mb-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(37,99,235,0.28)", color: "#E8EDF7", caretColor: CYAN }} />
+                                {loginErr && <p className="text-[11px] text-red-400 mb-2">{loginErr}</p>}
+                                <button onClick={verifyLoginCode} disabled={loginBusy || loginCode.length < 4}
+                                    className="w-full h-11 rounded-xl text-sm font-black text-white disabled:opacity-60 mb-2" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
+                                    {loginBusy ? <Loader2 className="w-4 h-4 animate-spin inline" /> : t("verify")}
+                                </button>
+                                <button onClick={resetLogin} className="w-full text-[11px]" style={{ color: "#6B7A99" }}>{t("changePhone")}</button>
+                            </>
+                        )}
+
+                        <button onClick={() => signIn("google", { callbackUrl: "/yukgo" })} className="w-full mt-4 text-[11px]" style={{ color: "#4B5B7A" }}>{t("orGoogle")}</button>
                     </div>
                 </>
             )}

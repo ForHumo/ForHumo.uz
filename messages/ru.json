@@ -1604,6 +1604,15 @@
     "gotIt": "Понятно",
     "loginTitle": "Показать контакт",
     "loginHint": "Войдите через Humo ID, чтобы увидеть номер телефона.",
-    "login": "Войти"
+    "login": "Войти",
+    "loginPhoneHint": "Введите номер телефона — код придёт в Telegram (не SMS).",
+    "phonePh": "+998 90 123 45 67",
+    "sendCode": "Отправить код",
+    "codeSentHint": "Код отправлен в Telegram ({phone}). Введите код.",
+    "codePh": "Код",
+    "verify": "Войти",
+    "changePhone": "Изменить номер",
+    "codeError": "Неверный или устаревший код",
+    "orGoogle": "или войти через Google"
   }
 }
