@@ -1540,6 +1540,13 @@
     }
   },
   "yukgo": {
+    "heroValue": "Cargo and trucks from 200+ Telegram groups — in one place, matched to your route.",
+    "postViaBot": "Post a load",
+    "howTitle": "How it works",
+    "how1": "Set your route",
+    "how2": "Matching load — instant alert",
+    "how3": "Contact directly",
+    "emptyBot": "Send your listing to @YukGo_tgbot — it posts automatically.",
     "tagline": "Cargo and trucks — all in one place",
     "tabAll": "All",
     "tabCargo": "Cargo",

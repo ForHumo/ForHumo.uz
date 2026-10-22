@@ -1540,6 +1540,13 @@
     }
   },
   "yukgo": {
+    "heroValue": "200+ Telegram guruhdagi yuk va mashina e'lonlari — bitta joyda, yo'nalishingiz bo'yicha.",
+    "postViaBot": "Yuk joylash",
+    "howTitle": "Qanday ishlaydi",
+    "how1": "Yo'nalishingizni qo'ying",
+    "how2": "Mos yuk chiqsa — darhol xabar",
+    "how3": "To'g'ridan bog'laning",
+    "emptyBot": "Yuk e'loningizni @YukGo_tgbot ga yuboring — avtomatik joylanadi.",
     "tagline": "Yuk va mashina e'lonlari — bir joyda",
     "tabAll": "Hammasi",
     "tabCargo": "Yuklar",

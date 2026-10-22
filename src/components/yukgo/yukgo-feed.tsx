@@ -208,7 +208,10 @@ export function YukGoFeed() {
                         </h1>
                         <p className="text-[10px] mt-1" style={{ color: "#6B7A99" }}>{t("tagline")}</p>
                     </div>
-                    <button onClick={openDriver} className="ml-auto w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95" style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.3)" }} title={t("driverTitle")}>
+                    <a href="https://t.me/YukGo_tgbot" target="_blank" rel="noopener noreferrer" className="ml-auto flex items-center gap-1.5 px-3 h-10 rounded-xl text-xs font-black text-white flex-shrink-0 active:scale-95" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
+                        <Truck className="w-4 h-4" />{t("postViaBot")}
+                    </a>
+                    <button onClick={openDriver} className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95" style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.3)" }} title={t("driverTitle")}>
                         <Bell className="w-5 h-5" style={{ color: CYAN }} />
                     </button>
                 </div>
@@ -271,11 +274,30 @@ export function YukGoFeed() {
                 {loading ? (
                     [0, 1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(37,99,235,0.12)" }} />)
                 ) : items.length === 0 ? (
-                    <div className="flex flex-col items-center gap-2 py-16 text-center">
-                        <Search className="w-8 h-8" style={{ color: "#2C3A57" }} />
-                        <p className="text-sm font-bold" style={{ color: "#6B7A99" }}>{t("empty")}</p>
-                        <p className="text-xs" style={{ color: "#4B5B7A" }}>{(from || to || type) ? t("emptyFilter") : t("emptySoon")}</p>
-                    </div>
+                    (from || to || type) ? (
+                        <div className="flex flex-col items-center gap-2 py-16 text-center">
+                            <Search className="w-8 h-8" style={{ color: "#2C3A57" }} />
+                            <p className="text-sm font-bold" style={{ color: "#6B7A99" }}>{t("empty")}</p>
+                            <p className="text-xs" style={{ color: "#4B5B7A" }}>{t("emptyFilter")}</p>
+                        </div>
+                    ) : (
+                        <div className="py-6">
+                            <p className="text-sm text-white font-bold mb-5 text-center px-2 leading-relaxed">{t("heroValue")}</p>
+                            <p className="text-[11px] font-black mb-3 text-center" style={{ color: "#6B7A99" }}>{t("howTitle")}</p>
+                            <div className="grid grid-cols-3 gap-2 mb-5">
+                                {[t("how1"), t("how2"), t("how3")].map((txt, i) => (
+                                    <div key={i} className="flex flex-col items-center text-center gap-1.5">
+                                        <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>{i + 1}</span>
+                                        <span className="text-[10px] leading-tight" style={{ color: "#9FB3D9" }}>{txt}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-[11px] text-center mb-3 px-2" style={{ color: "#6B7A99" }}>{t("emptyBot")}</p>
+                            <a href="https://t.me/YukGo_tgbot" target="_blank" rel="noopener noreferrer" className="mx-auto flex items-center justify-center gap-1.5 w-[220px] h-11 rounded-xl text-sm font-black text-white active:scale-95" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
+                                <Truck className="w-4 h-4" />{t("postViaBot")}
+                            </a>
+                        </div>
+                    )
                 ) : (
                     items.map(it => {
                         const isCargo = it.type === "CARGO";
