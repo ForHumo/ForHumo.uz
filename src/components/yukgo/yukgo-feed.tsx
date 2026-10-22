@@ -7,6 +7,7 @@ import {
     Search, Loader2, Clock, Weight, X, Bell, BellRing, Check,
 } from "lucide-react";
 import { subscribePush, getPushState, type PushState } from "@/lib/push-client";
+import { useTranslations, useLocale } from "next-intl";
 
 type LType = "CARGO" | "TRUCK";
 interface Listing {
@@ -22,30 +23,32 @@ interface Contact { phones: string[]; sourceLink: string | null }
 interface BIPEvent extends Event { prompt: () => void; userChoice: Promise<{ outcome: string }> }
 
 const BLUE = "#2563EB", CYAN = "#22D3EE";
-const TRUCK_LABELS: Record<string, string> = {
-    tent: "Tent", ref: "Refrijerator", open_top: "Tepasi ochiq", fura: "Fura", isuzu: "Isuzu",
-};
+const TRUCK_TYPES = ["tent", "ref", "open_top", "fura", "isuzu"];
 
-function timeAgo(iso: string) {
-    const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-    if (s < 60) return "hozir";
-    if (s < 3600) return `${Math.floor(s / 60)} daq`;
-    if (s < 86400) return `${Math.floor(s / 3600)} soat`;
-    return `${Math.floor(s / 86400)} kun`;
-}
-function fmtPrice(p: Listing["price"]) {
-    if (!p) return null;
-    if (p.amount == null) return p.negotiable ? "Kelishiladi" : null;
-    const n = p.amount.toLocaleString("ru-RU");
-    if (p.currency === "USD") return `$${n}`;
-    if (p.currency === "RUB") return `${n} ₽`;
-    return `${n} so'm`;
-}
 function place(city: string | null, text: string | null) {
     return (city || text || "—").replace(/\s+/g, " ").trim();
 }
 
 export function YukGoFeed() {
+    const t = useTranslations("yukgo");
+    const locale = useLocale();
+    const timeAgo = (iso: string) => {
+        const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+        if (s < 60) return t("now");
+        if (s < 3600) return t("minAgo", { n: Math.floor(s / 60) });
+        if (s < 86400) return t("hourAgo", { n: Math.floor(s / 3600) });
+        return t("dayAgo", { n: Math.floor(s / 86400) });
+    };
+    const fmtPrice = (p: Listing["price"]) => {
+        if (!p) return null;
+        if (p.amount == null) return p.negotiable ? t("negotiable") : null;
+        const n = p.amount.toLocaleString("ru-RU");
+        if (p.currency === "USD") return `$${n}`;
+        if (p.currency === "RUB") return `${n} ₽`;
+        return `${n} ${t("sum")}`;
+    };
+    const truckLabel = (tt: string) => (TRUCK_TYPES.includes(tt) ? t(`truck_${tt}`) : tt);
+
     const [type, setType] = useState<"" | LType>("");
     const [from, setFrom] = useState("");
     const [to, setTo] = useState("");
@@ -203,16 +206,16 @@ export function YukGoFeed() {
                         <h1 className="text-xl font-black leading-none">
                             <span style={{ color: "#fff" }}>Yuk</span><span style={{ background: `linear-gradient(135deg,${CYAN},${BLUE})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Go</span>
                         </h1>
-                        <p className="text-[10px] mt-1" style={{ color: "#6B7A99" }}>Yuk va mashina e'lonlari — bir joyda</p>
+                        <p className="text-[10px] mt-1" style={{ color: "#6B7A99" }}>{t("tagline")}</p>
                     </div>
-                    <button onClick={openDriver} className="ml-auto w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95" style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.3)" }} title="Haydovchi profili va bildirishnoma">
+                    <button onClick={openDriver} className="ml-auto w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95" style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.3)" }} title={t("driverTitle")}>
                         <Bell className="w-5 h-5" style={{ color: CYAN }} />
                     </button>
                 </div>
 
                 {/* Tur tablari */}
                 <div className="flex gap-2 mb-2.5">
-                    {([["", "Hammasi"], ["CARGO", "Yuklar"], ["TRUCK", "Mashinalar"]] as const).map(([v, label]) => (
+                    {([["", t("tabAll")], ["CARGO", t("tabCargo")], ["TRUCK", t("tabTrucks")]] as [("" | LType), string][]).map(([v, label]) => (
                         <button key={v} onClick={() => setType(v)}
                             className="px-3.5 py-1.5 rounded-lg text-xs font-black transition active:scale-95"
                             style={type === v
@@ -227,14 +230,14 @@ export function YukGoFeed() {
                 <div className="flex items-center gap-2">
                     <div className="relative flex-1">
                         <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "#4B5B7A" }} />
-                        <input value={from} onChange={e => setFrom(e.target.value)} placeholder="Qayerdan"
+                        <input value={from} onChange={e => setFrom(e.target.value)} placeholder={t("from")}
                             className="w-full h-9 rounded-lg pl-8 pr-2 text-xs outline-none"
                             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(37,99,235,0.22)", color: "#E8EDF7", caretColor: CYAN }} />
                     </div>
                     <ArrowRight className="w-4 h-4 flex-shrink-0" style={{ color: "#4B5B7A" }} />
                     <div className="relative flex-1">
                         <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "#4B5B7A" }} />
-                        <input value={to} onChange={e => setTo(e.target.value)} placeholder="Qayerga"
+                        <input value={to} onChange={e => setTo(e.target.value)} placeholder={t("to")}
                             className="w-full h-9 rounded-lg pl-8 pr-2 text-xs outline-none"
                             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(37,99,235,0.22)", color: "#E8EDF7", caretColor: CYAN }} />
                     </div>
@@ -251,13 +254,13 @@ export function YukGoFeed() {
                 <div className="mx-4 mt-2 p-3 rounded-2xl flex items-center gap-3" style={{ background: "rgba(37,99,235,0.1)", border: "1px solid rgba(37,99,235,0.3)" }}>
                     <img src="/yukgo/icon-192.png" alt="" className="w-10 h-10 rounded-xl flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                        <p className="text-xs font-black text-white">YukGo&apos;ni o&apos;rnating</p>
+                        <p className="text-xs font-black text-white">{t("installTitle")}</p>
                         <p className="text-[10px]" style={{ color: "#9FB3D9" }}>
-                            {iosInstall ? "Ulashish → “Bosh ekranga qo’shish”" : "Tez kirish uchun bosh ekranga qo’shing"}
+                            {iosInstall ? t("installIos") : t("installHint")}
                         </p>
                     </div>
                     {!iosInstall && installEvt && (
-                        <button onClick={doInstall} className="px-3 h-8 rounded-lg text-[11px] font-black text-white flex-shrink-0" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>O&apos;rnatish</button>
+                        <button onClick={doInstall} className="px-3 h-8 rounded-lg text-[11px] font-black text-white flex-shrink-0" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>{t("install")}</button>
                     )}
                     <button onClick={dismissInstall} className="flex-shrink-0"><X className="w-4 h-4" style={{ color: "#6B7A99" }} /></button>
                 </div>
@@ -270,8 +273,8 @@ export function YukGoFeed() {
                 ) : items.length === 0 ? (
                     <div className="flex flex-col items-center gap-2 py-16 text-center">
                         <Search className="w-8 h-8" style={{ color: "#2C3A57" }} />
-                        <p className="text-sm font-bold" style={{ color: "#6B7A99" }}>Hozircha e'lon yo'q</p>
-                        <p className="text-xs" style={{ color: "#4B5B7A" }}>{(from || to || type) ? "Filtrni o'zgartirib ko'ring" : "Tez orada e'lonlar paydo bo'ladi"}</p>
+                        <p className="text-sm font-bold" style={{ color: "#6B7A99" }}>{t("empty")}</p>
+                        <p className="text-xs" style={{ color: "#4B5B7A" }}>{(from || to || type) ? t("emptyFilter") : t("emptySoon")}</p>
                     </div>
                 ) : (
                     items.map(it => {
@@ -283,9 +286,9 @@ export function YukGoFeed() {
                                 {/* Yuqori qator */}
                                 <div className="flex items-center gap-2 mb-2">
                                     <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black" style={isCargo ? { background: "rgba(16,185,129,0.15)", color: "#34D399" } : { background: "rgba(37,99,235,0.18)", color: "#60A5FA" }}>
-                                        {isCargo ? <Package className="w-3 h-3" /> : <Truck className="w-3 h-3" />}{isCargo ? "Yuk" : "Mashina"}
+                                        {isCargo ? <Package className="w-3 h-3" /> : <Truck className="w-3 h-3" />}{isCargo ? t("badgeCargo") : t("badgeTruck")}
                                     </span>
-                                    {it.boosted && <span className="px-1.5 py-0.5 rounded text-[9px] font-black" style={{ background: `linear-gradient(135deg,${CYAN},${BLUE})`, color: "#fff" }}>TOP</span>}
+                                    {it.boosted && <span className="px-1.5 py-0.5 rounded text-[9px] font-black" style={{ background: `linear-gradient(135deg,${CYAN},${BLUE})`, color: "#fff" }}>{t("top")}</span>}
                                     <span className="ml-auto flex items-center gap-1 text-[10px]" style={{ color: "#4B5B7A" }}><Clock className="w-3 h-3" />{timeAgo(it.createdAt)}</span>
                                 </div>
 
@@ -298,10 +301,10 @@ export function YukGoFeed() {
 
                                 {/* Meta */}
                                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] mb-2.5" style={{ color: "#9FB3D9" }}>
-                                    {it.weightTons != null && <span className="flex items-center gap-1"><Weight className="w-3 h-3" />{it.weightTons} t</span>}
+                                    {it.weightTons != null && <span className="flex items-center gap-1"><Weight className="w-3 h-3" />{t("tons", { n: it.weightTons })}</span>}
                                     {it.cargo && <span>{it.cargo}</span>}
-                                    {it.truckTypes.map(t => <span key={t} className="px-1.5 py-0.5 rounded" style={{ background: "rgba(37,99,235,0.10)" }}>{TRUCK_LABELS[t] || t}</span>)}
-                                    {it.quantityTrucks && it.quantityTrucks > 1 && <span>{it.quantityTrucks} ta mashina</span>}
+                                    {it.truckTypes.map(tt => <span key={tt} className="px-1.5 py-0.5 rounded" style={{ background: "rgba(37,99,235,0.10)" }}>{truckLabel(tt)}</span>)}
+                                    {it.quantityTrucks && it.quantityTrucks > 1 && <span>{t("trucksCount", { n: it.quantityTrucks })}</span>}
                                     {priceStr && <span className="font-black" style={{ color: "#34D399" }}>{priceStr}</span>}
                                 </div>
 
@@ -315,18 +318,18 @@ export function YukGoFeed() {
                                         ))}
                                         {c.sourceLink && (
                                             <a href={c.sourceLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-bold" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(37,99,235,0.3)", color: "#9FB3D9" }}>
-                                                <ExternalLink className="w-3.5 h-3.5" />Telegram
+                                                <ExternalLink className="w-3.5 h-3.5" />{t("telegram")}
                                             </a>
                                         )}
-                                        {c.phones.length === 0 && !c.sourceLink && <span className="text-xs" style={{ color: "#6B7A99" }}>Kontakt topilmadi</span>}
+                                        {c.phones.length === 0 && !c.sourceLink && <span className="text-xs" style={{ color: "#6B7A99" }}>{t("noContact")}</span>}
                                     </div>
                                 ) : (
                                     <div className="flex items-center justify-between">
                                         <button onClick={() => reveal(it.id)} disabled={revealing === it.id}
                                             className="flex items-center gap-1.5 px-3.5 h-9 rounded-lg text-xs font-black disabled:opacity-60" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})`, color: "#fff" }}>
-                                            {revealing === it.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Phone className="w-3.5 h-3.5" />}Kontaktni ko&apos;rish
+                                            {revealing === it.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Phone className="w-3.5 h-3.5" />}{t("showContact")}
                                         </button>
-                                        {it.sourceKind === "TELEGRAM" && <span className="text-[9px]" style={{ color: "#3C4A67" }}>Manba: Telegram</span>}
+                                        {it.sourceKind === "TELEGRAM" && <span className="text-[9px]" style={{ color: "#3C4A67" }}>{t("source")}</span>}
                                     </div>
                                 )}
 
@@ -334,8 +337,8 @@ export function YukGoFeed() {
                                     <button onClick={() => reportTaken(it.id)}
                                         className="text-[10px] px-2 py-1 rounded-md active:scale-95"
                                         style={{ color: "#6B7A99", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(37,99,235,0.12)" }}
-                                        title="Band bo'lgan bo'lsa belgilang — boshqalar vaqt yo'qotmasin">
-                                        Band bo&apos;ldi?
+                                        title={t("taken")}>
+                                        {t("taken")}
                                     </button>
                                 </div>
                             </div>
@@ -345,7 +348,7 @@ export function YukGoFeed() {
 
                 {!loading && hasMore && (
                     <button onClick={loadMore} disabled={loadingMore} className="w-full h-11 rounded-xl text-sm font-black mt-1 disabled:opacity-50" style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.3)", color: "#9FB3D9" }}>
-                        {loadingMore ? <Loader2 className="w-4 h-4 animate-spin inline" /> : "Ko'proq e'lon"}
+                        {loadingMore ? <Loader2 className="w-4 h-4 animate-spin inline" /> : t("more")}
                     </button>
                 )}
             </div>
@@ -357,54 +360,54 @@ export function YukGoFeed() {
                     <div className="fixed inset-x-4 bottom-4 z-[110] rounded-2xl p-5 max-h-[88vh] overflow-y-auto md:inset-x-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[380px]"
                         style={{ background: "#0E1528", border: "1px solid rgba(37,99,235,0.35)" }}>
                         <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-base font-black text-white">Haydovchi profili</h3>
+                            <h3 className="text-base font-black text-white">{t("driverTitle")}</h3>
                             <button onClick={() => setDriverOpen(false)}><X className="w-5 h-5" style={{ color: "#6B7A99" }} /></button>
                         </div>
-                        <p className="text-[11px] mb-3" style={{ color: "#9FB3D9" }}>Yo&apos;nalishingizni qo&apos;ying — mos yuk chiqsa darhol bildirishnoma olasiz.</p>
+                        <p className="text-[11px] mb-3" style={{ color: "#9FB3D9" }}>{t("driverHint")}</p>
 
                         {dProUntil && new Date(dProUntil) > new Date() && (
                             <div className="mb-3 px-3 py-2 rounded-lg text-[11px] font-black flex items-center gap-1.5" style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#34D399" }}>
-                                <Check className="w-3.5 h-3.5" />Pro faol — {new Date(dProUntil).toLocaleDateString("uz-UZ", { day: "numeric", month: "short", year: "numeric" })}gacha
+                                <Check className="w-3.5 h-3.5" />{t("proActive", { date: new Date(dProUntil).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" }) })}
                             </div>
                         )}
 
-                        <label className="text-[10px] font-bold" style={{ color: "#6B7A99" }}>Yo&apos;nalish</label>
+                        <label className="text-[10px] font-bold" style={{ color: "#6B7A99" }}>{t("route")}</label>
                         <div className="flex items-center gap-2 mb-3 mt-1">
-                            <input value={dFrom} onChange={e => setDFrom(e.target.value)} placeholder="Qayerdan" className="flex-1 h-9 rounded-lg px-3 text-xs outline-none" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(37,99,235,0.22)", color: "#E8EDF7" }} />
+                            <input value={dFrom} onChange={e => setDFrom(e.target.value)} placeholder={t("from")} className="flex-1 h-9 rounded-lg px-3 text-xs outline-none" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(37,99,235,0.22)", color: "#E8EDF7" }} />
                             <ArrowRight className="w-4 h-4 flex-shrink-0" style={{ color: "#4B5B7A" }} />
-                            <input value={dTo} onChange={e => setDTo(e.target.value)} placeholder="Qayerga" className="flex-1 h-9 rounded-lg px-3 text-xs outline-none" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(37,99,235,0.22)", color: "#E8EDF7" }} />
+                            <input value={dTo} onChange={e => setDTo(e.target.value)} placeholder={t("to")} className="flex-1 h-9 rounded-lg px-3 text-xs outline-none" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(37,99,235,0.22)", color: "#E8EDF7" }} />
                         </div>
 
-                        <label className="text-[10px] font-bold" style={{ color: "#6B7A99" }}>Mashina turi</label>
+                        <label className="text-[10px] font-bold" style={{ color: "#6B7A99" }}>{t("vehicle")}</label>
                         <div className="flex flex-wrap gap-1.5 mb-3 mt-1">
-                            {Object.entries(TRUCK_LABELS).map(([v, label]) => (
+                            {TRUCK_TYPES.map(v => (
                                 <button key={v} onClick={() => setDVehicle(dVehicle === v ? "" : v)} className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold active:scale-95"
-                                    style={dVehicle === v ? { background: `linear-gradient(135deg,${BLUE},${CYAN})`, color: "#fff" } : { background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.2)", color: "#9FB3D9" }}>{label}</button>
+                                    style={dVehicle === v ? { background: `linear-gradient(135deg,${BLUE},${CYAN})`, color: "#fff" } : { background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.2)", color: "#9FB3D9" }}>{truckLabel(v)}</button>
                             ))}
                         </div>
 
-                        <label className="text-[10px] font-bold" style={{ color: "#6B7A99" }}>Sig&apos;imi (tonna)</label>
-                        <input value={dCapacity} onChange={e => setDCapacity(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="masalan 20"
+                        <label className="text-[10px] font-bold" style={{ color: "#6B7A99" }}>{t("capacity")}</label>
+                        <input value={dCapacity} onChange={e => setDCapacity(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder={t("capacityPh")}
                             className="w-full h-9 rounded-lg px-3 text-xs outline-none mb-3 mt-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(37,99,235,0.22)", color: "#E8EDF7" }} />
 
                         <button onClick={enablePush} disabled={pushState === "subscribed" || pushState === "denied" || pushState === "unsupported"}
                             className="w-full h-10 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 mb-3 disabled:opacity-70"
                             style={pushState === "subscribed" ? { background: "rgba(16,185,129,0.15)", color: "#34D399", border: "1px solid rgba(16,185,129,0.3)" } : { background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.3)", color: "#9FB3D9" }}>
-                            {pushState === "subscribed" ? <><Check className="w-3.5 h-3.5" />Bildirishnoma yoqilgan</>
-                                : pushState === "denied" ? "Brauzerda bloklangan"
-                                : pushState === "unsupported" ? "Bu qurilmada push yo'q"
-                                : <><BellRing className="w-3.5 h-3.5" />Bildirishnomani yoqish</>}
+                            {pushState === "subscribed" ? <><Check className="w-3.5 h-3.5" />{t("pushOn")}</>
+                                : pushState === "denied" ? t("pushDenied")
+                                : pushState === "unsupported" ? t("pushUnsupported")
+                                : <><BellRing className="w-3.5 h-3.5" />{t("pushEnable")}</>}
                         </button>
 
                         <div className="flex items-center justify-between py-1 mb-3">
-                            <span className="text-xs" style={{ color: "#9FB3D9" }}>Mos yuk chiqsa xabar ber</span>
+                            <span className="text-xs" style={{ color: "#9FB3D9" }}>{t("notifyMatch")}</span>
                             <button onClick={() => setDNotify(v => !v)} className="w-11 h-6 rounded-full relative transition flex-shrink-0" style={{ background: dNotify ? CYAN : "rgba(255,255,255,0.1)" }}>
                                 <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style={{ left: dNotify ? "22px" : "2px" }} />
                             </button>
                         </div>
 
                         <button onClick={saveDriver} disabled={savingDriver} className="w-full h-11 rounded-xl text-sm font-black text-white disabled:opacity-60" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
-                            {savingDriver ? <Loader2 className="w-4 h-4 animate-spin inline" /> : "Saqlash"}
+                            {savingDriver ? <Loader2 className="w-4 h-4 animate-spin inline" /> : t("save")}
                         </button>
                     </div>
                 </>
@@ -417,17 +420,17 @@ export function YukGoFeed() {
                     <div className="fixed inset-x-4 bottom-4 z-[110] rounded-2xl p-5 md:inset-x-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[360px]"
                         style={{ background: "#0E1528", border: "1px solid rgba(34,211,238,0.35)" }}>
                         <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-base font-black"><span className="text-white">YukGo </span><span style={{ color: CYAN }}>Pro</span></h3>
+                            <h3 className="text-base font-black"><span className="text-white">YukGo </span><span style={{ color: CYAN }}>{t("proTitle")}</span></h3>
                             <button onClick={() => setProOpen(false)}><X className="w-5 h-5" style={{ color: "#6B7A99" }} /></button>
                         </div>
-                        <p className="text-xs mb-3" style={{ color: "#9FB3D9" }}>Bugungi bepul limit tugadi ({proLimit} kontakt/kun). Pro bilan:</p>
+                        <p className="text-xs mb-3" style={{ color: "#9FB3D9" }}>{t("proLimitReached", { n: proLimit })}</p>
                         <ul className="space-y-2 mb-4 text-xs" style={{ color: "#E8EDF7" }}>
-                            <li className="flex items-center gap-2"><Check className="w-4 h-4" style={{ color: "#34D399" }} />Cheksiz kontakt</li>
-                            <li className="flex items-center gap-2"><Check className="w-4 h-4" style={{ color: "#34D399" }} />Ustuvor bildirishnoma</li>
-                            <li className="flex items-center gap-2"><Check className="w-4 h-4" style={{ color: "#34D399" }} />Barcha yo&apos;nalishlar</li>
+                            <li className="flex items-center gap-2"><Check className="w-4 h-4" style={{ color: "#34D399" }} />{t("proBenefit1")}</li>
+                            <li className="flex items-center gap-2"><Check className="w-4 h-4" style={{ color: "#34D399" }} />{t("proBenefit2")}</li>
+                            <li className="flex items-center gap-2"><Check className="w-4 h-4" style={{ color: "#34D399" }} />{t("proBenefit3")}</li>
                         </ul>
-                        <p className="text-[11px] mb-3" style={{ color: "#6B7A99" }}>To&apos;lov tizimi tez orada ulanadi. Hozircha Pro faollashtirish uchun biz bilan bog&apos;laning.</p>
-                        <button onClick={() => setProOpen(false)} className="w-full h-11 rounded-xl text-sm font-black text-white" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>Tushundim</button>
+                        <p className="text-[11px] mb-3" style={{ color: "#6B7A99" }}>{t("proPaymentSoon")}</p>
+                        <button onClick={() => setProOpen(false)} className="w-full h-11 rounded-xl text-sm font-black text-white" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>{t("gotIt")}</button>
                     </div>
                 </>
             )}
@@ -439,13 +442,13 @@ export function YukGoFeed() {
                     <div className="fixed inset-x-4 bottom-4 z-[110] rounded-2xl p-5 md:inset-x-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[360px]"
                         style={{ background: "#0E1528", border: "1px solid rgba(37,99,235,0.35)" }}>
                         <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-base font-black text-white">Kontaktni ko&apos;rish</h3>
+                            <h3 className="text-base font-black text-white">{t("loginTitle")}</h3>
                             <button onClick={() => setNeedLogin(false)}><X className="w-5 h-5" style={{ color: "#6B7A99" }} /></button>
                         </div>
-                        <p className="text-xs mb-4" style={{ color: "#9FB3D9" }}>Telefon raqamini ko&apos;rish uchun Humo ID bilan kiring.</p>
+                        <p className="text-xs mb-4" style={{ color: "#9FB3D9" }}>{t("loginHint")}</p>
                         <button onClick={() => signIn("google", { callbackUrl: "/yukgo" })}
                             className="w-full h-11 rounded-xl text-sm font-black text-white" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
-                            Kirish
+                            {t("login")}
                         </button>
                     </div>
                 </>
