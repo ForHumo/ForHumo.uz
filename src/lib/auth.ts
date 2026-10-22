@@ -10,6 +10,15 @@ export const authOptions: NextAuthOptions = {
     secret: process.env.NEXTAUTH_SECRET,
     // Multi-domain: Vercel proxy'da x-forwarded-host'ga ishonamiz
     useSecureCookies: process.env.NODE_ENV === "production",
+    // Sessiya: 1 yil + har kuni rolling yangilanadi → FAOL foydalanuvchi qayta login
+    // qilmaydi (oldin default 30 kun edi = "har oy login" muammosi). Xavfsizlik
+    // zaiflashmaydi: JWT imzolangan + jti revocation (qurilmani masofadan chiqarish) saqlanadi.
+    // (Sezgir Pay amallari uchun kelajakda step-up re-auth qo'shiladi.)
+    session: {
+        strategy: "jwt",
+        maxAge: 60 * 60 * 24 * 365,   // 1 yil
+        updateAge: 60 * 60 * 24,       // har kuni token yangilanib muddat uzayadi
+    },
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID!,
