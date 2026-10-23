@@ -5,19 +5,21 @@
 
 import { useEffect, useState } from "react";
 import { Flame, ChevronRight } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { BN } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 
 interface Cat {
     slug: string;
     name: string;
+    nameRu?: string | null;
     productCount: number;
     imageUrl: string | null;
 }
 
 export function BnTrendingCategories() {
     const t = useTranslations("bn.home");
+    const locale = useLocale();
     const [rows, setRows] = useState<Cat[]>([]);
     const [loaded, setLoaded] = useState(false);
 
@@ -55,39 +57,43 @@ export function BnTrendingCategories() {
                         style={{ background: BN.surface }}
                     />
                 ))}
-                {loaded && rows.map(c => (
-                    <BnLink
-                        key={c.slug}
-                        href={`/k/${c.slug}`}
-                        className="flex-shrink-0 w-[110px] rounded-2xl overflow-hidden group transition-transform active:scale-95"
-                        style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
-                    >
-                        <div
-                            className="w-full aspect-square overflow-hidden"
-                            style={{ background: BN.surfaceUp }}
+                {loaded && rows.map(c => {
+                    // Kategoriya nomi: ru'da nameRu (bo'lsa), aks holda asl nom
+                    const name = locale === "ru" && c.nameRu ? c.nameRu : c.name;
+                    return (
+                        <BnLink
+                            key={c.slug}
+                            href={`/k/${c.slug}`}
+                            className="flex-shrink-0 w-[110px] rounded-2xl overflow-hidden group transition-transform active:scale-95"
+                            style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                         >
-                            {c.imageUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                    src={c.imageUrl}
-                                    alt={c.name}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                    loading="lazy"
-                                />
-                            ) : (
-                                <div className="w-full h-full grid place-items-center" style={{ color: BN.text3 }}>
-                                    <Flame className="w-6 h-6" />
-                                </div>
-                            )}
-                        </div>
-                        <div className="p-2 text-center">
-                            <p className="text-[12px] font-black line-clamp-1">{c.name}</p>
-                            <p className="text-[10.5px] tabular-nums" style={{ color: BN.text3 }}>
-                                {t("nItems", { n: c.productCount })}
-                            </p>
-                        </div>
-                    </BnLink>
-                ))}
+                            <div
+                                className="w-full aspect-square overflow-hidden"
+                                style={{ background: BN.surfaceUp }}
+                            >
+                                {c.imageUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                        src={c.imageUrl}
+                                        alt={name}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                        loading="lazy"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full grid place-items-center" style={{ color: BN.text3 }}>
+                                        <Flame className="w-6 h-6" />
+                                    </div>
+                                )}
+                            </div>
+                            <div className="p-2 text-center">
+                                <p className="text-[12px] font-black line-clamp-1">{name}</p>
+                                <p className="text-[10.5px] tabular-nums" style={{ color: BN.text3 }}>
+                                    {t("nItems", { n: c.productCount })}
+                                </p>
+                            </div>
+                        </BnLink>
+                    );
+                })}
             </div>
         </section>
     );

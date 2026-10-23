@@ -5,9 +5,11 @@
 // SSR yo'q (client-only) — dynamic import bilan yuklanadi.
 
 import { useEffect, useRef, useState } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Store, MapPin, Loader2, Crown } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
+import { bnCity } from "@/lib/bn-seo";
 
 interface Shop {
     slug: string; name: string; city: string; address: string | null;
@@ -28,8 +30,21 @@ interface Data { shops: Shop[]; markets: Market[]; }
 // Leaflet dinamik yuklash (server'da leaflet ishlamaydi)
 type LeafletModule = typeof import("leaflet");
 
+// Popup HTML satr sifatida quriladi — do'kon/bozor nomi va manzili sotuvchi
+// kiritgan matn, shuning uchun har bir qiymat HTML-escape qilinadi (XSS).
+function escapeHtml(v: string | number | null | undefined): string {
+    return String(v ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 export function BnMap() {
     const locale = useLocale();
+    const t = useTranslations("bn.map");
+    const fmt = useBnFormat();
     const mapRef = useRef<HTMLDivElement>(null);
     const [data, setData] = useState<Data | null>(null);
     const [loading, setLoading] = useState(true);
@@ -86,11 +101,14 @@ export function BnMap() {
             maxZoom: 19,
         }).addTo(map);
 
+        // Ranglar — BN tokenlari (popup foni bn-styles.css'da BN surface).
+        // Oq halqa (#fff) ataylab: OSM xarita plitkalari har ikki temada och.
+
         // Bozor markerlari (katta, tilla)
         data.markets.forEach(m => {
             const marketName = locale === "ru" ? (m.nameRu ?? m.name) : m.name;
             const icon = leaflet.divIcon({
-                html: `<div style="width: 40px; height: 40px; background: ${BN.gold}; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: #0A0E27; font-size: 12px; font-weight: 800;">B</div>`,
+                html: `<div style="width: 40px; height: 40px; background: ${BN.gold}; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: ${BN.onGold}; font-size: 12px; font-weight: 800;">B</div>`,
                 className: "",
                 iconSize: [40, 40],
                 iconAnchor: [20, 20],
@@ -98,37 +116,41 @@ export function BnMap() {
             const marker = leaflet.marker([m.lat, m.lng], { icon }).addTo(map);
             marker.bindPopup(`
                 <div style="min-width: 180px; font-family: sans-serif;">
-                    <b style="font-size: 14px; color: #0A0E27;">${marketName}</b><br>
-                    <span style="font-size: 12px; color: #666;">${m.district ?? ""}${m.district ? ", " : ""}${m.city}</span><br>
-                    <a href="/m/${m.slug}" style="color: #F5B301; font-weight: 600; text-decoration: none; font-size: 12px;">${locale === "ru" ? "Открыть" : locale === "en" ? "Open" : "Ochish"} →</a>
+                    <b style="font-size: 14px; color: ${BN.text};">${escapeHtml(marketName)}</b><br>
+                    <span style="font-size: 12px; color: ${BN.text3};">${escapeHtml(m.district)}${m.district ? ", " : ""}${escapeHtml(bnCity(m.city, locale))}</span><br>
+                    <a href="/m/${encodeURIComponent(m.slug)}" style="color: ${BN.gold}; font-weight: 600; text-decoration: none; font-size: 12px;">${escapeHtml(t("open"))} →</a>
                 </div>
             `);
         });
 
-        // Do'kon markerlari (kichik, oq)
+        // Do'kon markerlari (kichik): Premium — to'la tilla (bozorning kichik nusxasi),
+        // Verified — tilla halqa, Oddiy — kulrang halqa. Fon BN surface — tungi
+        // temada ham halqa/harf o'qiladi.
         data.shops.forEach(s => {
             const isPrem = s.isPremium;
             const isVerified = s.verifiedTier !== "NONE";
-            const color = isPrem ? "#8B5CF6" : isVerified ? BN.gold : "#94A3B8";
+            const ring = isPrem ? "#fff" : isVerified ? BN.gold : BN.text3;
+            const fill = isPrem ? BN.gold : BN.surface;
+            const ink = isPrem ? BN.onGold : ring;
             const icon = leaflet.divIcon({
-                html: `<div style="width: 24px; height: 24px; background: #fff; border: 2px solid ${color}; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; color: ${color}; font-size: 10px; font-weight: 700;">S</div>`,
+                html: `<div style="width: 24px; height: 24px; background: ${fill}; border: 2px solid ${ring}; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; color: ${ink}; font-size: 10px; font-weight: 700;">S</div>`,
                 className: "",
                 iconSize: [24, 24],
                 iconAnchor: [12, 12],
             });
             const marker = leaflet.marker([s.lat, s.lng], { icon }).addTo(map);
             const badge = isPrem
-                ? '<span style="background: #8B5CF6; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700;">PREMIUM</span>'
+                ? `<span style="background: ${BN.gold}; color: ${BN.onGold}; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase;">${escapeHtml(t("legendPremium"))}</span>`
                 : isVerified
-                    ? '<span style="background: #F5B301; color: #0A0E27; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700;">VERIFIED</span>'
+                    ? `<span style="background: ${BN.goldSoft}; color: ${BN.gold}; border: 1px solid ${BN.borderGold}; padding: 1px 5px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase;">${escapeHtml(t("legendVerified"))}</span>`
                     : "";
             marker.bindPopup(`
                 <div style="min-width: 180px; font-family: sans-serif;">
-                    <b style="font-size: 13px; color: #0A0E27;">${s.name}</b> ${badge}<br>
-                    <span style="font-size: 11px; color: #666;">${s.address ?? s.city}</span><br>
-                    ${s.rating > 0 ? `<span style="font-size: 11px; color: #F5B301;">★ ${s.rating.toFixed(1)} (${s.ratingCount})</span> · ` : ""}
-                    <span style="font-size: 11px; color: #666;">${s.productCount} ${locale === "ru" ? "товаров" : locale === "en" ? "items" : "mahsulot"}</span><br>
-                    <a href="/d/${s.slug}" style="color: #F5B301; font-weight: 600; text-decoration: none; font-size: 12px;">${locale === "ru" ? "Открыть" : locale === "en" ? "Open" : "Ochish"} →</a>
+                    <b style="font-size: 13px; color: ${BN.text};">${escapeHtml(s.name)}</b> ${badge}<br>
+                    <span style="font-size: 11px; color: ${BN.text3};">${escapeHtml(s.address ?? bnCity(s.city, locale))}</span><br>
+                    ${s.rating > 0 ? `<span style="font-size: 11px; color: ${BN.gold};">★ ${escapeHtml(s.rating.toFixed(1))} (${escapeHtml(s.ratingCount)})</span> · ` : ""}
+                    <span style="font-size: 11px; color: ${BN.text3};">${escapeHtml(fmt.products(s.productCount))}</span><br>
+                    <a href="/d/${encodeURIComponent(s.slug)}" style="color: ${BN.gold}; font-weight: 600; text-decoration: none; font-size: 12px;">${escapeHtml(t("open"))} →</a>
                 </div>
             `);
         });
@@ -136,7 +158,7 @@ export function BnMap() {
         return () => {
             map.remove();
         };
-    }, [L, data, locale]);
+    }, [L, data, locale, t, fmt]);
 
     if (loading || !L) {
         return (
@@ -151,20 +173,21 @@ export function BnMap() {
             {/* Legend */}
             <div className="p-3 flex flex-wrap items-center gap-3 text-[11.5px]" style={{ background: BN.surfaceUp, borderBottom: `1px solid ${BN.border}` }}>
                 <div className="flex items-center gap-1.5">
+                    {/* Legenda markerlarni takrorlaydi: bozor — katta tilla, Premium — kichik tilla */}
+                    <div className="w-4 h-4 rounded-full" style={{ background: BN.gold, border: "2px solid #fff" }} />
+                    <span style={{ color: BN.text2 }}>{t("legendMarkets")}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
                     <div className="w-3 h-3 rounded-full" style={{ background: BN.gold, border: "2px solid #fff" }} />
-                    <span style={{ color: BN.text2 }}>{locale === "ru" ? "Базары" : locale === "en" ? "Bazaars" : "Bozorlar"}</span>
+                    <span style={{ color: BN.text2 }}>{t("legendPremium")}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full" style={{ background: "#fff", border: "2px solid #8B5CF6" }} />
-                    <span style={{ color: BN.text2 }}>Premium</span>
+                    <div className="w-3 h-3 rounded-full" style={{ background: BN.surface, border: `2px solid ${BN.gold}` }} />
+                    <span style={{ color: BN.text2 }}>{t("legendVerified")}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full" style={{ background: "#fff", border: `2px solid ${BN.gold}` }} />
-                    <span style={{ color: BN.text2 }}>Verified</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full" style={{ background: "#fff", border: "2px solid #94A3B8" }} />
-                    <span style={{ color: BN.text2 }}>{locale === "ru" ? "Обычный" : locale === "en" ? "Regular" : "Oddiy"}</span>
+                    <div className="w-3 h-3 rounded-full" style={{ background: BN.surface, border: `2px solid ${BN.text3}` }} />
+                    <span style={{ color: BN.text2 }}>{t("legendRegular")}</span>
                 </div>
                 <div className="ml-auto flex items-center gap-3 text-[11px]" style={{ color: BN.text3 }}>
                     <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{data?.markets.length ?? 0}</span>

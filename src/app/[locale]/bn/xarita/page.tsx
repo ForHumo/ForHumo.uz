@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { bnPageMeta } from "@/lib/bn-seo";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { BnMap } from "@/components/bn/bn-map";
 import { BnBackButton } from "@/components/bn/bn-back-button";
@@ -16,14 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     return {
         title,
         description,
-        alternates: {
-            canonical: `https://bozornarxida.uz/${locale}/xarita`,
-            languages: {
-                uz: "https://bozornarxida.uz/uz/xarita",
-                ru: "https://bozornarxida.uz/ru/xarita",
-                en: "https://bozornarxida.uz/en/xarita",
-            },
-        },
+        ...bnPageMeta({ locale, path: "/xarita", title, description }),
     };
 }
 

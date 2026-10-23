@@ -421,7 +421,7 @@ function WaitlistCard({
                     <a href={`tel:${phoneClean}`}
                         aria-label={`${e.name} — telefon qilish`}
                         className="h-9 px-3 grid place-items-center rounded-lg text-[12.5px] font-bold transition-transform active:scale-[0.95]"
-                        style={{ background: BN.gold, color: "#000" }}>
+                        style={{ background: BN.gold, color: BN.onGold }}>
                         <Phone className="w-3.5 h-3.5" />
                     </a>
                     <a href={buildWaLink(phoneClean, e.name)}
@@ -475,7 +475,7 @@ function WaitlistCard({
                             onClick={() => { onUpdate({ contactNote: note }); setNoteOpen(false); }}
                             disabled={busy}
                             className="h-8 px-3 rounded-lg text-[12px] font-bold"
-                            style={{ background: BN.gold, color: "#000" }}>
+                            style={{ background: BN.gold, color: BN.onGold }}>
                             Saqlash
                         </button>
                         <button onClick={() => { setNote(e.contactNote ?? ""); setNoteOpen(false); }}

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { bnPageMeta } from "@/lib/bn-seo";
 import { BnCatalog } from "@/components/bn/bn-catalog";
 import { BnVoiceSearchClient } from "@/components/bn/bn-voice-search-client";
 import { BnSearchShops } from "@/components/bn/bn-search-shops";
@@ -8,7 +10,13 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Qidiruv" };
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+    const { locale } = await params;
+    const t = await getTranslations({ locale, namespace: "bn" });
+    const title = t("seo.searchTitle");
+    const description = t("seo.searchDesc");
+    return { title, description, ...bnPageMeta({ locale, path: "/qidiruv", title, description }) };
+}
 
 export default async function Page({
     searchParams,

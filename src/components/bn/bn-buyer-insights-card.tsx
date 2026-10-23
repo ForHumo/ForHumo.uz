@@ -4,7 +4,8 @@
 
 import { useEffect, useState } from "react";
 import { TrendingUp, TrendingDown, ShoppingBag, Package, Heart, Bell, ChevronRight, Loader2 } from "lucide-react";
-import { BN, fmtPrice, fmtPriceShort } from "@/lib/bn-theme";
+import { BN } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
 import { BnLink } from "./bn-nav";
 
 interface Deal { productId: string; slug: string; title: string; image: string | null; price: number; oldPrice: number | null; marketAvgPrice: number | null; shopName?: string; shopSlug?: string }
@@ -23,6 +24,7 @@ interface Resp {
 }
 
 export function BnBuyerInsightsCard() {
+    const fmt = useBnFormat();
     const [data, setData] = useState<Resp | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -68,7 +70,7 @@ export function BnBuyerInsightsCard() {
                 <div className="grid grid-cols-2 gap-2.5 mb-3">
                     <div className="p-2.5 rounded-xl" style={{ background: BN.surface }}>
                         <p className="text-[10.5px] font-black uppercase tracking-wider" style={{ color: BN.text3 }}>Sarflagan</p>
-                        <p className="text-[18px] font-black leading-tight" style={{ color: BN.text }}>{fmtPrice(s.thisMonthTotal)}</p>
+                        <p className="text-[18px] font-black leading-tight" style={{ color: BN.text }}>{fmt.price(s.thisMonthTotal)}</p>
                         <p className="text-[10.5px] mt-0.5 flex items-center gap-1" style={{ color: trendColor }}>
                             <TIcon className="w-3 h-3" /> {Math.abs(s.trendPct)}% o'tgan oydan
                         </p>
@@ -96,7 +98,7 @@ export function BnBuyerInsightsCard() {
                                             <span style={{ color: BN.text3 }}>{i + 1}.</span> {c.name}
                                         </p>
                                         <p className="text-[11.5px] font-black tabular-nums" style={{ color: BN.gold }}>
-                                            {fmtPriceShort(c.total)}
+                                            {fmt.priceShort(c.total)}
                                         </p>
                                     </div>
                                     <div className="h-1 rounded-full overflow-hidden" style={{ background: BN.surfaceUp }}>
@@ -156,7 +158,7 @@ export function BnBuyerInsightsCard() {
                                         <p className="text-[11px]" style={{ color: BN.text3 }}>{d.shopName}</p>
                                     </div>
                                     <div className="text-right flex-shrink-0">
-                                        <p className="text-[13px] font-black" style={{ color: BN.gold }}>{fmtPrice(d.price)}</p>
+                                        <p className="text-[13px] font-black" style={{ color: BN.gold }}>{fmt.price(d.price)}</p>
                                         {savePct > 0 && (
                                             <p className="text-[10.5px] font-black" style={{ color: BN.ok }}>-{savePct}%</p>
                                         )}

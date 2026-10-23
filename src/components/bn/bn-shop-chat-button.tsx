@@ -12,8 +12,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import { MessageCircle, X, Send, Loader2, TagIcon, CheckCircle2, XCircle, ChevronDown, Phone } from "lucide-react";
-import { BN, groupThousands } from "@/lib/bn-theme";
+import { BN } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
 
 interface OfferProduct {
     id: string;
@@ -45,6 +47,7 @@ interface Props {
 }
 
 export function BnShopChatButton({ shopSlug, shopName, triggerLabel, product = null }: Props) {
+    const t = useTranslations("bn.shopChat");
     const [open, setOpen] = useState(false);
     const [initialText, setInitialText] = useState<string>("");
 
@@ -70,7 +73,7 @@ export function BnShopChatButton({ shopSlug, shopName, triggerLabel, product = n
                 style={{ background: BN.gold, color: BN.onGold }}
             >
                 <MessageCircle className="w-3.5 h-3.5" />
-                {triggerLabel ?? "Yozishish"}
+                {triggerLabel ?? t("trigger")}
             </button>
 
             {open && (
@@ -92,6 +95,8 @@ function BnShopChatModal({
     shopSlug: string; shopName: string; initialText?: string;
     product: OfferProduct | null; onClose: () => void;
 }) {
+    const tc = useTranslations("bn.shopChat");
+    const fmt = useBnFormat();
     const [messages, setMessages] = useState<Msg[]>([]);
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
@@ -193,10 +198,10 @@ function BnShopChatModal({
                         <MessageCircle className="w-5 h-5 shrink-0" style={{ color: BN.gold }} />
                         <div className="min-w-0">
                             <div className="text-sm font-bold truncate" style={{ color: BN.text }}>{shopName}</div>
-                            <div className="text-[11px]" style={{ color: BN.text3 }}>Do&apos;kon bilan chat</div>
+                            <div className="text-[11px]" style={{ color: BN.text3 }}>{tc("subtitle")}</div>
                         </div>
                     </div>
-                    <button onClick={onClose} aria-label="Yopish"
+                    <button onClick={onClose} aria-label={tc("close")}
                         className="p-1.5 rounded" style={{ background: BN.surfaceUp }}>
                         <X className="w-4 h-4" style={{ color: BN.text2 }} />
                     </button>
@@ -211,11 +216,11 @@ function BnShopChatModal({
                             <img src={product.imageUrl} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0" />
                         )}
                         <div className="flex-1 min-w-0">
-                            <div className="text-[11px]" style={{ color: BN.text3 }}>Muhokamada</div>
+                            <div className="text-[11px]" style={{ color: BN.text3 }}>{tc("discussing")}</div>
                             <div className="text-[13px] font-bold truncate" style={{ color: BN.gold }}>{product.title}</div>
                         </div>
                         <div className="text-[12px] font-black tabular-nums" style={{ color: BN.gold }}>
-                            {groupThousands(product.price)} so&apos;m
+                            {fmt.price(product.price)}
                         </div>
                     </div>
                 )}
@@ -234,8 +239,8 @@ function BnShopChatModal({
                         </div>
                     ) : messages.length === 0 ? (
                         <div className="text-center py-8 text-xs" style={{ color: BN.text3 }}>
-                            Hozircha xabar yo&apos;q.<br />
-                            Do&apos;konga savolingizni yozing yoki narx taklif qiling.
+                            {tc("emptyTitle")}<br />
+                            {tc("emptyText")}
                         </div>
                     ) : (
                         messages.map(m => (
@@ -272,7 +277,7 @@ function BnShopChatModal({
                                 style={{ background: BN.goldSoft, color: BN.gold, border: `1px solid ${BN.borderGold}` }}
                             >
                                 <TagIcon className="w-4 h-4" />
-                                Narx taklif qilish
+                                {tc("makeOffer")}
                             </button>
                         )}
                         <div className="flex gap-2">
@@ -281,7 +286,7 @@ function BnShopChatModal({
                                 value={text}
                                 onChange={e => setText(e.target.value)}
                                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void send(); } }}
-                                placeholder="Xabar yozing..."
+                                placeholder={tc("placeholder")}
                                 className="flex-1 px-3 py-2 rounded-lg text-sm focus:outline-none"
                                 style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
                                 maxLength={2000}
@@ -291,7 +296,7 @@ function BnShopChatModal({
                                 disabled={sending || !text.trim()}
                                 className="px-3 rounded-lg disabled:opacity-50"
                                 style={{ background: BN.gold, color: BN.onGold }}
-                                aria-label="Yuborish"
+                                aria-label={tc("send")}
                             >
                                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                             </button>
@@ -356,6 +361,8 @@ function OfferBubble({
     onRespond: (id: string, action: "ACCEPT" | "REJECT") => void;
     sending: boolean;
 }) {
+    const tc = useTranslations("bn.shopChat");
+    const fmt = useBnFormat();
     const amount = m.offerAmount ?? 0;
     const status = m.offerStatus ?? "PENDING";
     const isPending = status === "PENDING";
@@ -365,12 +372,12 @@ function OfferBubble({
     const canRespond = isPending && (m.fromShop ? !viewerIsSeller : viewerIsSeller);
 
     const pct = originalPrice ? Math.round((amount / originalPrice) * 100) : null;
-    const label = m.kind === "COUNTER" ? "Qarshi taklif" : "Narx taklifi";
+    const label = m.kind === "COUNTER" ? tc("counter") : tc("offer");
     const statusMeta: Record<string, { text: string; color: string; bg: string; icon: React.ReactNode }> = {
-        PENDING:   { text: "Kutilmoqda", color: BN.gold,  bg: BN.goldSoft, icon: null },
-        ACCEPTED:  { text: "Qabul qilindi", color: BN.ok, bg: `${BN.ok}22`, icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
-        REJECTED:  { text: "Rad etildi", color: BN.err,   bg: `${BN.err}22`, icon: <XCircle className="w-3.5 h-3.5" /> },
-        COUNTERED: { text: "Qarshi taklif berildi", color: BN.text3, bg: BN.surfaceUp, icon: <ChevronDown className="w-3.5 h-3.5" /> },
+        PENDING:   { text: tc("stPending"), color: BN.gold,  bg: BN.goldSoft, icon: null },
+        ACCEPTED:  { text: tc("stAccepted"), color: BN.ok, bg: `${BN.ok}22`, icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
+        REJECTED:  { text: tc("stRejected"), color: BN.err,   bg: `${BN.err}22`, icon: <XCircle className="w-3.5 h-3.5" /> },
+        COUNTERED: { text: tc("stCountered"), color: BN.text3, bg: BN.surfaceUp, icon: <ChevronDown className="w-3.5 h-3.5" /> },
     };
     const meta = statusMeta[status] ?? statusMeta.PENDING;
 
@@ -391,15 +398,15 @@ function OfferBubble({
                 {/* Summa */}
                 <div className="px-3 pb-2">
                     <div className="text-[22px] font-black tabular-nums leading-tight">
-                        {groupThousands(amount)} so&apos;m
+                        {fmt.price(amount)}
                     </div>
                     {pct !== null && (
                         <div className="text-[11px] opacity-70 mt-0.5">
-                            E&apos;lon narxining {pct}% i
+                            {tc("pctOfListing", { pct })}
                         </div>
                     )}
                 </div>
-                {/* Izoh (agar bor bo'lsa) */}
+                {/* Izoh (agar bor bo'lsa). Prefikslar — server yozgan avto-matn (API), UI matni emas */}
                 {m.text && !m.text.startsWith("Narx taklifi:") && !m.text.startsWith("Qarshi taklif:") && (
                     <div className="px-3 pb-2 text-[13px] whitespace-pre-wrap opacity-90">{m.text}</div>
                 )}
@@ -421,7 +428,7 @@ function OfferBubble({
                             style={{ color: m.fromShop ? BN.err : "#7A1F1F", background: "transparent" }}
                         >
                             <XCircle className="w-4 h-4 inline mr-1" />
-                            Rad
+                            {tc("reject")}
                         </button>
                         <button
                             onClick={() => onRespond(m.id, "ACCEPT")}
@@ -434,7 +441,7 @@ function OfferBubble({
                             }}
                         >
                             <CheckCircle2 className="w-4 h-4 inline mr-1" />
-                            Qabul
+                            {tc("accept")}
                         </button>
                     </div>
                 )}
@@ -447,6 +454,7 @@ function OfferBubble({
 }
 
 function CallBubble({ m }: { m: Msg }) {
+    const tc = useTranslations("bn.shopChat");
     return (
         <div className={`flex ${m.fromShop ? "justify-start" : "justify-end"}`}>
             <div className="max-w-[85%] px-3 py-2.5 rounded-2xl flex items-center gap-2.5"
@@ -455,7 +463,7 @@ function CallBubble({ m }: { m: Msg }) {
                     <Phone className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                    <div className="text-[13px] font-black">Qo&apos;ng&apos;iroq so&apos;rovi</div>
+                    <div className="text-[13px] font-black">{tc("callRequest")}</div>
                     {m.text && m.text !== "Qo'ng'iroq so'rovi" && (
                         <div className="text-[12px] opacity-90 truncate" style={{ color: BN.text2 }}>{m.text}</div>
                     )}
@@ -496,6 +504,8 @@ function OfferForm({
     sending: boolean;
     initialNote?: string;
 }) {
+    const tc = useTranslations("bn.shopChat");
+    const fmt = useBnFormat();
     const min = Math.max(1, Math.round(product.price * 0.3));
     const max = product.price;
     // 90% dan boshlaymiz — real hayotda savdolashuv odatda 5-15% chegirma
@@ -524,16 +534,16 @@ function OfferForm({
         <div className="p-3 space-y-3" style={{ borderTop: `1px solid ${BN.border}`, background: BN.surface }}>
             <div className="flex items-center justify-between">
                 <div className="text-[13px] font-black" style={{ color: BN.text }}>
-                    Narx taklif qiling
+                    {tc("offerTitle")}
                 </div>
                 <button onClick={onCancel} className="text-[12px] font-bold" style={{ color: BN.text3 }}>
-                    Bekor qilish
+                    {tc("cancel")}
                 </button>
             </div>
 
             {/* Katta raqam kirituvchi — istalgan raqam yozish mumkin, chegara faqat blur/submit'da */}
             <div>
-                <div className="text-[10px] mb-1" style={{ color: BN.text3 }}>Sizning taklifingiz</div>
+                <div className="text-[10px] mb-1" style={{ color: BN.text3 }}>{tc("yourOffer")}</div>
                 <div className="flex items-baseline gap-2 rounded-xl px-3 py-2.5"
                     style={{
                         background: BN.surfaceUp,
@@ -565,13 +575,13 @@ function OfferForm({
                         className="flex-1 bg-transparent text-[20px] font-black tabular-nums focus:outline-none"
                         style={{ color: outOfRange ? BN.err : BN.gold }}
                     />
-                    <span className="text-[13px] font-bold" style={{ color: BN.text3 }}>so&apos;m</span>
+                    <span className="text-[13px] font-bold" style={{ color: BN.text3 }}>{fmt.currency}</span>
                 </div>
                 {outOfRange && (
                     <div className="text-[11px] mt-1" style={{ color: BN.err }}>
                         {parsedInput < min
-                            ? `Minimal: ${groupThousands(min)} so'm (e'lon narxining 30%i)`
-                            : `Maksimal: ${groupThousands(max)} so'm (e'lon narxi)`}
+                            ? tc("minHint", { amount: fmt.price(min) })
+                            : tc("maxHint", { amount: fmt.price(max) })}
                     </div>
                 )}
             </div>
@@ -590,24 +600,24 @@ function OfferForm({
                         // Slider'ning to'ldirilgan qismi foizi (webkit track uchun)
                         ["--bn-range-pct" as string]: `${Math.round(((amount - min) / (max - min)) * 100)}%`,
                     }}
-                    aria-label="Taklif narxi"
+                    aria-label={tc("offerAria")}
                 />
                 <div className="flex justify-between text-[10px] mt-1.5" style={{ color: BN.text3 }}>
-                    <span>{groupThousands(min)} so&apos;m</span>
-                    <span>{groupThousands(max)} so&apos;m</span>
+                    <span>{fmt.price(min)}</span>
+                    <span>{fmt.price(max)}</span>
                 </div>
             </div>
 
             {/* Statistika: % + ehtimol */}
             <div className="grid grid-cols-2 gap-2">
                 <div className="rounded-xl px-3 py-2" style={{ background: BN.surfaceUp }}>
-                    <div className="text-[10px]" style={{ color: BN.text3 }}>E&apos;londan</div>
+                    <div className="text-[10px]" style={{ color: BN.text3 }}>{tc("ofListing")}</div>
                     <div className="text-[16px] font-black tabular-nums" style={{ color: pct >= 100 ? BN.ok : pct >= 85 ? BN.gold : BN.text }}>
                         {pct}%
                     </div>
                 </div>
                 <div className="rounded-xl px-3 py-2" style={{ background: BN.surfaceUp }}>
-                    <div className="text-[10px]" style={{ color: BN.text3 }}>Qabul ehtimoli</div>
+                    <div className="text-[10px]" style={{ color: BN.text3 }}>{tc("acceptChance")}</div>
                     <div className="text-[16px] font-black tabular-nums"
                         style={{ color: successPct >= 60 ? BN.ok : successPct >= 30 ? BN.gold : BN.err }}>
                         {successPct}%
@@ -619,7 +629,7 @@ function OfferForm({
             <textarea
                 value={note}
                 onChange={e => setNote(e.target.value)}
-                placeholder="Ixtiyoriy izoh (nima uchun shu narxni taklif qilyapsiz)..."
+                placeholder={tc("notePh")}
                 rows={2}
                 maxLength={500}
                 className="w-full px-3 py-2 rounded-xl text-[13px] resize-none focus:outline-none"
@@ -634,7 +644,7 @@ function OfferForm({
                 style={{ background: BN.gold, color: BN.onGold }}
             >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                Taklif yuborish
+                {tc("sendOffer")}
             </button>
         </div>
     );
