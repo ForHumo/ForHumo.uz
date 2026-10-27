@@ -16,7 +16,7 @@ const feedUrl = (L: YukLang) => `${FEED}/${L}/yukgo`;
 
 // ── Push (haydovchiga mos yuk) ──
 const P = {
-    newCargo: { uz: "Yangi yuk", ru: "Новый груз", en: "New load" },
+    newCargo: { uz: "Yangi yuk", ru: "Новый груз", en: "New cargo" },
     matchFound: { uz: "Mos yuk topildi", ru: "Подходящий груз найден", en: "Match found" },
     ton: { uz: "t", ru: "т", en: "t" },
 } as const;

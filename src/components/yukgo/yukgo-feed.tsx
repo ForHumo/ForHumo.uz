@@ -59,6 +59,7 @@ export function YukGoFeed() {
     const [to, setTo] = useState("");
     const [items, setItems] = useState<Listing[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
     const [hasMore, setHasMore] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [contacts, setContacts] = useState<Record<string, Contact>>({});
@@ -98,11 +99,14 @@ export function YukGoFeed() {
     }, [type, from, to]);
 
     const load = useCallback(async () => {
-        setLoading(true);
+        setLoading(true); setError(false);
         try {
-            const d = await fetch(`/api/yukgo/listings?${qs(0)}`).then(r => r.json());
+            const r = await fetch(`/api/yukgo/listings?${qs(0)}`);
+            if (!r.ok) throw new Error("load failed");
+            const d = await r.json();
             setItems(d.listings ?? []); setHasMore(!!d.hasMore);
-        } finally { setLoading(false); }
+        } catch { setError(true); }
+        finally { setLoading(false); }
     }, [qs]);
 
     useEffect(() => { const t = setTimeout(load, (from || to) ? 350 : 0); return () => clearTimeout(t); }, [load, from, to]);
@@ -241,8 +245,8 @@ export function YukGoFeed() {
                         <p className="text-[10px] mt-1 truncate" style={{ color: "#6B7A99" }}>{t("tagline")}</p>
                     </div>
                     <div className="ml-auto flex-shrink-0"><YukGoLangMenu /></div>
-                    <button onClick={() => setPostOpen(true)} className="flex items-center gap-1.5 px-3 h-10 rounded-xl text-xs font-black text-white flex-shrink-0 active:scale-95" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
-                        <Truck className="w-4 h-4" />{t("postViaBot")}
+                    <button onClick={() => setPostOpen(true)} aria-label={t("postViaBot")} className="flex items-center gap-1.5 px-3 h-10 rounded-xl text-xs font-black text-white flex-shrink-0 active:scale-95" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
+                        <Truck className="w-4 h-4" /><span className="hidden sm:inline">{t("postViaBot")}</span>
                     </button>
                     <button onClick={openDriver} className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95" style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.3)" }} title={t("driverTitle")}>
                         <Bell className="w-5 h-5" style={{ color: CYAN }} />
@@ -306,6 +310,11 @@ export function YukGoFeed() {
             <div className="px-4 mt-2 space-y-2.5">
                 {loading ? (
                     [0, 1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(37,99,235,0.12)" }} />)
+                ) : error && items.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center gap-3 py-16 px-6">
+                        <p className="text-sm" style={{ color: "#9FB3D9" }}>{t("loadError")}</p>
+                        <button onClick={load} className="px-4 h-10 rounded-xl text-sm font-black text-white active:scale-95" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>{t("retry")}</button>
+                    </div>
                 ) : items.length === 0 ? (
                     (from || to || type) ? (
                         <div className="flex flex-col items-center gap-2 py-16 text-center">
