@@ -10,6 +10,7 @@ import { subscribePush, getPushState, type PushState } from "@/lib/push-client";
 import { useTranslations, useLocale } from "next-intl";
 import { TgLoginButton } from "@/components/yukgo/tg-login-button";
 import { YukGoLangMenu } from "@/components/yukgo/yukgo-lang-menu";
+import { YukGoPostModal } from "@/components/yukgo/yukgo-post-modal";
 
 type LType = "CARGO" | "TRUCK";
 interface Listing {
@@ -18,7 +19,7 @@ interface Listing {
     toText: string | null; toCity: string | null; toCountry: string | null;
     cargo: string | null; weightTons: number | null; truckTypes: string[]; quantityTrucks: number | null;
     price: { amount: number | null; currency: string | null; negotiable: boolean } | null;
-    lang: string | null; createdAt: string; boosted: boolean;
+    lang: string | null; createdAt: string; boosted: boolean; isNative: boolean;
     hasContact: boolean; sourceKind: string; sourceTitle: string | null;
 }
 interface Contact { phones: string[]; sourceLink: string | null }
@@ -67,6 +68,9 @@ export function YukGoFeed() {
     const [loginBusy, setLoginBusy] = useState(false);
     const [loginErr, setLoginErr] = useState<string | null>(null);
     const [pendingReveal, setPendingReveal] = useState<string | null>(null);
+    // Native e'lon joylash formasi
+    const [postOpen, setPostOpen] = useState(false);
+    const [pendingPost, setPendingPost] = useState(false);
     // Haydovchi profili (onboarding + bildirishnoma)
     const [driverOpen, setDriverOpen] = useState(false);
     const [dFrom, setDFrom] = useState("");
@@ -187,12 +191,13 @@ export function YukGoFeed() {
                 setNeedLogin(false);
                 const pend = pendingReveal; setPendingReveal(null);
                 if (pend) setTimeout(() => reveal(pend), 300);   // login bo'lgach kontaktni avtomatik ochamiz
+                if (pendingPost) { setPendingPost(false); setTimeout(() => setPostOpen(true), 300); }  // login bo'lgach formani qayta ochamiz
             } else {
                 setLoginErr(t("loginError"));
             }
         } catch { setLoginErr(t("loginError")); }
         finally { setLoginBusy(false); }
-    }, [pendingReveal, reveal, t]);
+    }, [pendingReveal, pendingPost, reveal, t]);
 
     // PWA o'rnatish tavsiyasi (Android/Chrome beforeinstallprompt + iOS qo'lda)
     useEffect(() => {
@@ -235,9 +240,9 @@ export function YukGoFeed() {
                         <p className="text-[10px] mt-1 truncate" style={{ color: "#6B7A99" }}>{t("tagline")}</p>
                     </div>
                     <div className="ml-auto flex-shrink-0"><YukGoLangMenu /></div>
-                    <a href="https://t.me/YukGo_tgbot?start=web" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 h-10 rounded-xl text-xs font-black text-white flex-shrink-0 active:scale-95" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
+                    <button onClick={() => setPostOpen(true)} className="flex items-center gap-1.5 px-3 h-10 rounded-xl text-xs font-black text-white flex-shrink-0 active:scale-95" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
                         <Truck className="w-4 h-4" />{t("postViaBot")}
-                    </a>
+                    </button>
                     <button onClick={openDriver} className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95" style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.3)" }} title={t("driverTitle")}>
                         <Bell className="w-5 h-5" style={{ color: CYAN }} />
                     </button>
@@ -319,10 +324,11 @@ export function YukGoFeed() {
                                     </div>
                                 ))}
                             </div>
-                            <p className="text-[11px] text-center mb-3 px-2" style={{ color: "#6B7A99" }}>{t("emptyBot")}</p>
-                            <a href="https://t.me/YukGo_tgbot?start=web" target="_blank" rel="noopener noreferrer" className="mx-auto flex items-center justify-center gap-1.5 w-[220px] h-11 rounded-xl text-sm font-black text-white active:scale-95" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
+                            <p className="text-[11px] text-center mb-3 px-2" style={{ color: "#6B7A99" }}>{t("postPrompt")}</p>
+                            <button onClick={() => setPostOpen(true)} className="mx-auto flex items-center justify-center gap-1.5 w-[220px] h-11 rounded-xl text-sm font-black text-white active:scale-95" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
                                 <Truck className="w-4 h-4" />{t("postViaBot")}
-                            </a>
+                            </button>
+                            <a href="https://t.me/YukGo_tgbot?start=web" target="_blank" rel="noopener noreferrer" className="mx-auto mt-2.5 block text-center text-[11px]" style={{ color: "#6B7A99" }}>{t("orViaBot")}</a>
                         </div>
                     )
                 ) : (
@@ -338,6 +344,7 @@ export function YukGoFeed() {
                                         {isCargo ? <Package className="w-3 h-3" /> : <Truck className="w-3 h-3" />}{isCargo ? t("badgeCargo") : t("badgeTruck")}
                                     </span>
                                     {it.boosted && <span className="px-1.5 py-0.5 rounded text-[9px] font-black" style={{ background: `linear-gradient(135deg,${CYAN},${BLUE})`, color: "#fff" }}>{t("top")}</span>}
+                                    {it.isNative && <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black" style={{ background: "rgba(16,185,129,0.15)", color: "#34D399" }}><Check className="w-2.5 h-2.5" />{t("verified")}</span>}
                                     <span className="ml-auto flex items-center gap-1 text-[10px]" style={{ color: "#4B5B7A" }}><Clock className="w-3 h-3" />{timeAgo(it.createdAt)}</span>
                                 </div>
 
@@ -483,6 +490,14 @@ export function YukGoFeed() {
                     </div>
                 </>
             )}
+
+            {/* Native e'lon joylash formasi */}
+            <YukGoPostModal
+                open={postOpen}
+                onClose={() => setPostOpen(false)}
+                onPosted={() => { setPostOpen(false); load(); }}
+                onNeedLogin={() => { setPostOpen(false); setPendingPost(true); setNeedLogin(true); }}
+            />
 
             {/* Login modal (kontakt ko'rish uchun) */}
             {needLogin && (

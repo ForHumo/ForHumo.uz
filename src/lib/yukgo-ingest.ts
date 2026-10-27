@@ -127,6 +127,67 @@ export async function storeYukListing(input: StoreInput): Promise<StoreResult> {
     return { stored: true, reason: "ok", type: parsed.type, route };
 }
 
+// ── NATIVE joylash (foydalanuvchi saytда o'z e'lonini to'g'ridan joylaydi) ──
+// Strukturalangan maydonlardan quriladi — Gemini CHAQIRILMAYDI (tekin + aniq).
+// Rozilik bilan (o'z telefoni) → tasdiqlangan tier.
+export interface NativeInput {
+    type: "CARGO" | "TRUCK";
+    fromCity?: string | null;
+    toCity?: string | null;
+    cargo?: string | null;
+    weightTons?: number | null;
+    truckTypes?: string[];
+    priceAmount?: number | null;
+    priceCurrency?: string | null;   // UZS/USD/RUB
+    priceNegotiable?: boolean;
+    phone: string;
+}
+
+export async function createNativeListing(input: NativeInput, profileId: string): Promise<{ id: string }> {
+    const fromCity = (input.fromCity || "").trim() || null;
+    const toCity = (input.toCity || "").trim() || null;
+    const cargo = (input.cargo || "").trim() || null;
+    const phone = (input.phone || "").replace(/[^\d+]/g, "").slice(0, 20);
+    const weightTons = input.weightTons != null && isFinite(input.weightTons) ? input.weightTons : null;
+
+    const dedupKey = [
+        input.type, (fromCity || "").toLowerCase(), (toCity || "").toLowerCase(), phone, weightTons ?? "",
+    ].join("|");
+    const composed = [input.type, fromCity, toCity, cargo, weightTons, phone].filter(Boolean).join(" ");
+
+    const listing = await prisma.yukListing.create({
+        data: {
+            type: input.type,
+            status: "ACTIVE",
+            sourceId: null,
+            postedById: profileId,          // NATIVE marker
+            fromText: fromCity, fromCity,
+            toText: toCity, toCity,
+            cargo,
+            weightTons,
+            truckTypes: input.truckTypes ?? [],
+            priceAmount: input.priceAmount ?? null,
+            priceCurrency: input.priceCurrency ?? null,
+            priceNegotiable: !!input.priceNegotiable,
+            phones: phone ? [phone] : [],
+            lang: "uz",
+            confidence: 1,                   // native = to'liq ishonch
+            rawText: composed.slice(0, 4000),
+            rawHash: rawHashOf(composed),
+            dedupKey,
+            expiresAt: new Date(Date.now() + EXPIRE_MS),
+        },
+        select: { id: true },
+    });
+
+    if (input.type === "CARGO") {
+        try {
+            await matchAndNotify({ type: "CARGO", fromCity, toCity, weightTons, cargo } as unknown as YukParsed);
+        } catch (e) { console.error("[yukgo-match-native]", e); }
+    }
+    return listing;
+}
+
 // Yangi CARGO e'lon → yo'nalishi mos haydovchilarga Web Push.
 async function matchAndNotify(p: YukParsed) {
     if (p.type !== "CARGO") return;   // truckerlar yuk qidiradi

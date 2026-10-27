@@ -57,6 +57,7 @@ export async function GET(req: Request) {
         lang: r.lang,
         createdAt: r.createdAt,
         boosted: !!(r.boostedUntil && r.boostedUntil > now),
+        isNative: !!r.postedById,   // saytда o'zi joylagan (tasdiqlangan tier)
         hasContact: (r.phones?.length ?? 0) > 0 || !!r.sourceLink,
         sourceKind: r.source?.kind ?? "NATIVE",
         sourceTitle: r.source?.title ?? null,
