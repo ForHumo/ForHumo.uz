@@ -78,3 +78,40 @@ export function convertScript(text: string, script: UzScript): string {
     if (script === "latn-new") return toNewLatin(text);
     return text;
 }
+
+// ── next-intl UI xabarlarini butunlay o'girish (KALITLAR emas, QIYMATLAR) ──
+// ICU `{placeholder}` va `<teg>` (t.rich) bloklarini BUZMAYDI — faqat ular
+// orasidagi oddiy matnni o'giradi. (Loyihada plural/select YO'Q, shuning uchun
+// ichma-ich qavs muammosi yo'q — har `{...}` oddiy o'zgaruvchi.)
+const TEMPLATE_RE = /(\{[^{}]*\}|<[^>]*>)|([^{}<]+)/g;
+function convertTemplate(val: string, script: UzScript): string {
+    return val.replace(TEMPLATE_RE, (_m, token: string | undefined, text: string | undefined) =>
+        token !== undefined ? token : convertScript(text || "", script));
+}
+
+function deepConvert(node: unknown, script: UzScript): unknown {
+    if (typeof node === "string") return convertTemplate(node, script);
+    if (Array.isArray(node)) return node.map((v) => deepConvert(v, script));
+    if (node && typeof node === "object") {
+        const out: Record<string, unknown> = {};
+        for (const k in node as Record<string, unknown>) {
+            out[k] = deepConvert((node as Record<string, unknown>)[k], script);
+        }
+        return out;
+    }
+    return node;
+}
+
+// Statik xabarlar — alifbo bo'yicha bir marta hisoblanadi va keshlanadi.
+const _msgCache = new Map<UzScript, Record<string, unknown>>();
+export function transliterateMessages(
+    messages: Record<string, unknown>,
+    script: UzScript,
+): Record<string, unknown> {
+    if (script === "latn") return messages;
+    const cached = _msgCache.get(script);
+    if (cached) return cached;
+    const out = deepConvert(messages, script) as Record<string, unknown>;
+    _msgCache.set(script, out);
+    return out;
+}

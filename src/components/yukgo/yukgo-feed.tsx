@@ -9,6 +9,7 @@ import {
 import { subscribePush, getPushState, type PushState } from "@/lib/push-client";
 import { useTranslations, useLocale } from "next-intl";
 import { TgLoginButton } from "@/components/yukgo/tg-login-button";
+import { YukGoLangMenu } from "@/components/yukgo/yukgo-lang-menu";
 
 type LType = "CARGO" | "TRUCK";
 interface Listing {
@@ -227,13 +228,14 @@ export function YukGoFeed() {
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
                         <Truck className="w-5 h-5 text-white" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                         <h1 className="text-xl font-black leading-none">
                             <span style={{ color: "#fff" }}>Yuk</span><span style={{ background: `linear-gradient(135deg,${CYAN},${BLUE})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Go</span>
                         </h1>
-                        <p className="text-[10px] mt-1" style={{ color: "#6B7A99" }}>{t("tagline")}</p>
+                        <p className="text-[10px] mt-1 truncate" style={{ color: "#6B7A99" }}>{t("tagline")}</p>
                     </div>
-                    <a href="https://t.me/YukGo_tgbot?start=web" target="_blank" rel="noopener noreferrer" className="ml-auto flex items-center gap-1.5 px-3 h-10 rounded-xl text-xs font-black text-white flex-shrink-0 active:scale-95" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
+                    <div className="ml-auto flex-shrink-0"><YukGoLangMenu /></div>
+                    <a href="https://t.me/YukGo_tgbot?start=web" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 h-10 rounded-xl text-xs font-black text-white flex-shrink-0 active:scale-95" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
                         <Truck className="w-4 h-4" />{t("postViaBot")}
                     </a>
                     <button onClick={openDriver} className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95" style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.3)" }} title={t("driverTitle")}>
