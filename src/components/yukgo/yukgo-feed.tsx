@@ -233,7 +233,7 @@ export function YukGoFeed() {
                         </h1>
                         <p className="text-[10px] mt-1" style={{ color: "#6B7A99" }}>{t("tagline")}</p>
                     </div>
-                    <a href="https://t.me/YukGo_tgbot" target="_blank" rel="noopener noreferrer" className="ml-auto flex items-center gap-1.5 px-3 h-10 rounded-xl text-xs font-black text-white flex-shrink-0 active:scale-95" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
+                    <a href="https://t.me/YukGo_tgbot?start=web" target="_blank" rel="noopener noreferrer" className="ml-auto flex items-center gap-1.5 px-3 h-10 rounded-xl text-xs font-black text-white flex-shrink-0 active:scale-95" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
                         <Truck className="w-4 h-4" />{t("postViaBot")}
                     </a>
                     <button onClick={openDriver} className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95" style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.3)" }} title={t("driverTitle")}>
@@ -318,7 +318,7 @@ export function YukGoFeed() {
                                 ))}
                             </div>
                             <p className="text-[11px] text-center mb-3 px-2" style={{ color: "#6B7A99" }}>{t("emptyBot")}</p>
-                            <a href="https://t.me/YukGo_tgbot" target="_blank" rel="noopener noreferrer" className="mx-auto flex items-center justify-center gap-1.5 w-[220px] h-11 rounded-xl text-sm font-black text-white active:scale-95" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
+                            <a href="https://t.me/YukGo_tgbot?start=web" target="_blank" rel="noopener noreferrer" className="mx-auto flex items-center justify-center gap-1.5 w-[220px] h-11 rounded-xl text-sm font-black text-white active:scale-95" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
                                 <Truck className="w-4 h-4" />{t("postViaBot")}
                             </a>
                         </div>
