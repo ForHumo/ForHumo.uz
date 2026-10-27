@@ -196,7 +196,7 @@ export function YukGoFeed() {
                 setNeedLogin(false);
                 const pend = pendingReveal; setPendingReveal(null);
                 if (pend) setTimeout(() => reveal(pend), 300);   // login bo'lgach kontaktni avtomatik ochamiz
-                if (pendingPost) { setPendingPost(false); setTimeout(() => setPostOpen(true), 300); }  // login bo'lgach formani qayta ochamiz
+                if (pendingPost) setPendingPost(false);   // forma allaqachon ochiq (login ustida edi) — to'ldirilgan qiymatlar saqlangan
             } else {
                 setLoginErr(t("loginError"));
             }
@@ -506,7 +506,7 @@ export function YukGoFeed() {
                 open={postOpen}
                 onClose={() => setPostOpen(false)}
                 onPosted={() => { setPostOpen(false); load(); }}
-                onNeedLogin={() => { setPostOpen(false); setPendingPost(true); setNeedLogin(true); }}
+                onNeedLogin={() => { setPendingPost(true); setNeedLogin(true); }}
             />
 
             {/* Login modal (kontakt ko'rish uchun) */}
