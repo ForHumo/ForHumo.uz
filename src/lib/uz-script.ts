@@ -30,8 +30,19 @@ const SINGLE: Record<string, string> = {
     u: "у", v: "в", w: "в", x: "х", y: "й", z: "з", "'": "ъ",
 };
 
-// UI chetki holatlari uchun qo'lda tuzatish (kerak bo'lsa to'ldiriladi)
-const OVERRIDES: Record<string, string> = {};
+// Brand nomlari + UI chetki holatlari — kirillда o'girilmaydi (lotinда qoladi).
+// Token (bo'shliq bilan ajralgan so'z) darajasida tekshiriladi.
+const OVERRIDES: Record<string, string> = {
+    YukGo: "YukGo", For: "For", Humo: "Humo", Nexus: "Nexus", eSport: "eSport",
+    Market: "Market", Pay: "Pay", Google: "Google", Telegram: "Telegram",
+    AI: "AI", PWA: "PWA", Pro: "Pro", ID: "ID",
+};
+
+// Handle/URL/identifikator — hech qachon o'girilmaydi (@username, _, URL, http).
+// Oddiy o'zbek so'zida @ _ / belgilari bo'lmaydi, shuning uchun xavfsiz.
+function isTechnical(tok: string): boolean {
+    return /[@_/]/.test(tok) || /^https?:/i.test(tok) || /\.(uz|com|org|net|me|io|dev)\b/i.test(tok);
+}
 
 function applyCase(latin: string, cyr: string): string {
     if (!latin) return cyr;
@@ -68,8 +79,13 @@ function cyrWord(word: string): string {
 export function toCyrillic(text: string): string {
     const t = text || "";
     if (OVERRIDES[t]) return OVERRIDES[t];
-    // so'z bo'yicha (OVERRIDES so'z darajasida ham tekshiriladi)
-    return t.split(/(\s+)/).map(tok => /^\s+$/.test(tok) ? tok : (OVERRIDES[tok] ?? cyrWord(tok))).join("");
+    // so'z bo'yicha: bo'shliq → o'zgarmas; OVERRIDES/handle/URL → lotinda qoladi
+    return t.split(/(\s+)/).map(tok => {
+        if (/^\s+$/.test(tok)) return tok;
+        if (OVERRIDES[tok]) return OVERRIDES[tok];
+        if (isTechnical(tok)) return tok;
+        return cyrWord(tok);
+    }).join("");
 }
 
 /** Umumiy: tanlangan alifboga o'girish (latn = o'zgarmaydi). */
