@@ -89,11 +89,18 @@ export async function storeYukListing(input: StoreInput): Promise<StoreResult> {
         parsed.phones[0] || "",
         parsed.weightTons ?? "",
     ].join("|");
-    const dup = await prisma.yukListing.findFirst({
-        where: { dedupKey, createdAt: { gt: new Date(Date.now() - DEDUP_WINDOW_MS) } },
-        select: { id: true },
-    });
-    if (dup) return { stored: false, reason: "duplicate", type: parsed.type };
+    // Faqat farqlovchi maydon (telefon YOKI vazn) bo'lsa semantik dedup bloklaydi.
+    // Aks holda telefon/vazn aniqlanmagan ko'p xil yuk bitta kalitga ("CARGO|toshkent|moskva||")
+    // yopishib, mashhur yo'nalishdagi real e'lonlar jim yo'qolardi — bunday holda faqat
+    // rawHash (xuddi shu xom matn, 2-bosqich) takrorni ushlaydi.
+    const hasDistinguisher = Boolean(parsed.phones[0] || parsed.weightTons != null);
+    if (hasDistinguisher) {
+        const dup = await prisma.yukListing.findFirst({
+            where: { dedupKey, createdAt: { gt: new Date(Date.now() - DEDUP_WINDOW_MS) } },
+            select: { id: true },
+        });
+        if (dup) return { stored: false, reason: "duplicate", type: parsed.type };
+    }
 
     await prisma.yukListing.create({
         data: {

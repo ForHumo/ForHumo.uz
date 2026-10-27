@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     const type = typeParam === "CARGO" || typeParam === "TRUCK" ? typeParam : null;
     const from = (searchParams.get("from") || "").trim();
     const to = (searchParams.get("to") || "").trim();
-    const limit = Math.min(Number(searchParams.get("limit") ?? 24), 50);
+    const limit = Math.min(Math.max(1, Number(searchParams.get("limit")) || 24), 50);
     const offset = Math.max(0, Number(searchParams.get("offset") ?? 0));
 
     const now = new Date();
