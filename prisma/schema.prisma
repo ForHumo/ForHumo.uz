@@ -4867,6 +4867,9 @@ model YukSource {
   active     Boolean       @default(true)
   addedById  String?                 // kim qo'shgan (UserProfile.id)
   createdAt  DateTime      @default(now())
+  // Parse rate-cap: manba daqiqasiga maks N tahlil (Gemini xarajat shifti).
+  parseWindowStart DateTime?
+  parseWindowCount Int      @default(0)
   listings   YukListing[]
 
   @@index([active])
@@ -4906,6 +4909,7 @@ model YukListing {
   lang            String?          // uz/ru/mixed
   confidence      Float            @default(0.5)
   rawText         String                        // xom e'lon matni
+  rawHash         String?                        // normalizatsiyalangan matn hashi — PRE-PARSE dedup (10s qayta-tashlash spamini Gemini'siz to'xtatadi)
   dedupKey        String?                        // cross-guruh takror aniqlash (route+phone+weight)
   reportedBy      String[]         @default([])  // "band bo'ldi" shikoyat qilgan profileId'lar (>=2 → yashiriladi)
 
@@ -4916,6 +4920,8 @@ model YukListing {
   @@index([type, status, createdAt])
   @@index([fromCity, toCity])
   @@index([dedupKey])
+  @@index([rawHash, createdAt])
+  @@index([sourceId, createdAt])
   @@index([status, expiresAt])
 }
 

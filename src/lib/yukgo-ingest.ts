@@ -1,12 +1,23 @@
 // YukGo — e'lonni saqlash (umumiy logika). Telegram webhook (bot) ham, userbot
 // endpoint ham shuni chaqiradi. Parse → manba → dedup → YukListing.
 
+import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { parseYukListing, type YukParsed } from "@/lib/yukgo-parse";
 import { sameCity } from "@/lib/yukgo-cities";
 
 const DEDUP_WINDOW_MS = 48 * 60 * 60 * 1000;   // bir xil e'lon 48 soat ichida takrorlanmaydi
+const RAW_WINDOW_MS = 48 * 60 * 60 * 1000;      // bir xil XOM matn 48s ichida — PRE-PARSE skip
 const EXPIRE_MS = 48 * 60 * 60 * 1000;          // e'lon 48 soatdan keyin eskiradi
+const RATE_WINDOW_MS = 60 * 1000;               // rate-cap oynasi: 1 daqiqa
+const MAX_PARSE_PER_MIN = Number(process.env.YUKGO_MAX_PARSE_PER_MIN || 20); // manba/daqiqa Gemini shifti
+
+// Normalizatsiya: kichik harf + bo'shliqlarni bittaga + trim → bir xil qayta-tashlashlar
+// (whitespace/registr farqi bo'lsa ham) bir xil hash beradi.
+function rawHashOf(text: string): string {
+    const norm = text.toLowerCase().replace(/\s+/g, " ").trim();
+    return crypto.createHash("sha256").update(norm).digest("hex");
+}
 
 export interface StoreInput {
     text: string;
@@ -17,7 +28,7 @@ export interface StoreInput {
 }
 export interface StoreResult {
     stored: boolean;
-    reason: "ok" | "unparsable" | "duplicate";
+    reason: "ok" | "unparsable" | "duplicate" | "rate_limited";
     type?: "CARGO" | "TRUCK";
     route?: string;
 }
@@ -26,26 +37,50 @@ export async function storeYukListing(input: StoreInput): Promise<StoreResult> {
     const text = (input.text || "").trim();
     if (text.length < 5) return { stored: false, reason: "unparsable" };
 
-    const parsed = await parseYukListing(text);
-    // Faqat haqiqiy yuk/mashina e'lonlari (LOGIST/OTHER/past-ishonch saqlanmaydi)
-    if (!parsed || (parsed.type !== "CARGO" && parsed.type !== "TRUCK") || parsed.confidence < 0.5) {
-        return { stored: false, reason: "unparsable" };
-    }
+    // ── 1. PRE-PARSE dedup (Gemini'siz): bir xil xom matn 48s ichida → darhol skip.
+    //    Bot e'lonni 10 soniyada qayta tashlasa — birinchisidan keyin hammasi tekin.
+    const rawHash = rawHashOf(text);
+    const rawDup = await prisma.yukListing.findFirst({
+        where: { rawHash, createdAt: { gt: new Date(Date.now() - RAW_WINDOW_MS) } },
+        select: { id: true, type: true },
+    });
+    if (rawDup) return { stored: false, reason: "duplicate", type: rawDup.type as "CARGO" | "TRUCK" };
 
-    // Manba (guruh) — upsert (null bo'lsa native)
+    // ── 2. Manba upsert + rate-cap (Gemini'siz): manba daqiqasiga maks N tahlil.
+    //    Evaziv spam (har safar matnni ozgina o'zgartiruvchi) ham shu shiftда cheklanadi.
     let sourceId: string | null = null;
     if (input.srcChatId) {
         const source = await prisma.yukSource.upsert({
             where: { tgChatId: input.srcChatId },
             update: { title: input.srcTitle ?? undefined, username: input.srcUsername ?? undefined },
             create: { kind: "TELEGRAM", tgChatId: input.srcChatId, title: input.srcTitle ?? null, username: input.srcUsername ?? null },
+            select: { id: true, parseWindowStart: true, parseWindowCount: true },
         });
         sourceId = source.id;
+        const nowMs = Date.now();
+        const winActive = source.parseWindowStart != null && (nowMs - source.parseWindowStart.getTime() < RATE_WINDOW_MS);
+        if (winActive && source.parseWindowCount >= MAX_PARSE_PER_MIN) {
+            return { stored: false, reason: "rate_limited" };   // Gemini chaqirilmaydi
+        }
+        await prisma.yukSource.update({
+            where: { id: source.id },
+            data: winActive
+                ? { parseWindowCount: { increment: 1 } }
+                : { parseWindowStart: new Date(nowMs), parseWindowCount: 1 },
+        }).catch(() => { });
     }
+
+    // ── 3. Parse (Gemini) — faqat noyob, flood-bo'lmagan matn shu yerga yetadi.
+    const parsed = await parseYukListing(text);
+    // Faqat haqiqiy yuk/mashina e'lonlari (LOGIST/OTHER/past-ishonch saqlanmaydi)
+    if (!parsed || (parsed.type !== "CARGO" && parsed.type !== "TRUCK") || parsed.confidence < 0.5) {
+        return { stored: false, reason: "unparsable" };
+    }
+
     const origMsgId = input.origMsgId != null ? String(input.origMsgId) : null;
     const sourceLink = input.srcUsername && origMsgId ? `https://t.me/${input.srcUsername}/${origMsgId}` : null;
 
-    // Cross-guruh dedup (bir xil e'lon o'nlab guruhda) — 48s oynada
+    // ── 4. Semantik dedup (route+phone+weight) — bir xil e'lon turli guruhда / boshqa so'z bilan
     const dedupKey = [
         parsed.type,
         (parsed.fromCity || "").toLowerCase().trim(),
@@ -79,6 +114,7 @@ export async function storeYukListing(input: StoreInput): Promise<StoreResult> {
             lang: parsed.lang,
             confidence: parsed.confidence,
             rawText: text.slice(0, 4000),
+            rawHash,
             dedupKey,
             expiresAt: new Date(Date.now() + EXPIRE_MS),
         },
