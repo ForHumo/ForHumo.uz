@@ -71,6 +71,12 @@ model UserProfile {
   // Raw raqam saqlanmaydi (bu ustunda). phone o'zgarganda phoneHash ham yangilanadi.
   phoneHash     String? @unique
 
+  // YukGo Telegram Login Widget — friksiyasiz kirish anchori (telefon EMAS).
+  // Telegram ID barqaror identity; Humo ID IP-prefiks bilan avtomatik ochiladi.
+  // telegramUsername faqat ko'rsatish/qulaylik uchun (o'zgarishi mumkin).
+  telegramId       String? @unique
+  telegramUsername String?
+
   // Verification level:  0 = basic (Google only)
   //                      1 = email confirmed
   //                      2 = KYC (biometric, future)

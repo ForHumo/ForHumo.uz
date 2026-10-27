@@ -1613,6 +1613,8 @@
     "verify": "Kirish",
     "changePhone": "Raqamni o'zgartirish",
     "codeError": "Kod noto'g'ri yoki eskirgan",
+    "loginTgHint": "Telegram bilan bir bosishda kiring. Telefon raqam shart emas.",
+    "loginError": "Kirishda xatolik. Qayta urinib ko'ring.",
     "orGoogle": "yoki Google bilan kirish"
   }
 }

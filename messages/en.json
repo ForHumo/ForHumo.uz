@@ -1613,6 +1613,8 @@
     "verify": "Sign in",
     "changePhone": "Change number",
     "codeError": "Invalid or expired code",
+    "loginTgHint": "Sign in with Telegram in one tap. No phone number needed.",
+    "loginError": "Sign-in error. Please try again.",
     "orGoogle": "or sign in with Google"
   }
 }
