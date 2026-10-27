@@ -4947,6 +4947,7 @@ model YukDriver {
   routeFromCity   String?             // mos e'lon uchun afzal yo'nalish
   routeToCity     String?
   notifyOnMatch   Boolean   @default(true)
+  lang            String?   @default("uz")  // push xabari tili (uz/ru/en) — onboarding'da joriy locale
   subActiveUntil  DateTime?           // obuna (monetizatsiya)
   createdAt       DateTime  @default(now())
 

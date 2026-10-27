@@ -31,8 +31,9 @@ export async function PUT(req: Request) {
     const routeToCity = typeof b.routeToCity === "string" ? b.routeToCity.trim().slice(0, 60) || null : null;
     const phone = typeof b.phone === "string" ? b.phone.replace(/[^\d+]/g, "").slice(0, 20) || null : null;
     const notifyOnMatch = b.notifyOnMatch !== false;
+    const lang = b.lang === "ru" || b.lang === "en" || b.lang === "uz" ? b.lang : undefined;  // push tili
 
-    const data = { vehicleType, capacityTons, routeFromCity, routeToCity, phone, notifyOnMatch };
+    const data = { vehicleType, capacityTons, routeFromCity, routeToCity, phone, notifyOnMatch, ...(lang ? { lang } : {}) };
     const driver = await prisma.yukDriver.upsert({
         where: { profileId: id },
         update: data,

@@ -6,22 +6,19 @@
 
 import { NextResponse, after } from "next/server";
 import { storeYukListing } from "@/lib/yukgo-ingest";
+import { botWelcome, botDuplicate, botUnparsable, botPosted } from "@/lib/yukgo-i18n";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SECRET = process.env.YUKGO_WEBHOOK_SECRET;
 const BOT_TOKEN = process.env.TELEGRAM_YUKGO_BOT_TOKEN;
-const FEED_URL = "https://www.forhumo.uz/uz/yukgo";
-const WELCOME =
-    "Salom! Men YukGo botiman.\n\n" +
-    "Yuk yoki bo'sh mashina e'loningizni shu yerga yuboring — yoki guruhdagi e'lonni forward qiling. " +
-    "Men uni avtomatik ajratib YukGo'ga joylayman.\n\n" +
-    "Barcha e'lonlar: " + FEED_URL;
 
 interface TgChat { id: number; title?: string; username?: string; type?: string }
+interface TgUser { language_code?: string }
 interface TgMsg {
     message_id: number; text?: string; caption?: string; chat: TgChat;
+    from?: TgUser;                                                         // foydalanuvchi tili uchun
     forward_from_chat?: TgChat; forward_from_message_id?: number;          // eski Bot API
     forward_origin?: { type?: string; chat?: TgChat; message_id?: number }; // Bot API 7.0+
 }
@@ -50,9 +47,9 @@ export async function POST(req: Request) {
     const text = (msg.text || msg.caption || "").trim();
     const isPrivate = !["group", "supergroup", "channel"].includes(msg.chat.type || "private");
 
-    // Shaxsiy chat komandalari (/start, /help)
+    // Shaxsiy chat komandalari (/start, /help) — foydalanuvchi tilida
     if (isPrivate && text.startsWith("/")) {
-        after(() => reply(msg.chat.id, WELCOME));
+        after(() => reply(msg.chat.id, botWelcome(msg.from?.language_code)));
         return NextResponse.json({ ok: true });
     }
 
@@ -78,8 +75,9 @@ async function handle(msg: TgMsg, text: string, isPrivate: boolean) {
     const res = await storeYukListing({ text, srcChatId, srcTitle, srcUsername, origMsgId });
 
     if (isPrivate) {
-        if (res.reason === "duplicate") await reply(chat.id, "Bu e'lon allaqachon YukGo'da bor.");
-        else if (!res.stored) await reply(chat.id, "Bu matndan yuk yoki mashina e'lonini ajrata olmadim. To'liqroq yuboring: yo'nalish (qayerdan→qayerga), yuk/mashina, telefon.");
-        else await reply(chat.id, `Joylandi — ${res.type === "CARGO" ? "Yuk" : "Mashina"}${res.route ? `: ${res.route}` : ""}\n${FEED_URL}`);
+        const lang = msg.from?.language_code;
+        if (res.reason === "duplicate") await reply(chat.id, botDuplicate(lang));
+        else if (!res.stored) await reply(chat.id, botUnparsable(lang));
+        else await reply(chat.id, botPosted(lang, res.type ?? "CARGO", res.route));
     }
 }

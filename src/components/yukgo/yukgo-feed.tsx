@@ -170,6 +170,7 @@ export function YukGoFeed() {
                 body: JSON.stringify({
                     routeFromCity: dFrom, routeToCity: dTo, vehicleType: dVehicle,
                     capacityTons: dCapacity ? Number(dCapacity) : null, notifyOnMatch: dNotify,
+                    lang: locale,   // push xabari tili
                 }),
             });
             if (r.status === 401) { setNeedLogin(true); return; }

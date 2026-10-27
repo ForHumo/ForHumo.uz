@@ -5,6 +5,7 @@ import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { parseYukListing, type YukParsed } from "@/lib/yukgo-parse";
 import { sameCity } from "@/lib/yukgo-cities";
+import { pushNewCargo, normLang } from "@/lib/yukgo-i18n";
 
 const DEDUP_WINDOW_MS = 48 * 60 * 60 * 1000;   // bir xil e'lon 48 soat ichida takrorlanmaydi
 const RAW_WINDOW_MS = 48 * 60 * 60 * 1000;      // bir xil XOM matn 48s ichida — PRE-PARSE skip
@@ -196,7 +197,7 @@ async function matchAndNotify(p: YukParsed) {
 
     const drivers = await prisma.yukDriver.findMany({
         where: { notifyOnMatch: true, routeFromCity: { not: null }, routeToCity: { not: null } },
-        select: { profileId: true, routeFromCity: true, routeToCity: true, capacityTons: true },
+        select: { profileId: true, routeFromCity: true, routeToCity: true, capacityTons: true, lang: true },
         take: 1000,
     });
     const matched = drivers.filter(d => {
@@ -208,10 +209,10 @@ async function matchAndNotify(p: YukParsed) {
     });
     if (!matched.length) return;
 
-    const title = `Yangi yuk: ${p.fromCity} → ${p.toCity}`;
-    const body = [p.weightTons ? `${p.weightTons} t` : null, p.cargo].filter(Boolean).join(" · ") || "Mos yuk topildi";
+    // Har haydovchiga O'Z tilida (uz/ru/en) push
     const { sendPushToProfile } = await import("@/lib/push");
-    await Promise.all(matched.slice(0, 300).map(d =>
-        sendPushToProfile(d.profileId, { title, body, url: "/uz/yukgo", tag: "yukgo-match" }).catch(() => null),
-    ));
+    await Promise.all(matched.slice(0, 300).map(d => {
+        const { title, body } = pushNewCargo(d.lang, p.fromCity || "", p.toCity || "", p.weightTons ?? null, p.cargo ?? null);
+        return sendPushToProfile(d.profileId, { title, body, url: `/${normLang(d.lang)}/yukgo`, tag: "yukgo-match" }).catch(() => null);
+    }));
 }
