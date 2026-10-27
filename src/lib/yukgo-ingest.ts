@@ -26,6 +26,7 @@ export interface StoreInput {
     srcTitle?: string | null;
     srcUsername?: string | null;
     origMsgId?: number | string | null;   // havola + tgMessageId uchun
+    rateKey?: string | null;               // shaxsiy DM throttle kaliti (dm:<chatId>) — srcChatId yo'q bo'lganда
 }
 export interface StoreResult {
     stored: boolean;
@@ -49,15 +50,21 @@ export async function storeYukListing(input: StoreInput): Promise<StoreResult> {
 
     // ── 2. Manba upsert + rate-cap (Gemini'siz): manba daqiqasiga maks N tahlil.
     //    Evaziv spam (har safar matnni ozgina o'zgartiruvchi) ham shu shiftда cheklanadi.
+    // Throttle kaliti: guruh/kanal (srcChatId) YOKI shaxsiy DM (rateKey = dm:<chatId>).
+    // Ilgari DM'да srcChatId yo'q edi → Gemini cheklovsiz chaqirilardi (xarajat-DoS teshigi).
     let sourceId: string | null = null;
-    if (input.srcChatId) {
+    const throttleKey = input.srcChatId ?? input.rateKey ?? null;
+    const isRealSource = Boolean(input.srcChatId);   // faqat guruh/kanal e'longa biriktiriladi
+    if (throttleKey) {
         const source = await prisma.yukSource.upsert({
-            where: { tgChatId: input.srcChatId },
-            update: { title: input.srcTitle ?? undefined, username: input.srcUsername ?? undefined },
-            create: { kind: "TELEGRAM", tgChatId: input.srcChatId, title: input.srcTitle ?? null, username: input.srcUsername ?? null },
+            where: { tgChatId: throttleKey },
+            update: isRealSource ? { title: input.srcTitle ?? undefined, username: input.srcUsername ?? undefined } : {},
+            create: isRealSource
+                ? { kind: "TELEGRAM", tgChatId: throttleKey, title: input.srcTitle ?? null, username: input.srcUsername ?? null }
+                : { kind: "TELEGRAM", tgChatId: throttleKey, active: false },   // DM throttle qatori — statistikaga kirmaydi
             select: { id: true, parseWindowStart: true, parseWindowCount: true },
         });
-        sourceId = source.id;
+        if (isRealSource) sourceId = source.id;
         const nowMs = Date.now();
         const winActive = source.parseWindowStart != null && (nowMs - source.parseWindowStart.getTime() < RATE_WINDOW_MS);
         if (winActive && source.parseWindowCount >= MAX_PARSE_PER_MIN) {

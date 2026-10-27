@@ -72,10 +72,12 @@ async function handle(msg: TgMsg, text: string, isPrivate: boolean) {
         origMsgId = msg.forward_from_message_id ?? msg.forward_origin?.message_id ?? null;
     }
 
-    const res = await storeYukListing({ text, srcChatId, srcTitle, srcUsername, origMsgId });
+    const rateKey = isPrivate ? `dm:${chat.id}` : null;   // shaxsiy DM — har foydalanuvchi bo'yicha Gemini throttle
+    const res = await storeYukListing({ text, srcChatId, srcTitle, srcUsername, origMsgId, rateKey });
 
     if (isPrivate) {
         const lang = msg.from?.language_code;
+        if (res.reason === "rate_limited") return;                 // juda tez-tez — jim (flood himoyasi)
         if (res.reason === "duplicate") await reply(chat.id, botDuplicate(lang));
         else if (!res.stored) await reply(chat.id, botUnparsable(lang));
         else await reply(chat.id, botPosted(lang, res.type ?? "CARGO", res.route));

@@ -38,7 +38,7 @@ export async function GET() {
         prisma.yukListing.count({ where: activeWhere }),
         prisma.yukListing.count({ where: { ...activeWhere, type: "CARGO" } }),
         prisma.yukListing.count({ where: { ...activeWhere, type: "TRUCK" } }),
-        prisma.yukSource.count(),
+        prisma.yukSource.count({ where: { NOT: { tgChatId: { startsWith: "dm:" } } } }),
         prisma.yukSource.count({ where: { active: true } }),
         prisma.yukContactView.count(),
         prisma.yukContactView.count({ where: { createdAt: { gte: sevenAgo } } }),
