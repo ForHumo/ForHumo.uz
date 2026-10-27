@@ -12,8 +12,11 @@ import { LanguageSwitcher } from "@/components/ui/language-switcher";
 // Bozor Narxida — marketplace: mahsulotni ko'rish, qidirish va narx solishtirish
 // uchun kirish TALAB QILINMAYDI (docs/BN-PLAN.md §4.1). Kirish faqat savat,
 // buyurtma va kabinet uchun kerak — ular o'z ichida so'raydi.
+// YukGo — logistika marketplace: e'lonlarni ko'rish friksiyasiz (kirishsiz).
+// Kirish faqat kontakt ochish / haydovchi bo'lishда YukGo'ning o'z modalida
+// (Telegram Login Widget) so'raladi — global Google devori emas.
 // Qidiruv tizimlari ham shu tufayli sahifalarni indeksiy oladi.
-const PUBLIC_PREFIXES = ["/bn"];
+const PUBLIC_PREFIXES = ["/bn", "/yukgo"];
 
 function isPublicPath(pathname: string | null): boolean {
     if (!pathname) return false;
