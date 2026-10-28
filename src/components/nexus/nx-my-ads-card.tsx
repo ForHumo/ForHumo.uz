@@ -6,6 +6,8 @@
 import { useEffect, useState } from "react";
 import { useLocale } from "next-intl";
 import { Sparkles, Eye, MousePointerClick, Clock, Ban, Loader2, Plus, ExternalLink } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { formatMoney } from "@/lib/money";
 import { NxAdBuyModal } from "./nx-ad-buy-modal";
 
@@ -115,12 +117,7 @@ export function NxMyAdsCard() {
 
                 {ads && ads.length === 0 ? (
                     <div className="text-center py-10">
-                        <span
-                            className="w-16 h-16 rounded-2xl grid place-items-center mx-auto mb-3"
-                            style={{ background: NX_GRADIENT }}
-                        >
-                            <Sparkles className="w-8 h-8 text-[var(--nx-text)]" />
-                        </span>
+                        <UmmiPose pose={UMMI.empty} size={72} className="mx-auto mb-3 drop-shadow-sm" />
                         <p className="text-[14px] font-black mb-1">
                             {t("Hali reklamangiz yo'q", "У вас пока нет реклам", "You have no ads yet")}
                         </p>

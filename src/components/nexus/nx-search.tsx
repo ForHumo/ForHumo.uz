@@ -8,6 +8,8 @@ import {
     UserPlus, UserCheck, MessageCircle, Heart, Play, Eye, Music2, Radio, Lock,
     Clock, Trash2,
 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 
 interface SAuthor { name: string | null; username: string | null; image?: string | null; verified: boolean; verifiedCategory?: string | null }
@@ -294,7 +296,7 @@ export function NxSearch() {
                         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                     ) : !hasAny ? (
                         <div className="flex flex-col items-center justify-center py-14">
-                            <Search className="w-10 h-10 mb-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.25)" }} />
+                            <UmmiPose pose={UMMI.search} size={64} className="mx-auto mb-3 drop-shadow-sm" />
                             <p className="text-sm font-bold text-[var(--nx-text-2)]">Natija topilmadi</p>
                             <p className="text-xs mt-1" style={{ color: "rgb(var(--nx-text-3-rgb)/0.50)" }}>&ldquo;{query}&rdquo; bo&apos;yicha hech narsa yo&apos;q</p>
                         </div>

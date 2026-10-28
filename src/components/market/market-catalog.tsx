@@ -8,6 +8,8 @@ import {
     SlidersHorizontal, ChevronRight, Loader2,
     Search, X, ArrowUpDown, ChevronDown, Check,
 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 import { ProductCard } from "./product-card";
 
@@ -268,7 +270,7 @@ export function MarketCatalog() {
                         </div>
                     ) : products.length === 0 ? (
                         <div className="text-center py-20">
-                            <SlidersHorizontal size={36} className="text-gray-200 dark:text-white/10 mx-auto mb-3" />
+                            <UmmiPose pose={UMMI.search} size={72} className="mx-auto mb-3 drop-shadow-sm" />
                             <p className="text-gray-400 dark:text-white/30 text-sm">Mahsulot topilmadi</p>
                         </div>
                     ) : (

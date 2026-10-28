@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Link, useRouter } from "@/i18n/routing";
-import { ArrowLeft, BadgeCheck, Loader2, Edit3, UserPlus, UserCheck, UserX, MessageCircle, MoreHorizontal, Ban, VolumeX, Volume2, ShieldAlert, Gift, Star, Settings2, TrendingUp, Sparkles } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Loader2, Edit3, UserPlus, UserCheck, MessageCircle, MoreHorizontal, Ban, VolumeX, Volume2, ShieldAlert, Gift, Star, Settings2, TrendingUp, Sparkles } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 import { NxPlayerProvider } from "./nx-player-ctx";
 import { NxShare } from "./nx-share";
@@ -143,7 +145,7 @@ export function NexusProfile({ username }: { username: string }) {
                     <div className="flex justify-center py-24"><Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                 ) : notFound || !data ? (
                     <div className="flex flex-col items-center py-24 px-6 text-center">
-                        <UserX className="w-12 h-12 mb-3" style={{ color: "var(--nx-text-3)" }} />
+                        <UmmiPose pose={UMMI.confused} size={72} className="mx-auto mb-3 drop-shadow-sm" />
                         <p className="text-sm font-bold text-[var(--nx-text-2)]">Foydalanuvchi topilmadi</p>
                         <Link href="/nexus" className="mt-4 px-5 py-2.5 rounded-xl text-xs font-black text-white"
                             style={{ background: "var(--nx-accent)" }}>Nexus&apos;ga qaytish</Link>

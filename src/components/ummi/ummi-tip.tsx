@@ -9,11 +9,13 @@
 //   "esport"  (--es-* dizayn tizimi, .es-bg scope)
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
-import { X, ArrowRight } from "lucide-react";
+import { X, ArrowRight, HelpCircle } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { pickUmmiPose } from "@/lib/ummi-poses";
 
-interface Suggestion { id: string; kind: string; title: string; body: string; url: string; }
+interface Suggestion { id: string; kind: string; title: string; body: string; url: string; params?: Record<string, string>; }
 type Variant = "default" | "nexus" | "esport";
 
 interface VariantStyle {
@@ -46,12 +48,14 @@ const VARIANTS: Record<Exclude<Variant, "default">, VariantStyle> = {
 
 export function UmmiTip({ className = "", variant = "default" }: { className?: string; variant?: Variant }) {
     const t = useTranslations("ummi");
+    const locale = useLocale();
     const [s, setS] = useState<Suggestion | null>(null);
     const [hidden, setHidden] = useState(false);
+    const [showWhy, setShowWhy] = useState(false);
 
     useEffect(() => {
         let alive = true;
-        fetch("/api/ai/suggestions", { cache: "no-store" })
+        fetch(`/api/ai/suggestions?locale=${encodeURIComponent(locale)}`, { cache: "no-store" })
             .then(r => (r.ok ? r.json() : null))
             .then(d => {
                 if (alive && d?.suggestion) {
@@ -61,7 +65,7 @@ export function UmmiTip({ className = "", variant = "default" }: { className?: s
             })
             .catch(() => { /* jim — yuza ixtiyoriy */ });
         return () => { alive = false; };
-    }, []);
+    }, [locale]);
 
     function patch(id: string, status: "SEEN" | "DISMISSED" | "ACTED") {
         fetch(`/api/ai/suggestions/${id}`, {
@@ -77,6 +81,23 @@ export function UmmiTip({ className = "", variant = "default" }: { className?: s
     const external = /^https?:\/\//.test(s.url);
     const onOpen = () => patch(s.id, "ACTED");
     const onDismiss = () => { setHidden(true); patch(s.id, "DISMISSED"); };
+
+    // Matn tilga mos — kind + GET bergan params shabloni bilan (saqlangan uz matn fallback).
+    let title = s.title, body = s.body;
+    const KNOWN = ["belis", "nexus", "bn", "profile", "cart", "pricedrop"];
+    if (KNOWN.includes(s.kind)) {
+        try {
+            const P = s.params ?? {};
+            title = t(`s.${s.kind}.title`, P);
+            body = t(`s.${s.kind}.body`, P);
+        } catch {
+            title = s.title; body = s.body;   // shablon/param yetmasa — saqlangan matn
+        }
+    }
+
+    // "Nega bu taklif?" — shaffoflik (kind'ga mos sabab, params bilan)
+    let reason = "";
+    try { reason = t(`why.${s.kind}`, s.params ?? {}); } catch { reason = ""; }
 
     const v = variant === "default" ? null : VARIANTS[variant];
 
@@ -98,21 +119,14 @@ export function UmmiTip({ className = "", variant = "default" }: { className?: s
             className={`relative flex items-start gap-3 rounded-2xl p-3.5 shadow-sm ${cardCls} ${className}`}
             style={v?.card}
         >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-                src="/mascot/ummi.webp"
-                alt="Ummi"
-                width={40}
-                height={40}
-                className="w-10 h-10 rounded-xl object-contain shrink-0"
-            />
+            <UmmiPose pose={pickUmmiPose({ kind: s.kind })} size={44} className="w-11 h-11 shrink-0 -mt-0.5" />
             <div className="min-w-0 flex-1">
                 <div className={`text-[11px] font-bold uppercase tracking-wide mb-0.5 ${eyebrowCls}`} style={v?.eyebrow}>
                     {t("eyebrow")}
                 </div>
-                <div className={`text-sm font-bold leading-snug ${titleCls}`} style={v?.title}>{s.title}</div>
-                <div className={`text-xs leading-snug mt-0.5 ${bodyCls}`} style={v?.body}>{s.body}</div>
-                <div className="mt-2">
+                <div className={`text-sm font-bold leading-snug ${titleCls}`} style={v?.title}>{title}</div>
+                <div className={`text-xs leading-snug mt-0.5 ${bodyCls}`} style={v?.body}>{body}</div>
+                <div className="mt-2 flex items-center gap-3">
                     {external ? (
                         <a href={s.url} target="_blank" rel="noopener noreferrer" onClick={onOpen} className={openCls} style={v?.link}>
                             {openInner}
@@ -122,7 +136,21 @@ export function UmmiTip({ className = "", variant = "default" }: { className?: s
                             {openInner}
                         </Link>
                     )}
+                    {reason && (
+                        <button
+                            onClick={() => setShowWhy(w => !w)}
+                            className={`inline-flex items-center gap-1 text-[11px] hover:underline ${bodyCls}`}
+                            style={v?.body}
+                        >
+                            <HelpCircle className="w-3 h-3" /> {t("whyLabel")}
+                        </button>
+                    )}
                 </div>
+                {reason && showWhy && (
+                    <div className={`text-[11px] leading-snug mt-1.5 ${bodyCls}`} style={v?.body}>
+                        {reason}
+                    </div>
+                )}
             </div>
             <button
                 onClick={onDismiss}

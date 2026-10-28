@@ -29,7 +29,7 @@ export interface LiveStream {
     id: string; title: string; category: string | null; status: "UPCOMING" | "LIVE" | "ENDED";
     scheduledAt: string | null; startedAt: string | null; endedAt: string | null;
     viewers: number; peakViewers: number; likes: number; createdAt: string;
-    author: LAuthor | null;
+    author: LAuthor | null; thumbUrl?: string | null;
     recordingUrl?: string | null; recordingDurationSec?: number | null; isMine?: boolean;
 }
 
@@ -96,6 +96,22 @@ export function LiveView() {
             setDeleteBusy(false);
             setDeleteId(null);
         }
+    }
+
+    // Rejalangan efirni hozir boshlash — go-live oynasini prefill bilan ochadi
+    async function startScheduled(id: string) {
+        const d = await fetch(`/api/nexus/live/${id}`).then(r => r.json()).catch(() => null);
+        const s = d?.stream;
+        window.dispatchEvent(new CustomEvent("nexus:go-live-resume", {
+            detail: {
+                id,
+                title: s?.title ?? "",
+                category: s?.category ?? "",
+                privacy: s?.privacy ?? "PUBLIC",
+                description: s?.description ?? "",
+                thumbUrl: s?.thumbUrl ?? null,
+            },
+        }));
     }
 
     const load = useCallback(async (silent = false) => {
@@ -262,11 +278,37 @@ export function LiveView() {
                         <Section title="Tez kunda boshlanadi" accent="#10B981">
                             <div className="px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {upcoming.map(s => {
+                                    const badge = <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-[var(--nx-text)]" style={{ background: "#10B981" }}><CalendarClock className="w-3 h-3" />REJADA</span>;
+                                    const meta = <><Clock className="w-3 h-3" />{fmtWhen(s.scheduledAt)}</>;
+                                    // Ega — "Hozir boshlash" + o'chirish; boshqalar — eslatma toggle
+                                    if (s.isMine) {
+                                        return (
+                                            <StreamCard key={s.id} s={s} onOpen={() => setRoomId(s.id)} badge={badge} meta={meta}
+                                                corner={
+                                                    <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1.5">
+                                                        <button type="button"
+                                                            onMouseDown={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()}
+                                                            onClick={e => { e.stopPropagation(); e.preventDefault(); startScheduled(s.id); }}
+                                                            title="Hozir boshlash"
+                                                            className="flex items-center gap-1 px-2.5 h-8 rounded-lg text-[11px] font-black text-white active:scale-95"
+                                                            style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>
+                                                            <Radio className="w-3 h-3" />Boshlash
+                                                        </button>
+                                                        <button type="button"
+                                                            onMouseDown={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()}
+                                                            onClick={e => { e.stopPropagation(); e.preventDefault(); setDeleteId(s.id); }}
+                                                            title="O'chirish"
+                                                            className="w-8 h-8 flex items-center justify-center rounded-lg"
+                                                            style={{ background: "rgba(239,68,68,0.85)", backdropFilter: "blur(6px)" }}>
+                                                            <Trash2 className="w-3.5 h-3.5 text-white" />
+                                                        </button>
+                                                    </div>
+                                                } />
+                                        );
+                                    }
                                     const rem = reminders.has(s.id);
                                     return (
-                                        <StreamCard key={s.id} s={s} onOpen={() => setRoomId(s.id)}
-                                            badge={<span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-[var(--nx-text)]" style={{ background: "#10B981" }}><CalendarClock className="w-3 h-3" />REJADA</span>}
-                                            meta={<><Clock className="w-3 h-3" />{fmtWhen(s.scheduledAt)}</>}
+                                        <StreamCard key={s.id} s={s} onOpen={() => setRoomId(s.id)} badge={badge} meta={meta}
                                             corner={
                                                 <button onClick={e => { e.stopPropagation(); toggleReminder(s.id); }}
                                                     title={rem ? "Eslatma yoqilgan" : "Eslatma qo'shish"}
@@ -367,7 +409,9 @@ function StreamCard({ s, onOpen, badge, meta, dim, corner }: {
             className="text-left group cursor-pointer">
             <div className="relative aspect-video rounded-xl overflow-hidden mb-2 flex items-center justify-center"
                 style={{ border: `1px solid ${dim ? "rgba(100,110,140,0.25)" : "rgba(239,68,68,0.25)"}`, background: "linear-gradient(135deg, rgba(40,10,20,0.9), rgba(30,15,50,0.9))", opacity: dim ? 0.75 : 1 }}>
-                <img src={avatarOf(s.author)} alt="" className="w-16 h-16 rounded-full object-cover bg-white" style={{ border: "2px solid rgba(239,68,68,0.5)" }} />
+                {s.thumbUrl
+                    ? <img src={s.thumbUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    : <img src={avatarOf(s.author)} alt="" className="w-16 h-16 rounded-full object-cover bg-white" style={{ border: "2px solid rgba(239,68,68,0.5)" }} />}
                 <div className="absolute top-2 left-2">{badge}</div>
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none" style={{ background: "rgba(5,8,24,0.40)" }}>
                     <span className="px-3 py-1.5 rounded-xl text-xs font-black text-[var(--nx-text)]" style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>Kirish</span>

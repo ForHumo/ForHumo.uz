@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNxPlayer } from "./nx-player-ctx";
-import { MessageCircle, Loader2, BadgeCheck, Pencil, Bookmark, Pin, VolumeX } from "lucide-react";
+import { Loader2, BadgeCheck, Pencil, Bookmark, Pin, VolumeX } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NxChatList — Ijtimoiy > Chatlar tabidagi inline suhbatlar ro'yxati.
@@ -87,9 +89,7 @@ export function NxChatList({ filterUnread = false }: { filterUnread?: boolean } 
                 <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
             ) : displayed.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                        <MessageCircle className="w-5 h-5" style={{ color: "rgb(var(--nx-accent-rgb) / 0.45)" }} />
-                    </div>
+                    <UmmiPose pose={UMMI.chat} size={64} className="mx-auto mb-3 drop-shadow-sm" />
                     <p className="text-sm font-bold text-[var(--nx-text-2)] mb-1">
                         {filterUnread ? "O'qilmagan suhbat yo'q" : "Hali suhbat yo'q"}
                     </p>

@@ -1,19 +1,120 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { headers } from "next/headers";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { isJtiRevoked, bumpLastSeenAt } from "@/lib/auth-session-cache";
+import { normalizePhone, hashPhone } from "@/lib/phone-hash";
+import { encryptPhone } from "@/lib/crypto";
+import { checkCode } from "@/lib/telegram-gateway";
+import { verifyTelegramWidget } from "@/lib/telegram-widget";
+import { generateHumoId } from "@/lib/humo-id";
 
 export const authOptions: NextAuthOptions = {
     // Explicit secret — env yo'q bo'lsa NextAuth 500 beradi
     secret: process.env.NEXTAUTH_SECRET,
     // Multi-domain: Vercel proxy'da x-forwarded-host'ga ishonamiz
     useSecureCookies: process.env.NODE_ENV === "production",
+    // Sessiya: 1 yil + har kuni rolling yangilanadi → FAOL foydalanuvchi qayta login
+    // qilmaydi (oldin default 30 kun edi = "har oy login" muammosi). Xavfsizlik
+    // zaiflashmaydi: JWT imzolangan + jti revocation (qurilmani masofadan chiqarish) saqlanadi.
+    // (Sezgir Pay amallari uchun kelajakda step-up re-auth qo'shiladi.)
+    session: {
+        strategy: "jwt",
+        maxAge: 60 * 60 * 24 * 365,   // 1 yil
+        updateAge: 60 * 60 * 24,       // har kuni token yangilanib muddat uzayadi
+    },
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        }),
+        // Telegram-telefon: raqam + Gateway kod → Humo ID avtomatik (ism so'ralmaydi).
+        // Email'siz foydalanuvchi. YukGo friksiyasiz onboarding uchun.
+        CredentialsProvider({
+            id: "telegram-phone",
+            name: "Telegram",
+            credentials: { phone: {}, requestId: {}, code: {} },
+            async authorize(credentials) {
+                const e164 = normalizePhone(String(credentials?.phone || ""));
+                const requestId = String(credentials?.requestId || "");
+                const code = String(credentials?.code || "");
+                if (!e164 || !requestId || !/^\d{4,8}$/.test(code)) return null;
+
+                // Kod Telegram Gateway orqali tasdiqlanadi
+                const res = await checkCode(requestId, code);
+                if (!res.verified) return null;
+
+                const phoneHash = hashPhone(e164);
+                // Davlat (IP geolokatsiya) → Humo ID prefiks
+                let country = "UZ";
+                try { const h = await headers(); country = (h.get("x-vercel-ip-country") || "UZ").toUpperCase(); } catch { /* noop */ }
+
+                const sel = { id: true, humoId: true, username: true, onboardingDone: true, image: true, name: true } as const;
+                let profile = await prisma.userProfile.findUnique({ where: { phoneHash }, select: sel });
+                if (!profile) {
+                    const humoId = await generateHumoId(country);
+                    const { encrypted, iv } = encryptPhone(e164);
+                    profile = await prisma.userProfile.create({
+                        data: { humoId, country, phoneHash, phoneEnc: encrypted, phoneIv: iv, emailVerified: false, level: 1, lastLoginAt: new Date() },
+                        select: sel,
+                    });
+                } else {
+                    await prisma.userProfile.update({ where: { id: profile.id }, data: { lastLoginAt: new Date() } }).catch(() => { });
+                }
+                // NextAuth user (custom maydonlar jwt callback'da token'ga ko'chiriladi)
+                return {
+                    id: profile.id, name: profile.name ?? null, email: null, image: profile.image ?? null,
+                    profileId: profile.id, humoId: profile.humoId ?? null,
+                    username: profile.username ?? null, onboardingDone: profile.onboardingDone ?? false,
+                } as unknown as { id: string };
+            },
+        }),
+        // Telegram Login Widget (BEPUL) — 1 bosqichli "Telegram bilan kirish".
+        // Telefon SO'RAMAYDI; anchor = Telegram ID. Humo ID IP-prefiks bilan avto.
+        // (Gateway telefon+kod — yuqoridagi telegram-phone — $100 balans talab qiladi,
+        //  shuning uchun hozir uxlab turadi; pul bo'lganda yoqiladi.)
+        CredentialsProvider({
+            id: "telegram-widget",
+            name: "Telegram",
+            credentials: { payload: {} },
+            async authorize(credentials) {
+                let parsed: unknown;
+                try { parsed = JSON.parse(String(credentials?.payload || "")); } catch { return null; }
+                const tg = verifyTelegramWidget(parsed);
+                if (!tg) return null;
+
+                // Davlat (IP geolokatsiya) → Humo ID prefiks (foydalanuvchi o'zgartira olmaydi)
+                let country = "UZ";
+                try { const h = await headers(); country = (h.get("x-vercel-ip-country") || "UZ").toUpperCase(); } catch { /* noop */ }
+
+                const sel = { id: true, humoId: true, username: true, onboardingDone: true, image: true, name: true } as const;
+                let profile = await prisma.userProfile.findUnique({ where: { telegramId: tg.id }, select: sel });
+                if (!profile) {
+                    const humoId = await generateHumoId(country);
+                    const displayName = [tg.firstName, tg.lastName].filter(Boolean).join(" ") || null;
+                    profile = await prisma.userProfile.create({
+                        data: {
+                            humoId, country,
+                            telegramId: tg.id, telegramUsername: tg.username,
+                            name: displayName, image: tg.photoUrl,
+                            emailVerified: false, level: 1, lastLoginAt: new Date(),
+                        },
+                        select: sel,
+                    });
+                } else {
+                    await prisma.userProfile.update({
+                        where: { id: profile.id },
+                        data: { lastLoginAt: new Date(), telegramUsername: tg.username ?? undefined },
+                    }).catch(() => { });
+                }
+                return {
+                    id: profile.id, name: profile.name ?? null, email: null, image: profile.image ?? null,
+                    profileId: profile.id, humoId: profile.humoId ?? null,
+                    username: profile.username ?? null, onboardingDone: profile.onboardingDone ?? false,
+                } as unknown as { id: string };
+            },
         }),
     ],
     pages: {
@@ -118,6 +219,17 @@ export const authOptions: NextAuthOptions = {
             if (!token.email && user?.email) token.email = user.email;
             if (!token.name && user?.name)   token.name  = user.name;
             if (!token.picture && user?.image) token.picture = user.image;
+
+            // Telegram-telefon (credentials) login: user obyektida profileId keladi (email yo'q).
+            // Google login'да bu maydonlar yo'q → shox o'tkazib yuboriladi (Google buzilmaydi).
+            const cu = user as unknown as { profileId?: string; humoId?: string | null; username?: string | null; onboardingDone?: boolean } | undefined;
+            if (cu?.profileId) {
+                token.profileId = cu.profileId;
+                token.humoId = cu.humoId ?? null;
+                token.username = cu.username ?? null;
+                token.onboardingDone = cu.onboardingDone ?? false;
+                token.coverImage = token.coverImage ?? null;
+            }
 
             if (trigger === "signIn" || trigger === "update" || !token.onboardingDone || token.coverImage === undefined) {
                 if (token.email) {

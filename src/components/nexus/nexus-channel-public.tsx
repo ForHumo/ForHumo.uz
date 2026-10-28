@@ -12,6 +12,8 @@ import {
     Loader2, Megaphone, Users, BadgeCheck, ArrowLeft, Copy, Check,
     Eye, ImageIcon, Video, Mic, MapPin, User, BarChart2, Lock, Shield, ExternalLink,
 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { NxMarkdown } from "./nx-markdown";
 
 type ChannelData = {
@@ -179,10 +181,7 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
         return (
             <div className="fixed inset-0 z-[100] overflow-y-auto" style={{ background: "var(--nx-bg)" }}>
                 <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.30)" }}>
-                        <Megaphone className="w-8 h-8" style={{ color: "#EF4444" }} />
-                    </div>
+                    <UmmiPose pose={UMMI.confused} size={80} className="mx-auto mb-4 drop-shadow-sm" />
                     <p className="text-lg font-bold text-[var(--nx-text)] mb-2">{error ?? "Kanal topilmadi"}</p>
                     <p className="text-sm mb-6" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                         Havola noto'g'ri yoki kanal o'chirilgan bo'lishi mumkin.

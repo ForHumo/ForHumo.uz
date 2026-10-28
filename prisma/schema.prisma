@@ -71,6 +71,12 @@ model UserProfile {
   // Raw raqam saqlanmaydi (bu ustunda). phone o'zgarganda phoneHash ham yangilanadi.
   phoneHash     String? @unique
 
+  // YukGo Telegram Login Widget — friksiyasiz kirish anchori (telefon EMAS).
+  // Telegram ID barqaror identity; Humo ID IP-prefiks bilan avtomatik ochiladi.
+  // telegramUsername faqat ko'rsatish/qulaylik uchun (o'zgarishi mumkin).
+  telegramId       String? @unique
+  telegramUsername String?
+
   // Verification level:  0 = basic (Google only)
   //                      1 = email confirmed
   //                      2 = KYC (biometric, future)
@@ -4830,5 +4836,121 @@ model BelisItemBooking {
 
   @@index([itemId, bookingId])
   @@index([bookingId])
+}
+
+// ── YukGo — logistika marketplace (alohida brend, For Humo infra ustida) ─────
+enum YukListingType {
+  CARGO    // yuk egasi mashina qidiryapti ("yuk bor")
+  TRUCK    // haydovchi bo'sh mashina, yuk qidiryapti
+  LOGIST   // dispetcher/vositachi reklama
+  OTHER    // yuk tashishga aloqasiz (mashina sotuvi, spam)
+}
+
+enum YukListingStatus {
+  ACTIVE   // ko'rinadi
+  EXPIRED  // eskirgan (vaqti o'tgan)
+  HIDDEN   // moderatsiya/shikoyat/manba o'chirish so'rovi
+}
+
+enum YukSourceKind {
+  TELEGRAM // guruh/kanaldan yig'ilgan (vaqtinchalik "seed")
+  NATIVE   // YukGo'da to'g'ridan joylangan (tasdiqlangan)
+}
+
+// E'lon manbai (Telegram guruh/kanal yoki native)
+model YukSource {
+  id         String        @id @default(cuid())
+  kind       YukSourceKind @default(TELEGRAM)
+  tgChatId   String?       @unique  // Telegram chat id (guruh/kanal)
+  title      String?                 // guruh nomi
+  username   String?                 // @username (public bo'lsa — deep link uchun)
+  active     Boolean       @default(true)
+  addedById  String?                 // kim qo'shgan (UserProfile.id)
+  createdAt  DateTime      @default(now())
+  // Parse rate-cap: manba daqiqasiga maks N tahlil (Gemini xarajat shifti).
+  parseWindowStart DateTime?
+  parseWindowCount Int      @default(0)
+  listings   YukListing[]
+
+  @@index([active])
+}
+
+// Yuk e'loni (parserdan strukturalangan)
+model YukListing {
+  id              String           @id @default(cuid())
+  type            YukListingType
+  status          YukListingStatus @default(ACTIVE)
+
+  // Manba
+  sourceId        String?
+  source          YukSource?       @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  tgMessageId     String?          // original xabar id
+  sourceLink      String?          // https://t.me/<username>/<msgId> (telefonni qayta nashr o'rniga manbaga yo'naltirish)
+  postedById      String?          // NATIVE bo'lsa — UserProfile.id
+
+  // Strukturalangan (lib/yukgo-parse.ts)
+  fromText        String?
+  fromCity        String?
+  fromCountry     String?
+  toText          String?
+  toCity          String?
+  toCountry       String?
+  cargo           String?
+  weightTons      Float?
+  truckTypes      String[]         @default([])
+  quantityTrucks  Int?
+  priceAmount     Decimal?         @db.Decimal(16, 2)
+  priceCurrency   String?          // UZS/RUB/USD
+  priceNegotiable Boolean          @default(false)
+
+  // Kontakt — GATED (API/UI login/obuna ortida ochiladi, ochiq nashr qilinmaydi)
+  phones          String[]         @default([])  // +998... normalizatsiya
+
+  lang            String?          // uz/ru/mixed
+  confidence      Float            @default(0.5)
+  rawText         String                        // xom e'lon matni
+  rawHash         String?                        // normalizatsiyalangan matn hashi — PRE-PARSE dedup (10s qayta-tashlash spamini Gemini'siz to'xtatadi)
+  dedupKey        String?                        // cross-guruh takror aniqlash (route+phone+weight)
+  reportedBy      String[]         @default([])  // "band bo'ldi" shikoyat qilgan profileId'lar (>=2 → yashiriladi)
+
+  boostedUntil    DateTime?                      // "ko'tarilgan" (monetizatsiya)
+  createdAt       DateTime         @default(now())
+  expiresAt       DateTime?                      // eskirgan e'lon (query'da filtr — cron kerak emas)
+
+  @@index([type, status, createdAt])
+  @@index([fromCity, toCity])
+  @@index([dedupKey])
+  @@index([rawHash, createdAt])
+  @@index([sourceId, createdAt])
+  @@index([status, expiresAt])
+}
+
+// Kontakt ko'rish hisobi — kunlik bepul limit + Pro (cheksiz)
+model YukContactView {
+  id         String   @id @default(cuid())
+  profileId  String
+  listingId  String
+  createdAt  DateTime @default(now())
+
+  @@unique([profileId, listingId])        // bir e'lon qayta ko'rilsa, limitga 2 marta sanalmaydi
+  @@index([profileId, createdAt])          // kunlik hisob uchun
+}
+
+// Haydovchi profili (Humo ID ustida)
+model YukDriver {
+  id              String    @id @default(cuid())
+  profileId       String    @unique  // UserProfile.id
+  phone           String?             // OTP tasdiqlangan
+  phoneVerifiedAt DateTime?
+  vehicleType     String?             // tent/ref/open_top/fura/isuzu...
+  capacityTons    Float?
+  routeFromCity   String?             // mos e'lon uchun afzal yo'nalish
+  routeToCity     String?
+  notifyOnMatch   Boolean   @default(true)
+  lang            String?   @default("uz")  // push xabari tili (uz/ru/en) — onboarding'da joriy locale
+  subActiveUntil  DateTime?           // obuna (monetizatsiya)
+  createdAt       DateTime  @default(now())
+
+  @@index([routeFromCity, routeToCity])
 }
 

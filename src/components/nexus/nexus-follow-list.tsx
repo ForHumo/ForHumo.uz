@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "@/i18n/routing";
 import { X, BadgeCheck, Loader2 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 
 interface FollowUser {
@@ -58,7 +60,10 @@ export function NexusFollowList({ username, type, onClose }: {
                     {loading ? (
                         <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                     ) : users.length === 0 ? (
-                        <p className="text-center py-10 text-xs" style={{ color: "var(--nx-text-3)" }}>Hozircha hech kim yo&apos;q</p>
+                        <div className="py-10 text-center">
+                            <UmmiPose pose={UMMI.empty} size={56} className="mx-auto mb-2 drop-shadow-sm" />
+                            <p className="text-xs" style={{ color: "var(--nx-text-3)" }}>Hozircha hech kim yo&apos;q</p>
+                        </div>
                     ) : users.map((u, i) => (
                         <div key={i} className="flex items-center gap-3 p-2 rounded-xl">
                             <Link href={u.username ? `/nexus/u/${u.username}` : "/nexus"} onClick={onClose} className="flex items-center gap-3 flex-1 min-w-0">

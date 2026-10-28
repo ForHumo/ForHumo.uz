@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { Radio, Eye, ChevronLeft, Hash, CalendarClock, Search, X } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { NxLiveRoom } from "./nx-live-room";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 
@@ -121,7 +123,7 @@ export function NxLiveCategory({ category, label }: { category: string; label: s
                         )}
                         {live.length === 0 && upcoming.length === 0 && ended.length === 0 && (
                             <div className="p-8 rounded-2xl text-center" style={{ background: "rgba(139,92,246,0.06)", border: "1px dashed rgba(139,92,246,0.30)" }}>
-                                <Radio className="w-8 h-8 mx-auto mb-2" style={{ color: "rgba(139,92,246,0.55)" }} />
+                                <UmmiPose pose={UMMI.empty} size={56} className="mx-auto mb-3 drop-shadow-sm" />
                                 <p className="text-xs" style={{ color: "rgba(200,180,230,0.75)" }}>
                                     {q ? `"${q}" bo'yicha topilmadi` : `Bu kategoriyada hozircha efir yo'q`}
                                 </p>

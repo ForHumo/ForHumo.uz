@@ -8,6 +8,8 @@ import {
     Store, ChevronRight, Loader2, Package, ShoppingBag,
     Star, Users, Calendar,
 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { VerifiedBadge } from "./verified-badge";
 import { ProductCard } from "./product-card";
 import { BrandReviews } from "./brand-reviews";
@@ -48,7 +50,7 @@ export function BrandProfile({ slug }: { slug: string }) {
     );
     if (notFound || !data) return (
         <div className="text-center py-32">
-            <Store size={48} className="text-gray-200 dark:text-white/10 mx-auto mb-4" />
+            <UmmiPose pose={UMMI.confused} size={88} className="mx-auto mb-4 drop-shadow-sm" />
             <p className="text-gray-500 dark:text-white/40">Brend topilmadi</p>
         </div>
     );

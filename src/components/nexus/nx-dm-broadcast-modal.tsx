@@ -7,6 +7,8 @@ import { nxToast } from "@/components/nexus/ui/nx-toast";
 import {
     X, Users, Loader2, Plus, Send, Trash2, Search,
 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 
 type BroadcastItem = {
     id: string;
@@ -140,7 +142,7 @@ export function NxDmBroadcastModal({
                             <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                         ) : items.length === 0 ? (
                             <div className="text-center py-12">
-                                <Users className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: "var(--nx-accent)" }} />
+                                <UmmiPose pose={UMMI.empty} size={64} className="mx-auto mb-3 drop-shadow-sm" />
                                 <p className="text-sm" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>Ro&apos;yxat yo&apos;q</p>
                                 <button onClick={() => setTab("create")}
                                     className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black text-[var(--nx-text)]"

@@ -9,6 +9,8 @@ import {
     BarChart2, Settings as SettingsIcon, Terminal, Info as InfoIcon, AlertTriangle,
     History, Tag,
 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 
 type Tab = "info" | "settings" | "commands" | "stats" | "logs";
 
@@ -492,7 +494,7 @@ export function NxAgentManageModal({
                                     {commands.length === 0 ? (
                                         <div className="p-6 rounded-2xl text-center"
                                             style={{ background: "var(--nx-surface)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.20)" }}>
-                                            <Terminal className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "var(--nx-accent)" }} />
+                                            <UmmiPose pose={UMMI.document} size={56} className="mx-auto mb-3 drop-shadow-sm" />
                                             <p className="text-sm" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>
                                                 Buyruq yo&apos;q. Qo&apos;shish bosing.
                                             </p>
@@ -545,7 +547,7 @@ export function NxAgentManageModal({
                                 ) : logs.length === 0 ? (
                                     <div className="p-8 rounded-2xl text-center"
                                         style={{ background: "var(--nx-surface)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.20)" }}>
-                                        <History className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "var(--nx-accent)" }} />
+                                        <UmmiPose pose={UMMI.empty} size={56} className="mx-auto mb-3 drop-shadow-sm" />
                                         <p className="text-sm" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                                             Hali chaqiruv yo&apos;q
                                         </p>

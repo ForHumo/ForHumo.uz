@@ -4,7 +4,9 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
-import { Play, ArrowLeft, Music, Loader2, User, Lock, Share2, Trash2 } from "lucide-react";
+import { Play, ArrowLeft, Music, Loader2, User, Share2, Trash2 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 
 interface Track {
     id: string; title: string; artist: string | null;
@@ -68,7 +70,7 @@ export function NexusPlaylistPage({ id }: { id: string }) {
         return (
             <div className="min-h-screen grid place-items-center bg-neutral-50 dark:bg-neutral-950 p-4">
                 <div className="text-center">
-                    <Lock className="w-10 h-10 mx-auto mb-2 opacity-30 text-neutral-400" />
+                    <UmmiPose pose={UMMI.confused} size={64} className="mx-auto mb-3 drop-shadow-sm" />
                     <p className="text-[13px] text-neutral-500">{error || "Pleylist mavjud emas"}</p>
                     <Link href={"/nexus" as never}
                         className="inline-block mt-4 h-10 px-4 rounded-xl bg-black text-[var(--nx-text)] text-[13px] font-black">
@@ -142,7 +144,7 @@ export function NexusPlaylistPage({ id }: { id: string }) {
                 <div className="rounded-2xl overflow-hidden bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
                     {data.tracks.length === 0 && (
                         <div className="p-8 text-center">
-                            <Music className="w-10 h-10 mx-auto mb-2 opacity-30 text-neutral-400" />
+                            <UmmiPose pose={UMMI.music} size={64} className="mx-auto mb-3 drop-shadow-sm" />
                             <p className="text-[12.5px] text-neutral-500">Pleylist bo'sh</p>
                         </div>
                     )}

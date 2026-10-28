@@ -8,6 +8,8 @@ import {
     Bell, ThumbsUp, MessageSquare, Star, Package,
     CheckCircle2, Loader2, ChevronRight, BadgeCheck, Truck, HelpCircle, CheckCheck,
 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 
 type NotifType = "REVIEW_LIKE" | "PRODUCT_REVIEW" | "BRAND_REVIEW"
     | "ORDER_DELIVERED" | "ORDER_ACCEPTED" | "ORDER_UPDATE" | "REVIEW_REMINDER" | "REPLY"
@@ -100,7 +102,7 @@ export function MarketNotifications() {
                 <div className="flex justify-center py-20"><Loader2 size={28} className="animate-spin text-green-500" /></div>
             ) : !items.length ? (
                 <div className="text-center py-20">
-                    <Bell size={48} className="text-gray-200 dark:text-white/10 mx-auto mb-4" />
+                    <UmmiPose pose={UMMI.notification} size={88} className="mx-auto mb-4 drop-shadow-sm" />
                     <p className="text-gray-500 dark:text-white/40 text-sm">Hali bildirishnoma yo'q</p>
                 </div>
             ) : (

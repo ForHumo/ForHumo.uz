@@ -87,13 +87,13 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const [hasRemoteVideo, setHasRemoteVideo] = useState(false);
     const [hasScreen, setHasScreen] = useState(false);
     const [hasCamera, setHasCamera] = useState(false);
-    // Viewer PiP tartibi (Batch A + D: viewer o'zi joylashtiradi)
-    type PipCorner = "br" | "bl" | "tr" | "tl";
+    // Viewer PiP tartibi — viewer face-cam'ni istalgan joyga erkin sudraydi (free drag)
     type PipSize = "sm" | "md" | "lg";
     const [pipVisible, setPipVisible] = useState(true);
-    const [pipCorner, setPipCorner] = useState<PipCorner>("br");
     const [pipSize, setPipSize] = useState<PipSize>("md");
-    const [pipDrag, setPipDrag] = useState<{ x: number; y: number; corner: PipCorner } | null>(null);
+    // null = birlamchi joy (pastki-o'ng); aks holda sahnaga nisbatan px (left/top)
+    const [pipPos, setPipPos] = useState<{ x: number; y: number } | null>(null);
+    const pipDragRef = useRef<{ px: number; py: number; ex: number; ey: number; w: number; h: number } | null>(null);
     // Player controls
     const [volume, setVolume] = useState(1);         // 0..1
     const [muted, setMuted] = useState(false);
@@ -1404,39 +1404,43 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 {isLive && hasScreen && hasCamera && pipVisible && (
                     <div
                         onPointerDown={e => {
-                            const target = e.currentTarget as HTMLElement;
-                            target.setPointerCapture(e.pointerId);
-                            setPipDrag({ x: e.clientX, y: e.clientY, corner: pipCorner });
-                        }}
-                        onPointerMove={e => {
-                            if (!pipDrag) return;
-                            const dx = e.clientX - pipDrag.x;
-                            const dy = e.clientY - pipDrag.y;
-                            if (Math.abs(dx) < 30 && Math.abs(dy) < 30) return;
-                            // Snap to nearest corner based on final pointer position within stage
                             const stage = stageRef.current;
                             if (!stage) return;
-                            const rect = stage.getBoundingClientRect();
-                            const relX = e.clientX - rect.left, relY = e.clientY - rect.top;
-                            const nx = relX < rect.width / 2 ? "l" : "r";
-                            const ny = relY < rect.height / 2 ? "t" : "b";
-                            setPipCorner((ny + nx) as PipCorner);
+                            const el = e.currentTarget as HTMLElement;
+                            el.setPointerCapture(e.pointerId);
+                            const r = el.getBoundingClientRect();
+                            const sr = stage.getBoundingClientRect();
+                            const ex = r.left - sr.left, ey = r.top - sr.top;
+                            pipDragRef.current = { px: e.clientX, py: e.clientY, ex, ey, w: r.width, h: r.height };
+                            // bottom/right birlamchi joylashuvdan left/top erkin joylashuvga o'tamiz (joyi sakramaydi)
+                            setPipPos({ x: ex, y: ey });
                         }}
-                        onPointerUp={() => setPipDrag(null)}
+                        onPointerMove={e => {
+                            const d = pipDragRef.current;
+                            const stage = stageRef.current;
+                            if (!d || !stage) return;
+                            const sr = stage.getBoundingClientRect();
+                            // Kursor ortidan erkin ergashadi, sahna ichida clamp qilinadi
+                            const nx = Math.max(0, Math.min(d.ex + (e.clientX - d.px), sr.width - d.w));
+                            const ny = Math.max(0, Math.min(d.ey + (e.clientY - d.py), sr.height - d.h));
+                            setPipPos({ x: nx, y: ny });
+                        }}
+                        onPointerUp={e => {
+                            pipDragRef.current = null;
+                            try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+                        }}
                         onDoubleClick={() => setPipSize(s => s === "sm" ? "md" : s === "md" ? "lg" : "sm")}
-                        className={`absolute z-20 rounded-xl overflow-hidden cursor-move transition-all duration-200 animate-in fade-in ${
-                            pipCorner === "br" ? "bottom-20 right-4" :
-                            pipCorner === "bl" ? "bottom-20 left-4" :
-                            pipCorner === "tr" ? "top-20 right-4" :
-                            "top-20 left-4"
-                        } ${pipSize === "sm" ? "w-32 h-20" : pipSize === "md" ? "w-48 h-28" : "w-64 h-40"}`}
+                        className={`absolute z-20 rounded-xl overflow-hidden cursor-move transition-[width,height] duration-200 animate-in fade-in ${
+                            pipSize === "sm" ? "w-32 h-20" : pipSize === "md" ? "w-48 h-28" : "w-64 h-40"
+                        }`}
                         style={{
+                            ...(pipPos ? { left: pipPos.x, top: pipPos.y } : { bottom: 80, right: 16 }),
                             border: "2px solid rgba(255,255,255,0.35)",
                             boxShadow: "0 12px 32px rgba(0,0,0,0.55), 0 0 0 1px rgb(var(--nx-accent-rgb) / 0.25)",
                             background: "#000",
                             touchAction: "none",
                         }}
-                        title="Sudrab joylashtiring · 2× bosing — o'lcham"
+                        title="Sudrab istalgan joyga qo'ying · 2× bosing — o'lcham"
                     >
                         <video ref={camPipElRef} autoPlay playsInline muted
                             className="w-full h-full object-cover pointer-events-none" />

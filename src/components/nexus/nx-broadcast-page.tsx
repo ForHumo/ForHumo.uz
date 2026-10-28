@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Radio, Plus, Users, Send, Trash2, ArrowLeft, Search, X, Loader2, Check, AlertCircle } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 
 interface ListRow { id: string; name: string; memberCount: number; updatedAt: string }
 interface Member { profileId: string; name: string | null; username: string | null; image: string | null; addedAt: string }
@@ -49,7 +51,7 @@ export function NxBroadcastPage() {
             {loading && <div className="text-center py-8 opacity-60"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></div>}
             {!loading && lists.length === 0 && (
                 <div className="text-center py-16 opacity-60">
-                    <Radio className="w-10 h-10 mx-auto mb-3" />
+                    <UmmiPose pose={UMMI.notification} size={64} className="mx-auto mb-3 drop-shadow-sm" />
                     <div className="font-bold mb-1">Hali ro'yxat yo'q</div>
                     <div className="text-xs">"Yangi" tugmasi bilan boshlang.</div>
                 </div>

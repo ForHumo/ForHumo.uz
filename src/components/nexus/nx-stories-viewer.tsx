@@ -7,6 +7,8 @@ import {
     X, ChevronLeft, ChevronRight, Pause, Play,
     VolumeX, Volume2, Eye, Trash2, Loader2, Send, Music as MusicIcon, Loader,
 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 import { normalizeOverlays, type StoryOverlay } from "@/lib/story-overlays";
 
@@ -236,7 +238,10 @@ export function NxStoriesViewer() {
             {!loaded ? (
                 <Loader2 className="w-8 h-8 animate-spin text-white/70" />
             ) : !group || !story || !slide ? (
-                <p className="text-sm text-white/60">Hikoya yo&apos;q</p>
+                <div className="text-center">
+                    <UmmiPose pose={UMMI.confused} size={72} className="mx-auto mb-2 drop-shadow-sm" />
+                    <p className="text-sm text-white/60">Hikoya yo&apos;q</p>
+                </div>
             ) : (
                 <>
                     {(userIdx > 0 || itemIdx > 0 || slideIdx > 0) && (

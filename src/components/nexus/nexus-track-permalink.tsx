@@ -7,6 +7,8 @@ import { NxPlayerProvider, useNxPlayer, type NxTrack } from "./nx-player-ctx";
 import { NxMusicPlayer } from "./nx-music-player";
 import { NxShare } from "./nx-share";
 import { ArrowLeft, Play, Heart, Share2, Loader2, BadgeCheck, Music2, Clock, Headphones } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 
 interface Track {
     id: string; title: string; artist: string | null; audioUrl: string; coverUrl: string | null;
@@ -62,7 +64,7 @@ function Inner({ id }: { id: string }) {
             {loading ? (
                 <div className="flex justify-center py-24"><Loader2 className="w-8 h-8 animate-spin" style={{ color: "#10B981" }} /></div>
             ) : !t ? (
-                <div className="text-center py-24 px-6"><Headphones className="w-12 h-12 mx-auto mb-3" style={{ color: "rgba(16,185,129,0.3)" }} /><p className="text-sm font-bold text-[var(--nx-text-2)]">Trek topilmadi yoki o&apos;chirilgan</p></div>
+                <div className="text-center py-24 px-6"><UmmiPose pose={UMMI.music} size={72} className="mx-auto mb-3 drop-shadow-sm" /><p className="text-sm font-bold text-[var(--nx-text-2)]">Trek topilmadi yoki o&apos;chirilgan</p></div>
             ) : (
                 <div className="max-w-md mx-auto px-6 pt-8 pb-28 flex flex-col items-center text-center">
                     <div className="w-56 h-56 rounded-3xl overflow-hidden mb-6" style={{ border: "1px solid rgba(16,185,129,0.25)", boxShadow: "0 16px 48px rgba(16,185,129,0.18)" }}>

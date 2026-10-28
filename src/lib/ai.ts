@@ -165,18 +165,26 @@ export async function aiAnalyzeMulti(prompt: string, fileUrls: string[], opts: G
 
 /**
  * Gemini bilan rasm YARATISH (Gen Pic) — gemini-2.5-flash-image ("Nano Banana").
- * Matn prompt → rasm (base64). Kalit yo'q / xato → null (chaqiruvchi boshqa provayderga tushadi).
+ * Matn prompt (+ ixtiyoriy kiritiladigan rasmlar) → rasm (base64). Rasm(lar) berilsa model
+ * ularni manba/uslub sifatida ishlatadi (tahrir/kompozitsiya). Kalit yo'q / xato → null.
  */
-export async function aiGenerateImage(prompt: string): Promise<{ mime: string; base64: string } | null> {
+export async function aiGenerateImage(
+    prompt: string,
+    images?: { mime: string; base64: string }[],
+): Promise<{ mime: string; base64: string } | null> {
     if (!GEMINI_KEY) return null;
     const model = "gemini-2.5-flash-image";
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`;
     try {
+        const reqParts: Record<string, unknown>[] = [{ text: prompt }];
+        for (const im of images ?? []) {
+            if (im?.base64) reqParts.push({ inline_data: { mime_type: im.mime || "image/jpeg", data: im.base64 } });
+        }
         const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
+                contents: [{ parts: reqParts }],
                 generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
             }),
         });

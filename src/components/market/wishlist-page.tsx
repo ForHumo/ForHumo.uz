@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "@/i18n/routing";
 import { Heart, ChevronRight, Loader2 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { ProductCard } from "./product-card";
 
 interface WishProduct {
@@ -42,7 +44,7 @@ export function WishlistPage() {
             ) : !products.length ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                     className="text-center py-20">
-                    <Heart size={48} className="text-gray-200 dark:text-white/10 mx-auto mb-4" />
+                    <UmmiPose pose={UMMI.love} size={88} className="mx-auto mb-4 drop-shadow-sm" />
                     <p className="text-gray-500 dark:text-white/40 font-semibold mb-2">Hali sevimli mahsulotlar yo'q</p>
                     <p className="text-gray-400 dark:text-white/25 text-sm mb-6">Mahsulot kartasidagi yurakcha belgisini bosing</p>
                     <Link href="/market/catalog"

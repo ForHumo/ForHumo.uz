@@ -8,6 +8,8 @@ import {
     Store, Plus, ChevronRight, BadgeCheck, Package,
     Loader2, CheckCircle2, AlertCircle, X, ArrowRight, Pencil, Inbox, LayoutDashboard,
 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { VerifiedBadge } from "./verified-badge";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 import { ImageUploader } from "./image-uploader";
@@ -260,7 +262,7 @@ export function BrandManage() {
                 <div className="flex justify-center py-20"><Loader2 size={28} className="animate-spin text-green-500" /></div>
             ) : !brands.length ? (
                 <div className="text-center py-20">
-                    <Store size={48} className="text-gray-200 dark:text-white/10 mx-auto mb-4" />
+                    <UmmiPose pose={UMMI.market} size={88} className="mx-auto mb-4 drop-shadow-sm" />
                     <p className="text-gray-500 dark:text-white/40 font-semibold mb-2">Hali brend yo'q</p>
                     <p className="text-gray-400 dark:text-white/25 text-sm">Yuqoridagi tugmani bosib birinchi brendingizni oching</p>
                 </div>

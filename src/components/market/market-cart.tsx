@@ -10,6 +10,8 @@ import {
     MapPin, CreditCard, Banknote, Clock, Package, ChevronDown,
     Truck, XCircle, Tag,
 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { VerifiedBadge } from "./verified-badge";
 import { LocationPicker } from "@/components/ui/location-picker";
 import { formatMoney, type Currency } from "@/lib/money";
@@ -270,7 +272,7 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                 <>
                     {!items.length ? (
                         <div className="text-center py-20">
-                            <ShoppingCart size={48} className="text-gray-200 dark:text-white/10 mx-auto mb-4" />
+                            <UmmiPose pose={UMMI.market} size={88} className="mx-auto mb-4 drop-shadow-sm" />
                             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Savat bo'sh</h2>
                             <p className="text-gray-400 dark:text-white/30 mb-6 text-sm">Mahsulot qo'shing va xarid qiling</p>
                             <Link href="/market"

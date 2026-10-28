@@ -5,7 +5,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { X, Phone, Video, Clock, PhoneMissed, PhoneIncoming, PhoneOutgoing, Search, Mic, Users } from "lucide-react";
+import { X, Phone, Video, PhoneMissed, PhoneIncoming, PhoneOutgoing, Search, Mic, Users } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { useNxPlayer } from "./nx-player-ctx";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 
@@ -218,7 +220,7 @@ export function NxCalls() {
                     {/* 1:1 kun bo'yicha guruhlangan */}
                     {!loading && filter !== "groups" && filteredCalls.length === 0 && filteredGroups.length === 0 && (
                         <div className="py-10 text-center">
-                            <Clock className="mx-auto mb-3 h-8 w-8" style={{ color: "var(--nx-text-2)" }} />
+                            <UmmiPose pose={UMMI.empty} size={56} className="mx-auto mb-3 drop-shadow-sm" />
                             <p className="text-sm" style={{ color: "var(--nx-text-3)" }}>
                                 {query ? `"${query}" bo'yicha topilmadi` : filter === "missed" ? "O'tkazib yuborilgan qo'ng'iroq yo'q" : "Hozircha qo'ng'iroqlar yo'q"}
                             </p>

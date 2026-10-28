@@ -9,6 +9,8 @@ import {
     ChevronRight, Loader2, Star, ThumbsUp, MessageSquare,
     TrendingDown, TrendingUp, Reply as ReplyIcon, ShoppingBag,
 } from "lucide-react";
+import { UmmiPose } from "@/components/ummi/ummi-pose";
+import { UMMI } from "@/lib/ummi-poses";
 import { isVideoUrl } from "./media-uploader";
 import { formatMoney } from "@/lib/money";
 
@@ -161,7 +163,12 @@ function Stars({ n }: { n: number }) {
     return <div className="flex items-center gap-0.5">{[1,2,3,4,5].map(s => <Star key={s} size={12} className={s <= n ? "text-amber-400 fill-amber-400" : "text-gray-200 dark:text-white/10"} />)}</div>;
 }
 function Empty({ text }: { text: string }) {
-    return <p className="text-sm text-gray-400 dark:text-white/25 py-16 text-center">{text}</p>;
+    return (
+        <div className="py-16 text-center">
+            <UmmiPose pose={UMMI.empty} size={72} className="mx-auto mb-3 drop-shadow-sm" />
+            <p className="text-sm text-gray-400 dark:text-white/25">{text}</p>
+        </div>
+    );
 }
 function Card({ href, image, icon, title, time, badge, children }: {
     href: string; image?: string | null; icon?: React.ReactNode; title: string; time: string; badge?: React.ReactNode; children?: React.ReactNode;

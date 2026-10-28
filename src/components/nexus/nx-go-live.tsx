@@ -6,6 +6,7 @@ import {
     X, Radio, Mic, MicOff, Camera, CameraOff, Eye, Loader2,
     Send, Globe, Users, Lock, StopCircle, Clock, MessageSquare,
     Monitor, MonitorOff, Layout, User, Sparkles, Gift,
+    Image as ImageIcon, Plus, CalendarClock,
 } from "lucide-react";
 import { Room, LocalVideoTrack, LocalAudioTrack, Track } from "livekit-client";
 import { upload } from "@vercel/blob/client";
@@ -86,6 +87,20 @@ export function NxGoLive() {
     const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
     const [currency, setCurrency] = useState<Currency>("UZS");
     const [totalTips, setTotalTips] = useState(0);
+    // Cover (oblojka) — Humo AI yoki qurilmadan
+    const [coverUrl, setCoverUrl] = useState<string | null>(null);
+    const [coverBusy, setCoverBusy] = useState(false);          // qurilmadan yuklanyapti
+    const [coverErr, setCoverErr] = useState<string | null>(null);
+    const [aiOpen, setAiOpen] = useState(false);                // AI panel ochiq
+    const [aiPrompt, setAiPrompt] = useState("");
+    const [aiRefs, setAiRefs] = useState<string[]>([]);         // reference rasm data URL'lari (maks 3)
+    const [aiGenning, setAiGenning] = useState(false);
+    // Rejalashtirish (UPCOMING efir)
+    const [scheduleLater, setScheduleLater] = useState(false);
+    const [scheduleAt, setScheduleAt] = useState("");           // datetime-local qiymati (local vaqt)
+    const [scheduling, setScheduling] = useState(false);
+    const [scheduledOk, setScheduledOk] = useState(false);
+    const [resumeId, setResumeId] = useState<string | null>(null);   // rejalangan efirni boshlash
     // Batch B + C + D: PiP position/size/frame/transition
     const [pipCorner, setPipCorner] = useState<PipCorner>("br");
     const [pipSize, setPipSize] = useState<PipSize>("md");
@@ -94,6 +109,23 @@ export function NxGoLive() {
     const [studioPanelOpen, setStudioPanelOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     useEffect(() => { setMounted(true); }, []);
+    // Rejalangan efirni "Hozir boshlash" — LiveView event yuboradi: prefill + ochish
+    useEffect(() => {
+        const h = (e: Event) => {
+            const d = (e as CustomEvent).detail || {};
+            if (!d.id) return;
+            setResumeId(String(d.id));
+            setTitle(String(d.title || ""));
+            setCategory(String(d.category || ""));
+            setPrivacy(d.privacy === "FRIENDS" ? "FRIENDS" : d.privacy === "PRIVATE" ? "PRIVATE" : "PUBLIC");
+            setDescription(String(d.description || ""));
+            setCoverUrl(d.thumbUrl ? String(d.thumbUrl) : null);
+            setScheduleLater(false); setScheduledOk(false);
+            setGoLiveOpen(true);
+        };
+        window.addEventListener("nexus:go-live-resume", h);
+        return () => window.removeEventListener("nexus:go-live-resume", h);
+    }, [setGoLiveOpen]);
     useEffect(() => {
         if (!goLiveOpen) return;
         fetch("/api/pay/wallet").then(r => r.json()).then(d => setCurrency(d.currency === "USD" ? "USD" : "UZS")).catch(() => {});
@@ -167,6 +199,10 @@ export function NxGoLive() {
             setMicOn(true); setCamOn(true); setStarting(false); setErr(null);
             setStreamId(null); setViewers(0); setPeak(0); setDuration(0);
             setMsgs([]); setChatIn(""); lastTsRef.current = null;
+            setCoverUrl(null); setCoverBusy(false); setCoverErr(null);
+            setAiOpen(false); setAiPrompt(""); setAiRefs([]); setAiGenning(false);
+            setScheduleLater(false); setScheduleAt(""); setScheduling(false); setScheduledOk(false);
+            setResumeId(null);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [goLiveOpen]);
@@ -293,13 +329,29 @@ export function NxGoLive() {
         if (!title.trim() || starting) return;
         setStarting(true); setErr(null);
         try {
-            const r = await fetch("/api/nexus/live", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title, category, privacy, crossToChannel }),
-            });
-            const d = await r.json().catch(() => ({}));
-            if (!r.ok || !d.stream) { setErr(d.error || "Efir boshlanmadi"); return; }
-            const newId: string = d.stream.id;
+            let newId: string;
+            if (resumeId) {
+                // Rejalangan (UPCOMING) efir — tahrirlangan meta'ni yangilab, keyin boshlash (LIVE)
+                await fetch(`/api/nexus/live/${resumeId}`, {
+                    method: "PATCH", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "update", title, category, privacy, description, thumbUrl: coverUrl }),
+                }).catch(() => { });
+                const r = await fetch(`/api/nexus/live/${resumeId}`, {
+                    method: "PATCH", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "start" }),
+                });
+                const d = await r.json().catch(() => ({}));
+                if (!r.ok || !d.stream) { setErr(d.error || "Efir boshlanmadi"); return; }
+                newId = resumeId;
+            } else {
+                const r = await fetch("/api/nexus/live", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title, category, privacy, crossToChannel, thumbUrl: coverUrl }),
+                });
+                const d = await r.json().catch(() => ({}));
+                if (!r.ok || !d.stream) { setErr(d.error || "Efir boshlanmadi"); return; }
+                newId = d.stream.id;
+            }
 
             // Studio composer — VOD recording uchun (LIVE broadcast dual-track)
             const studio = createStudio({
@@ -339,8 +391,8 @@ export function NxGoLive() {
                 }
             }
 
-            // Description agar bor bo'lsa — meta update
-            if (description.trim()) {
+            // Description agar bor bo'lsa — meta update (resume'da yuqorida allaqachon yangilangan)
+            if (!resumeId && description.trim()) {
                 fetch(`/api/nexus/live/${newId}`, {
                     method: "PATCH", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ action: "update", description }),
@@ -350,6 +402,33 @@ export function NxGoLive() {
             setStreamId(newId); setStage("live"); setDuration(0);
         } catch { setErr("Tarmoq xatosi"); }
         finally { setStarting(false); }
+    }
+
+    // Rejalashtirilgan efir yaratish (UPCOMING — darhol jonli emas)
+    async function createScheduled() {
+        if (!title.trim() || scheduling) return;
+        const when = scheduleAt ? new Date(scheduleAt) : null;
+        if (!when || isNaN(when.getTime()) || when.getTime() < Date.now() + 60_000) {
+            setErr("Kelajakdagi vaqtni tanlang (kamida 1 daqiqa keyin)");
+            return;
+        }
+        setScheduling(true); setErr(null);
+        try {
+            const r = await fetch("/api/nexus/live", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, category, privacy, crossToChannel, thumbUrl: coverUrl, scheduledAt: when.toISOString() }),
+            });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok || !d.stream) { setErr(d.error || "Rejalashtirilmadi"); return; }
+            if (description.trim()) {
+                fetch(`/api/nexus/live/${d.stream.id}`, {
+                    method: "PATCH", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "update", description }),
+                }).catch(() => { });
+            }
+            setScheduledOk(true);
+        } catch { setErr("Tarmoq xatosi"); }
+        finally { setScheduling(false); }
     }
 
     // Screen share toggle
@@ -442,6 +521,51 @@ export function NxGoLive() {
         } finally { setChatBusy(false); }
     }
 
+    // ── Cover (oblojka) ──
+    function fileToDataUrl(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const r = new FileReader();
+            r.onload = () => resolve(String(r.result));
+            r.onerror = () => reject(new Error("read"));
+            r.readAsDataURL(file);
+        });
+    }
+
+    async function pickCoverFromDevice(file: File) {
+        if (!file.type.startsWith("image/")) { setCoverErr("Faqat rasm fayli"); return; }
+        if (file.size > 10 * 1024 * 1024) { setCoverErr("Rasm 10MB dan kichik bo'lsin"); return; }
+        setCoverBusy(true); setCoverErr(null);
+        try {
+            const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+            const up = await upload(`nexus/live-cover/${Date.now()}.${ext}`, file, {
+                access: "public", handleUploadUrl: "/api/market/upload/client-token",
+            });
+            setCoverUrl(up.url); setAiOpen(false);
+        } catch { setCoverErr("Yuklashda xato — qayta urinib ko'ring"); }
+        finally { setCoverBusy(false); }
+    }
+
+    async function addAiRef(file: File) {
+        if (!file.type.startsWith("image/")) return;
+        if (file.size > 6 * 1024 * 1024) { setCoverErr("Reference rasm 6MB dan kichik bo'lsin"); return; }
+        try { const u = await fileToDataUrl(file); setAiRefs(r => [...r, u].slice(0, 3)); } catch { /* ignore */ }
+    }
+
+    async function generateAiCover() {
+        if (aiPrompt.trim().length < 2 || aiGenning) return;
+        setAiGenning(true); setCoverErr(null);
+        try {
+            const r = await fetch("/api/nexus/live/cover", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prompt: aiPrompt.trim(), images: aiRefs }),
+            });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok || !d.url) { setCoverErr(d.error === "prompt_required" ? "Tavsif yozing" : (d.error || "Rasm yaratilmadi")); return; }
+            setCoverUrl(d.url); setAiOpen(false);
+        } catch { setCoverErr("Tarmoq xatosi"); }
+        finally { setAiGenning(false); }
+    }
+
     // ── Kamera preview bloki (setup va live'da umumiy) ──
     const cameraBlock = (
         <div className="relative w-full aspect-video rounded-2xl overflow-hidden"
@@ -481,6 +605,28 @@ export function NxGoLive() {
         </div>
     );
 
+    /* ── Rejalashtirildi — tasdiq ── */
+    if (stage === "setup" && scheduledOk) {
+        return createPortal(
+            <>
+                <div className="fixed inset-0 z-[200]" style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(8px)" }} onClick={close} />
+                <div className="fixed inset-x-0 bottom-0 z-[200] flex flex-col rounded-t-3xl overflow-hidden md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[400px] md:rounded-3xl"
+                    style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(16,185,129,0.30)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)" }}
+                    onClick={e => e.stopPropagation()}>
+                    <div className="p-8 flex flex-col items-center gap-3 text-center">
+                        <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.40)" }}>
+                            <CalendarClock className="w-7 h-7" style={{ color: "#10B981" }} />
+                        </div>
+                        <h2 className="text-lg font-black text-white">Efir rejalashtirildi</h2>
+                        <p className="text-xs leading-relaxed" style={{ color: "rgba(140,160,210,0.8)" }}>Belgilangan vaqtda &quot;Tez kunda boshlanadi&quot; ro&apos;yxatida ko&apos;rinadi. Tomoshabinlar eslatma yoqib qo&apos;yishi mumkin.</p>
+                        <button onClick={close} className="mt-2 px-6 h-10 rounded-xl text-sm font-black text-white" style={{ background: "linear-gradient(135deg,#10B981,#059669)" }}>Tayyor</button>
+                    </div>
+                </div>
+            </>,
+            document.body,
+        );
+    }
+
     /* ── SETUP ── */
     if (stage === "setup") {
         return createPortal(
@@ -494,7 +640,7 @@ export function NxGoLive() {
                             <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>
                                 <Radio className="w-4 h-4 text-white" />
                             </div>
-                            <h2 className="text-base font-black text-white">Jonli efir boshlash</h2>
+                            <h2 className="text-base font-black text-white">{resumeId ? "Rejalangan efirni boshlash" : "Jonli efir boshlash"}</h2>
                         </div>
                         <button onClick={close} className="w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                             <X className="w-4 h-4 text-white" />
@@ -502,7 +648,7 @@ export function NxGoLive() {
                     </div>
 
                     <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-4" style={{ scrollbarWidth: "none" }}>
-                        {cameraBlock}
+                        {!scheduleLater && cameraBlock}
 
                         <div>
                             <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>Efir sarlavhasi</p>
@@ -510,6 +656,35 @@ export function NxGoLive() {
                                 className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none"
                                 style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "#F97316" }} />
                         </div>
+
+                        {/* Qachon — hozir/keyinroq (rejalangan efirni boshlashda yashirin) */}
+                        {!resumeId && (<div>
+                            <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>
+                                <Clock className="w-3 h-3 inline mr-1" />Qachon
+                            </p>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button onClick={() => setScheduleLater(false)}
+                                    className="py-2.5 rounded-xl text-xs font-black transition active:scale-95"
+                                    style={!scheduleLater
+                                        ? { background: "linear-gradient(135deg,#EF4444,#F97316)", color: "#fff" }
+                                        : { background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.20)", color: "rgba(220,160,150,0.85)" }}>
+                                    Hozir boshlash
+                                </button>
+                                <button onClick={() => setScheduleLater(true)}
+                                    className="py-2.5 rounded-xl text-xs font-black transition active:scale-95"
+                                    style={scheduleLater
+                                        ? { background: "linear-gradient(135deg,#10B981,#059669)", color: "#fff" }
+                                        : { background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.22)", color: "rgba(160,220,190,0.9)" }}>
+                                    Keyinroq rejalashtirish
+                                </button>
+                            </div>
+                            {scheduleLater && (
+                                <input type="datetime-local" value={scheduleAt}
+                                    onChange={e => setScheduleAt(e.target.value)}
+                                    className="w-full mt-2 px-4 py-3 rounded-xl text-sm text-white outline-none"
+                                    style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.28)", colorScheme: "dark", caretColor: "#10B981" }} />
+                            )}
+                        </div>)}
 
                         <div>
                             <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>Tavsif (ixtiyoriy)</p>
@@ -519,6 +694,96 @@ export function NxGoLive() {
                                 style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "#F97316" }} />
                         </div>
 
+                        {/* Cover (oblojka) — AI yoki qurilmadan */}
+                        <div>
+                            <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>
+                                <ImageIcon className="w-3 h-3 inline mr-1" />Oblojka (ixtiyoriy)
+                            </p>
+
+                            {/* Preview */}
+                            <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-2"
+                                style={{ background: "rgba(5,8,24,0.6)", border: "1px dashed rgba(239,68,68,0.28)" }}>
+                                {coverUrl ? (
+                                    <>
+                                        <img src={coverUrl} alt="" className="w-full h-full object-cover" />
+                                        <button onClick={() => setCoverUrl(null)}
+                                            className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-lg"
+                                            style={{ background: "rgba(5,8,24,0.78)" }} title="O'chirish">
+                                            <X className="w-3.5 h-3.5 text-white" />
+                                        </button>
+                                    </>
+                                ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center flex-col gap-1">
+                                        <ImageIcon className="w-7 h-7" style={{ color: "rgba(239,68,68,0.35)" }} />
+                                        <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.6)" }}>Efir kartasida ko&apos;rinadi</p>
+                                    </div>
+                                )}
+                                {(coverBusy || aiGenning) && (
+                                    <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(5,8,24,0.65)" }}>
+                                        <Loader2 className="w-6 h-6 animate-spin text-white" />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Manba tanlash */}
+                            <div className="grid grid-cols-2 gap-2">
+                                <button onClick={() => setAiOpen(o => !o)} disabled={coverBusy || aiGenning}
+                                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black transition active:scale-95 disabled:opacity-50"
+                                    style={aiOpen
+                                        ? { background: "linear-gradient(135deg,#8B5CF6,#6366F1)", color: "#fff" }
+                                        : { background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.35)", color: "rgba(190,170,240,0.95)" }}>
+                                    <Sparkles className="w-3.5 h-3.5" />Humo AI
+                                </button>
+                                <label className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black transition active:scale-95 cursor-pointer"
+                                    style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "rgba(220,160,150,0.9)" }}>
+                                    <ImageIcon className="w-3.5 h-3.5" />Qurilmadan
+                                    <input type="file" accept="image/*" className="hidden"
+                                        onChange={e => { const f = e.target.files?.[0]; if (f) pickCoverFromDevice(f); e.currentTarget.value = ""; }} />
+                                </label>
+                            </div>
+
+                            {/* AI panel */}
+                            {aiOpen && (
+                                <div className="mt-2 p-3 rounded-xl space-y-2" style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.25)" }}>
+                                    <textarea value={aiPrompt} onChange={e => setAiPrompt(e.target.value.slice(0, 500))} rows={2}
+                                        placeholder="Qanday oblojka? Masalan: kechki shahar fonida gaming setup, neon yorug'lik"
+                                        className="w-full px-3 py-2 rounded-lg text-xs text-white outline-none resize-y"
+                                        style={{ background: "rgba(5,8,24,0.55)", border: "1px solid rgba(139,92,246,0.3)", caretColor: "#8B5CF6" }} />
+
+                                    {/* Reference rasmlar (ixtiyoriy, maks 3) */}
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        {aiRefs.map((src, i) => (
+                                            <div key={i} className="relative w-12 h-12 rounded-lg overflow-hidden" style={{ border: "1px solid rgba(139,92,246,0.4)" }}>
+                                                <img src={src} alt="" className="w-full h-full object-cover" />
+                                                <button onClick={() => setAiRefs(r => r.filter((_, j) => j !== i))}
+                                                    className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center rounded-full" style={{ background: "#EF4444" }}>
+                                                    <X className="w-2.5 h-2.5 text-white" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {aiRefs.length < 3 && (
+                                            <label className="w-12 h-12 flex items-center justify-center rounded-lg cursor-pointer" style={{ background: "rgba(139,92,246,0.1)", border: "1px dashed rgba(139,92,246,0.4)" }} title="Reference rasm">
+                                                <Plus className="w-4 h-4" style={{ color: "rgba(190,170,240,0.9)" }} />
+                                                <input type="file" accept="image/*" className="hidden"
+                                                    onChange={e => { const f = e.target.files?.[0]; if (f) addAiRef(f); e.currentTarget.value = ""; }} />
+                                            </label>
+                                        )}
+                                    </div>
+                                    <p className="text-[9px]" style={{ color: "rgba(150,140,190,0.7)" }}>Rasm qo&apos;shsangiz — AI ularni uslub/manba sifatida ishlatadi. Kuniga 20 ta.</p>
+
+                                    <button onClick={generateAiCover} disabled={aiGenning || aiPrompt.trim().length < 2}
+                                        className="w-full h-10 rounded-lg text-xs font-black text-white flex items-center justify-center gap-2 disabled:opacity-50"
+                                        style={{ background: "linear-gradient(135deg,#8B5CF6,#6366F1)" }}>
+                                        {aiGenning ? <><Loader2 className="w-4 h-4 animate-spin" />Yaratilyapti...</> : <><Sparkles className="w-4 h-4" />Rasm yaratish</>}
+                                    </button>
+                                </div>
+                            )}
+
+                            {coverErr && <p className="text-[11px] text-red-400 font-bold mt-1.5">{coverErr}</p>}
+                        </div>
+
+                        {/* Sahna sxemasi + ekran — faqat "hozir boshlash"da (rejalashtirishda kerak emas) */}
+                        {!scheduleLater && (<>
                         {/* Scene layout — Solo/Podkast/PiP/Ekran */}
                         <div>
                             <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>
@@ -551,6 +816,7 @@ export function NxGoLive() {
                                           : <><Monitor className="w-3.5 h-3.5" />Ekranni ulash</>}
                             </button>
                         )}
+                        </>)}
 
                         <div>
                             <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>Kategoriya</p>
@@ -585,10 +851,13 @@ export function NxGoLive() {
 
                         {err && <p className="text-xs text-red-400 font-bold">{err}</p>}
 
-                        <button onClick={startLive} disabled={starting || !title.trim()}
+                        <button onClick={scheduleLater ? createScheduled : startLive}
+                            disabled={starting || scheduling || !title.trim() || (scheduleLater && !scheduleAt)}
                             className="w-full h-12 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-50"
-                            style={{ background: "linear-gradient(135deg,#EF4444,#F97316)", boxShadow: "0 4px 20px rgba(239,68,68,0.35)" }}>
-                            {starting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Radio className="w-4 h-4" /> Efirni boshlash</>}
+                            style={{ background: scheduleLater ? "linear-gradient(135deg,#10B981,#059669)" : "linear-gradient(135deg,#EF4444,#F97316)", boxShadow: scheduleLater ? "0 4px 20px rgba(16,185,129,0.35)" : "0 4px 20px rgba(239,68,68,0.35)" }}>
+                            {(starting || scheduling) ? <Loader2 className="w-4 h-4 animate-spin" />
+                                : scheduleLater ? <><CalendarClock className="w-4 h-4" /> Rejalashtirish</>
+                                : <><Radio className="w-4 h-4" /> Efirni boshlash</>}
                         </button>
                     </div>
                 </div>
