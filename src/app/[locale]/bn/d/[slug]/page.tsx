@@ -7,6 +7,7 @@ import { getShopBySlug } from "@/lib/bn-data";
 import { prisma } from "@/lib/prisma";
 import { BnStoreLd, BnBreadcrumbLd } from "@/components/bn/bn-jsonld";
 import { getBnFormat } from "@/lib/bn-format-server";
+import { bnNotFoundMeta } from "@/lib/bn-seo-server";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
         },
     });
 
-    if (!s) return { title: slug.replace(/-/g, " ") };
+    if (!s) return bnNotFoundMeta(locale);
     const rv = await prisma.bnShopReview.aggregate({
         where: { shopId: s.id, hidden: false },
         _avg: { rating: true },

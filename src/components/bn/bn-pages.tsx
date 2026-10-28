@@ -54,7 +54,8 @@ export function BnMarketPage({
                     src={m.coverUrl}
                     alt={m.name}
                     eager
-                    iconClass="w-24 h-24 sm:w-28 sm:h-28"
+                    // Mobil'da kichikroq va yuqoriroq — pastdagi breadcrumb/sarlavha bilan to'qnashmasin
+                    iconClass="w-14 h-14 -translate-y-8 sm:w-28 sm:h-28 sm:translate-y-0"
                     onFallback={() => setHasCover(false)}
                 />
                 <div

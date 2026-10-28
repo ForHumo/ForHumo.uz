@@ -6,6 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { liveShopStats } from "@/lib/bn-data";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 900; // 15 daq cache
@@ -19,10 +20,10 @@ export async function GET() {
                 lng: { not: null },
             },
             select: {
-                slug: true, name: true, city: true, address: true,
+                id: true, slug: true, name: true, city: true, address: true,
                 lat: true, lng: true,
-                tier: true, verifiedTier: true, rating: true, ratingCount: true,
-                productCount: true, orderCount: true,
+                tier: true, verifiedTier: true,
+                orderCount: true,
                 logoUrl: true,
                 marketId: true,
                 premiumTier: true, premiumUntil: true,
@@ -43,6 +44,9 @@ export async function GET() {
         }),
     ]);
 
+    // Popup sonlari sahifa/ro'yxat bilan bir xil bo'lsin — saqlangan seed qiymatlari emas
+    const stats = await liveShopStats(shops.map(s => s.id)).catch(() => new Map());
+
     const now = new Date();
     const shopsOut = shops.map(s => ({
         slug: s.slug,
@@ -53,9 +57,9 @@ export async function GET() {
         lng: s.lng!,
         tier: s.tier,
         verifiedTier: s.verifiedTier,
-        rating: s.rating,
-        ratingCount: s.ratingCount,
-        productCount: s.productCount,
+        rating: stats.get(s.id)?.rating ?? 0,
+        ratingCount: stats.get(s.id)?.ratingCount ?? 0,
+        productCount: stats.get(s.id)?.productCount ?? 0,
         orderCount: s.orderCount,
         logoUrl: s.logoUrl,
         isPremium: !!(s.premiumUntil && s.premiumUntil > now),

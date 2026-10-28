@@ -7,6 +7,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { unstable_cache } from "next/cache";
+import { bnCategoryName } from "@/lib/bn-category-names";
 
 // ── Tiplar (client komponent ham import qiladi) ─────────────────────────────
 // Bular MockShop/MockProduct'ga o'xshaydi lekin real DB ma'lumotidan.
@@ -160,6 +161,27 @@ async function realShopRatings(shopIds: string[]): Promise<Map<string, { rating:
         _count: { _all: true },
     });
     return new Map(rows.map(r => [r.shopId, { rating: r._avg.rating ?? 0, count: r._count._all }]));
+}
+
+/** Do'konlarning HAQIQIY ko'rsatkichlari (BnShop'dagi saqlangan productCount/rating seed
+ *  qiymatlari eskiradi): faol mahsulotlar soni + ko'rinadigan sharhlar o'rtachasi/soni.
+ *  OG kartochka va xarita popup'lari sahifa bilan bir xil sonni ko'rsatishi uchun. */
+export async function liveShopStats(shopIds: string[]): Promise<Map<string, { productCount: number; rating: number; ratingCount: number }>> {
+    if (shopIds.length === 0) return new Map();
+    const [prodRows, ratings] = await Promise.all([
+        prisma.bnProduct.groupBy({
+            by: ["shopId"],
+            where: { shopId: { in: shopIds }, isActive: true, hidden: false },
+            _count: { _all: true },
+        }),
+        realShopRatings(shopIds),
+    ]);
+    const prod = new Map(prodRows.map(r => [r.shopId, r._count._all]));
+    return new Map(shopIds.map(id => [id, {
+        productCount: prod.get(id) ?? 0,
+        rating: ratings.get(id)?.rating ?? 0,
+        ratingCount: ratings.get(id)?.count ?? 0,
+    }]));
 }
 
 type ProductWithRels = Awaited<ReturnType<typeof prisma.bnProduct.findMany>>[number]
@@ -557,14 +579,14 @@ export interface BnCategoryTreeDTO {
     children: { slug: string; name: string; nameRu?: string | null; icon: string | null; productCount: number }[];
 }
 
-/** Kategoriya daraxti nomlarini tilga moslash: ru'da nameRu (bo'lsa), aks holda asl nom.
- *  (BnCategory'da nameEn yo'q — en'da asl nom qoladi.) */
+/** Kategoriya daraxti nomlarini tilga moslash (bnCategoryName: ru — nameRu yoki ro'yxat,
+ *  en — ro'yxat; BnCategory'da nameEn yo'q). */
 export function localizeCategoryTree(tree: BnCategoryTreeDTO[], locale: string): BnCategoryTreeDTO[] {
-    if (locale !== "ru") return tree;
+    if (locale === "uz") return tree;
     return tree.map(c => ({
         ...c,
-        name: c.nameRu || c.name,
-        children: c.children.map(ch => ({ ...ch, name: ch.nameRu || ch.name })),
+        name: bnCategoryName(c, locale),
+        children: c.children.map(ch => ({ ...ch, name: bnCategoryName(ch, locale) })),
     }));
 }
 
@@ -631,7 +653,26 @@ export async function getCategoryBySlug(slug: string, profileId: string | null =
         take: 100,
     });
 
-    return { category: cat, products: products.map(toProductDTO) };
+    // Sonlar HAQIQIY qatorlardan (BnCategory.productCount saqlangan qiymat eskiradi:
+    // "0 ta mahsulot" yonida 3 ta mahsulot chiqardi). Ro'yxat bilan bir xil filtr.
+    const countRows = await prisma.bnProduct.groupBy({
+        by: ["categoryId"],
+        where: {
+            isActive: true, hidden: false,
+            categoryId: { in: [cat.id, ...childIds] },
+            ...(seeWholesale ? {} : { isWholesale: false }),
+        },
+        _count: { _all: true },
+    });
+    const countBy = new Map(countRows.map(r => [r.categoryId, r._count._all]));
+    const total = countRows.reduce((sum, r) => sum + r._count._all, 0);
+    const category = {
+        ...cat,
+        productCount: total,
+        children: cat.children.map(ch => ({ ...ch, productCount: countBy.get(ch.id) ?? 0 })),
+    };
+
+    return { category, products: products.map(toProductDTO) };
 }
 
 export async function searchProducts(opts: {

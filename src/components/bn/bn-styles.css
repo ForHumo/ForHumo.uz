@@ -43,7 +43,7 @@
     --bn-text-3:      #6F654F;
     --bn-on-gold:     #FFFDF8;
 
-    --bn-ok:          #15803D;
+    --bn-ok:          #137336;  /* 11–13px matnda ham AA: surface-up ustida 4.9:1 */
     --bn-ok-soft:     rgba(21, 128, 61, 0.10);
     --bn-warn:        #B45309;
     --bn-warn-soft:   rgba(180, 83, 9, 0.10);
@@ -90,7 +90,7 @@
 
     --bn-text:        #F6F0E2;
     --bn-text-2:      #B7AD95;
-    --bn-text-3:      #877D68;
+    --bn-text-3:      #9C917A;  /* placeholder/izohlar: surface-up ustida 4.9:1 (AA) */
     --bn-on-gold:     #1A1409;
 
     --bn-ok:          #58C87E;

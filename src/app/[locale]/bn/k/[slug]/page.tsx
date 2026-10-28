@@ -5,6 +5,8 @@ import { BnCatalog, type BnCatalogCategoryDTO } from "@/components/bn/bn-catalog
 import { getCategoryBySlug, getMarkets } from "@/lib/bn-data";
 import { getBnAuth } from "@/lib/bn-auth";
 import { getBnFormat } from "@/lib/bn-format-server";
+import { bnNotFoundMeta } from "@/lib/bn-seo-server";
+import { bnCategoryName } from "@/lib/bn-category-names";
 
 export const dynamic = "force-dynamic";
 
@@ -41,9 +43,9 @@ function buildDescription(locale: Locale, name: string, productsText: string, pr
 export async function generateMetadata({ params }: { params: Promise<{ locale: Locale; slug: string }> }): Promise<Metadata> {
     const { locale, slug } = await params;
     const data = await getCategoryBySlug(slug);
-    if (!data) return { title: slug.replace(/-/g, " ") };
+    if (!data) return bnNotFoundMeta(locale);
 
-    const name = locale === "ru" && data.category.nameRu ? data.category.nameRu : data.category.name;
+    const name = bnCategoryName(data.category, locale);
     const count = data.category.productCount;
     const range = priceRange(data.products);
     const fmt = await getBnFormat(locale);
@@ -81,10 +83,10 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
 
     const catDTO: BnCatalogCategoryDTO = {
         slug: rootCat.slug,
-        name: rootCat.name,
+        name: bnCategoryName(rootCat, locale),
         productCount: rootCat.productCount,
         children: (parent ? parent.category.children : c.children).map(ch => ({
-            slug: ch.slug, name: ch.name, productCount: ch.productCount,
+            slug: ch.slug, name: bnCategoryName(ch, locale), productCount: ch.productCount,
         })),
     };
 
@@ -94,7 +96,7 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
-        name: c.name,
+        name: bnCategoryName(c, locale),
         url: `https://www.bozornarxida.uz/k/${c.slug}`,
         inLanguage: locale,
         isPartOf: {

@@ -103,7 +103,9 @@ export function BnPriceChart({ slug }: { slug: string }) {
     }
 
     const trend = data.stats.changePct;
-    const trendColor = trend > 0 ? "#EF4444" : trend < 0 ? "#10B981" : BN.text3;
+    const trendColor = trend > 0 ? BN.err : trend < 0 ? BN.ok : BN.text3;
+    // Min = Maks (narx o'zgarmagan) — bir xil qiymatni yashil/qizil qilib ko'rsatish chalg'itardi
+    const flat = data.stats.min === data.stats.max;
     const TrendIcon = trend > 0 ? TrendingUp : trend < 0 ? TrendingDown : Minus;
     const hovered = hoverIdx !== null ? data.points[hoverIdx] : null;
 
@@ -194,12 +196,12 @@ export function BnPriceChart({ slug }: { slug: string }) {
                 <StatItem
                     label={locale === "ru" ? "Мин" : locale === "en" ? "Min" : "Min"}
                     value={fmt.price(data.stats.min)}
-                    color="#10B981"
+                    color={flat ? BN.text : BN.ok}
                 />
                 <StatItem
                     label={locale === "ru" ? "Макс" : locale === "en" ? "Max" : "Maks"}
                     value={fmt.price(data.stats.max)}
-                    color="#EF4444"
+                    color={flat ? BN.text : BN.err}
                 />
                 <StatItem
                     label={locale === "ru" ? "Рынок ср." : locale === "en" ? "Market avg" : "Bozor o'rt."}

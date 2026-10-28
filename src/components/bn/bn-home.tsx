@@ -468,14 +468,16 @@ function EntryCard({
         >
             {cover ? (
                 <>
-                    {/* Dekorativ muqova — ilgari 800×800 asl JPEG ~173px kartada LCP elementi edi.
-                        next/image kartaga mos o'lcham (WebP/AVIF) beradi, lazy — kritik yo'lni band qilmaydi. */}
+                    {/* Dekorativ muqova — mobil birinchi ekranda turadi va LCP elementi bo'ladi.
+                        next/image kartaga mos o'lcham (WebP/AVIF) beradi; `priority` — lazy emas,
+                        oldindan yuklanadi (lazy bo'lganda LCP kech kelardi). */}
                     {canOptimize(cover) ? (
                         <Image
                             src={cover}
                             alt=""
                             aria-hidden="true"
                             fill
+                            priority
                             sizes="(min-width: 1280px) 620px, 50vw"
                             className="object-cover transition-transform duration-500 group-hover:scale-[1.06]"
                         />

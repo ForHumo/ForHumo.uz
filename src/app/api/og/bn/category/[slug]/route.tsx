@@ -4,6 +4,7 @@
 
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
+import { bnCategoryName } from "@/lib/bn-category-names";
 import { groupThousands } from "@/lib/bn-theme";
 import { OG, OgBrand, clip, fallbackOg, ogHandler, ogLocale, renderOg } from "../../_shared";
 
@@ -19,7 +20,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
 
         const cat = await prisma.bnCategory.findUnique({
             where: { slug },
-            select: { name: true, nameRu: true, productCount: true, id: true,
+            select: { name: true, nameRu: true, id: true,
                 children: { where: { isActive: true }, select: { id: true } } },
         }).catch(() => null);
 
@@ -28,8 +29,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
         const catIds = [cat.id, ...cat.children.map(c => c.id)];
         const priceAgg = await prisma.bnProduct.aggregate({
             where: { isActive: true, hidden: false, isWholesale: false, categoryId: { in: catIds } },
-            _min: { price: true }, _max: { price: true },
-        }).catch(() => ({ _min: { price: null }, _max: { price: null } }));
+            _min: { price: true }, _max: { price: true }, _count: { _all: true },
+        }).catch(() => ({ _min: { price: null }, _max: { price: null }, _count: { _all: 0 } }));
+        // HAQIQIY mahsulot soni (BnCategory.productCount saqlangan qiymat eskiradi)
+        const productCount = priceAgg._count._all;
 
         const currency = t("currency");
         const fmt = (n: number) => `${groupThousands(n)} ${currency}`;
@@ -38,7 +41,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
         const priceLine = minP && maxP
             ? (minP === maxP ? fmt(minP) : `${fmt(minP)} — ${fmt(maxP)}`)
             : null;
-        const name = locale === "ru" && cat.nameRu ? cat.nameRu : cat.name;
+        const name = bnCategoryName({ slug, name: cat.name, nameRu: cat.nameRu }, locale);
 
         return renderOg(
             (
@@ -95,7 +98,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
                                     fontSize: 54, fontWeight: 900,
                                     color: OG.gold, letterSpacing: "-0.02em",
                                 }}>
-                                    {String(cat.productCount)}
+                                    {String(productCount)}
                                 </div>
                             </div>
                             {priceLine && (

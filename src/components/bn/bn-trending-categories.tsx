@@ -8,6 +8,7 @@ import { Flame, ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { BN } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
+import { bnCategoryName } from "@/lib/bn-category-names";
 
 interface Cat {
     slug: string;
@@ -58,8 +59,8 @@ export function BnTrendingCategories() {
                     />
                 ))}
                 {loaded && rows.map(c => {
-                    // Kategoriya nomi: ru'da nameRu (bo'lsa), aks holda asl nom
-                    const name = locale === "ru" && c.nameRu ? c.nameRu : c.name;
+                    // Kategoriya nomi joriy tilda (ru — nameRu/ro'yxat, en — ro'yxat)
+                    const name = bnCategoryName(c, locale);
                     return (
                         <BnLink
                             key={c.slug}

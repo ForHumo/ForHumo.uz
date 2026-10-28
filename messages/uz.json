@@ -1679,6 +1679,30 @@
       "title": "Bugungi bozor narxlari",
       "subtitle": "Har kategoriya uchun o'rtacha narx, hafta trendi",
       "browse": "Bu kategoriya mahsulotlari"
+    },
+    "attrValues": {
+      "months": "{n} oy",
+      "years": "{n} yil",
+      "v": {
+        "yangi": "Yangi",
+        "ishlatilgan": "Ishlatilgan",
+        "restavratsiya": "Restavratsiya",
+        "original": "Original",
+        "analog": "Analog",
+        "dubl": "Dubl",
+        "boshqa": "Boshqa",
+        "old": "Old",
+        "orqa": "Orqa",
+        "chap": "Chap",
+        "o_ng": "O'ng",
+        "yuqori": "Yuqori",
+        "past": "Past",
+        "yoz": "Yoz",
+        "bahor": "Bahor",
+        "kuz": "Kuz",
+        "qish": "Qish",
+        "har_fasl": "Har fasl"
+      }
     }
   },
   "belis": {

@@ -12,6 +12,7 @@ import { getProductBySlug, getShopBySlug } from "@/lib/bn-data";
 import { BnProductLd, BnBreadcrumbLd } from "@/components/bn/bn-jsonld";
 import { getBnAuth } from "@/lib/bn-auth";
 import { trackBnEvent } from "@/lib/bn-events";
+import { bnNotFoundMeta } from "@/lib/bn-seo-server";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export async function generateMetadata(
     const { locale, slug, productSlug } = await params;
     const t = await getTranslations({ locale, namespace: "bn" });
     const data = await getProductBySlug(productSlug, null);
-    if (!data) return { title: t("notFound.title") };
+    if (!data) return bnNotFoundMeta(locale);
 
     // Agar shopSlug mos kelmasa — canonical'ni to'g'ri URL'ga o'zgartiramiz
     const correctShopSlug = data.product.shopSlug ?? slug;

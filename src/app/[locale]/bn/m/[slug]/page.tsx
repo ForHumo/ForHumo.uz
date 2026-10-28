@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { BnBreadcrumbLd } from "@/components/bn/bn-jsonld";
 import { BnMarketLd } from "@/components/bn/bn-market-ld";
 import { getBnFormat } from "@/lib/bn-format-server";
+import { bnNotFoundMeta } from "@/lib/bn-seo-server";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +51,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
             _count: { select: { shops: { where: { status: "APPROVED" } } } },
         },
     });
-    if (!m) return { title: slug.replace(/-/g, " ") };
+    if (!m) return bnNotFoundMeta(locale);
 
     const name = localizedName(m.name, m.nameRu, locale);
     const city = bnCity(m.city, locale);

@@ -3,6 +3,7 @@
 
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
+import { liveShopStats } from "@/lib/bn-data";
 import { bnCity } from "@/lib/bn-seo";
 import { OG, OgBrand, OgStar, clip, fallbackOg, ogHandler, ogImageSrc, ogLocale, renderOg } from "../../_shared";
 
@@ -26,14 +27,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
         const shop = await prisma.bnShop.findUnique({
             where: { slug },
             select: {
-                name: true, description: true, logoUrl: true, tier: true,
-                rating: true, ratingCount: true, productCount: true,
+                id: true, name: true, description: true, logoUrl: true, tier: true,
                 city: true,
                 market: { select: { name: true, nameRu: true } },
             },
         }).catch(() => null);
 
         if (!shop || !shop.name) return fallbackOg(t("tagline"));
+        // Sahifadagi bilan bir xil HAQIQIY sonlar (saqlangan seed qiymatlari emas)
+        const stats = (await liveShopStats([shop.id]).catch(() => null))?.get(shop.id)
+            ?? { productCount: 0, rating: 0, ratingCount: 0 };
 
         const tierColor = TIER_COLOR[shop.tier] ?? OG.text3;
         const marketName = shop.market ? (locale === "ru" && shop.market.nameRu ? shop.market.nameRu : shop.market.name) : null;
@@ -118,19 +121,19 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
 
                         {/* Statistika */}
                         <div style={{ display: "flex", alignItems: "center", gap: 32, marginTop: 20 }}>
-                            {shop.ratingCount > 0 && (
+                            {stats.ratingCount > 0 && (
                                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                                     <OgStar size={36} />
                                     <div style={{ display: "flex", fontSize: 40, fontWeight: 900, color: OG.gold }}>
-                                        {shop.rating.toFixed(1)}
+                                        {stats.rating.toFixed(1)}
                                     </div>
                                     <div style={{ display: "flex", fontSize: 20, color: OG.text3 }}>
-                                        {`(${shop.ratingCount})`}
+                                        {`(${stats.ratingCount})`}
                                     </div>
                                 </div>
                             )}
                             <div style={{ display: "flex", fontSize: 32, fontWeight: 900, color: OG.text }}>
-                                {t("seo.ogProductsN", { n: shop.productCount })}
+                                {t("seo.ogProductsN", { n: stats.productCount })}
                             </div>
                         </div>
                     </div>

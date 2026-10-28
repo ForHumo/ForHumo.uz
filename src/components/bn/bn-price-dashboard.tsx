@@ -11,6 +11,7 @@ import { BN } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 import { useBnFormat } from "./bn-format-hook";
 import { BnForecastCard } from "./bn-forecast-card";
+import { bnCategoryName } from "@/lib/bn-category-names";
 
 interface CatAgg {
     slug: string; name: string; nameRu?: string | null; icon: string | null;
@@ -79,8 +80,8 @@ export function BnPriceDashboard() {
                         >
                             <div className="flex items-start justify-between">
                                 <div className="text-[13px] font-semibold" style={{ color: BN.text }}>
-                                    {/* ru'da nameRu (bo'lsa), aks holda asl nom */}
-                                    {locale === "ru" && c.nameRu ? c.nameRu : c.name}
+                                    {/* Kategoriya nomi joriy tilda (ru — nameRu/ro'yxat, en — ro'yxat) */}
+                                    {bnCategoryName(c, locale)}
                                 </div>
                                 <div className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold" style={{ background: meta.bg, color: meta.color }}>
                                     <Icon className="w-3 h-3" />

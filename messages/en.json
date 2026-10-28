@@ -1005,7 +1005,7 @@
       "bulkIntroText": "Copy rows from Excel or Google Sheets and paste. Each row = one product. Up to 200 at a time.",
       "bulkColumnsTitle": "Columns (Tab-separated):",
       "bulkCol1": "Title (required)",
-      "bulkCol2": "Price (sum, required)",
+      "bulkCol2": "Price (UZS, required)",
       "bulkCol3": "Category slug (e.g. olma). Empty → uses the default below.",
       "bulkCol4": "Stock (default 1)",
       "bulkCol5": "Old price (may be empty)",
@@ -1198,11 +1198,11 @@
       "errImage": "Image upload error"
     },
     "productRef": {
-      "anonTitle": "Share with friends — earn 10 000 sum",
-      "anonSubtitle": "Sign in to get your link. Every invited buyer who makes their first order earns you 10 000 sum and them a 5 000 sum bonus.",
+      "anonTitle": "Share with friends — earn 10 000 UZS",
+      "anonSubtitle": "Sign in to get your link. Every invited buyer who makes their first order earns you 10 000 UZS and them a 5 000 UZS bonus.",
       "anonBtn": "Sign in (Google)",
       "authTitle": "Share this product with a friend",
-      "authSubtitle": "They make their first order — you get 10 000 sum.",
+      "authSubtitle": "They make their first order — you get 10 000 UZS.",
       "shareMessage": "Bozor Narxida: {product}. I have a referral — you get a bonus too.",
       "earnedShort": "+{n}",
       "copy": "Copy",
@@ -1222,7 +1222,7 @@
       "s2Highlight": "Free reservation — zero risk",
       "s3Title": "Delivery or pickup",
       "s3Body": "Courier across Tashkent, post to regions. Or pick up from the shop yourself — cheaper.",
-      "s3Highlight": "Courier from 20 000 sum"
+      "s3Highlight": "Courier from 20 000 UZS"
     },
     "inspect": {
       "yourCode": "Your code",
@@ -1679,6 +1679,30 @@
       "title": "Today's Market Prices",
       "subtitle": "Average price per category, weekly trend",
       "browse": "Browse category"
+    },
+    "attrValues": {
+      "months": "{n, plural, one {# month} other {# months}}",
+      "years": "{n, plural, one {# year} other {# years}}",
+      "v": {
+        "yangi": "New",
+        "ishlatilgan": "Used",
+        "restavratsiya": "Refurbished",
+        "original": "Original",
+        "analog": "Aftermarket",
+        "dubl": "Replica",
+        "boshqa": "Other",
+        "old": "Front",
+        "orqa": "Rear",
+        "chap": "Left",
+        "o_ng": "Right",
+        "yuqori": "Upper",
+        "past": "Lower",
+        "yoz": "Summer",
+        "bahor": "Spring",
+        "kuz": "Autumn",
+        "qish": "Winter",
+        "har_fasl": "All-season"
+      }
     }
   },
   "belis": {

@@ -20,6 +20,7 @@ import { BnProductCard } from "./bn-product-card";
 import { BnProductCompareCard } from "./bn-product-compare-card";
 import { BnSectionTitle } from "./bn-cards";
 import type { BnProductDTO, BnShopDTO } from "@/lib/bn-data";
+import { bnCategoryName } from "@/lib/bn-category-names";
 
 interface ReviewVideo {
     id: string;
@@ -59,6 +60,18 @@ export function BnProductDetail({
     const t = useTranslations("bn.product");
     const tCrumb = useTranslations("bn.breadcrumb");
     const tAttr = useTranslations("bn.attr");
+    const tVal = useTranslations("bn.attrValues");
+    // Xususiyat qiymatlari bazada o'zbekcha ("Yangi", "12 oy") — ma'lum variantlar tarjima
+    // qilinadi, qolgani (brend, model, o'lcham) asl holida.
+    const attrValue = (raw: string): string => {
+        const v = raw.trim();
+        const mo = /^(\d+)\s*oy$/i.exec(v);
+        if (mo) return tVal("months", { n: Number(mo[1]) });
+        const yr = /^(\d+)\s*yil$/i.exec(v);
+        if (yr) return tVal("years", { n: Number(yr[1]) });
+        const key = `v.${v.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
+        return tVal.has(key) ? tVal(key) : raw;
+    };
     const fmt = useBnFormat();
     const locale = useLocale();
     const to = useBnHref();
@@ -274,7 +287,7 @@ export function BnProductDetail({
                         <>
                             {/* Haqiqiy kategoriya nomi (ru'da nameRu); eski kesh yozuvida bo'lmasa — umumiy yorliq */}
                             <BnLink href={`/k/${p.categorySlug}`} className="hover:opacity-70 transition-colors">
-                                {(locale === "ru" && p.categoryNameRu) || p.categoryName || tCrumb("category")}
+                                {bnCategoryName({ slug: p.categorySlug, name: p.categoryName, nameRu: p.categoryNameRu }, locale) || tCrumb("category")}
                             </BnLink>
                             <ChevronRight className="w-3 h-3" />
                         </>
@@ -303,7 +316,7 @@ export function BnProductDetail({
                                             >
                                                 <dt style={{ color: BN.text3 }}>{tAttr.has(k) ? tAttr(k) : k}</dt>
                                                 <dd className="font-bold text-right">
-                                                    {typeof v === "boolean" ? (v ? t("yes") : t("no")) : String(v)}
+                                                    {typeof v === "boolean" ? (v ? t("yes") : t("no")) : attrValue(String(v))}
                                                 </dd>
                                             </div>
                                         ))}

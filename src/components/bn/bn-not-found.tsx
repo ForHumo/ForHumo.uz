@@ -5,17 +5,23 @@
 // darhol qidiruv + asosiy bo'limlarga yo'l beriladi.
 
 import { useTranslations } from "next-intl";
+import { usePathname } from "next/navigation";
 import { Home, LayoutGrid, Search, SearchX, Store } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { BnLink, useBnHref } from "./bn-nav";
+import { isProductRoute } from "./bn-header";
 
 export function BnNotFoundView() {
     const t = useTranslations("bn");
     const to = useBnHref();
     const secondary = { background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text };
+    // Yo'q mahsulot (/d/<do'kon>/<x>, /p/<x>) — header yo'l bo'yicha shaffof tungi kapsula
+    // bo'lib qoladi. Yorug' fon ustida u kulrang va o'qilmas edi, shuning uchun 404 ham
+    // vitrina kabi tungi sahnada (.bn-stage) chiqadi va kapsula ostida joy qoldiriladi.
+    const onStage = isProductRoute(usePathname() ?? "");
 
-    return (
-        <section className="max-w-[640px] mx-auto px-4 pt-14 pb-10 flex flex-col items-center text-center">
+    const view = (
+        <section className={`max-w-[640px] mx-auto px-4 ${onStage ? "pt-28 pb-28" : "pt-14 pb-10"} flex flex-col items-center text-center`}>
             <span
                 className="w-16 h-16 rounded-2xl grid place-items-center mb-5"
                 style={{ background: BN.goldSoft, border: `1px solid ${BN.borderGold}`, color: BN.gold }}
@@ -79,5 +85,14 @@ export function BnNotFoundView() {
                 </BnLink>
             </div>
         </section>
+    );
+
+    if (!onStage) return view;
+    return (
+        <>
+            <div className="bn-stage" style={{ background: "var(--bn-bg)", color: "var(--bn-text)" }}>{view}</div>
+            {/* .bn-stage TASHQARISIDA — var(--bn-bg) bu yerda sahifaning o'z foni (vitrinadagi o'tish kabi) */}
+            <div aria-hidden="true" className="relative h-24 -mt-24 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 0%, var(--bn-bg) 100%)" }} />
+        </>
     );
 }
