@@ -248,7 +248,7 @@ export function YukGoFeed() {
                     <button onClick={() => setPostOpen(true)} aria-label={t("postViaBot")} className="flex items-center gap-1.5 px-3 h-10 rounded-xl text-xs font-black text-white flex-shrink-0 active:scale-95" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>
                         <Truck className="w-4 h-4" /><span className="hidden sm:inline">{t("postViaBot")}</span>
                     </button>
-                    <button onClick={openDriver} className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95" style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.3)" }} title={t("driverTitle")}>
+                    <button onClick={openDriver} aria-label={t("driverTitle")} className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95" style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.3)" }} title={t("driverTitle")}>
                         <Bell className="w-5 h-5" style={{ color: CYAN }} />
                     </button>
                 </div>
@@ -302,7 +302,7 @@ export function YukGoFeed() {
                     {!iosInstall && installEvt && (
                         <button onClick={doInstall} className="px-3 h-8 rounded-lg text-[11px] font-black text-white flex-shrink-0" style={{ background: `linear-gradient(135deg,${BLUE},${CYAN})` }}>{t("install")}</button>
                     )}
-                    <button onClick={dismissInstall} className="flex-shrink-0"><X className="w-4 h-4" style={{ color: "#6B7A99" }} /></button>
+                    <button onClick={dismissInstall} aria-label={t("close")} className="flex-shrink-0"><X className="w-4 h-4" style={{ color: "#6B7A99" }} /></button>
                 </div>
             )}
 
@@ -467,7 +467,7 @@ export function YukGoFeed() {
 
                         <div className="flex items-center justify-between py-1 mb-3">
                             <span className="text-xs" style={{ color: "#9FB3D9" }}>{t("notifyMatch")}</span>
-                            <button onClick={() => setDNotify(v => !v)} className="w-11 h-6 rounded-full relative transition flex-shrink-0" style={{ background: dNotify ? CYAN : "rgba(255,255,255,0.1)" }}>
+                            <button onClick={() => setDNotify(v => !v)} role="switch" aria-checked={dNotify} aria-label={t("notifyMatch")} className="w-11 h-6 rounded-full relative transition flex-shrink-0" style={{ background: dNotify ? CYAN : "rgba(255,255,255,0.1)" }}>
                                 <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" style={{ left: dNotify ? "22px" : "2px" }} />
                             </button>
                         </div>
@@ -517,7 +517,7 @@ export function YukGoFeed() {
                         style={{ background: "#0E1528", border: "1px solid rgba(37,99,235,0.35)" }}>
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="text-base font-black text-white">{t("loginTitle")}</h3>
-                            <button onClick={() => setNeedLogin(false)}><X className="w-5 h-5" style={{ color: "#6B7A99" }} /></button>
+                            <button onClick={() => setNeedLogin(false)} aria-label={t("close")}><X className="w-5 h-5" style={{ color: "#6B7A99" }} /></button>
                         </div>
 
                         <p className="text-xs mb-4" style={{ color: "#9FB3D9" }}>{t("loginTgHint")}</p>
@@ -525,7 +525,7 @@ export function YukGoFeed() {
                         {loginBusy && <div className="flex justify-center mt-3"><Loader2 className="w-5 h-5 animate-spin" style={{ color: CYAN }} /></div>}
                         {loginErr && <p className="text-[11px] text-red-400 mt-3 text-center">{loginErr}</p>}
 
-                        <button onClick={() => signIn("google", { callbackUrl: "/yukgo" })} className="w-full mt-4 text-[11px]" style={{ color: "#4B5B7A" }}>{t("orGoogle")}</button>
+                        <button onClick={() => signIn("google", { callbackUrl: "/yukgo" })} className="w-full mt-4 text-[11px]" style={{ color: "#9FB3D9" }}>{t("orGoogle")}</button>
                     </div>
                 </>
             )}

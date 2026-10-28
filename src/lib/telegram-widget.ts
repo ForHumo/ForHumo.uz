@@ -16,7 +16,7 @@ import crypto from "crypto";
 const BOT_TOKEN = process.env.TELEGRAM_YUKGO_BOT_TOKEN;
 
 // Imzo eskirgan deb hisoblanadigan muddat (soniya). Telegram auth_date UNIX.
-const MAX_AGE_SEC = 60 * 60 * 24; // 24 soat
+const MAX_AGE_SEC = 300; // 5 daqiqa — widget auth darhol ishlatiladi; replay oynasi qisqa
 
 export interface TgWidgetUser {
     id: string;              // Telegram user id (raqam, string sifatida)
