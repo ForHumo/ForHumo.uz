@@ -354,7 +354,7 @@ export function YukGoFeed() {
                                         {isCargo ? <Package className="w-3 h-3" /> : <Truck className="w-3 h-3" />}{isCargo ? t("badgeCargo") : t("badgeTruck")}
                                     </span>
                                     {it.boosted && <span className="px-1.5 py-0.5 rounded text-[9px] font-black" style={{ background: `linear-gradient(135deg,${CYAN},${BLUE})`, color: "#fff" }}>{t("top")}</span>}
-                                    {it.isNative && <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black" style={{ background: "rgba(16,185,129,0.15)", color: "#34D399" }}><Check className="w-2.5 h-2.5" />{t("verified")}</span>}
+                                    {it.isNative && <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black" style={{ background: "rgba(34,211,238,0.14)", color: "#22D3EE" }}><ArrowRight className="w-2.5 h-2.5" />{t("direct")}</span>}
                                     <span className="ml-auto flex items-center gap-1 text-[10px]" style={{ color: "#4B5B7A" }}><Clock className="w-3 h-3" />{timeAgo(it.createdAt)}</span>
                                 </div>
 
