@@ -6,7 +6,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { createNativeListing } from "@/lib/yukgo-ingest";
+import { Prisma } from "@prisma/client";
+import { createNativeListing, notifyNativeCargo } from "@/lib/yukgo-ingest";
 
 export const dynamic = "force-dynamic";
 
@@ -31,11 +32,6 @@ export async function POST(req: Request) {
     const toCity = String(b.toCity || "").trim().slice(0, 80);
     if (!fromCity && !toCity) return NextResponse.json({ error: "route_required" }, { status: 400 });
 
-    // Kunlik limit — spam/abuse oldini olish
-    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const todayCount = await prisma.yukListing.count({ where: { postedById: meId, createdAt: { gt: since } } });
-    if (todayCount >= MAX_PER_DAY) return NextResponse.json({ error: "daily_limit", limit: MAX_PER_DAY }, { status: 429 });
-
     const weightRaw = Number(b.weightTons);
     const weightTons = isFinite(weightRaw) && weightRaw > 0 && weightRaw < 1000 ? weightRaw : null;
     const priceRaw = Number(b.priceAmount);
@@ -43,8 +39,8 @@ export async function POST(req: Request) {
     const priceCurrency = CURRENCIES.has(b.priceCurrency) ? b.priceCurrency : null;
     const truckTypes = Array.isArray(b.truckTypes) ? b.truckTypes.filter((x: unknown) => typeof x === "string" && TRUCK_TYPES.has(x)).slice(0, 5) : [];
 
-    const { id } = await createNativeListing({
-        type,
+    const input = {
+        type: type as "CARGO" | "TRUCK",
         fromCity: fromCity || null,
         toCity: toCity || null,
         cargo: String(b.cargo || "").trim().slice(0, 300) || null,
@@ -54,7 +50,30 @@ export async function POST(req: Request) {
         priceCurrency,
         priceNegotiable: !!b.priceNegotiable,
         phone,
-    }, meId);
+    };
 
-    return NextResponse.json({ ok: true, id });
+    // Kunlik limit — count+create ATOMIK (Serializable): bir vaqtда ko'p POST limitni
+    // chetlab o'tolmaydi (ilgari count->create orasida race bor edi).
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    let listingId: string;
+    try {
+        const created = await prisma.$transaction(async (tx) => {
+            const todayCount = await tx.yukListing.count({ where: { postedById: meId, createdAt: { gt: since } } });
+            if (todayCount >= MAX_PER_DAY) return null;
+            return await createNativeListing(input, meId, { db: tx, skipNotify: true });
+        }, { isolationLevel: "Serializable" });
+        if (!created) return NextResponse.json({ error: "daily_limit", limit: MAX_PER_DAY }, { status: 429 });
+        listingId = created.id;
+    } catch (e) {
+        // Serializable konflikt (parallel POST) — kunlik limitga urinish deb hisoblaymiz
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2034") {
+            return NextResponse.json({ error: "daily_limit", limit: MAX_PER_DAY }, { status: 429 });
+        }
+        throw e;
+    }
+
+    // Push — tranzaksiyadan TASHQARIDA (tarmoq side-effect tx'ni ushlab turmasin)
+    if (type === "CARGO") await notifyNativeCargo(input);
+
+    return NextResponse.json({ ok: true, id: listingId });
 }

@@ -3,6 +3,7 @@
 
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { parseYukListing, type YukParsed } from "@/lib/yukgo-parse";
 import { sameCity } from "@/lib/yukgo-cities";
 import { pushNewCargo, normLang } from "@/lib/yukgo-i18n";
@@ -62,20 +63,24 @@ export async function storeYukListing(input: StoreInput): Promise<StoreResult> {
             create: isRealSource
                 ? { kind: "TELEGRAM", tgChatId: throttleKey, title: input.srcTitle ?? null, username: input.srcUsername ?? null }
                 : { kind: "TELEGRAM", tgChatId: throttleKey, active: false },   // DM throttle qatori — statistikaga kirmaydi
-            select: { id: true, parseWindowStart: true, parseWindowCount: true },
+            select: { id: true },
         });
         if (isRealSource) sourceId = source.id;
+        // Atomik rate-cap (TOCTOU'siz): bir qancha parallel webhook endi shiftни chetlab o'tolmaydi.
+        // 1) eskirgan/bo'sh oynani reset (count=1); 2) reset bo'lmasa — faqat shift ostida shartli increment.
         const nowMs = Date.now();
-        const winActive = source.parseWindowStart != null && (nowMs - source.parseWindowStart.getTime() < RATE_WINDOW_MS);
-        if (winActive && source.parseWindowCount >= MAX_PARSE_PER_MIN) {
-            return { stored: false, reason: "rate_limited" };   // Gemini chaqirilmaydi
+        const cutoff = new Date(nowMs - RATE_WINDOW_MS);
+        const reset = await prisma.yukSource.updateMany({
+            where: { id: source.id, OR: [{ parseWindowStart: null }, { parseWindowStart: { lt: cutoff } }] },
+            data: { parseWindowStart: new Date(nowMs), parseWindowCount: 1 },
+        });
+        if (reset.count === 0) {
+            const inc = await prisma.yukSource.updateMany({
+                where: { id: source.id, parseWindowStart: { gte: cutoff }, parseWindowCount: { lt: MAX_PARSE_PER_MIN } },
+                data: { parseWindowCount: { increment: 1 } },
+            });
+            if (inc.count === 0) return { stored: false, reason: "rate_limited" };   // shift to'ldi — Gemini chaqirilmaydi
         }
-        await prisma.yukSource.update({
-            where: { id: source.id },
-            data: winActive
-                ? { parseWindowCount: { increment: 1 } }
-                : { parseWindowStart: new Date(nowMs), parseWindowCount: 1 },
-        }).catch(() => { });
     }
 
     // ── 3. Parse (Gemini) — faqat noyob, flood-bo'lmagan matn shu yerga yetadi.
@@ -158,7 +163,12 @@ export interface NativeInput {
     phone: string;
 }
 
-export async function createNativeListing(input: NativeInput, profileId: string): Promise<{ id: string }> {
+export async function createNativeListing(
+    input: NativeInput,
+    profileId: string,
+    opts?: { db?: Prisma.TransactionClient; skipNotify?: boolean },
+): Promise<{ id: string }> {
+    const db = opts?.db ?? prisma;
     const fromCity = (input.fromCity || "").trim() || null;
     const toCity = (input.toCity || "").trim() || null;
     const cargo = (input.cargo || "").trim() || null;
@@ -170,7 +180,7 @@ export async function createNativeListing(input: NativeInput, profileId: string)
     ].join("|");
     const composed = [input.type, fromCity, toCity, cargo, weightTons, phone].filter(Boolean).join(" ");
 
-    const listing = await prisma.yukListing.create({
+    const listing = await db.yukListing.create({
         data: {
             type: input.type,
             status: "ACTIVE",
@@ -195,12 +205,24 @@ export async function createNativeListing(input: NativeInput, profileId: string)
         select: { id: true },
     });
 
-    if (input.type === "CARGO") {
+    if (!opts?.skipNotify && input.type === "CARGO") {
         try {
             await matchAndNotify({ type: "CARGO", fromCity, toCity, weightTons, cargo } as unknown as YukParsed);
         } catch (e) { console.error("[yukgo-match-native]", e); }
     }
     return listing;
+}
+
+// Native CARGO uchun mos haydovchilarга push — tranzaksiyadan TASHQARIDA chaqiriladi (tarmoq side-effect).
+export async function notifyNativeCargo(input: NativeInput) {
+    if (input.type !== "CARGO") return;
+    const fromCity = (input.fromCity || "").trim() || null;
+    const toCity = (input.toCity || "").trim() || null;
+    const cargo = (input.cargo || "").trim() || null;
+    const weightTons = input.weightTons != null && isFinite(input.weightTons) ? input.weightTons : null;
+    try {
+        await matchAndNotify({ type: "CARGO", fromCity, toCity, weightTons, cargo } as unknown as YukParsed);
+    } catch (e) { console.error("[yukgo-match-native]", e); }
 }
 
 // Yangi CARGO e'lon → yo'nalishi mos haydovchilarga Web Push.
