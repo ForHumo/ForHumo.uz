@@ -97,6 +97,39 @@ function photos(s?: string): string[] {
     return s.split(/[,;\s]+/).map((u) => u.trim()).filter((u) => /^https?:\/\//.test(u)).slice(0, 10);
 }
 
+// ── Browse AI eksport yordamchilari (Title/Address/Price matnidan ajratish) ──
+function currencyFromText(s?: string): string | null {
+    if (!s) return null;
+    if (/y\.?\s*e|у\.?\s*е|usd|\$|dollar|доллар/i.test(s)) return "y.e";
+    if (/so'?m|сум|uzs|сўм/i.test(s)) return "so'm";
+    return null;
+}
+function typeFromTitle(t?: string): string | null {
+    const k = (t || "").toLowerCase();
+    if (/kvartira|kvartera|квартир|apartment|xonali|хонали|комнатн/.test(k)) return "kvartira";
+    if (/kottej|коттедж|dala hovli|hovli|house|\bдом\b|\buy\b|dacha|дача|taunhaus|таунхаус/.test(k)) return "uy";
+    if (/ofis|office|офис|tijorat|kommer|коммер|магазин|do'?kon|склад|ombor|biznes|бизнес|здание|\bbino\b/.test(k)) return "tijorat";
+    if (/yer\s*maydon|yer\s*uchast|uchastka|участок|\byer\b|землю|земел|tomorqa/.test(k)) return "yer";
+    return null;
+}
+function roomsFromTitle(t?: string): number | null {
+    const k = t || "";
+    const m1 = k.match(/(\d+)\s*\/\s*\d+\s*\/\s*\d+/);      // 2/2/4 (xona/qavat/jami qavat)
+    if (m1) { const n = parseInt(m1[1], 10); if (n >= 1 && n <= 9) return n; }
+    const m2 = k.match(/(\d+)\s*-?\s*(xonali|хонали|комнатн|комн|xona)/i);
+    if (m2) { const n = parseInt(m2[1], 10); if (n >= 1 && n <= 9) return n; }
+    return null;
+}
+function areaFromTitle(t?: string): number | null {
+    const m = (t || "").match(/(\d{2,4})\s*(m2|м2|m²|kv\.?\s*m|кв\.?\s*м)/i);
+    return m ? parseInt(m[1], 10) : null;
+}
+function lastSegment(addr?: string): string {
+    if (!addr) return "";
+    const parts = addr.split(",").map((s) => s.trim()).filter(Boolean);
+    return parts.length ? parts[parts.length - 1] : addr.trim();
+}
+
 // Header → index map (nom bo'yicha o'qish; ustun tartibi muhim emas)
 function headerMap(header: string[]): Record<string, number> {
     const m: Record<string, number> = {};
@@ -128,6 +161,43 @@ export async function importCsv(text: string): Promise<ImportResult> {
     const h = headerMap(rows[0]);
     const body = rows.slice(1);
     const get = (r: string[], key: string) => (h[key] != null ? (r[h[key]] ?? "").trim() : "");
+
+    // Browse AI joymee eksporti (ustunlar: Title, Price, Address, Seller, Listing Url, Cover Image...)
+    // Bizning native formatda "mulk_turi" bo'ladi; Browse AI'da yo'q — shu bilan ajratiladi.
+    const isBrowseAiSale = "title" in h && "price" in h && "address" in h
+        && !("mulk_turi" in h) && !("byudjet_min" in h);
+    if (isBrowseAiSale) {
+        const data = body.map((r) => {
+            const priceStr = get(r, "price");
+            const title = get(r, "title");
+            const addr = get(r, "address");
+            const cover = get(r, "cover image") || get(r, "cover_image");
+            return {
+                link: get(r, "listing url") || get(r, "listing_url") || get(r, "origin url") || null,
+                propertyType: typeFromTitle(title),
+                price: num(priceStr),
+                currency: currencyFromText(priceStr),
+                rooms: roomsFromTitle(title),
+                areaM2: areaFromTitle(title),
+                floor: null,
+                district: lastSegment(addr) || null,
+                addressText: addr || null,
+                lat: null,
+                lng: null,
+                condition: null,
+                description: title || null,
+                sellerName: get(r, "seller") || null,
+                phone: get(r, "phone") || get(r, "телефон") || get(r, "telefon") || get(r, "tel") || null,
+                postedBy: null,
+                photos: cover && /^https?:\/\//.test(cover) ? [cover] : [],
+            };
+        });
+        await withSerializableRetry(async (tx) => {
+            await tx.realtorListing.deleteMany({});
+            await tx.realtorListing.createMany({ data });
+        });
+        return { kind: "sale", count: data.length };
+    }
 
     const isBuyer = "byudjet_min" in h || "budget_min" in h;
     const isSale = "narx" in h || "price" in h;

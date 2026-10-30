@@ -62,6 +62,29 @@ const DISTRICT_ALIASES: Record<string, string> = {
     "piskent": "piskent", "пискент": "piskent",
     "boka": "boka", "бука": "boka",
     "nurafshon": "nurafshon", "tuytepa": "nurafshon", "нурафшон": "nurafshon", "туйтепа": "nurafshon",
+    // Rus sifat shakllari (Joymee manzillarida: "Яккасарайский район")
+    "бектемирский": "bektemir",
+    "чиланзарский": "chilonzor", "чилонзорский": "chilonzor",
+    "мирабадский": "mirobod", "мирободский": "mirobod",
+    "мирзо-улугбекский": "mirzo-ulugbek", "мирзоулугбекский": "mirzo-ulugbek",
+    "сергелийский": "sergeli", "сергелинский": "sergeli",
+    "шайхантахурский": "shayxontohur", "шайхонтохурский": "shayxontohur",
+    "алмазарский": "olmazor", "олмазорский": "olmazor",
+    "учтепин": "uchtepa", "учтепинский": "uchtepa",
+    "яккасарайский": "yakkasaroy",
+    "яшнабадский": "yashnobod", "яшнободский": "yashnobod",
+    "юнусабадский": "yunusobod", "юнусободский": "yunusobod",
+    "янгихаётский": "yangihayot", "янгихаетский": "yangihayot",
+    "кибрайский": "qibray",
+    "зангиатинский": "zangiota", "зангиотинский": "zangiota",
+    "янгиюльский": "yangiyol",
+    "чирчикский": "chirchiq",
+    "бекабадский": "bekobod",
+    "ахангаранский": "ohangaron",
+    "паркентский": "parkent",
+    "пискентский": "piskent",
+    "букинский": "boka",
+    "бостанлык": "bostanliq", "бостанлыкский": "bostanliq", "boʻstonliq": "bostanliq", "bostonliq": "bostanliq",
 };
 // Uzun kalit avval tekshirilsin ("mirzo ulugbek" > "ulugbek")
 const DISTRICT_KEYS = Object.keys(DISTRICT_ALIASES).sort((a, b) => b.length - a.length);
@@ -79,6 +102,10 @@ function normDistrict(s?: string | null): string | null {
     const padded = ` ${c} `;
     for (const k of DISTRICT_KEYS) {
         if (padded.includes(` ${k} `)) return DISTRICT_ALIASES[k];
+    }
+    // Deklinatsiya/qo'shimcha (masalan "сергелийский" ⊃ "сергели") — uzun kalit substring sifatida
+    for (const k of DISTRICT_KEYS) {
+        if (k.length >= 6 && c.includes(k)) return DISTRICT_ALIASES[k];
     }
     return c;
 }
