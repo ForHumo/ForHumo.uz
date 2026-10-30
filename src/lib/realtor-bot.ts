@@ -197,10 +197,12 @@ export async function buildDailyReport(topMatches = 20): Promise<string> {
     ]);
     const matches = findMatches(listings, buyers, topMatches);
     const today = new Date().toLocaleDateString("uz-UZ");
+    const times = [...listings, ...buyers].map((r) => r.importedAt.getTime());
+    const freshness = times.length ? `\nData yangilangan: ${new Date(Math.max(...times)).toLocaleString("uz-UZ")}` : "";
 
     const head =
         `<b>Rieltor hisoboti — ${today}</b>\n` +
-        `Sotuv: ${listings.length} · Xaridor: ${buyers.length} · Mos juftlik: ${matches.length}\n`;
+        `Sotuv: ${listings.length} · Xaridor: ${buyers.length} · Mos juftlik: ${matches.length}${freshness}\n`;
 
     if (!matches.length) {
         return head + `\nMos juftlik topilmadi. (Data yuklang: sotuv + xaridor CSV)`;
