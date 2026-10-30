@@ -4,7 +4,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { findMatches } from "@/lib/realtor-match";
-import type { RealtorListing, RealtorBuyer } from "@prisma/client";
+import { Prisma, type RealtorListing, type RealtorBuyer } from "@prisma/client";
 
 const TOKEN = process.env.REALTOR_BOT_TOKEN;
 
@@ -104,6 +104,21 @@ function headerMap(header: string[]): Record<string, number> {
     return m;
 }
 
+// Snapshot almashtirishni konkurent yuklashga bardoshli qiladi — ikki CSV
+// deyarli bir vaqtda kelsa ham natija ARALASHMAYDI (bittasi to'liq yutadi).
+async function withSerializableRetry(fn: (tx: Prisma.TransactionClient) => Promise<void>): Promise<void> {
+    for (let attempt = 0; ; attempt++) {
+        try {
+            await prisma.$transaction(fn, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+            return;
+        } catch (e) {
+            const code = (e as { code?: string })?.code;
+            if ((code === "P2034" || code === "P2028") && attempt < 3) continue; // serializatsiya ziddiyati → qayta urin
+            throw e;
+        }
+    }
+}
+
 export interface ImportResult { kind: "sale" | "buyer" | "unknown"; count: number }
 
 // CSV matnini import qiladi — turini header'dan aniqlaydi, snapshot'ni ALMASHTIRADI.
@@ -131,10 +146,10 @@ export async function importCsv(text: string): Promise<ImportResult> {
             name: get(r, "ismi") || null,
             note: get(r, "izoh") || null,
         }));
-        await prisma.$transaction([
-            prisma.realtorBuyer.deleteMany({}),
-            prisma.realtorBuyer.createMany({ data }),
-        ]);
+        await withSerializableRetry(async (tx) => {
+            await tx.realtorBuyer.deleteMany({});
+            await tx.realtorBuyer.createMany({ data });
+        });
         return { kind: "buyer", count: data.length };
     }
 
@@ -158,10 +173,10 @@ export async function importCsv(text: string): Promise<ImportResult> {
             postedBy: get(r, "kim") || null,
             photos: photos(get(r, "rasmlar")),
         }));
-        await prisma.$transaction([
-            prisma.realtorListing.deleteMany({}),
-            prisma.realtorListing.createMany({ data }),
-        ]);
+        await withSerializableRetry(async (tx) => {
+            await tx.realtorListing.deleteMany({});
+            await tx.realtorListing.createMany({ data });
+        });
         return { kind: "sale", count: data.length };
     }
 
