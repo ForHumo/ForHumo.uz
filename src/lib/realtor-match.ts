@@ -28,13 +28,59 @@ function normType(s?: string | null): string | null {
     return k;
 }
 
+// Tuman alias-jadvali — bir joy ko'p imloda yoziladi (uz lotin / alt / kirill).
+// Barcha variant yagona kalitga keltiriladi, aks holda "Chilonzor" va "Chilanzar"
+// boshqa tuman deb hisoblanib mos juftlik o'tkazib yuboriladi.
+const DISTRICT_ALIASES: Record<string, string> = {
+    // Toshkent shahri
+    "bektemir": "bektemir", "бектемир": "bektemir",
+    "chilonzor": "chilonzor", "chilanzar": "chilonzor", "chilonzar": "chilonzor", "chilanzor": "chilonzor",
+    "чиланзар": "chilonzor", "чилонзор": "chilonzor", "чиланзор": "chilonzor",
+    "mirobod": "mirobod", "mirabad": "mirobod", "mirabod": "mirobod",
+    "мирабад": "mirobod", "миробод": "mirobod",
+    "mirzo ulugbek": "mirzo-ulugbek", "mirzoulugbek": "mirzo-ulugbek", "ulugbek": "mirzo-ulugbek",
+    "mirzo-ulugbek": "mirzo-ulugbek", "мирзо улугбек": "mirzo-ulugbek", "мирзоулугбек": "mirzo-ulugbek", "улугбек": "mirzo-ulugbek",
+    "sergeli": "sergeli", "сергели": "sergeli",
+    "shayxontohur": "shayxontohur", "shayhontohur": "shayxontohur", "shaykhontohur": "shayxontohur",
+    "shaykhantakhur": "shayxontohur", "шайхантахур": "shayxontohur", "шайхонтохур": "shayxontohur",
+    "olmazor": "olmazor", "almazar": "olmazor", "олмазор": "olmazor", "алмазар": "olmazor",
+    "uchtepa": "uchtepa", "учтепа": "uchtepa",
+    "yakkasaroy": "yakkasaroy", "yakkasaray": "yakkasaroy", "яккасарай": "yakkasaroy", "яккасарой": "yakkasaroy",
+    "yashnobod": "yashnobod", "yashnabad": "yashnobod", "yashnobad": "yashnobod", "яшнабад": "yashnobod", "яшнобод": "yashnobod",
+    "yunusobod": "yunusobod", "yunusabad": "yunusobod", "yunusabod": "yunusobod", "юнусабад": "yunusobod", "юнусобод": "yunusobod",
+    "yangihayot": "yangihayot", "yangi hayot": "yangihayot", "янгихаёт": "yangihayot", "янгиҳаёт": "yangihayot",
+    // Toshkent viloyati (ko'p uchraydi)
+    "qibray": "qibray", "kibray": "qibray", "кибрай": "qibray", "қибрай": "qibray",
+    "zangiota": "zangiota", "зангиата": "zangiota", "зангиота": "zangiota",
+    "yangiyol": "yangiyol", "yangiyul": "yangiyol", "янгиюль": "yangiyol",
+    "chirchiq": "chirchiq", "chirchik": "chirchiq", "чирчик": "chirchiq", "чирчиқ": "chirchiq",
+    "bekobod": "bekobod", "bekabad": "bekobod", "бекабад": "bekobod",
+    "olmaliq": "olmaliq", "almalyk": "olmaliq", "алмалык": "olmaliq",
+    "angren": "angren", "ангрен": "angren",
+    "ohangaron": "ohangaron", "ахангаран": "ohangaron", "оҳангарон": "ohangaron",
+    "parkent": "parkent", "паркент": "parkent",
+    "piskent": "piskent", "пискент": "piskent",
+    "boka": "boka", "бука": "boka",
+    "nurafshon": "nurafshon", "tuytepa": "nurafshon", "нурафшон": "nurafshon", "туйтепа": "nurafshon",
+};
+// Uzun kalit avval tekshirilsin ("mirzo ulugbek" > "ulugbek")
+const DISTRICT_KEYS = Object.keys(DISTRICT_ALIASES).sort((a, b) => b.length - a.length);
+
 function normDistrict(s?: string | null): string | null {
     if (!s) return null;
-    const k = s.toLowerCase()
-        .replace(/tumani|tuman|туман|район|r-n|district/g, "")
-        .replace(/[^a-zЀ-ӿ\s'ʻ-]/gi, "")
+    const c = s.toLowerCase()
+        .replace(/tumani|tuman|туман|район|р-н|r-n|district|shahri|shahar|город/g, " ")
+        .replace(/['''ʻ`ʼ]/g, "")
+        .replace(/[^a-zЀ-ӿ\s-]/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
-    return k || null;
+    if (!c) return null;
+    if (DISTRICT_ALIASES[c]) return DISTRICT_ALIASES[c];
+    const padded = ` ${c} `;
+    for (const k of DISTRICT_KEYS) {
+        if (padded.includes(` ${k} `)) return DISTRICT_ALIASES[k];
+    }
+    return c;
 }
 
 function normCurrency(s?: string | null): "USD" | "UZS" | null {

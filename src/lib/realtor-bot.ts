@@ -3,7 +3,7 @@
 // Public UI yo'q; faqat REALTOR_BOT_ALLOWED_IDS dagi 2-3 kishi.
 
 import { prisma } from "@/lib/prisma";
-import { findMatches, type Match } from "@/lib/realtor-match";
+import { findMatches } from "@/lib/realtor-match";
 import type { RealtorListing, RealtorBuyer } from "@prisma/client";
 
 const TOKEN = process.env.REALTOR_BOT_TOKEN;
@@ -177,38 +177,58 @@ function esc(s?: string | null): string {
     return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function matchLine(m: Match, i: number): string {
-    const l = m.listing, b = m.buyer;
-    const price = money(l.price, l.currency);
+// Bitta e'lon sarlavhasi (narx · xona · telefon · link)
+function listingHead(l: RealtorListing, i: number): string {
+    const bits = [money(l.price, l.currency)];
+    if (l.rooms != null) bits.push(`${l.rooms} xona`);
+    const meta = [l.phone ? esc(l.phone) : null, l.link ? `<a href="${esc(l.link)}">link</a>` : null]
+        .filter(Boolean).join(" · ");
+    return `<b>${i}. ${esc(l.propertyType || "mulk")} · ${esc(l.district || "")}</b>\n` +
+        `Sotuv: ${bits.join(" · ")}${meta ? ` · ${meta}` : ""}`;
+}
+// E'longa mos bitta xaridor qatori
+function buyerLine(b: RealtorBuyer, reasons: string[]): string {
     const budget = `${money(b.budgetMin, b.currency)}–${money(b.budgetMax, b.currency)}`;
-    const parts = [
-        `<b>${i + 1}. ${esc(l.propertyType || "mulk")} · ${esc(l.district || "")}</b>`,
-        `Sotuv: ${price}${l.rooms ? ` · ${l.rooms} xona` : ""}${l.phone ? ` · ${esc(l.phone)}` : ""}${l.link ? ` · <a href="${esc(l.link)}">link</a>` : ""}`,
-        `Xaridor: byudjet ${budget}${b.rooms ? ` · ${b.rooms} xona` : ""}${b.phone ? ` · ${esc(b.phone)}` : ""}${b.name ? ` (${esc(b.name)})` : ""}`,
-        `Mos: ${m.reasons.join(", ")}`,
-    ];
-    return parts.join("\n");
+    const bits = [b.name ? esc(b.name) : "xaridor", `byudjet ${budget}`];
+    if (b.rooms != null) bits.push(`${b.rooms} xona`);
+    if (b.phone) bits.push(esc(b.phone));
+    return `- ${bits.join(" · ")} [${reasons.join(", ")}]`;
 }
 
-export async function buildDailyReport(topMatches = 20): Promise<string> {
+export async function buildDailyReport(maxListings = 40): Promise<string> {
     const [listings, buyers] = await Promise.all([
         prisma.realtorListing.findMany({ take: 2000 }),
         prisma.realtorBuyer.findMany({ take: 2000 }),
     ]);
-    const matches = findMatches(listings, buyers, topMatches);
+    const matches = findMatches(listings, buyers, 1000);
     const today = new Date().toLocaleDateString("uz-UZ");
     const times = [...listings, ...buyers].map((r) => r.importedAt.getTime());
     const freshness = times.length ? `\nData yangilangan: ${new Date(Math.max(...times)).toLocaleString("uz-UZ")}` : "";
 
+    // E'lon bo'yicha guruhlash — matches score bo'yicha tartibli, Map tartibni saqlaydi.
+    const groups = new Map<string, { listing: RealtorListing; buyers: { buyer: RealtorBuyer; reasons: string[] }[] }>();
+    for (const m of matches) {
+        let g = groups.get(m.listing.id);
+        if (!g) { g = { listing: m.listing, buyers: [] }; groups.set(m.listing.id, g); }
+        g.buyers.push({ buyer: m.buyer, reasons: m.reasons });
+    }
+
     const head =
         `<b>Rieltor hisoboti — ${today}</b>\n` +
-        `Sotuv: ${listings.length} · Xaridor: ${buyers.length} · Mos juftlik: ${matches.length}${freshness}\n`;
+        `Sotuv: ${listings.length} · Xaridor: ${buyers.length} · Mos juftlik: ${matches.length} · Mos e'lon: ${groups.size}${freshness}\n`;
 
-    if (!matches.length) {
+    if (!groups.size) {
         return head + `\nMos juftlik topilmadi. (Data yuklang: sotuv + xaridor CSV)`;
     }
-    const body = matches.map((m, i) => matchLine(m, i)).join("\n\n");
-    return head + "\n" + body;
+
+    const shown = [...groups.values()].slice(0, maxListings);
+    const blocks = shown.map((g, i) => {
+        const label = g.buyers.length > 1 ? `Mos xaridorlar (${g.buyers.length}):` : "Mos xaridor:";
+        const subs = g.buyers.map((x) => buyerLine(x.buyer, x.reasons)).join("\n");
+        return `${listingHead(g.listing, i + 1)}\n${label}\n${subs}`;
+    });
+    const more = groups.size > shown.length ? `\n\n…va yana ${groups.size - shown.length} ta mos e'lon.` : "";
+    return head + "\n" + blocks.join("\n\n") + more;
 }
 
 export { findMatches };
