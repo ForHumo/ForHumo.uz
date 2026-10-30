@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { ShieldCheck } from "lucide-react";
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnShopsRanked } from "./bn-sections";
+import { useBnFormat } from "./bn-format-hook";
 import type { BnShopDTO } from "@/lib/bn-data";
 
 type Tier = "NEW" | "TRUSTED" | "VERIFIED" | "PREMIUM";
@@ -16,6 +17,7 @@ const TIERS: Tier[] = ["TRUSTED", "VERIFIED", "PREMIUM"];   // "NEW" default (ba
 
 export function BnShopsWithFilter({ shops }: { shops: BnShopDTO[] }) {
     const t = useTranslations("bn.shops");
+    const fmt = useBnFormat();
     const sp = useSearchParams();
     const router = useRouter();
     const path = usePathname();
@@ -69,7 +71,7 @@ export function BnShopsWithFilter({ shops }: { shops: BnShopDTO[] }) {
                                 border: `1px solid ${isActive ? meta.color : BN.border}`,
                             }}>
                             <ShieldCheck className="w-3 h-3" style={{ color: isActive ? "#000" : meta.color }} />
-                            {meta.label}
+                            {fmt.tier(tier)}
                             <span className="tabular-nums opacity-70">{n}</span>
                         </button>
                     );

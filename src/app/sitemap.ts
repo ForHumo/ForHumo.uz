@@ -12,7 +12,8 @@ export const revalidate = 3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const host = (await headers()).get("host")?.split(":")[0].toLowerCase() ?? "";
     const isBn = BN_HOSTS.has(host);
-    const origin = isBn ? "https://bozornarxida.uz" : "https://forhumo.uz";
+    // BN — www host (yalang'och bozornarxida.uz www'ga 308 qiladi; canonical bilan bir xil — lib/bn-seo.ts)
+    const origin = isBn ? "https://www.bozornarxida.uz" : "https://forhumo.uz";
     const prefix = isBn ? "" : "/uz/bn";
     const now = new Date();
 

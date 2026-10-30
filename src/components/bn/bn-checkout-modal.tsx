@@ -8,7 +8,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { X, Truck, Package, Eye, Wallet, Banknote, Loader2, BookMarked, Check } from "lucide-react";
-import { BN, fmtPrice } from "@/lib/bn-theme";
+import { BN } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
 import { BN_FLAGS } from "@/lib/bn-flags";
 import { useBnHref } from "./bn-nav";
 import { BnPhoneInput, isValidUzPhone } from "./bn-phone-input";
@@ -48,6 +49,7 @@ export function BnCheckoutModal({ subtotal, canDelivery: canDeliveryProp, canIns
     const to = useBnHref();
     const t = useTranslations("bn.checkout");
     const tNav = useTranslations("bn.nav");
+    const fmt = useBnFormat();
 
     const [fulfill, setFulfill] = useState<Fulfill>("PICKUP");
     const [phone, setPhone] = useState("+998");
@@ -117,7 +119,7 @@ export function BnCheckoutModal({ subtotal, canDelivery: canDeliveryProp, canIns
             const d = await r.json();
             if (!r.ok || !d?.ok) {
                 if (d?.error === "insufficient_balance") {
-                    setErr(t("errInsufficient", { need: fmtPrice(d.need), have: fmtPrice(d.have) }));
+                    setErr(t("errInsufficient", { need: fmt.price(d.need), have: fmt.price(d.have) }));
                 } else if (d?.error === "cart_empty") {
                     setErr(t("errCartEmpty"));
                 } else if (d?.error === "insufficient_stock") {
@@ -190,7 +192,7 @@ export function BnCheckoutModal({ subtotal, canDelivery: canDeliveryProp, canIns
                                 onClick={() => setFulfill("DELIVERY")}
                                 icon={<Truck className="w-4 h-4" />}
                                 title={t("fulfillDelivery")}
-                                desc={t("fulfillDeliveryDesc", { price: fmtPrice(20_000) })}
+                                desc={t("fulfillDeliveryDesc", { price: fmt.price(20_000) })}
                             />
                         )}
                         {canInspect && (
@@ -301,14 +303,14 @@ export function BnCheckoutModal({ subtotal, canDelivery: canDeliveryProp, canIns
                     style={{ background: BN.surface, borderTop: `1px solid ${BN.border}` }}
                 >
                     <div className="space-y-1.5 text-[13.5px]">
-                        <SumRow label={t("productsRow")} value={fmtPrice(subtotal)} />
-                        {deliveryFee > 0 && <SumRow label={t("deliveryRow")} value={fmtPrice(deliveryFee)} />}
+                        <SumRow label={t("productsRow")} value={fmt.price(subtotal)} />
+                        {deliveryFee > 0 && <SumRow label={t("deliveryRow")} value={fmt.price(deliveryFee)} />}
                         <div
                             className="flex items-baseline justify-between pt-2"
                             style={{ borderTop: `1px solid ${BN.border}` }}
                         >
                             <span className="text-[14px] font-bold">{t("total")}</span>
-                            <span className="text-[20px] font-black tabular-nums">{fmtPrice(total)}</span>
+                            <span className="text-[20px] font-black tabular-nums">{fmt.price(total)}</span>
                         </div>
                     </div>
 
@@ -318,7 +320,7 @@ export function BnCheckoutModal({ subtotal, canDelivery: canDeliveryProp, canIns
                         className="flex items-center justify-center gap-2 w-full h-12 rounded-2xl text-[15px] font-black transition-transform active:scale-[0.98] disabled:opacity-60"
                         style={{ background: BN.gold, color: BN.onGold }}
                     >
-                        {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : t("submit", { total: fmtPrice(total) })}
+                        {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : t("submit", { total: fmt.price(total) })}
                     </button>
                 </div>
             </div>

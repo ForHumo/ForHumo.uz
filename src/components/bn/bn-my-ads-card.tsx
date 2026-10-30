@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useLocale } from "next-intl";
 import { Sparkles, Eye, MousePointerClick, Clock, Ban, Loader2, Plus } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
-import { formatMoney } from "@/lib/money";
+import { useBnFormat } from "./bn-format-hook";
 import { BnAdBuyModal } from "./bn-ad-buy-modal";
 
 interface MyAd {
@@ -29,6 +29,7 @@ interface MyAd {
 }
 
 export function BnMyAdsCard() {
+    const fmt = useBnFormat();
     const locale = useLocale();
     const [ads, setAds] = useState<MyAd[] | null>(null);
     const [loading, setLoading] = useState(true);
@@ -150,7 +151,7 @@ export function BnMyAdsCard() {
                                         <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{a.impressions.toLocaleString()}</span>
                                         <span className="flex items-center gap-1"><MousePointerClick className="w-3 h-3" />{a.clicks.toLocaleString()}</span>
                                         <span>CTR {a.impressions > 0 ? ((a.clicks / a.impressions) * 100).toFixed(1) : "0"}%</span>
-                                        <span className="ml-auto tabular-nums">{formatMoney(a.paidAmountUzs, "UZS")}</span>
+                                        <span className="ml-auto tabular-nums">{fmt.price(a.paidAmountUzs)}</span>
                                     </div>
                                     <div className="mt-0.5 text-[10px]" style={{ color: BN.text3 }}>
                                         {new Date(a.startsAt).toLocaleDateString(locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : "uz-UZ")}

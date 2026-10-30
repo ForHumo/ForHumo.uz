@@ -3,10 +3,12 @@
 // Do'konga obuna tugmasi (shop page header).
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Bell, BellOff, Loader2, Check } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 
 export function BnShopFollowButton({ shopSlug }: { shopSlug: string }) {
+    const t = useTranslations("bn.shopPage");
     const [following, setFollowing] = useState(false);
     const [count, setCount] = useState(0);
     const [busy, setBusy] = useState(false);
@@ -59,9 +61,9 @@ export function BnShopFollowButton({ shopSlug }: { shopSlug: string }) {
             {busy ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : following ? (
-                <><Check className="w-3.5 h-3.5" /> Obuna</>
+                <><Check className="w-3.5 h-3.5" /> {t("following")}</>
             ) : (
-                <><Bell className="w-3.5 h-3.5" /> Obuna bo&apos;lish</>
+                <><Bell className="w-3.5 h-3.5" /> {t("follow")}</>
             )}
             {count > 0 && (
                 <span className="text-[10px] opacity-70">{count}</span>

@@ -22,6 +22,8 @@ interface Copy {
     howSubtitle: string;
     howSteps: { title: string; text: string }[];
 
+    /** Sarlavha ustidagi kichik tilla yorliq (sarlavhani takrorlamasin) */
+    forSellersEyebrow: string;
     forSellersTitle: string;
     forSellersText: string;
     forSellersCta: string;
@@ -59,6 +61,7 @@ const COPY: Record<Locale, Copy> = {
             { title: "Qabul qiling va baholang", text: "Mahsulot yaxshi bo'lsa — tasdiqlaysiz, sotuvchiga pul o'tadi. Yomon bo'lsa — qaytarib yuboriladi." },
         ],
 
+        forSellersEyebrow: "Sotuvchilar uchun",
         forSellersTitle: "Sotuvchi bo'lishni xohlaysizmi?",
         forSellersText: "Bozordagi yoki ko'chadagi do'koningizni onlaynga chiqaring. Buyurtmalar telefoningizga tushadi. Komissiya 5% — naqd savdodan olinmaydi.",
         forSellersCta: "Waitlist'ga yozilish",
@@ -101,9 +104,10 @@ const COPY: Record<Locale, Copy> = {
             { title: "Получите и оцените", text: "Всё хорошо — подтверждаете, продавец получает деньги. Плохо — возвращаем." },
         ],
 
+        forSellersEyebrow: "Для продавцов",
         forSellersTitle: "Хотите стать продавцом?",
         forSellersText: "Выведите ваш магазин на базаре или на улице в онлайн. Заказы приходят на телефон. Комиссия 5% — с наличных не берётся.",
-        forSellersCta: "Записаться в waitlist",
+        forSellersCta: "Записаться в лист ожидания",
         forSellersNote: "Сейчас идёт сбор заявок — как только откроем ООО, Джалол свяжется и всё объяснит.",
 
         faqTitle: "Частые вопросы",
@@ -112,7 +116,7 @@ const COPY: Record<Locale, Copy> = {
             { q: "Как считается цена базара?", a: "Средняя цена по нескольким магазинам этой категории. Показываем самый дешёвый вариант и процент экономии." },
             { q: "Доставка бесплатная?", a: "Стоимость зависит от расстояния и веса. Альтернатива — самовывоз с базара или посещение магазина (бесплатно)." },
             { q: "Как проходит оплата?", a: "Картой (Payme/Click) или наличными в магазине. Оплата картой — эскроу, при проблеме возвращается." },
-            { q: "Что нужно чтобы стать продавцом?", a: "Документы ООО или ИП, название магазина, телефон и банковские реквизиты. Если документов ещё нет — записывайтесь в waitlist." },
+            { q: "Что нужно чтобы стать продавцом?", a: "Документы ООО или ИП, название магазина, телефон и банковские реквизиты. Если документов ещё нет — запишитесь в лист ожидания." },
             { q: "Как работает бонус за приглашение?", a: "Делитесь своей ссылкой. Друг делает первый заказ — вам 10 000 сум, ему 5 000 сум на кошелёк." },
         ],
 
@@ -143,6 +147,7 @@ const COPY: Record<Locale, Copy> = {
             { title: "Receive and review", text: "All good — you confirm, seller gets paid. Something wrong — you get a refund." },
         ],
 
+        forSellersEyebrow: "For sellers",
         forSellersTitle: "Want to sell on BN?",
         forSellersText: "Bring your bazaar or street shop online. Orders come to your phone. 5% commission — never on cash sales.",
         forSellersCta: "Join the waitlist",
@@ -267,7 +272,7 @@ export function BnHaqidaPage({ locale }: { locale: Locale }) {
                     <div className="flex items-center gap-2 mb-3">
                         <Store className="w-5 h-5" style={{ color: BN.gold }} />
                         <span className="text-[12px] font-black" style={{ color: BN.gold }}>
-                            {c.forSellersTitle}
+                            {c.forSellersEyebrow}
                         </span>
                     </div>
                     <h2 className="text-[22px] sm:text-[26px] font-black tracking-tight mb-2 leading-tight">

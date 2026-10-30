@@ -200,7 +200,7 @@ function AddAdminModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
                     onChange={(e) => setHumoId(e.target.value.toUpperCase())}
                     placeholder="UZ0000000"
                     className="w-full rounded-xl px-3 py-2.5 mt-1 mb-3 text-[14px] font-mono"
-                    style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: "#fff" }}
+                    style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
                 />
 
                 <label className="text-[11px] uppercase tracking-wider font-bold" style={{ color: BN.text3 }}>Rol</label>
@@ -227,7 +227,7 @@ function AddAdminModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="BN loyihasi rahbari, moderator, ..."
                     className="w-full rounded-xl px-3 py-2.5 mt-1 mb-4 text-[14px]"
-                    style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: "#fff" }}
+                    style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
                 />
 
                 <button

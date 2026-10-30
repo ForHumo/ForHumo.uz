@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { BN_SITE, bnCity, bnPageMeta } from "@/lib/bn-seo";
 import { notFound } from "next/navigation";
 import { BnMarketPage } from "@/components/bn/bn-pages";
 import { getMarketBySlug } from "@/lib/bn-data";
 import { prisma } from "@/lib/prisma";
 import { BnBreadcrumbLd } from "@/components/bn/bn-jsonld";
 import { BnMarketLd } from "@/components/bn/bn-market-ld";
+import { getBnFormat } from "@/lib/bn-format-server";
+import { bnNotFoundMeta } from "@/lib/bn-seo-server";
 
 export const dynamic = "force-dynamic";
 
@@ -14,24 +18,26 @@ function localizedName(name: string, nameRu: string | null, locale: Locale): str
     return locale === "ru" && nameRu ? nameRu : name;
 }
 
-function buildDescription(locale: Locale, name: string, city: string, district: string | null, shopCount: number, workHours: string | null, address: string | null): string {
+// shopsText — tayyor "N ta do'kon" (ICU plural, getBnFormat)
+function buildDescription(locale: Locale, name: string, city: string, district: string | null, shopsText: string, workHours: string | null, address: string | null): string {
     const loc = district ? `${district}, ${city}` : city;
     if (locale === "ru") {
-        return `${name} — ${loc}. ${shopCount} магазинов${address ? ` · ${address}` : ""}${workHours ? ` · ${workHours}` : ""}. `
+        return `${name} — ${loc}. ${shopsText}${address ? ` · ${address}` : ""}${workHours ? ` · ${workHours}` : ""}. `
             + `Смотрите цены на все товары базара онлайн, сравнивайте магазины и заказывайте с защитой на Bozor Narxida.`;
     }
     if (locale === "en") {
-        return `${name} — ${loc}. ${shopCount} shops${address ? ` · ${address}` : ""}${workHours ? ` · ${workHours}` : ""}. `
+        return `${name} — ${loc}. ${shopsText}${address ? ` · ${address}` : ""}${workHours ? ` · ${workHours}` : ""}. `
             + `Browse all bazaar prices online, compare shops and order with protection on Bozor Narxida.`;
     }
-    return `${name} — ${loc}. ${shopCount} ta do'kon${address ? ` · ${address}` : ""}${workHours ? ` · ${workHours}` : ""}. `
+    return `${name} — ${loc}. ${shopsText}${address ? ` · ${address}` : ""}${workHours ? ` · ${workHours}` : ""}. `
         + `Bozor barcha mahsulotlari narxlarini onlayn ko'ring, do'konlarni solishtiring va Bozor Narxida'da eskrow himoyasi bilan buyurtma bering.`;
 }
 
+// Sarlavha "| Bozor Narxida" shabloni bilan (layout) — suffiks bu yerda yozilmaydi
 function buildTitle(locale: Locale, name: string, city: string): string {
-    if (locale === "ru") return `${name} — цены онлайн (${city}) · Bozor Narxida`;
-    if (locale === "en") return `${name} — online prices (${city}) · Bozor Narxida`;
-    return `${name} — onlayn narxlar (${city}) · Bozor Narxida`;
+    if (locale === "ru") return `${name} — цены онлайн (${city})`;
+    if (locale === "en") return `${name} — online prices (${city})`;
+    return `${name} — onlayn narxlar (${city})`;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: Locale; slug: string }> }): Promise<Metadata> {
@@ -40,43 +46,28 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
         where: { slug },
         select: {
             name: true, nameRu: true, description: true, city: true, district: true,
-            address: true, workHours: true, shopCount: true,
+            address: true, workHours: true,
+            // Do'konlar soni — sahifadagi ro'yxat bilan bir xil (APPROVED), kesh shopCount emas
+            _count: { select: { shops: { where: { status: "APPROVED" } } } },
         },
     });
-    if (!m) return { title: slug.replace(/-/g, " ") };
+    if (!m) return bnNotFoundMeta(locale);
 
     const name = localizedName(m.name, m.nameRu, locale);
-    const title = buildTitle(locale, name, m.city);
-    const description = m.description ?? buildDescription(locale, name, m.city, m.district, m.shopCount, m.workHours, m.address);
+    const city = bnCity(m.city, locale);
+    const title = buildTitle(locale, name, city);
+    const fmt = await getBnFormat(locale);
+    const description = m.description ?? buildDescription(locale, name, city, m.district, fmt.shops(m._count.shops), m.workHours, m.address);
 
-    const ogImage = `https://bozornarxida.uz/api/og/bn/market/${encodeURIComponent(slug)}`;
-    const pageUrl = `https://bozornarxida.uz/m/${slug}`;
+    const ogImage = `${BN_SITE}/api/og/bn/market/${encodeURIComponent(slug)}${locale === "uz" ? "" : `?l=${locale}`}`;
 
     return {
-        title: { absolute: title },
+        title,
         description,
-        alternates: {
-            canonical: pageUrl,
-            languages: {
-                "uz": `https://bozornarxida.uz/uz/m/${slug}`,
-                "ru": `https://bozornarxida.uz/ru/m/${slug}`,
-                "en": `https://bozornarxida.uz/en/m/${slug}`,
-            },
-        },
-        openGraph: {
-            type: "website",
-            title,
-            description,
-            url: pageUrl,
-            siteName: "Bozor Narxida",
+        ...bnPageMeta({
+            locale, path: `/m/${slug}`, title, description,
             images: [{ url: ogImage, width: 1200, height: 630, alt: name }],
-        },
-        twitter: {
-            card: "summary_large_image",
-            title,
-            description,
-            images: [ogImage],
-        },
+        }),
     };
 }
 
@@ -146,6 +137,7 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
     }));
 
     const displayName = localizedName(m.name, m.nameRu ?? null, locale);
+    const t = await getTranslations({ locale, namespace: "bn" });
 
     return (
         <>
@@ -164,14 +156,15 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
                 shopCount={m.shopCount}
             />
             <BnBreadcrumbLd items={[
-                { name: "Bosh sahifa", url: "/" },
-                { name: "Bozorlar", url: "/bozorlar" },
+                { name: t("breadcrumb.home"), url: "/" },
+                { name: t("markets.title"), url: "/bozorlar" },
                 { name: displayName, url: `/m/${m.slug}` },
             ]} />
             <BnMarketPage
                 market={{
                     slug: m.slug,
-                    name: m.name,
+                    // ru'da nameRu (bo'lsa) — sarlavha/metadata bilan bir xil
+                    name: displayName,
                     coverUrl: m.coverUrl ?? "",
                     address: m.address ?? "",
                     workHours: m.workHours ?? "",

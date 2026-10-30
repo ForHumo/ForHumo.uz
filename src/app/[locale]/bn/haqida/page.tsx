@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { bnPageMeta } from "@/lib/bn-seo";
 import { BnHaqidaPage } from "@/components/bn/bn-haqida";
 
 type Locale = "uz" | "ru" | "en";
@@ -29,28 +30,10 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
     const { locale } = await params;
     const m = META[locale] ?? META.uz;
     return {
-        title: { absolute: `${m.title} | For Humo` },
+        // Sarlavhada brend bor — shablon qo'shilmasin (absolute)
+        title: { absolute: m.title },
         description: m.description,
-        alternates: {
-            canonical: "https://bozornarxida.uz/haqida",
-            languages: {
-                "uz": "https://bozornarxida.uz/uz/haqida",
-                "ru": "https://bozornarxida.uz/ru/haqida",
-                "en": "https://bozornarxida.uz/en/haqida",
-            },
-        },
-        openGraph: {
-            type: "website",
-            title: m.title,
-            description: m.description,
-            url: "https://bozornarxida.uz/haqida",
-            siteName: "Bozor Narxida",
-        },
-        twitter: {
-            card: "summary_large_image",
-            title: m.title,
-            description: m.description,
-        },
+        ...bnPageMeta({ locale, path: "/haqida", title: m.title, description: m.description }),
     };
 }
 

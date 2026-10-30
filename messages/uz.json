@@ -520,6 +520,7 @@
       "forYouSub": "Qiziqishlaringiz asosida AI tavsiya qildi",
       "trustedShops": "Ishonchli do'konlar",
       "trustedShopsSub": "Reyting va xaridor faolligiga qarab AI tuzgan TOP 10",
+      "trustedShopsSubRanked": "Reyting va xaridor faolligiga qarab AI saralagan",
       "seeAll": "Barchasini ko'rish",
       "trendingCatsTitle": "Tanlanayotgan turkumlar",
       "viewAll": "Ko'rish",
@@ -539,7 +540,8 @@
       "loadMore": "Yana yuklash",
       "filterAria": "Mahsulotlar filteri",
       "sellerCta": "Do'koningiz bormi? Onlaynga chiqaring",
-      "sellerCtaText": "Bozordagi do'kon ham, ko'chadagi do'kon ham bo'ladi. Mahsulot rasmini yuklaysiz — Humo AI nomi, tavsifi va narx tavsiyasini o'zi yozadi. Komissiya 5%, naqd savdodan olinmaydi."
+      "sellerCtaText": "Bozordagi do'kon ham, ko'chadagi do'kon ham bo'ladi. Mahsulot rasmini yuklaysiz — Humo AI nomi, tavsifi va narx tavsiyasini o'zi yozadi. Komissiya 5%, naqd savdodan olinmaydi.",
+      "h1": "Bozor Narxida — Toshkent bozorlari va do'konlaridagi narxlarni onlayn solishtiring"
     },
     "card": {
       "addToFav": "Sevimlilarga qo'shish",
@@ -579,6 +581,11 @@
       "othersCheaper": "{pct}% arzon",
       "seller": "Sotuvchi",
       "sellerCall": "Qo'ng'iroq",
+      "sellerHours": {
+        "openNow": "Hozir ochiq",
+        "closedToday": "Yopiq · bugun {hours}",
+        "dayOff": "Bugun dam olish kuni"
+      },
       "sellerMessage": "Yozish",
       "sellerRatings": "{n} baho · {p} mahsulot",
       "atMarketPrice": "Bozor narxida",
@@ -624,7 +631,65 @@
       "holdAlready": "Bu mahsulot allaqachon band qilingan.",
       "holdError": "Xatolik yuz berdi",
       "buyersRecent": "kishi so'nggi 7 kunda sotib oldi",
-      "viewersRecent": "kishi so'nggi 7 kunda ko'rdi"
+      "viewersRecent": "kishi so'nggi 7 kunda ko'rdi",
+      "showroom": {
+        "buyNow": "Sotib olish",
+        "outOfStock": "Tugagan",
+        "reserve": "Band qilish · 24 soat",
+        "reserveShort": "Band qilish",
+        "pickup": "Borib olaman",
+        "pickupText": "O'zingiz borib olasiz",
+        "telegramAria": "Sotuvchiga Telegram orqali yozish",
+        "whatsappAria": "Sotuvchiga WhatsApp orqali yozish",
+        "negotiate": "Narx kelishish",
+        "verified": "Tasdiqlangan sotuvchi",
+        "avgShort": "o'rtacha {price}",
+        "cheaperBy": "{pct}% arzon",
+        "pricierBy": "{pct}% qimmat",
+        "chapterPrice": "Narx",
+        "priceQ1": "Bu narx bozorda",
+        "priceQ2": "qanday?",
+        "meterBasis": "BN'dagi {n} ta do'kon narxi va bozor o'rtachasi asosida",
+        "meterBasisAvg": "Bozordagi o'rtacha narx asosida",
+        "meterAria": "Shu narx {price} so'm. Bozordagi o'rtacha {avg} so'm. Oraliq {lo} dan {hi} gacha.",
+        "thisPrice": "Shu narx",
+        "zoneCheap": "Arzon",
+        "zoneFair": "Bozor narxida",
+        "zoneExpensive": "Qimmat",
+        "chapterGet": "Olish",
+        "getQ1": "Qanday",
+        "getQ2": "olasiz?",
+        "negotiateTitle": "Narx kelishish — tayyor xabar",
+        "sendTelegram": "Telegram'da yuborish",
+        "sendWhatsapp": "WhatsApp'da yuborish",
+        "chapterSeller": "Sotuvchi",
+        "sellerQ1": "Kimdan",
+        "sellerQ2": "olasiz?",
+        "directions": "Yo'nalish",
+        "finalBuy": "Sotib olish — {price}",
+        "scrollHint": "Pastga suring",
+        "qtyLess": "Miqdorni kamaytirish",
+        "qtyMore": "Miqdorni oshirish",
+        "video": "Video",
+        "play": "Videoni boshlash",
+        "pause": "Videoni to'xtatish",
+        "mute": "Ovozni o'chirish",
+        "unmute": "Ovozni yoqish",
+        "mediaN": "{n}-media",
+        "mediaGroup": "Mahsulot rasmlari va videosi",
+        "linkCopied": "Havola nusxalandi",
+        "meterEmpty": "Bu mahsulot uchun bozor narxi hali yig'ilmoqda. Narx tushsa — darhol xabar beramiz.",
+        "offerInApp": "BN chatda taklif berish",
+        "messageCopied": "Xabar nusxalandi — Telegram'da joylashtiring",
+        "cartShort": "Savatga"
+      },
+      "deal": {
+        "title": "Siz kelishgan narx",
+        "expired": "Muddati tugadi",
+        "heldFor": "{time} band — savatga qo'shib sotib oling",
+        "hours": "{n} soat",
+        "minutes": "{n} daqiqa"
+      }
     },
     "cart": {
       "title": "Savat",
@@ -739,7 +804,8 @@
       "emptyTitle": "Hozircha bozor ro'yxatga olinmagan",
       "emptyText": "Tez orada Toshkent bozorlari ochiladi.",
       "shopN": "{n} do'kon",
-      "allTumans": "Barchasi"
+      "allTumans": "Barchasi",
+      "shopsSoon": "Do'konlar tez kunda"
     },
     "favorites": {
       "title": "Sevimlilar",
@@ -758,7 +824,10 @@
     "shopCard": {
       "verifiedRetail": "Tasdiqlangan sotuvchi",
       "verifiedWholesale": "Tasdiqlangan ulgurji sotuvchi",
-      "productsN": "{n} ta"
+      "productsN": "{n} ta",
+      "productsLabel": "{n} ta mahsulot",
+      "newBadge": "Yangi",
+      "newBadgeHint": "Hali baho qo'yilmagan"
     },
     "sellerReg": {
       "titleGate": "Sotuvchi bo'lish",
@@ -1177,7 +1246,9 @@
       "emptyText": "Buyurtma holati o'zgarganda va narx tushganda shu yerda xabar beramiz.",
       "unreadN": "{n} yangi",
       "markAll": "Hammasini o'qildi",
-      "view": "Ko'rish →"
+      "view": "Ko'rish →",
+      "signInTitle": "Kiring va davom eting",
+      "signInText": "Buyurtma holati va narx tushishi haqidagi xabarlarni ko'rish uchun Humo ID bilan kiring."
     },
     "pages": {
       "locationTitle": "Mening joylashuvim",
@@ -1396,7 +1467,148 @@
       "routeAria": "{name} do'koniga marshrut"
     },
     "shops": {
-      "allTiers": "Barchasi"
+      "allTiers": "Barchasi",
+      "logPurchase": "Xaridni qayd etish",
+      "logPurchaseHint": "Naqd yoki karta bilan qilgan xaridingizni tarixga qo'shing",
+      "title": "Do'konlar",
+      "subtitle": "Reyting va xaridor faolligiga qarab AI saralagan ro'yxat",
+      "tabAll": "Umumiy",
+      "tabMarket": "Bozordagi do'konlar",
+      "tabOther": "Boshqa do'konlar",
+      "empty": "Do'kon topilmadi"
+    },
+    "catalogPage": {
+      "subtitle": "Barcha kategoriyalar",
+      "empty": "Hozircha kategoriya yo'q",
+      "allN": "Barcha {n} ta",
+      "noChildren": "Bo'linmalar keyin qo'shiladi. Hozircha to'g'ridan-to'g'ri kategoriya ochiladi."
+    },
+    "marketPage": {
+      "address": "Manzil",
+      "hours": "Ish vaqti",
+      "shops": "Do'konlar",
+      "mapTitle": "Xarita",
+      "mapSub": "Bozor joylashuvi",
+      "sections": "Bo'limlar",
+      "shopsTitle": "Bu bozordagi do'konlar",
+      "shopsOnline": "{n} ta do'kon onlaynda",
+      "emptyTitle": "Hali do'kon yo'q",
+      "emptyText": "Bu bozordan birinchi bo'lib siz chiqing.",
+      "productsTitle": "Bu bozordagi mahsulotlar"
+    },
+    "shopPage": {
+      "nexusProfileAria": "Nexus profilga o'tish",
+      "productsTitle": "Mahsulotlar",
+      "emptyTitle": "Hali mahsulot yo'q",
+      "emptyText": "Bu do'kon hozircha mahsulot qo'shmagan.",
+      "mapTitle": "Xarita",
+      "mapSub": "Do'konga borish uchun",
+      "openRoute": "Yo'nalishni ochish",
+      "follow": "Obuna bo'lish",
+      "following": "Obuna",
+      "scanOk": "Skanlash muvaffaqiyatli",
+      "scanQuestion": "Nima qilmoqchisiz?",
+      "scanBuy": "Xarid qilaman",
+      "scanBuyHint": "Mahsulotni tanlab For Pay hamyoni bilan to'lang",
+      "scanBought": "Xarid qildim",
+      "scanBoughtHint": "Naqd/karta bilan to'lagan xaridni tarixga qo'shish",
+      "scanFoot": "Muddat yaqinlashsa yoki arzon variant paydo bo'lsa xabar beramiz."
+    },
+    "shopChat": {
+      "trigger": "Yozishish",
+      "subtitle": "Do'kon bilan chat",
+      "close": "Yopish",
+      "discussing": "Muhokamada",
+      "emptyTitle": "Hozircha xabar yo'q.",
+      "emptyText": "Do'konga savolingizni yozing yoki narx taklif qiling.",
+      "makeOffer": "Narx taklif qilish",
+      "placeholder": "Xabar yozing...",
+      "send": "Yuborish",
+      "offer": "Narx taklifi",
+      "counter": "Qarshi taklif",
+      "stPending": "Kutilmoqda",
+      "stAccepted": "Qabul qilindi",
+      "stRejected": "Rad etildi",
+      "stCountered": "Qarshi taklif berildi",
+      "pctOfListing": "E'lon narxining {pct}% i",
+      "reject": "Rad",
+      "accept": "Qabul",
+      "callRequest": "Qo'ng'iroq so'rovi",
+      "offerTitle": "Narx taklif qiling",
+      "cancel": "Bekor qilish",
+      "yourOffer": "Sizning taklifingiz",
+      "minHint": "Minimal: {amount} (e'lon narxining 30%i)",
+      "maxHint": "Maksimal: {amount} (e'lon narxi)",
+      "offerAria": "Taklif narxi",
+      "ofListing": "E'londan",
+      "acceptChance": "Qabul ehtimoli",
+      "notePh": "Ixtiyoriy izoh (nima uchun shu narxni taklif qilyapsiz)...",
+      "sendOffer": "Taklif yuborish"
+    },
+    "purchase": {
+      "title": "Xarid qildim",
+      "close": "Yopish",
+      "errNoTitle": "Mahsulot nomini yozing yoki ro'yxatdan tanlang",
+      "errGeneric": "Xato",
+      "errNetwork": "Tarmoq xatosi",
+      "saved": "Xaridingiz saqlandi",
+      "savedHint": "Muddati yaqinlashsa xabar beramiz.",
+      "pickLabel": "Do'kon mahsulotlaridan tanlang",
+      "searchPh": "Nom bo'yicha qidirish...",
+      "notFound": "Topilmadi",
+      "or": "— yoki —",
+      "customLabel": "Nom qo'lda kiriting",
+      "customPh": "Masalan: Yerto'la olma 2 kg",
+      "qty": "Miqdor",
+      "price": "Narx ({currency})",
+      "save": "Saqlash",
+      "pushHint": "Muddati yaqinlashsa Web Push orqali xabar beramiz."
+    },
+    "shopQr": {
+      "title": "Do'kon uchun QR-kod (premium)",
+      "text": "Chop etib do'koningizga qo'ying. Xaridor skan qilsa Bozor Narxida'dan For Pay bilan xarid qiladi yoki xaridni tarixga qo'shadi.",
+      "themeLabel": "Fon rejimi",
+      "themeDark": "Tungi",
+      "themeLight": "Tongi",
+      "langLabel": "Til (bittadan uchtagacha)",
+      "langsHint": "Bitta chop etilgan varaqda {n} til birga chiqadi.",
+      "sizeLabel": "Hajmi:",
+      "sizeAria": "Chop etish hajmi",
+      "sizeA5": "A5 (o'rta)",
+      "sizeA4": "A4 (katta)",
+      "print": "Chop etish",
+      "pngOnly": "Faqat QR (PNG)"
+    },
+    "map": {
+      "yandex": "Yandex xaritada",
+      "directions": "Yo'l ko'rsatish",
+      "legendMarkets": "Bozorlar",
+      "legendPremium": "Premium",
+      "legendVerified": "Tasdiqlangan",
+      "legendRegular": "Oddiy",
+      "open": "Ochish"
+    },
+    "stories": {
+      "title": "Do'konlar hozir",
+      "subtitle": "Nexus'dagi 24 soatlik hikoyalar",
+      "aria": "{name} hikoyasi"
+    },
+    "garage": {
+      "title": "Mashinamga mos"
+    },
+    "heroAd": {
+      "learnMore": "Batafsil",
+      "slot": "SLOT {n}",
+      "slotFree": "BO'SH",
+      "slotAria": "Slot {n}",
+      "title": "Bu yerda sizning reklamangiz",
+      "text": "Kunlik mijozlar Sizning reklamangizni ko'radi",
+      "placeAd": "Reklama qo'yish"
+    },
+    "cheapest": {
+      "title": "Bugungi eng arzon",
+      "subtitle": "Bozor o'rtachasidan past yoki hafta ichida tushgan",
+      "seeAll": "Barchasi"
     },
     "trending": {
       "title": "Hozir trendda",
@@ -1410,6 +1622,91 @@
     },
     "newShops": {
       "text": "Bu hafta <b>{n} ta</b> yangi do'kon qo'shildi — ko'rish"
+    },
+    "tier": {
+      "NEW": "Yangi",
+      "TRUSTED": "Ishonchli",
+      "VERIFIED": "Tasdiqlangan",
+      "PREMIUM": "Premium"
+    },
+    "seo": {
+      "homeTitle": "Bozor Narxida — O'zbekiston bozorlari va do'konlari onlayn",
+      "homeDesc": "O'zbekiston bozorlari va do'konlari onlayn. Har mahsulot narxi bozor o'rtachasi bilan solishtiriladi. Ko'rib sotib olish, xavfsiz to'lov, rasmiy sotuvchilar.",
+      "waitlistDesc": "Bozor Narxida sotuvchilari ro'yxatiga yoziling: telefon raqamingizni qoldiring — savdo ochilishi bilan qo'ng'iroq qilamiz va birinchi sotuvchilardan bo'lasiz.",
+      "searchTitle": "Mahsulot qidirish",
+      "searchDesc": "Toshkent bozorlari va do'konlaridagi mahsulotlarni qidiring, narxlarni bozor o'rtachasi bilan solishtiring.",
+      "catalogDesc": "Bozor Narxida katalogi: barcha kategoriyalar bo'yicha bozor va do'kon mahsulotlari, narxlar bozor o'rtachasi bilan.",
+      "boycottTitle": "Boykot brendlar",
+      "boycottDesc": "Bozor Narxida platformasida sotilmaydigan brendlar ro'yxati va sabablari.",
+      "nexusDesc": "Sotuvchilarning postlari, reels va reklamalari. Humo Nexus bilan integratsiya.",
+      "scanTitle": "Skaner",
+      "scanDesc": "Mahsulot rasmini yuklab AI orqali sotayotgan do'konlarni toping.",
+      "sellerDesc": "Do'koningizni onlaynga chiqaring. YaTT yoki MChJ bilan ro'yxatdan o'ting, komissiya 5%.",
+      "wholesaleTitle": "Ulgurji",
+      "wholesaleDesc": "Ulgurji (optom) mahsulotlar — faqat BN do'kon egalari uchun. Katta miqdorda arzon narxlar.",
+      "termsDesc": "Bozor Narxida platformasidan foydalanish qoidalari va shartlari.",
+      "privacyTitle": "Maxfiylik siyosati",
+      "privacyDesc": "Bozor Narxida foydalanuvchi ma'lumotlarini qanday to'playdi, saqlaydi va ishlatadi.",
+      "offerDesc": "Bozor Narxida platformasida xarid va sotuv shartlarining ommaviy oferta shakli.",
+      "orderTitle": "Buyurtma #{code}",
+      "analyticsTitle": "Sotuvchi tahlili",
+      "analyticsReportTitle": "Tahlil hisoboti",
+      "productDesc": "{title} — {price}, {shop} ({place}). Narxni bozor o'rtachasi bilan solishtiring va Bozor Narxida'da xavfsiz buyurtma bering.",
+      "productCheaper": "Bozor o'rtachasidan {pct}% arzon.",
+      "productInspect": "Ko'rib sotib olish mumkin.",
+      "ogProductsN": "{n} ta mahsulot",
+      "ogProductsLabel": "Mahsulot",
+      "ogPriceRange": "Narx diapazoni"
+    },
+    "notFound": {
+      "title": "Sahifa topilmadi",
+      "text": "Bu sahifa o'chirilgan yoki manzil noto'g'ri yozilgan bo'lishi mumkin. Kerakli mahsulotni qidiruv yoki katalog orqali toping."
+    },
+    "fmt": {
+      "mln": "{n} mln",
+      "thousand": "{n} ming",
+      "diffCheaper": "{pct}% arzon",
+      "diffPricier": "{pct}% qimmat",
+      "diffSame": "aynan bozor narxida",
+      "nProducts": "{n} ta mahsulot",
+      "nShops": "{n} ta do'kon",
+      "productsWord": "mahsulot"
+    },
+    "compare": {
+      "loading": "Boshqa do'konlar tekshirilmoqda…",
+      "title": "Boshqa do'konlarda",
+      "foundN": "{n} ta o'xshash mahsulot topildi",
+      "savings": "{amount} tejashingiz mumkin",
+      "cheaperShops": "{n} do'kon bu mahsulotni {pct}% arzon sotmoqda"
+    },
+    "priceDash": {
+      "title": "Bugungi bozor narxlari",
+      "subtitle": "Har kategoriya uchun o'rtacha narx, hafta trendi",
+      "browse": "Bu kategoriya mahsulotlari"
+    },
+    "attrValues": {
+      "months": "{n} oy",
+      "years": "{n} yil",
+      "v": {
+        "yangi": "Yangi",
+        "ishlatilgan": "Ishlatilgan",
+        "restavratsiya": "Restavratsiya",
+        "original": "Original",
+        "analog": "Analog",
+        "dubl": "Dubl",
+        "boshqa": "Boshqa",
+        "old": "Old",
+        "orqa": "Orqa",
+        "chap": "Chap",
+        "o_ng": "O'ng",
+        "yuqori": "Yuqori",
+        "past": "Past",
+        "yoz": "Yoz",
+        "bahor": "Bahor",
+        "kuz": "Kuz",
+        "qish": "Qish",
+        "har_fasl": "Har fasl"
+      }
     }
   },
   "belis": {

@@ -1,19 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
     Store, MapPin, ArrowRight, ChevronRight, Star, Package,
     TrendingDown, Sparkles, Crown, Loader2, Globe, ShoppingBasket, ClipboardList,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import { BN, TIER_META } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
 import { BnProductCard } from "./bn-product-card";
 import { BnHeroSlider } from "./bn-hero-slider";
 // AiQuickHelper + BnShoppingAssistant olib tashlandi — skaner+ovoz yetadi
 import { BnOnboarding } from "./bn-onboarding";
 import { BnLink, useBnBase } from "./bn-nav";
-import { useShopLocationText } from "./bn-cards";
+import { BnShopRating, useShopLocationText } from "./bn-cards";
 import { LiquidGlassNavbar } from "@/components/shared/liquid-glass-navbar";
 import { BnShopStories } from "./bn-shop-stories";
 import { BnReferralHero } from "./bn-referral-hero";
@@ -36,6 +39,8 @@ type FilterKey = "cheap" | "fresh" | "top" | "seasonal";
 
 export interface BnHomeInitial {
     markets: BnMarketDTO[];
+    /** Faol bozorlar umumiy soni (markets — faqat ko'rsatish uchun 6 tasi) */
+    marketCount?: number;
     topShops: BnShopDTO[];
     cheap: BnProductDTO[];
     fresh: BnProductDTO[];
@@ -45,8 +50,10 @@ export interface BnHomeInitial {
 }
 
 export function BnHome({ initial }: { initial: BnHomeInitial }) {
-    const { markets, topShops, cheap, fresh, top, seasonal, forYou } = initial;
+    const { markets, marketCount, topShops, cheap, fresh, top, seasonal, forYou } = initial;
     const t = useTranslations("bn.home");
+    const tCard = useTranslations("bn.shopCard");
+    const fmt = useBnFormat();
     const locText = useShopLocationText();
 
     // ── Mahsulotlar filtri (LiquidGlassNavbar bilan) ────────────────────────
@@ -64,8 +71,17 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
     };
     const active = FILTER_MAP[filter];
 
+    // Kirish kartalari muqovasi: bo'sh coverUrl ("") — `??` ushlamasdi va <img src="">
+    // bo'sh kulrang dog' bo'lib qolardi. Faqat haqiqiy rasmlar; ikkalasiga yetmasa
+    // ikkala karta ham bir xil dizayn fonida (biri rasmli, biri "buzuq" ko'rinmasin).
+    const covers = Array.from(new Set(markets.map(m => m.coverUrl).filter(Boolean)));
+    const [marketsCover, shopsCover] = covers.length >= 2 ? [covers[0], covers[1]] : [null, null];
+
     return (
         <div className="mx-auto max-w-[1280px] px-4 pt-5 pb-10">
+            {/* Sahifa sarlavhasi (SEO + ekran o'quvchi) — vizual dizaynda alohida H1 yo'q */}
+            <h1 className="sr-only">{t("h1")}</h1>
+
             {/* ── Birinchi tashrif — onboarding (faqat bosh sahifada; ilgari layout'da
                    global edi + bn-welcome-tour bilan ikki marta chiqardi) ── */}
             <BnOnboarding />
@@ -86,19 +102,19 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
             <section className="grid grid-cols-2 gap-2 sm:gap-3 mb-8 sm:mb-10">
                 <EntryCard
                     href="/bozorlar"
-                    icon={<Store className="w-6 h-6" />}
+                    Icon={Store}
                     title={t("markets")}
                     text={t("marketsText")}
-                    count={t("marketsCount", { n: markets.length })}
-                    cover={markets[0]?.coverUrl ?? "https://picsum.photos/seed/bn-fallback-1/800/800"}
+                    count={t("marketsCount", { n: marketCount ?? markets.length })}
+                    cover={marketsCover}
                 />
                 <EntryCard
                     href="/dokonlar"
-                    icon={<ShoppingBasket className="w-6 h-6" />}
+                    Icon={ShoppingBasket}
                     title={t("shops")}
                     text={t("shopsText")}
                     count={t("shopsCount", { n: topShops.length })}
-                    cover={markets[2]?.coverUrl ?? markets[0]?.coverUrl ?? "https://picsum.photos/seed/bn-fallback-2/800/800"}
+                    cover={shopsCover}
                 />
             </section>
 
@@ -137,11 +153,13 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
                 />
             )}
 
-            {/* ── TOP 10 ishonchli do'kon ── */}
+            {/* ── TOP 10 ishonchli do'kon ── (getTopShops na baho, na mahsuloti yo'qlarini chiqarmaydi;
+                   10 taga yetmasa sarlavha "TOP 10" deb va'da bermaydi) */}
+            {topShops.length > 0 && (
             <section className="mb-10">
                 <SectionHead
                     title={t("trustedShops")}
-                    subtitle={t("trustedShopsSub")}
+                    subtitle={topShops.length >= 10 ? t("trustedShopsSub") : t("trustedShopsSubRanked")}
                     href="/dokonlar"
                     hrefLabel={t("seeAll")}
                 />
@@ -187,7 +205,7 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
                                             className="px-1.5 py-0.5 rounded-md text-[9px] font-black leading-none flex-shrink-0"
                                             style={{ background: `${TIER_META[s.tier].color}1F`, color: TIER_META[s.tier].color }}
                                         >
-                                            {TIER_META[s.tier].label}
+                                            {fmt.tier(s.tier)}
                                         </span>
                                     )}
                                 </span>
@@ -201,24 +219,36 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
                                 </span>
                             </span>
 
+                            {/* Baho yo'q bo'lsa oltin "0.0" emas — "Yangi" (BnShopRating); mahsulot soni
+                                yorliq bilan — yulduz ostidagi yalang raqam "baho soni" bo'lib o'qilardi */}
                             <span className="flex flex-col items-end flex-shrink-0">
-                                <span className="flex items-center gap-1 text-[12.5px] font-black" style={{ color: BN.gold }}>
-                                    <Star className="w-3.5 h-3.5 fill-current" />
-                                    {s.rating.toFixed(1)}
+                                <span className="text-[12.5px] font-black">
+                                    <BnShopRating rating={s.rating} ratingCount={s.ratingCount} />
                                 </span>
-                                <span className="flex items-center gap-1 text-[10.5px] mt-0.5" style={{ color: BN.text3 }}>
-                                    <Package className="w-3 h-3" />
-                                    {s.productCount}
-                                </span>
+                                {s.productCount > 0 && (
+                                    <span className="flex items-center gap-1 text-[10.5px] mt-0.5 whitespace-nowrap" style={{ color: BN.text3 }}>
+                                        <Package className="w-3 h-3" />
+                                        {tCard("productsLabel", { n: s.productCount })}
+                                    </span>
+                                )}
                             </span>
                         </BnLink>
                     ))}
                 </div>
             </section>
+            )}
 
-            {/* ── Mahsulot filtri (iOS 26 uslubidagi Liquid Glass navbar) ── */}
-            <section className="mb-6 flex justify-center overflow-x-auto no-scrollbar" data-no-swipe>
+            {/* ── Mahsulot filtri (iOS 26 uslubidagi Liquid Glass navbar) ──
+                justify-center + overflow birga bo'lsa, sig'magan pill chapga chiqib ketib,
+                chap qismiga scroll qilib bo'lmasdi. Endi "xavfsiz markaz" (bolada mx-auto):
+                sig'sa markazda, sig'masa chapdan boshlanadi. Mobil'da ekran chetigacha
+                cho'ziladi va chetlari xiralashadi — davomi borligi ko'rinadi. */}
+            <section
+                className="-mx-4 px-4 mb-6 flex overflow-x-auto no-scrollbar [mask-image:linear-gradient(to_right,transparent,#000_16px,#000_calc(100%-16px),transparent)] sm:mx-0 sm:px-0 sm:[mask-image:none]"
+                data-no-swipe
+            >
                 <LiquidGlassNavbar
+                    className="mx-auto flex-shrink-0"
                     tint={navTint}
                     accent="var(--bn-gold)"
                     value={filter}
@@ -416,40 +446,78 @@ function SectionHead({
     );
 }
 
+// next.config.ts `images.remotePatterns` bilan bir xil — boshqa host'da next/image xato beradi
+const NEXT_IMAGE_HOST = /^https:\/\/(?:[a-z0-9-]+\.public\.blob\.vercel-storage\.com|[a-z0-9-]+\.vercel-storage\.com|[a-z0-9-]+\.googleusercontent\.com|picsum\.photos|images\.unsplash\.com|plus\.unsplash\.com)\//i;
+const canOptimize = (src: string) => NEXT_IMAGE_HOST.test(src) || (src.startsWith("/") && !src.startsWith("//"));
+
 function EntryCard({
-    href, icon, title, text, count, cover,
+    href, Icon, title, text, count, cover,
 }: {
     href: string;
-    icon: React.ReactNode;
+    Icon: LucideIcon;
     title: string;
     text: string;
     count: string;
-    cover: string;
+    cover: string | null;
 }) {
     return (
         <BnLink
             href={href}
             className="group relative overflow-hidden rounded-2xl sm:rounded-3xl transition-all active:scale-[0.99]"
-            style={{ border: `1px solid ${BN.border}` }}
+            style={{ border: `1px solid ${BN.border}`, background: BN.surface }}
         >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-                src={cover}
-                alt=""
-                aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
-            />
-            <div
-                className="absolute inset-0"
-                style={{ background: "linear-gradient(105deg, var(--bn-surface) 42%, rgba(0,0,0,0.35) 100%)" }}
-            />
+            {cover ? (
+                <>
+                    {/* Dekorativ muqova — mobil birinchi ekranda turadi va LCP elementi bo'ladi.
+                        next/image kartaga mos o'lcham (WebP/AVIF) beradi; `priority` — lazy emas,
+                        oldindan yuklanadi (lazy bo'lganda LCP kech kelardi). */}
+                    {canOptimize(cover) ? (
+                        <Image
+                            src={cover}
+                            alt=""
+                            aria-hidden="true"
+                            fill
+                            priority
+                            sizes="(min-width: 1280px) 620px, 50vw"
+                            className="object-cover transition-transform duration-500 group-hover:scale-[1.06]"
+                        />
+                    ) : (
+                        // Boshqa host — next.config'da yo'q, oddiy lazy <img>
+                        <img
+                            src={cover}
+                            alt=""
+                            aria-hidden="true"
+                            loading="lazy"
+                            decoding="async"
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
+                        />
+                    )}
+                    <div
+                        className="absolute inset-0"
+                        style={{ background: "linear-gradient(105deg, var(--bn-surface) 42%, rgba(0,0,0,0.35) 100%)" }}
+                    />
+                </>
+            ) : (
+                // Muqova yo'q — bo'sh <img> o'rniga dizayn foni: tilla nur + katta xira ikonka
+                <div aria-hidden="true" className="absolute inset-0 pointer-events-none">
+                    <div
+                        className="absolute inset-0"
+                        style={{ background: `radial-gradient(120% 100% at 100% 0%, ${BN.goldSoft} 0%, transparent 65%)` }}
+                    />
+                    <Icon
+                        className="absolute -right-3 -bottom-5 w-28 h-28 sm:w-40 sm:h-40 opacity-[0.12] transition-transform duration-500 group-hover:scale-[1.06]"
+                        style={{ color: BN.gold }}
+                        strokeWidth={1.4}
+                    />
+                </div>
+            )}
 
             <div className="relative flex flex-col justify-between p-3 sm:p-5 min-h-[140px] sm:min-h-[168px]">
                 <span
                     className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl grid place-items-center"
                     style={{ background: BN.goldSoft, color: BN.gold }}
                 >
-                    {icon}
+                    <Icon className="w-6 h-6" />
                 </span>
 
                 <div>

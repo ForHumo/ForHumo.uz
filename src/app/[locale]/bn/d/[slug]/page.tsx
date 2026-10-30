@@ -1,36 +1,34 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { BN_SITE, bnCity, bnPageMeta } from "@/lib/bn-seo";
 import { notFound } from "next/navigation";
 import { BnShopPage } from "@/components/bn/bn-pages";
 import { getShopBySlug } from "@/lib/bn-data";
 import { prisma } from "@/lib/prisma";
 import { BnStoreLd, BnBreadcrumbLd } from "@/components/bn/bn-jsonld";
+import { getBnFormat } from "@/lib/bn-format-server";
+import { bnNotFoundMeta } from "@/lib/bn-seo-server";
 
 export const dynamic = "force-dynamic";
 
 type Locale = "uz" | "ru" | "en";
 
-function formatUZS(n: number, locale: Locale): string {
-    const bcp = locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : "uz-Latn-UZ";
-    const num = n.toLocaleString(bcp, { maximumFractionDigits: 0 });
-    return locale === "ru" ? `${num} сум` : locale === "en" ? `${num} UZS` : `${num} so'm`;
-}
-
-function buildTitle(locale: Locale, name: string, marketName: string | null, city: string): string {
+// Sarlavha "| Bozor Narxida" shabloni bilan (layout) — suffiks bu yerda yozilmaydi
+function buildTitle(name: string, marketName: string | null, city: string): string {
     const loc = marketName ? `${marketName}, ${city}` : city;
-    if (locale === "ru") return `${name} — ${loc} · Bozor Narxida`;
-    if (locale === "en") return `${name} — ${loc} · Bozor Narxida`;
-    return `${name} — ${loc} · Bozor Narxida`;
+    return `${name} — ${loc}`;
 }
 
-function buildDescription(locale: Locale, name: string, city: string, marketName: string | null, productCount: number, rating: number, ratingCount: number, priceLine: string | null): string {
+// productsText — tayyor "N ta mahsulot" (ICU plural, getBnFormat)
+function buildDescription(locale: Locale, name: string, city: string, marketName: string | null, productsText: string, rating: number, ratingCount: number, priceLine: string | null): string {
     const ratingBit = ratingCount > 0 ? `★${rating.toFixed(1)} (${ratingCount})` : "";
     if (locale === "ru") {
-        return `${name} — ${marketName ? `магазин на ${marketName}, ` : ""}${city}. ${productCount} товаров${ratingBit ? ` · ${ratingBit}` : ""}${priceLine ? ` · ${priceLine}` : ""}. Заказ с защитой эскроу на Bozor Narxida.`;
+        return `${name} — ${marketName ? `магазин в «${marketName}», ` : ""}${city}. ${productsText}${ratingBit ? ` · ${ratingBit}` : ""}${priceLine ? ` · ${priceLine}` : ""}. Заказ с защитой эскроу на Bozor Narxida.`;
     }
     if (locale === "en") {
-        return `${name} — ${marketName ? `shop at ${marketName}, ` : ""}${city}. ${productCount} items${ratingBit ? ` · ${ratingBit}` : ""}${priceLine ? ` · ${priceLine}` : ""}. Order with escrow protection on Bozor Narxida.`;
+        return `${name} — ${marketName ? `shop at ${marketName}, ` : ""}${city}. ${productsText}${ratingBit ? ` · ${ratingBit}` : ""}${priceLine ? ` · ${priceLine}` : ""}. Order with escrow protection on Bozor Narxida.`;
     }
-    return `${name} — ${marketName ? `${marketName} bozorida ` : ""}${city}dagi do'kon. ${productCount} ta mahsulot${ratingBit ? ` · ${ratingBit}` : ""}${priceLine ? ` · ${priceLine}` : ""}. Bozor Narxida'da eskrow himoyasi bilan buyurtma.`;
+    return `${name} — ${marketName ? `${marketName} bozorida ` : ""}${city}dagi do'kon. ${productsText}${ratingBit ? ` · ${ratingBit}` : ""}${priceLine ? ` · ${priceLine}` : ""}. Bozor Narxida'da eskrow himoyasi bilan buyurtma.`;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: Locale; slug: string }> }): Promise<Metadata> {
@@ -38,8 +36,10 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
     const s = await prisma.bnShop.findUnique({
         where: { slug },
         select: {
-            name: true, description: true, city: true, rating: true, ratingCount: true, productCount: true,
-            market: { select: { name: true } },
+            id: true, name: true, description: true, city: true,
+            market: { select: { name: true, nameRu: true } },
+            // Sonlar kesh maydonlardan emas — sahifa bilan bir xil (faol mahsulot, ko'rinadigan sharh)
+            _count: { select: { products: { where: { isActive: true, hidden: false } } } },
             products: {
                 where: { isActive: true, hidden: false, isWholesale: false },
                 select: { price: true },
@@ -48,54 +48,47 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
         },
     });
 
-    if (!s) return { title: slug.replace(/-/g, " ") };
+    if (!s) return bnNotFoundMeta(locale);
+    const rv = await prisma.bnShopReview.aggregate({
+        where: { shopId: s.id, hidden: false },
+        _avg: { rating: true },
+        _count: { _all: true },
+    });
+    const rating = rv._avg.rating ?? 0;
+    const ratingCount = rv._count._all;
 
     const prices = s.products.map(p => p.price).filter(Boolean);
     const minP = prices.length ? Math.min(...prices) : null;
     const maxP = prices.length ? Math.max(...prices) : null;
+    const fmt = await getBnFormat(locale);
     const priceLine = minP != null && maxP != null
-        ? (minP === maxP ? formatUZS(minP, locale) : `${formatUZS(minP, locale)} — ${formatUZS(maxP, locale)}`)
+        ? (minP === maxP ? fmt.price(minP) : `${fmt.price(minP)} — ${fmt.price(maxP)}`)
         : null;
 
-    const title = buildTitle(locale, s.name, s.market?.name ?? null, s.city);
-    const description = s.description ?? buildDescription(locale, s.name, s.city, s.market?.name ?? null, s.productCount, s.rating, s.ratingCount, priceLine);
+    // DB'dagi o'zbekcha nomlar tilga moslanadi (bozor — nameRu, shahar — bnCity)
+    const marketName = s.market ? (locale === "ru" && s.market.nameRu ? s.market.nameRu : s.market.name) : null;
+    const city = bnCity(s.city, locale);
+    const title = buildTitle(s.name, marketName, city);
+    const description = s.description ?? buildDescription(locale, s.name, city, marketName, fmt.products(s._count.products), rating, ratingCount, priceLine);
 
-    const ogImage = `https://bozornarxida.uz/api/og/bn/shop/${encodeURIComponent(slug)}`;
-    const pageUrl = `https://bozornarxida.uz/d/${slug}`;
+    const ogImage = `${BN_SITE}/api/og/bn/shop/${encodeURIComponent(slug)}${locale === "uz" ? "" : `?l=${locale}`}`;
 
     return {
-        title: { absolute: title },
+        title,
         description,
-        alternates: {
-            canonical: pageUrl,
-            languages: {
-                "uz": `https://bozornarxida.uz/uz/d/${slug}`,
-                "ru": `https://bozornarxida.uz/ru/d/${slug}`,
-                "en": `https://bozornarxida.uz/en/d/${slug}`,
-            },
-        },
-        openGraph: {
-            type: "website",
-            title,
-            description,
-            url: pageUrl,
-            siteName: "Bozor Narxida",
+        ...bnPageMeta({
+            locale, path: `/d/${slug}`, title, description,
             images: [{ url: ogImage, width: 1200, height: 630, alt: s.name }],
-        },
-        twitter: {
-            card: "summary_large_image",
-            title,
-            description,
-            images: [ogImage],
-        },
+        }),
     };
 }
 
 export default async function Page({ params }: { params: Promise<{ locale: Locale; slug: string }> }) {
-    const { slug } = await params;
+    const { locale, slug } = await params;
     const data = await getShopBySlug(slug);
     if (!data) notFound();
     const s = data.shop;
+    const t = await getTranslations({ locale, namespace: "bn" });
 
     // Ochiq maydonlar — LocalBusiness JSON-LD uchun (DTO'da yo'q)
     const extras = await prisma.bnShop.findUnique({
@@ -126,8 +119,8 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
                 ratingCount={s.ratingCount || null}
             />
             <BnBreadcrumbLd items={[
-                { name: "Bosh sahifa", url: "/" },
-                { name: "Do'konlar", url: "/dokonlar" },
+                { name: t("breadcrumb.home"), url: "/" },
+                { name: t("shops.title"), url: "/dokonlar" },
                 { name: s.name, url: `/d/${s.slug}` },
             ]} />
             <BnShopPage shop={data.shop} products={data.products} />
