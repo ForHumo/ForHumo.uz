@@ -4954,3 +4954,56 @@ model YukDriver {
   @@index([routeFromCity, routeToCity])
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Rieltor vositasi (ichki, 2-3 kishilik oq ro'yxat) — sotuv e'lonlari ↔ xaridor
+// so'rovlari matching + kunlik 9:00 hisobot. Data TASHQARIDAN (CSV import) keladi;
+// har import eski snapshot'ni ALMASHTIRADI (begonalar ma'lumoti to'planib qolmaydi).
+// Public UI yo'q — faqat bot webhook + cron.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Sotuvdagi ko'chmas mulk (import qilingan snapshot)
+model RealtorListing {
+  id           String    @id @default(cuid())
+  link         String?                       // manba havolasi
+  propertyType String?                        // kvartira/uy/tijorat/yer...
+  price        Float?
+  currency     String?                        // "y.e" (USD) / "so'm"
+  rooms        Int?
+  areaM2       Float?
+  floor        String?
+  district     String?                        // tuman
+  addressText  String?                        // mo'ljal / ko'cha
+  lat          Float?
+  lng          Float?
+  condition    String?
+  description  String?
+  sellerName   String?
+  phone        String?
+  postedBy     String?                        // egasi / rieltor
+  listedAt     DateTime?
+  photos       String[]                       // rasm URL'lari
+  importedAt   DateTime  @default(now())
+
+  @@index([propertyType, district])
+}
+
+// Xaridor so'rovi (import qilingan snapshot)
+model RealtorBuyer {
+  id           String    @id @default(cuid())
+  link         String?
+  propertyType String?
+  budgetMin    Float?
+  budgetMax    Float?
+  currency     String?
+  rooms        Int?
+  district     String?
+  addressText  String?
+  phone        String?
+  name         String?
+  requestedAt  DateTime?
+  note         String?
+  importedAt   DateTime  @default(now())
+
+  @@index([propertyType, district])
+}
+
