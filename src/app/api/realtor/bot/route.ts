@@ -4,7 +4,7 @@
 
 import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isAllowed, sendMessage, downloadFile, importCsv, buildDailyReport } from "@/lib/realtor-bot";
+import { isAllowed, sendMessage, downloadFile, importCsv, buildDailyReport, sendDailyReport } from "@/lib/realtor-bot";
 import { aiText, aiAvailable } from "@/lib/ai";
 
 export const runtime = "nodejs";
@@ -39,13 +39,13 @@ export async function POST(req: Request) {
 }
 
 const WELCOME =
-    "<b>Rieltor bot</b>\n\n" +
-    "Buyruqlar:\n" +
+    "🏘 <b>Rieltor bot</b>\n\n" +
+    "📋 Buyruqlar:\n" +
     "/report — hozirgi mos juftliklar hisoboti\n" +
     "/stats — snapshotdagi sotuv/xaridor soni\n\n" +
-    "CSV yuklash: sotuv yoki xaridor CSV faylini shu chatga yuboring (eski snapshot almashtiriladi).\n" +
-    "Savol: masalan \"qaysi tumanda eng arzon kvartira\" — AI joriy data ustida javob beradi.\n\n" +
-    "Har kuni 09:00da mos juftliklar hisoboti avtomatik keladi.";
+    "📄 CSV yuklash: sotuv yoki xaridor CSV faylini shu chatga yuboring (eski snapshot almashtiriladi).\n" +
+    "💬 Savol: masalan \"qaysi tumanda eng arzon kvartira\" — AI joriy data ustida javob beradi.\n\n" +
+    "🕘 Har kuni 09:00da mos juftliklar hisoboti avtomatik keladi.";
 
 async function handle(msg: TgMsg, chatId: number) {
     // CSV hujjat
@@ -62,7 +62,7 @@ async function handle(msg: TgMsg, chatId: number) {
             await sendMessage(chatId, "CSV turini aniqlab bo'lmadi. Sarlavhada 'narx' (sotuv) yoki 'byudjet_min' (xaridor) bo'lishi kerak.");
         } else {
             const label = res.kind === "sale" ? "sotuv e'loni" : "xaridor so'rovi";
-            await sendMessage(chatId, `Import tayyor: <b>${res.count}</b> ta ${label} yangilandi (eski snapshot almashtirildi).`);
+            await sendMessage(chatId, `✅ Import tayyor: <b>${res.count}</b> ta ${label} yangilandi (eski snapshot almashtirildi).`);
         }
         return;
     }
@@ -70,10 +70,10 @@ async function handle(msg: TgMsg, chatId: number) {
     const text = (msg.text || "").trim();
 
     if (text === "/start" || text === "/help") { await sendMessage(chatId, WELCOME); return; }
-    if (text === "/report") { await sendMessage(chatId, await buildDailyReport()); return; }
+    if (text === "/report") { await sendDailyReport(chatId, await buildDailyReport()); return; }
     if (text === "/stats") {
         const [s, b] = await Promise.all([prisma.realtorListing.count(), prisma.realtorBuyer.count()]);
-        await sendMessage(chatId, `Hozirgi snapshot — Sotuv: <b>${s}</b> · Xaridor: <b>${b}</b>`);
+        await sendMessage(chatId, `📊 Hozirgi snapshot — Sotuv: <b>${s}</b> · Xaridor: <b>${b}</b>`);
         return;
     }
 

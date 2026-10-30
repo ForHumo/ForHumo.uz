@@ -192,25 +192,44 @@ function esc(s?: string | null): string {
     return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-// Bitta e'lon sarlavhasi (narx · xona · telefon · link)
-function listingHead(l: RealtorListing, i: number): string {
-    const bits = [money(l.price, l.currency)];
-    if (l.rooms != null) bits.push(`${l.rooms} xona`);
-    const meta = [l.phone ? esc(l.phone) : null, l.link ? `<a href="${esc(l.link)}">link</a>` : null]
-        .filter(Boolean).join(" · ");
-    return `<b>${i}. ${esc(l.propertyType || "mulk")} · ${esc(l.district || "")}</b>\n` +
-        `Sotuv: ${bits.join(" · ")}${meta ? ` · ${meta}` : ""}`;
+// ── Hisobot formati (emoji FAQAT shu ichki botда — oson ajratish uchun) ──
+function typeIcon(t?: string | null): string {
+    const k = (t || "").toLowerCase();
+    if (/kvartira|kvartera|apartment|flat|кварт/.test(k)) return "🏢";
+    if (/tijorat|kommer|commercial|ofis|office|коммер|офис/.test(k)) return "🏬";
+    if (/\buy\b|hovli|house|\bdom\b|дом|ҳовли|ховли/.test(k)) return "🏠";
+    if (/yer|uchastka|land|plot|участ/.test(k)) return "🏞";
+    return "🏘";
 }
-// E'longa mos bitta xaridor qatori
-function buyerLine(b: RealtorBuyer, reasons: string[]): string {
+// Mos-kuch belgisi: 4/4 yashil, 3/4 sariq, 2/4 ko'k
+function strengthDot(score: number): string {
+    if (score >= 1) return "🟢";
+    if (score >= 0.75) return "🟡";
+    return "🔵";
+}
+
+// Bitta e'lon sarlavhasi
+function listingHead(l: RealtorListing, i: number): string {
+    const bits = [`💰 ${money(l.price, l.currency)}`];
+    if (l.rooms != null) bits.push(`${l.rooms} xona`);
+    if (l.phone) bits.push(`📞 ${esc(l.phone)}`);
+    if (l.link) bits.push(`🔗 <a href="${esc(l.link)}">link</a>`);
+    if (l.photos?.length) bits.push(`🖼 ${l.photos.length}`);
+    return `${typeIcon(l.propertyType)} <b>${i}. ${esc(l.propertyType || "mulk")} · ${esc(l.district || "")}</b>\n` +
+        bits.join(" · ");
+}
+// E'longa mos bitta xaridor qatori (chapda mos-kuch belgisi)
+function buyerLine(b: RealtorBuyer, reasons: string[], score: number): string {
     const budget = `${money(b.budgetMin, b.currency)}–${money(b.budgetMax, b.currency)}`;
     const bits = [b.name ? esc(b.name) : "xaridor", `byudjet ${budget}`];
     if (b.rooms != null) bits.push(`${b.rooms} xona`);
-    if (b.phone) bits.push(esc(b.phone));
-    return `- ${bits.join(" · ")} [${reasons.join(", ")}]`;
+    if (b.phone) bits.push(`📞 ${esc(b.phone)}`);
+    return `${strengthDot(score)} ${bits.join(" · ")} [${reasons.join(", ")}]`;
 }
 
-export async function buildDailyReport(maxListings = 40): Promise<string> {
+export interface DailyReport { text: string; photos: { url: string; caption: string }[] }
+
+export async function buildDailyReport(maxListings = 40): Promise<DailyReport> {
     const [listings, buyers] = await Promise.all([
         prisma.realtorListing.findMany({ take: 2000 }),
         prisma.realtorBuyer.findMany({ take: 2000 }),
@@ -218,32 +237,57 @@ export async function buildDailyReport(maxListings = 40): Promise<string> {
     const matches = findMatches(listings, buyers, 1000);
     const today = new Date().toLocaleDateString("uz-UZ");
     const times = [...listings, ...buyers].map((r) => r.importedAt.getTime());
-    const freshness = times.length ? `\nData yangilangan: ${new Date(Math.max(...times)).toLocaleString("uz-UZ")}` : "";
+    const newest = times.length ? Math.max(...times) : 0;
+    const ageH = newest ? (Date.now() - newest) / 3600000 : 0;
+    const freshness = newest ? `\n🕐 Data yangilangan: ${new Date(newest).toLocaleString("uz-UZ")}` : "";
+    // 24 soatdan eski bo'lsa — cron eski datani takrorlamasligi uchun ogohlantirish
+    const stale = newest && ageH > 24
+        ? `\n⚠️ <b>DATA ESKIRGAN</b> — oxirgi yangilanish ${Math.floor(ageH)} soat oldin. Yangi CSV yuklang.`
+        : "";
 
     // E'lon bo'yicha guruhlash — matches score bo'yicha tartibli, Map tartibni saqlaydi.
-    const groups = new Map<string, { listing: RealtorListing; buyers: { buyer: RealtorBuyer; reasons: string[] }[] }>();
+    const groups = new Map<string, { listing: RealtorListing; buyers: { buyer: RealtorBuyer; reasons: string[]; score: number }[] }>();
     for (const m of matches) {
         let g = groups.get(m.listing.id);
         if (!g) { g = { listing: m.listing, buyers: [] }; groups.set(m.listing.id, g); }
-        g.buyers.push({ buyer: m.buyer, reasons: m.reasons });
+        g.buyers.push({ buyer: m.buyer, reasons: m.reasons, score: m.score });
     }
 
     const head =
-        `<b>Rieltor hisoboti — ${today}</b>\n` +
+        `🏘 <b>Rieltor hisoboti — ${today}</b>${stale}\n` +
         `Sotuv: ${listings.length} · Xaridor: ${buyers.length} · Mos juftlik: ${matches.length} · Mos e'lon: ${groups.size}${freshness}\n`;
 
     if (!groups.size) {
-        return head + `\nMos juftlik topilmadi. (Data yuklang: sotuv + xaridor CSV)`;
+        return { text: head + `\nMos juftlik topilmadi. (Data yuklang: sotuv + xaridor CSV)`, photos: [] };
     }
 
     const shown = [...groups.values()].slice(0, maxListings);
     const blocks = shown.map((g, i) => {
-        const label = g.buyers.length > 1 ? `Mos xaridorlar (${g.buyers.length}):` : "Mos xaridor:";
-        const subs = g.buyers.map((x) => buyerLine(x.buyer, x.reasons)).join("\n");
+        const label = g.buyers.length > 1 ? `👥 Mos xaridorlar (${g.buyers.length}):` : "👤 Mos xaridor:";
+        const subs = g.buyers.map((x) => buyerLine(x.buyer, x.reasons, x.score)).join("\n");
         return `${listingHead(g.listing, i + 1)}\n${label}\n${subs}`;
     });
     const more = groups.size > shown.length ? `\n\n…va yana ${groups.size - shown.length} ta mos e'lon.` : "";
-    return head + "\n" + blocks.join("\n\n") + more;
+    const text = head + "\n" + blocks.join("\n\n") + more;
+
+    // Top mos e'lonlarning birinchi rasmi (maks 3) — matn ostidan alohida rasm sifatida
+    const photos = shown
+        .filter((g) => g.listing.photos?.length)
+        .slice(0, 3)
+        .map((g) => ({
+            url: g.listing.photos[0],
+            caption: `${typeIcon(g.listing.propertyType)} ${g.listing.propertyType || "mulk"} · ${g.listing.district || ""} — 💰 ${money(g.listing.price, g.listing.currency)}${g.listing.link ? `\n🔗 ${g.listing.link}` : ""}`,
+        }));
+
+    return { text, photos };
+}
+
+// Hisobotni (matn + top rasmlar) bitta chatga yuboradi
+export async function sendDailyReport(chatId: number | string, report: DailyReport) {
+    await sendMessage(chatId, report.text);
+    for (const p of report.photos) {
+        await tg("sendPhoto", { chat_id: chatId, photo: p.url, caption: p.caption });
+    }
 }
 
 export { findMatches };

@@ -3,7 +3,7 @@
 // Hisobot oq ro'yxatdagi 2-3 kishiga bir xil yuboriladi.
 
 import { NextResponse } from "next/server";
-import { allowedIds, sendMessage, buildDailyReport } from "@/lib/realtor-bot";
+import { allowedIds, sendDailyReport, buildDailyReport } from "@/lib/realtor-bot";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +17,6 @@ export async function GET(req: Request) {
     }
     const report = await buildDailyReport();
     const ids = allowedIds();
-    await Promise.all(ids.map((id) => sendMessage(id, report)));
+    await Promise.all(ids.map((id) => sendDailyReport(id, report)));
     return NextResponse.json({ ok: true, sent: ids.length });
 }
