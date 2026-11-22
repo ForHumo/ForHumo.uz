@@ -25,6 +25,12 @@ const DICT: Record<string, [string, string, string]> = {
     "common.title": ["Sarlavha", "Заголовок", "Title"],
     "common.text": ["Matn (ixtiyoriy)", "Текст (необязательно)", "Text (optional)"],
 
+    // ── Qatnashish darvozasi (auth) ──
+    "auth.gateTitle": ["Qatnashish uchun kiring", "Войдите, чтобы участвовать", "Sign in to participate"],
+    "auth.gateDesc": ["Tomosha qilish uchun hisob shart emas. Jamoa yaratish, turnirga ro'yxatdan o'tish va transfer uchun Humo ID bilan kiring.", "Для просмотра аккаунт не нужен. Чтобы создать команду, зарегистрироваться на турнир или сделать трансфер — войдите через Humo ID.", "Viewing needs no account. To create a team, register for a tournament or make a transfer, sign in with Humo ID."],
+    "auth.gateBtn": ["Google bilan kirish", "Войти через Google", "Continue with Google"],
+    "auth.gateLater": ["Keyinroq", "Позже", "Later"],
+
     // ── Status ──
     "st.upcoming": ["Tez orada", "Скоро", "Upcoming"],
     "st.registration": ["Ro'yxat ochiq", "Регистрация открыта", "Registration open"],

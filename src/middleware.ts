@@ -12,10 +12,15 @@ const DOMAIN_PREFIXES: Record<string, string> = {
     "www.bozornarxida.uz": "/bn",
     "belis.uz": "/belis",
     "www.belis.uz": "/belis",
+    // Humo eSport — alohida brend domenlar (hammasi bir deploy'dan /esport'ga).
+    // DNS Vercel'ga yo'naltirilgandagina trafik keladi; yo'naltirilmagan domen zararsiz turadi.
+    "esport.forhumo.uz": "/esport",
+    "www.esport.forhumo.uz": "/esport",
+    "humoesport.uz": "/esport",
+    "www.humoesport.uz": "/esport",
     // Kelajakda user rejasi bo'yicha (barcha bir deploy'dan):
     // "humoai.uz": "/ai",
     // "nexus.uz": "/nexus",
-    // "humoesport.uz": "/esport",
     // "humomarket.uz": "/market",
 };
 

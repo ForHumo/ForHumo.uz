@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import EsportNavbar from "@/components/esport/esport-navbar";
 import { EsServiceWorker } from "@/components/esport/es-service-worker";
+import { EsAuthModal } from "@/components/esport/es-auth-modal";
 
 export function generateMetadata(): Metadata {
     return {
@@ -35,6 +36,7 @@ export default function EsportLayout({ children }: { children: React.ReactNode }
             <div className="flex-1 overflow-y-auto overflow-x-hidden nx-scrollbar">
                 {children}
             </div>
+            <EsAuthModal />
             <EsServiceWorker />
         </div>
     );

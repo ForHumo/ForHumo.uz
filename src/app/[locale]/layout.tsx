@@ -130,7 +130,13 @@ export default async function LocaleLayout({
     // bozornarxida.uz da URL "/bozorlar" ko'rinadi (middleware /uz/bn/... ga
     // rewrite qiladi), shuning uchun yo'l bo'yicha aniqlab bo'lmaydi — host kerak.
     const host = (await headers()).get("host")?.split(":")[0].toLowerCase() ?? "";
-    const publicHost = ["bozornarxida.uz", "www.bozornarxida.uz"].includes(host);
+    // Ommaviy/brend hostlar — AuthBarrier devori YO'Q + global header/footer yopiq
+    // (modulning o'z navbari bor). eSport subdomenlari mustaqil sayt ko'rinadi.
+    const publicHost = [
+        "bozornarxida.uz", "www.bozornarxida.uz",
+        "esport.forhumo.uz", "www.esport.forhumo.uz",
+        "humoesport.uz", "www.humoesport.uz",
+    ].includes(host);
 
     // Providing all messages to the client
     // side is the easiest way to get started
