@@ -15,13 +15,21 @@ import { LanguageSwitcher } from "@/components/ui/language-switcher";
 // YukGo — logistika marketplace: e'lonlarni ko'rish friksiyasiz (kirishsiz).
 // Kirish faqat kontakt ochish / haydovchi bo'lishда YukGo'ning o'z modalida
 // (Telegram Login Widget) so'raladi — global Google devori emas.
+// eSport — tomoshabin oqimi: turnir/efir/jamoa/standings KIRISHSIZ ko'riladi
+// (homiylar olib kelgan auditoriya Google devoriga urilmaydi; SEO ham indekslaydi).
+// Kirish faqat QATNASHISH uchun kerak (jamoa yaratish, ro'yxatdan o'tish, transfer) —
+// har action API'si o'zi 401/403 qaytaradi va UI kirishni so'raydi.
 // Qidiruv tizimlari ham shu tufayli sahifalarni indeksiy oladi.
-const PUBLIC_PREFIXES = ["/bn", "/yukgo"];
+const PUBLIC_PREFIXES = ["/bn", "/yukgo", "/esport"];
+// Ommaviy prefiks ichidagi ISTISNOLAR — bular baribir kirish talab qiladi.
+// eSport admin paneli faqat ega/adminlarga; anonim ko'ra olmaydi.
+const PUBLIC_EXCLUDE = ["/esport/admin"];
 
 function isPublicPath(pathname: string | null): boolean {
     if (!pathname) return false;
     // "/uz/bn/..." → locale prefiksini olib tashlaymiz
     const withoutLocale = pathname.replace(/^\/(uz|ru|en)(?=\/|$)/, "") || "/";
+    if (PUBLIC_EXCLUDE.some(p => withoutLocale === p || withoutLocale.startsWith(p + "/"))) return false;
     return PUBLIC_PREFIXES.some(p => withoutLocale === p || withoutLocale.startsWith(p + "/"));
 }
 

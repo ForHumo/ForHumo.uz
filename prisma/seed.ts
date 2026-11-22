@@ -9,6 +9,7 @@ async function main() {
         { slug: 'mlbb', name: 'Mobile Legends: Bang Bang', teamSize: 5, active: true },
         { slug: 'pubgm', name: 'PUBG Mobile', teamSize: 4, active: true },
         { slug: 'cs2', name: 'Counter-Strike 2', teamSize: 5, active: true },
+        { slug: 'dota2', name: 'Dota 2', teamSize: 5, active: true },
     ];
     for (const g of games) {
         await prisma.esGame.upsert({
@@ -26,7 +27,7 @@ async function main() {
         { name: 'Division 2', tier: 3, capacity: 8 },
         { name: 'Ochiq divizion', tier: 4, capacity: null as number | null },
     ];
-    for (const slug of ['mlbb', 'pubgm', 'cs2']) {
+    for (const slug of ['mlbb', 'pubgm', 'cs2', 'dota2']) {
         const g = await prisma.esGame.findUnique({ where: { slug }, select: { id: true } });
         if (!g) continue;
         for (const d of divisionTemplate) {
