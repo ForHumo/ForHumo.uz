@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { getBnAuth } from "@/lib/bn-auth";
@@ -7,11 +8,12 @@ import { BnSellerAnalytics } from "@/components/bn/bn-seller-analytics";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-    title: "Sotuvchi tahlili",
-    robots: { index: false, follow: false },
-    description: "Do'koningiz reytinglari, sotilmagan mahsulotlar va AI tavsiyalari.",
-};
+// Shaxsiy sahifa — indekslanmaydi; sarlavha tilga mos
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+    const { locale } = await params;
+    const t = await getTranslations({ locale, namespace: "bn" });
+    return { title: t("seo.analyticsTitle"), robots: { index: false, follow: false } };
+}
 
 const BN_HOSTS = ["bozornarxida.uz", "www.bozornarxida.uz"];
 

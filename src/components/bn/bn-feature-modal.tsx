@@ -9,13 +9,14 @@ import { createPortal } from "react-dom";
 import { useLocale } from "next-intl";
 import { X, Rocket, Loader2, CheckCircle2, Clock } from "lucide-react";
 import { BN, fmtBnDateTime } from "@/lib/bn-theme";
-import { formatMoney } from "@/lib/money";
+import { useBnFormat } from "./bn-format-hook";
 
 interface Pricing { hours: number; amount: number; labelUz: string; labelRu: string; labelEn: string; }
 interface Active { id: string; paidAmount: number; startsAt: string; expiresAt: string; }
 interface Data { active: Active | null; pricing: readonly Pricing[]; }
 
 export function BnFeatureButton({ productSlug, compact }: { productSlug: string; compact?: boolean }) {
+    const fmt = useBnFormat();
     const locale = useLocale();
     const [open, setOpen] = useState(false);
     const [data, setData] = useState<Data | null>(null);
@@ -144,7 +145,7 @@ export function BnFeatureButton({ productSlug, compact }: { productSlug: string;
                                             </div>
                                         </div>
                                         <div className="text-[15px] font-bold" style={{ color: BN.gold }}>
-                                            {formatMoney(p.amount, "UZS")}
+                                            {fmt.price(p.amount)}
                                         </div>
                                     </button>
                                 ))}

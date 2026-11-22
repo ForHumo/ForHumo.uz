@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { bnPageMeta } from "@/lib/bn-seo";
 import { BnShopsWithFilter } from "@/components/bn/bn-shops-with-filter";
 import { getTopShops } from "@/lib/bn-data";
 import { BnBreadcrumbLd } from "@/components/bn/bn-jsonld";
-import { TIER_META } from "@/lib/bn-theme";
 
 export const dynamic = "force-dynamic";
 
@@ -15,23 +16,22 @@ function normalizeTier(raw: string | undefined): Tier | null {
     return up === "TRUSTED" || up === "VERIFIED" || up === "PREMIUM" ? up as Tier : null;
 }
 
-function buildTitle(locale: Locale, tier: Tier | null): string {
+// label — daraja nomi tilga mos (bn.tier.*)
+function buildTitle(locale: Locale, tier: Tier | null, label = ""): string {
     if (tier) {
-        const label = TIER_META[tier].label;
-        if (locale === "ru") return `${label} магазины Ташкента · Bozor Narxida`;
-        if (locale === "en") return `${label} shops in Tashkent · Bozor Narxida`;
-        return `${label} do'konlari — Toshkent · Bozor Narxida`;
+        if (locale === "ru") return `Магазины Ташкента: уровень «${label}»`;
+        if (locale === "en") return `${label} shops in Tashkent`;
+        return `${label} do'konlar — Toshkent`;
     }
-    if (locale === "ru") return "Магазины базаров Ташкента — рейтинг · Bozor Narxida";
-    if (locale === "en") return "Tashkent bazaar shops — ranked · Bozor Narxida";
-    return "Toshkent bozor do'konlari — reyting · Bozor Narxida";
+    if (locale === "ru") return "Магазины базаров Ташкента — рейтинг";
+    if (locale === "en") return "Tashkent bazaar shops — ranked";
+    return "Toshkent bozor do'konlari — reyting";
 }
 
-function buildDescription(locale: Locale, count: number, tier: Tier | null): string {
+function buildDescription(locale: Locale, count: number, tier: Tier | null, label: string): string {
     if (tier) {
-        const label = TIER_META[tier].label;
         if (locale === "ru") {
-            return `${count} магазинов уровня ${label} на Ташкентских базарах. Проверенные продавцы, эскроу-защита.`;
+            return `${count} магазинов уровня «${label}» на Ташкентских базарах. Проверенные продавцы, эскроу-защита.`;
         }
         if (locale === "en") {
             return `${count} ${label}-tier shops across Tashkent bazaars. Verified sellers, escrow protection.`;
@@ -54,7 +54,7 @@ export async function generateMetadata({
     searchParams: Promise<{ tier?: string }>;
 }): Promise<Metadata> {
     const [{ locale }, sp, shops] = await Promise.all([
-        params, searchParams, getTopShops(100).catch(() => []),
+        params, searchParams, getTopShops(100, true).catch(() => []),
     ]);
 
     const tier = normalizeTier(sp.tier);
@@ -62,53 +62,37 @@ export async function generateMetadata({
         ? shops.filter(s => s.tier === tier).length
         : shops.length;
 
-    const title = buildTitle(locale, tier);
-    const description = buildDescription(locale, filteredCount, tier);
-    const pageUrl = tier
-        ? `https://bozornarxida.uz/dokonlar?tier=${tier.toLowerCase()}`
-        : "https://bozornarxida.uz/dokonlar";
+    const tTier = await getTranslations({ locale, namespace: "bn.tier" });
+    const label = tier ? tTier(tier) : "";
+    const title = buildTitle(locale, tier, label);
+    const description = buildDescription(locale, filteredCount, tier, label);
+    const path = tier ? `/dokonlar?tier=${tier.toLowerCase()}` : "/dokonlar";
 
     return {
-        title: { absolute: title },
+        title,
         description,
-        alternates: {
-            canonical: pageUrl,
-            languages: {
-                "uz": pageUrl.replace("https://bozornarxida.uz/", "https://bozornarxida.uz/uz/"),
-                "ru": pageUrl.replace("https://bozornarxida.uz/", "https://bozornarxida.uz/ru/"),
-                "en": pageUrl.replace("https://bozornarxida.uz/", "https://bozornarxida.uz/en/"),
-            },
-        },
-        openGraph: {
-            type: "website",
-            title, description, url: pageUrl,
-            siteName: "Bozor Narxida",
-        },
-        twitter: {
-            card: "summary_large_image",
-            title, description,
-        },
+        ...bnPageMeta({ locale, path, title, description }),
     };
 }
 
 export default async function Page({ params }: { params: Promise<{ locale: Locale }> }) {
     const { locale } = await params;
-    const shops = await getTopShops(100);
+    const shops = await getTopShops(100, true);
 
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
         name: buildTitle(locale, null),
-        url: "https://bozornarxida.uz/dokonlar",
+        url: "https://www.bozornarxida.uz/dokonlar",
         inLanguage: locale,
-        isPartOf: { "@type": "WebSite", name: "Bozor Narxida", url: "https://bozornarxida.uz" },
+        isPartOf: { "@type": "WebSite", name: "Bozor Narxida", url: "https://www.bozornarxida.uz" },
         mainEntity: {
             "@type": "ItemList",
             numberOfItems: shops.length,
             itemListElement: shops.slice(0, 30).map((s, i) => ({
                 "@type": "ListItem",
                 position: i + 1,
-                url: `https://bozornarxida.uz/d/${s.slug}`,
+                url: `https://www.bozornarxida.uz/d/${s.slug}`,
                 name: s.name,
             })),
         },

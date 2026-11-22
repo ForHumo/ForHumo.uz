@@ -4,9 +4,11 @@
 // Xaridor uchun narx solishtirish — BN'ning asosiy va'dasi.
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Store, TrendingDown, ChevronRight, Loader2, Sparkles } from "lucide-react";
-import { BN, fmtPrice } from "@/lib/bn-theme";
+import { BN } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
+import { useBnFormat } from "./bn-format-hook";
 
 interface Alt {
     productId: string; slug: string; title: string;
@@ -29,6 +31,8 @@ interface Resp {
 }
 
 export function BnProductCompareCard({ productId }: { productId: string }) {
+    const t = useTranslations("bn.compare");
+    const fmt = useBnFormat();
     const [data, setData] = useState<Resp | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -45,7 +49,7 @@ export function BnProductCompareCard({ productId }: { productId: string }) {
             <div className="rounded-2xl p-4 mt-6 flex items-center gap-2"
                 style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
                 <Loader2 className="w-4 h-4 animate-spin" style={{ color: BN.gold }} />
-                <span className="text-[12px]" style={{ color: BN.text3 }}>Boshqa do'konlar tekshirilmoqda…</span>
+                <span className="text-[12px]" style={{ color: BN.text3 }}>{t("loading")}</span>
             </div>
         );
     }
@@ -65,9 +69,9 @@ export function BnProductCompareCard({ productId }: { productId: string }) {
                         <Store className="w-4 h-4" />
                     </span>
                     <div className="min-w-0 flex-1">
-                        <p className="text-[14px] font-black" style={{ color: BN.text }}>Boshqa do'konlarda</p>
+                        <p className="text-[14px] font-black" style={{ color: BN.text }}>{t("title")}</p>
                         <p className="text-[12px] mt-0.5" style={{ color: BN.text2 }}>
-                            {data.alternatives.length} ta o'xshash mahsulot topildi
+                            {t("foundN", { n: data.alternatives.length })}
                         </p>
                     </div>
                 </div>
@@ -79,10 +83,10 @@ export function BnProductCompareCard({ productId }: { productId: string }) {
                         <Sparkles className="w-5 h-5 flex-shrink-0" style={{ color: BN.ok }} />
                         <div className="flex-1 min-w-0">
                             <p className="text-[13.5px] font-black" style={{ color: BN.ok }}>
-                                {fmtPrice(data.summary.possibleSavings)} tejashingiz mumkin
+                                {t("savings", { amount: fmt.price(data.summary.possibleSavings) })}
                             </p>
                             <p className="text-[11.5px]" style={{ color: BN.text2 }}>
-                                {cheaperCount} do'kon bu mahsulotni {data.summary.savingsPct}% arzon sotmoqda
+                                {t("cheaperShops", { n: cheaperCount, pct: data.summary.savingsPct })}
                             </p>
                         </div>
                     </div>
@@ -113,13 +117,13 @@ export function BnProductCompareCard({ productId }: { productId: string }) {
                             </div>
                             <div className="text-right flex-shrink-0">
                                 <p className="text-[13.5px] font-black" style={{ color: cheaper ? BN.ok : BN.text2 }}>
-                                    {fmtPrice(a.price)}
+                                    {fmt.price(a.price)}
                                 </p>
                                 {a.diffPct !== 0 && (
                                     <p className="text-[10.5px] font-black flex items-center gap-0.5 justify-end"
                                         style={{ color: cheaper ? BN.ok : BN.err }}>
                                         {cheaper && <TrendingDown className="w-3 h-3" />}
-                                        {cheaper ? `${Math.abs(a.diffPct)}% arzon` : `${a.diffPct}% qimmat`}
+                                        {fmt.diffPct(cheaper ? -Math.abs(a.diffPct) : Math.abs(a.diffPct))}
                                     </p>
                                 )}
                             </div>

@@ -5,6 +5,8 @@
 // Foydalanuvchi so'rovi: "For Humo" qalin va brend rangida (ko'k gradient)
 // bo'lsin.
 
+import Image from "next/image";
+
 interface Props {
     /** true = kichik shrift (footer uchun); false = katta */
     small?: boolean;
@@ -33,9 +35,9 @@ export function PoweredByForHumo({ small = true, href = "https://forhumo.uz" }: 
                 Powered by
             </span>
 
-            {/* For Humo rasmiy logo */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            {/* For Humo rasmiy logo — next/image: manba PNG ~430 KB, 16-20px uchun
+                optimallashtirilgan kichik nusxa yuklanadi */}
+            <Image
                 src="/logos/forhumo.png"
                 alt=""
                 aria-hidden="true"

@@ -34,7 +34,7 @@ export function BnCategoryPicker({ categories, value, onChange, placeholder }: P
                 style={{
                     background: BN.surfaceUp,
                     border: `1px solid ${BN.border}`,
-                    color: selected ? "#fff" : BN.text3,
+                    color: selected ? BN.text : BN.text3,
                 }}
             >
                 <span className="flex items-center gap-2 truncate">
@@ -143,7 +143,7 @@ function CategoryModal({
                             style={{
                                 background: BN.surfaceUp,
                                 border: `1px solid ${BN.border}`,
-                                color: "#fff",
+                                color: BN.text,
                             }}
                         />
                     </div>
@@ -207,7 +207,7 @@ function Row({ name, sub, selected, onClick, className }: { name: string; sub: b
             className={`w-full flex items-center justify-between gap-2 h-11 rounded-xl text-[14px] text-left transition-colors ${className ?? ""}`}
             style={{
                 background: selected ? BN.goldSoft : "transparent",
-                color: selected ? BN.gold : "#fff",
+                color: selected ? BN.gold : BN.text,
                 paddingLeft: sub ? 32 : 14,
                 paddingRight: 14,
             }}

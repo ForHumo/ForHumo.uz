@@ -4,8 +4,10 @@
 // Do'kon mahsulotlaridan biri yoki custom nom + narx kiritadi → yozib qo'yiladi.
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { X, Search, Loader2, Check, ShoppingBag } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
 
 interface Product {
     id: string;
@@ -22,6 +24,8 @@ export function BnPurchaseModal({
     onClose: () => void;
     onSaved?: () => void;
 }) {
+    const t = useTranslations("bn.purchase");
+    const fmt = useBnFormat();
     const [query, setQuery] = useState("");
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(false);
@@ -74,7 +78,7 @@ export function BnPurchaseModal({
                     priceUzs,
                 };
             if (!picked && !customTitle.trim()) {
-                setErr("Mahsulot nomini yozing yoki ro'yxatdan tanlang");
+                setErr(t("errNoTitle"));
                 setSaving(false); return;
             }
             const r = await fetch("/api/bn/purchases", {
@@ -93,12 +97,12 @@ export function BnPurchaseModal({
                 onSaved?.();
                 window.setTimeout(onClose, 1500);
             } else {
-                setErr(j.error ?? "Xato");
+                setErr(j.error ?? t("errGeneric"));
             }
         } catch {
-            setErr("Tarmoq xatosi");
+            setErr(t("errNetwork"));
         } finally { setSaving(false); }
-    }, [picked, customTitle, quantity, priceUzs, shopSlug, onClose, onSaved]);
+    }, [picked, customTitle, quantity, priceUzs, shopSlug, onClose, onSaved, t]);
 
     return (
         <div className="bn-overlay-in fixed inset-0 z-[200] bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -110,11 +114,11 @@ export function BnPurchaseModal({
                     <div className="flex items-center gap-2">
                         <ShoppingBag className="w-5 h-5" style={{ color: BN.gold }} />
                         <div>
-                            <div className="text-sm font-semibold">Xarid qildim</div>
+                            <div className="text-sm font-semibold">{t("title")}</div>
                             <div className="text-xs text-neutral-500">{shopName}</div>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded">
+                    <button onClick={onClose} aria-label={t("close")} className="p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
@@ -124,21 +128,21 @@ export function BnPurchaseModal({
                         <div className="w-14 h-14 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3">
                             <Check className="w-7 h-7 text-emerald-600" />
                         </div>
-                        <div className="font-semibold">Xaridingiz saqlandi</div>
-                        <div className="text-xs text-neutral-500 mt-1">Muddati yaqinlashsa xabar beramiz.</div>
+                        <div className="font-semibold">{t("saved")}</div>
+                        <div className="text-xs text-neutral-500 mt-1">{t("savedHint")}</div>
                     </div>
                 ) : (
                     <div className="flex-1 overflow-y-auto p-4 space-y-3">
                         {/* Do'kon mahsulotlari qidiruv */}
                         <div>
                             <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
-                                Do'kon mahsulotlaridan tanlang
+                                {t("pickLabel")}
                             </label>
                             <div className="relative">
                                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
                                 <input
                                     type="text"
-                                    placeholder="Nom bo'yicha qidirish..."
+                                    placeholder={t("searchPh")}
                                     value={query}
                                     onChange={e => setQuery(e.target.value)}
                                     className="w-full pl-9 pr-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-950 text-sm"
@@ -160,26 +164,26 @@ export function BnPurchaseModal({
                                     >
                                         <div className="flex-1 min-w-0">
                                             <div className="text-sm truncate">{p.title}</div>
-                                            <div className="text-xs text-neutral-500">{formatSum(p.price)} so'm</div>
+                                            <div className="text-xs text-neutral-500">{fmt.price(p.price)}</div>
                                         </div>
                                         {picked?.id === p.id && <Check className="w-4 h-4 text-amber-600" />}
                                     </button>
                                 ))}
                             </div>
                         ) : query ? (
-                            <div className="text-xs text-neutral-500 text-center py-2">Topilmadi</div>
+                            <div className="text-xs text-neutral-500 text-center py-2">{t("notFound")}</div>
                         ) : null}
 
                         {/* YOKI custom nom */}
-                        <div className="text-xs text-center text-neutral-400 py-1">— yoki —</div>
+                        <div className="text-xs text-center text-neutral-400 py-1">{t("or")}</div>
 
                         <div>
                             <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
-                                Nom qo'lda kiriting
+                                {t("customLabel")}
                             </label>
                             <input
                                 type="text"
-                                placeholder="Masalan: Yerto'la olma 2 kg"
+                                placeholder={t("customPh")}
                                 value={customTitle}
                                 onChange={e => { setCustomTitle(e.target.value); if (e.target.value) setPicked(null); }}
                                 maxLength={200}
@@ -189,7 +193,7 @@ export function BnPurchaseModal({
 
                         <div className="grid grid-cols-2 gap-2">
                             <div>
-                                <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Miqdor</label>
+                                <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("qty")}</label>
                                 <input
                                     type="number"
                                     min={1}
@@ -199,7 +203,7 @@ export function BnPurchaseModal({
                                 />
                             </div>
                             <div>
-                                <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Narx (so'm)</label>
+                                <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("price", { currency: fmt.currency })}</label>
                                 <input
                                     type="number"
                                     min={0}
@@ -219,19 +223,15 @@ export function BnPurchaseModal({
                             className="w-full py-2.5 rounded-lg bg-amber-500 text-white text-sm font-semibold disabled:opacity-50 hover:bg-amber-600 flex items-center justify-center gap-2"
                         >
                             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                            Saqlash
+                            {t("save")}
                         </button>
 
                         <div className="text-[11px] text-neutral-500 text-center">
-                            Muddati yaqinlashsa Web Push orqali xabar beramiz.
+                            {t("pushHint")}
                         </div>
                     </div>
                 )}
             </div>
         </div>
     );
-}
-
-function formatSum(n: number): string {
-    return new Intl.NumberFormat("uz-UZ").format(n);
 }

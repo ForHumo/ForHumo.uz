@@ -13,7 +13,7 @@ function LdScript({ data }: { data: Json }) {
     );
 }
 
-const SITE = "https://bozornarxida.uz";
+const SITE = "https://www.bozornarxida.uz";
 
 export function BnOrgLd() {
     return (

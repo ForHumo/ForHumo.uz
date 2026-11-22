@@ -5,11 +5,11 @@
 // yashiradi (home boshqa qatorlarni buzmaydi).
 
 import { useEffect, useState } from "react";
-import { useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { TrendingDown, ChevronRight, Tag } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
-import { formatMoney } from "@/lib/money";
+import { useBnFormat } from "./bn-format-hook";
 
 interface CheapItem {
     id: string;
@@ -26,7 +26,8 @@ interface CheapItem {
 }
 
 export function BnCheapestToday() {
-    const locale = useLocale();
+    const fmt = useBnFormat();
+    const t = useTranslations("bn.cheapest");
     const [items, setItems] = useState<CheapItem[] | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -62,14 +63,10 @@ export function BnCheapestToday() {
                     </div>
                     <div>
                         <h2 className="bn-display text-[20px] font-black tracking-tight" style={{ color: BN.text }}>
-                            {locale === "ru" ? "Самые выгодные сегодня" : locale === "en" ? "Best Deals Today" : "Bugungi eng arzon"}
+                            {t("title")}
                         </h2>
                         <div className="text-[13px]" style={{ color: BN.text2 }}>
-                            {locale === "ru"
-                                ? "Ниже среднерыночной цены или упали за неделю"
-                                : locale === "en"
-                                    ? "Below market average or dropped this week"
-                                    : "Bozor o'rtachasidan past yoki hafta ichida tushgan"}
+                            {t("subtitle")}
                         </div>
                     </div>
                 </div>
@@ -78,7 +75,7 @@ export function BnCheapestToday() {
                     className="hidden sm:flex items-center gap-1 text-[13px] font-medium hover:opacity-80"
                     style={{ color: BN.gold }}
                 >
-                    {locale === "ru" ? "Смотреть все" : locale === "en" ? "See all" : "Barchasi"}
+                    {t("seeAll")}
                     <ChevronRight className="w-4 h-4" />
                 </BnLink>
             </div>
@@ -113,15 +110,15 @@ export function BnCheapestToday() {
                             </div>
                             <div className="mt-1.5 flex items-baseline gap-1.5">
                                 <span className="text-[14px] font-bold" style={{ color: BN.gold }}>
-                                    {formatMoney(item.price, "UZS")}
+                                    {fmt.price(item.price)}
                                 </span>
                                 {item.reason === "market_avg" && item.marketAvgPrice ? (
                                     <span className="text-[10.5px] line-through" style={{ color: BN.text3 }}>
-                                        {formatMoney(item.marketAvgPrice, "UZS")}
+                                        {fmt.price(item.marketAvgPrice)}
                                     </span>
                                 ) : item.oldPrice ? (
                                     <span className="text-[10.5px] line-through" style={{ color: BN.text3 }}>
-                                        {formatMoney(item.oldPrice, "UZS")}
+                                        {fmt.price(item.oldPrice)}
                                     </span>
                                 ) : null}
                             </div>

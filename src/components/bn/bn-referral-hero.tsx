@@ -6,29 +6,39 @@
 // Kirgan foydalanuvchi kabinetda to'liq referral kartochkasini ko'radi
 // (BnReferralCard) — bu yerda takror qilinmaydi.
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState, useSyncExternalStore } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Gift, ArrowRight, X, Users, Coins } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
-import { formatMoney } from "@/lib/money";
+import { useBnFormat } from "./bn-format-hook";
 
 const DISMISS_KEY = "bn-refhero-dismissed-v1";
 
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+const noopSubscribe = () => () => {};
+
+// CLS: ilgari karta mount + sessiya kelgandan keyin (~6s) paydo bo'lib, ostidagi hamma narsani
+// 224px pastga surardi. Endi SSR HTML'ning o'zida chiziladi va kerak bo'lmasa bo'yashdan
+// OLDIN yashiriladi:
+//   • kirgan foydalanuvchi — layout `data-bn-authed` qo'yadi, karta CSS bilan yashirin;
+//   • yashirgan (dismiss) tashrifchi — inline skript localStorage'ni o'qib `hidden` qiladi.
+// Gidratsiyadan keyin komponent o'zi ham null qaytaradi (sessiya / localStorage).
 export function BnReferralHero() {
+    const fmt = useBnFormat();
     const t = useTranslations("bn.referralHero");
     const { status } = useSession();
-    const [dismissed, setDismissed] = useState(true);
-    const [mounted, setMounted] = useState(false);
+    const [dismissed, setDismissed] = useState(false);
+    // Skript faqat server HTML'ida (gidratsiyada ham) — klientda yangi mount'da kerak emas,
+    // layout effect bo'yashdan oldin yashiradi (React klientda <script> ni ishga tushirmaydi).
+    const fromServer = useSyncExternalStore(noopSubscribe, () => false, () => true);
 
-    useEffect(() => {
-        setMounted(true);
-        try { setDismissed(!!localStorage.getItem(DISMISS_KEY)); }
-        catch { setDismissed(false); }
+    useIsoLayoutEffect(() => {
+        try { if (localStorage.getItem(DISMISS_KEY)) setDismissed(true); }
+        catch { /* ignore */ }
     }, []);
 
-    if (!mounted) return null;
-    if (status !== "unauthenticated") return null;  // kirganda ko'rsatilmaydi
+    if (status === "authenticated") return null;  // kirganda ko'rsatilmaydi
     if (dismissed) return null;
 
     function dismiss() {
@@ -36,11 +46,19 @@ export function BnReferralHero() {
         setDismissed(true);
     }
 
-    const inviterBonus = formatMoney(10_000, "UZS");
-    const inviteeBonus = formatMoney(5_000, "UZS");
+    const inviterBonus = fmt.price(10_000);
+    const inviteeBonus = fmt.price(5_000);
 
     return (
-        <section className="mb-4 sm:mb-5">
+        // suppressHydrationWarning — inline skript qo'ygan `hidden` atributi uchun
+        <section className="mb-4 sm:mb-5 [[data-bn-authed]_&]:hidden" suppressHydrationWarning>
+            {fromServer && (
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `try{if(localStorage.getItem(${JSON.stringify(DISMISS_KEY)}))document.currentScript.parentElement.hidden=true}catch(e){}`,
+                    }}
+                />
+            )}
             <div
                 className="relative overflow-hidden rounded-2xl sm:rounded-3xl p-4 sm:p-5"
                 style={{ background: BN.surface, border: `1px solid ${BN.borderGold}` }}

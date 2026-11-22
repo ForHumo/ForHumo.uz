@@ -4,14 +4,17 @@
 // Tema: tungi/tongi. Til: 1-3 tildan tanlab olinadi (bir listda birga chiqadi).
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { QrCode, Download, Printer, ExternalLink, Sun, Moon, Check } from "lucide-react";
 import { BnSelect } from "@/components/bn/bn-select";
 
 type Theme = "dark" | "light";
 type Lang = "uz" | "ru" | "en";
+// Til nomlari o'z tilida (endonim) — tarjima qilinmaydi
 const LANG_LABELS: Record<Lang, string> = { uz: "O'zbek", ru: "Русский", en: "English" };
 
 export function BnShopQrPanel({ shopSlug, shopName }: { shopSlug: string; shopName: string }) {
+    const t = useTranslations("bn.shopQr");
     const [size, setSize] = useState<"a5" | "a4">("a5");
     const [theme, setTheme] = useState<Theme>("dark");
     const [langs, setLangs] = useState<Lang[]>(["uz"]);
@@ -42,11 +45,10 @@ export function BnShopQrPanel({ shopSlug, shopName }: { shopSlug: string; shopNa
         <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 space-y-3 bg-white dark:bg-neutral-900">
             <div className="flex items-center gap-2">
                 <QrCode className="w-4 h-4 text-amber-500" />
-                <h3 className="font-semibold text-sm">Do&apos;kon uchun QR-kod (premium)</h3>
+                <h3 className="font-semibold text-sm">{t("title")}</h3>
             </div>
             <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                Chop etib do&apos;koningizga qo&apos;ying. Xaridor skan qilsa Bozor Narxida&apos;dan
-                For Pay bilan xarid qiladi yoki xaridni tarixga qo&apos;shadi.
+                {t("text")}
             </p>
 
             {/* Preview */}
@@ -56,7 +58,7 @@ export function BnShopQrPanel({ shopSlug, shopName }: { shopSlug: string; shopNa
 
             {/* Tema tanlash */}
             <div>
-                <div className="text-xs font-medium mb-1.5 text-neutral-600 dark:text-neutral-400">Fon rejimi</div>
+                <div className="text-xs font-medium mb-1.5 text-neutral-600 dark:text-neutral-400">{t("themeLabel")}</div>
                 <div className="grid grid-cols-2 gap-2">
                     <button
                         onClick={() => setTheme("dark")}
@@ -67,7 +69,7 @@ export function BnShopQrPanel({ shopSlug, shopName }: { shopSlug: string; shopNa
                         }`}
                     >
                         <Moon className="w-3.5 h-3.5" />
-                        Tungi (dark)
+                        {t("themeDark")}
                     </button>
                     <button
                         onClick={() => setTheme("light")}
@@ -78,7 +80,7 @@ export function BnShopQrPanel({ shopSlug, shopName }: { shopSlug: string; shopNa
                         }`}
                     >
                         <Sun className="w-3.5 h-3.5" />
-                        Tongi (light)
+                        {t("themeLight")}
                     </button>
                 </div>
             </div>
@@ -86,7 +88,7 @@ export function BnShopQrPanel({ shopSlug, shopName }: { shopSlug: string; shopNa
             {/* Til tanlash */}
             <div>
                 <div className="text-xs font-medium mb-1.5 text-neutral-600 dark:text-neutral-400">
-                    Til (bittadan uchtagacha)
+                    {t("langLabel")}
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                     {(["uz", "ru", "en"] as Lang[]).map(l => {
@@ -109,22 +111,22 @@ export function BnShopQrPanel({ shopSlug, shopName }: { shopSlug: string; shopNa
                 </div>
                 {langs.length > 1 && (
                     <div className="mt-1.5 text-[10.5px] text-neutral-500">
-                        Bitta chop etilgan varaqda {langs.length} til birga chiqadi.
+                        {t("langsHint", { n: langs.length })}
                     </div>
                 )}
             </div>
 
             {/* Hajm */}
             <div className="flex items-center gap-2">
-                <label className="text-xs text-neutral-600 dark:text-neutral-400 shrink-0">Hajmi:</label>
+                <label className="text-xs text-neutral-600 dark:text-neutral-400 shrink-0">{t("sizeLabel")}</label>
                 <BnSelect
                     className="flex-1 max-w-[220px]"
-                    ariaLabel="Chop etish hajmi"
+                    ariaLabel={t("sizeAria")}
                     value={size}
                     onChange={v => setSize(v as "a4" | "a5")}
                     options={[
-                        { value: "a5", label: "A5 (o'rta)" },
-                        { value: "a4", label: "A4 (katta)" },
+                        { value: "a5", label: t("sizeA5") },
+                        { value: "a4", label: t("sizeA4") },
                     ]}
                 />
             </div>
@@ -136,7 +138,7 @@ export function BnShopQrPanel({ shopSlug, shopName }: { shopSlug: string; shopNa
                     className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600"
                 >
                     <Printer className="w-4 h-4" />
-                    Chop etish
+                    {t("print")}
                 </button>
                 <a
                     href={pngUrl}
@@ -144,7 +146,7 @@ export function BnShopQrPanel({ shopSlug, shopName }: { shopSlug: string; shopNa
                     className="flex items-center justify-center gap-1.5 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800"
                 >
                     <Download className="w-4 h-4" />
-                    Faqat QR (PNG)
+                    {t("pngOnly")}
                 </a>
             </div>
 

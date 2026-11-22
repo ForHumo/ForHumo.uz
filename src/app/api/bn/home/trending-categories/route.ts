@@ -19,6 +19,7 @@ function cached<T>(data: T) {
 interface Row {
     slug: string;
     name: string;
+    nameRu: string | null;   // ru tilida ko'rsatish uchun (client locale bo'yicha tanlaydi)
     productCount: number;
     imageUrl: string | null;
 }
@@ -64,7 +65,7 @@ export async function GET() {
             .map(([id]) => id);
         const cats = await prisma.bnCategory.findMany({
             where: { id: { in: topIds }, isActive: true },
-            select: { id: true, slug: true, name: true, _count: { select: { products: true } } },
+            select: { id: true, slug: true, name: true, nameRu: true, _count: { select: { products: true } } },
         });
         const scoreOrder = new Map(topIds.map((id, i) => [id, i]));
         rows = cats
@@ -72,6 +73,7 @@ export async function GET() {
                 _order: scoreOrder.get(c.id) ?? 999,
                 slug: c.slug,
                 name: c.name,
+                nameRu: c.nameRu ?? null,
                 productCount: c._count.products,
                 imageUrl: catCover.get(c.id) ?? null,
             }))
@@ -84,7 +86,7 @@ export async function GET() {
             orderBy: [{ order: "asc" }, { name: "asc" }],
             take: 8,
             select: {
-                id: true, slug: true, name: true,
+                id: true, slug: true, name: true, nameRu: true,
                 _count: { select: { products: true } },
                 products: { take: 1, where: { isActive: true, hidden: false }, select: { images: true } },
             },
@@ -92,6 +94,7 @@ export async function GET() {
         rows = cats.map(c => ({
             slug: c.slug,
             name: c.name,
+            nameRu: c.nameRu ?? null,
             productCount: c._count.products,
             imageUrl: c.products[0]?.images[0] ?? null,
         }));

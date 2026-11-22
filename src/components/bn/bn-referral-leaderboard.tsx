@@ -9,7 +9,7 @@ import { useTranslations } from "next-intl";
 import { Trophy, Crown, Medal, Loader2 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
-import { formatMoney } from "@/lib/money";
+import { useBnFormat } from "./bn-format-hook";
 
 interface Row {
     rank: number;
@@ -23,6 +23,7 @@ interface Row {
 }
 
 export function BnReferralLeaderboard() {
+    const fmt = useBnFormat();
     const t = useTranslations("bn.refBoard");
     const [rows, setRows] = useState<Row[] | null>(null);
 
@@ -123,7 +124,7 @@ export function BnReferralLeaderboard() {
                                 {r.invited}
                             </span>
                             <span className="block text-[10px] tabular-nums" style={{ color: BN.text3 }}>
-                                {formatMoney(r.earned, "UZS")}
+                                {fmt.price(r.earned)}
                             </span>
                         </span>
                     </li>

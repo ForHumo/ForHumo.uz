@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { useLocale } from "next-intl";
 import { Crown, Loader2, CheckCircle2, X, Star, Trophy, Medal, Award, Gem } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
-import { formatMoney } from "@/lib/money";
+import { useBnFormat } from "./bn-format-hook";
 
 type Tier = "BRONZE" | "SILVER" | "GOLD" | "PLATINUM";
 
@@ -55,6 +55,7 @@ const TIER_FEATURES: Record<Tier, { uz: string[]; ru: string[]; en: string[] }> 
 };
 
 export function BnPremiumUpgrade() {
+    const fmt = useBnFormat();
     const locale = useLocale();
     const [data, setData] = useState<PremiumData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -152,7 +153,7 @@ export function BnPremiumUpgrade() {
                                 <div className="text-[14px] font-bold" style={{ color: BN.text }}>{label}</div>
                             </div>
                             <div className="text-[18px] font-black" style={{ color: tier.meta.color }}>
-                                {formatMoney(tier.priceMonthly, "UZS")}<span className="text-[11px] font-normal" style={{ color: BN.text3 }}>/oy</span>
+                                {fmt.price(tier.priceMonthly)}<span className="text-[11px] font-normal" style={{ color: BN.text3 }}>/oy</span>
                             </div>
                             <ul className="text-[11.5px] space-y-1" style={{ color: BN.text2 }}>
                                 {featureList.map((f, i) => (
@@ -210,7 +211,7 @@ export function BnPremiumUpgrade() {
                                 <div className="flex justify-between items-baseline">
                                     <span className="text-[13px]" style={{ color: BN.text2 }}>{t("Jami", "Итого", "Total")}:</span>
                                     <span className="text-[18px] font-bold" style={{ color: BN.gold }}>
-                                        {formatMoney((data.tiers.find(t => t.tier === selectedTier)?.priceMonthly ?? 0) * months, "UZS")}
+                                        {fmt.price((data.tiers.find(t => t.tier === selectedTier)?.priceMonthly ?? 0) * months)}
                                     </span>
                                 </div>
                                 {err && <p className="text-[12px]" style={{ color: BN.err }}>{err}</p>}

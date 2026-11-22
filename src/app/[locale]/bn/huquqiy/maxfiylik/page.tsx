@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { bnPageMeta } from "@/lib/bn-seo";
 import { BnLegalPage } from "@/components/bn/bn-legal";
 import { Shield } from "lucide-react";
 
-export const metadata: Metadata = {
-    title: "Maxfiylik siyosati",
-    description: "Bozor Narxida foydalanuvchi ma'lumotlarini qanday to'playdi, saqlaydi va ishlatadi.",
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+    const { locale } = await params;
+    const t = await getTranslations({ locale, namespace: "bn" });
+    const title = t("seo.privacyTitle");
+    const description = t("seo.privacyDesc");
+    return { title, description, ...bnPageMeta({ locale, path: "/huquqiy/maxfiylik", title, description }) };
+}
 
 export default function Page() {
     return (

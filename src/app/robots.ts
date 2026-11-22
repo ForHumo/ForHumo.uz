@@ -13,7 +13,8 @@ const BN_HOSTS = new Set(["bozornarxida.uz", "www.bozornarxida.uz"]);
 export default async function robots(): Promise<MetadataRoute.Robots> {
     const host = (await headers()).get("host")?.split(":")[0].toLowerCase() ?? "";
     const isBn = BN_HOSTS.has(host);
-    const origin = isBn ? "https://bozornarxida.uz" : "https://forhumo.uz";
+    // BN — www host (yalang'och bozornarxida.uz www'ga 308 qiladi; canonical bilan bir xil — lib/bn-seo.ts)
+    const origin = isBn ? "https://www.bozornarxida.uz" : "https://forhumo.uz";
 
     // Marketing sahifalari ochiq (SEO uchun kritik), xususiy oqim yopiq.
     // "allow" bir necha marta yozilsa Google eng aniq mos keluvchini oladi —
@@ -24,6 +25,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
             "/",
             "/haqida",              // SEO landing
             "/sotuvchi/waitlist",   // marketing konversiya sahifasi
+            "/api/og/",             // OG rasmlar — Twitterbot va boshqalar robots.txt'ga qaraydi
         ],
         disallow: [
             "/api/",

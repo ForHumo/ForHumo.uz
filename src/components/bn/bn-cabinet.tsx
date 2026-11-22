@@ -22,7 +22,8 @@ import {
     Send, MessageCircle, Rocket, QrCode, ExternalLink, Car,
     Receipt, ChevronDown,
 } from "lucide-react";
-import { BN, fmtPrice, groupThousands, fmtBnDateTime, ORDER_STATUS_META } from "@/lib/bn-theme";
+import { BN, groupThousands, fmtBnDateTime, ORDER_STATUS_META } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
 import { BnLink } from "./bn-nav";
 import { BnEmpty } from "./bn-cards";
 import { BnPhoneInput } from "./bn-phone-input";
@@ -414,6 +415,7 @@ export function BnCabinet(props: Props) {
 
 function HomeTab({ shop, stats, orders }: { shop: CabinetShop; stats: CabinetStats; orders: CabinetOrder[] }) {
     const t = useTranslations("bn.cabinet");
+    const fmt = useBnFormat();
     const recent = orders.slice(0, 5);
     return (
         <>
@@ -421,7 +423,7 @@ function HomeTab({ shop, stats, orders }: { shop: CabinetShop; stats: CabinetSta
             <OnboardingChecklist shop={shop} stats={stats} />
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
                 <Stat icon={<ShoppingBag className="w-[18px] h-[18px]" />} label={t("statOrders")} value={stats.ordersThisMonth.toString()} hint={t("statThisMonth")} />
-                <Stat icon={<TrendingUp className="w-[18px] h-[18px]" />} label={t("statSold")} value={fmtPrice(stats.revenueThisMonth)} hint={t("statThisMonth")} />
+                <Stat icon={<TrendingUp className="w-[18px] h-[18px]" />} label={t("statSold")} value={fmt.price(stats.revenueThisMonth)} hint={t("statThisMonth")} />
                 <Stat icon={<Package className="w-[18px] h-[18px]" />} label={t("statProducts")} value={stats.productsActive.toString()} hint={t("statActive")} />
                 <Stat icon={<Eye className="w-[18px] h-[18px]" />} label={t("statRating")} value={shop.rating > 0 ? shop.rating.toFixed(1) : "—"} hint={t("statNRatings", { n: shop.ratingCount })} />
             </div>
@@ -751,6 +753,8 @@ function OrderCard({
     t: (k: string, v?: Record<string, string | number>) => string;
 }) {
     const meta = ORDER_STATUS_META[o.status];
+    const tStatus = useTranslations("bn.orderStatus");
+    const fmt = useBnFormat();
     const canConfirm = o.status === "PLACED";
     const canReady   = o.status === "CONFIRMED";
     const canDone    = o.status === "READY";
@@ -781,7 +785,7 @@ function OrderCard({
                             className="px-2 py-0.5 rounded-md text-[10px] font-black leading-none"
                             style={{ background: `${meta.color}1F`, color: meta.color }}
                         >
-                            {meta.label}
+                            {tStatus(o.status)}
                         </span>
                         <span className="text-[11px] tabular-nums" style={{ color: BN.text3 }}>#{o.code}</span>
                         <FulfillBadge type={o.fulfillType} />
@@ -796,7 +800,7 @@ function OrderCard({
                     </p>
                 </div>
                 <span className="text-right flex-shrink-0">
-                    <span className="text-[15px] font-black tabular-nums">{fmtPrice(o.total)}</span>
+                    <span className="text-[15px] font-black tabular-nums">{fmt.price(o.total)}</span>
                 </span>
             </div>
 
@@ -843,20 +847,20 @@ function OrderCard({
                                         )}
                                     </div>
                                     <span className="tabular-nums font-black text-[12px]" style={{ color: BN.text2 }}>
-                                        {it.qty} × {fmtPrice(it.price)}
+                                        {it.qty} × {fmt.price(it.price)}
                                     </span>
                                 </div>
                             ))}
                             {typeof o.subtotal === "number" && (
                                 <div className="pt-2 mt-2 flex items-center justify-between text-[12px]" style={{ borderTop: `1px solid ${BN.border}` }}>
                                     <span style={{ color: BN.text3 }}>{t("subtotal")}</span>
-                                    <span className="tabular-nums font-bold">{fmtPrice(o.subtotal)}</span>
+                                    <span className="tabular-nums font-bold">{fmt.price(o.subtotal)}</span>
                                 </div>
                             )}
                             {o.deliveryFee !== undefined && o.deliveryFee > 0 && (
                                 <div className="flex items-center justify-between text-[12px]">
                                     <span style={{ color: BN.text3 }}>{t("deliveryFee")}</span>
-                                    <span className="tabular-nums font-bold">{fmtPrice(o.deliveryFee)}</span>
+                                    <span className="tabular-nums font-bold">{fmt.price(o.deliveryFee)}</span>
                                 </div>
                             )}
                         </div>
@@ -976,6 +980,7 @@ function CancelModal({
     t: (k: string, v?: Record<string, string | number>) => string;
 }) {
     const [reason, setReason] = useState("");
+    const fmt = useBnFormat();
     const [submitting, setSubmitting] = useState(false);
     const [mounted, setMounted] = useState(false);
     useEffect(() => { setMounted(true); }, []);
@@ -1016,7 +1021,7 @@ function CancelModal({
                     <div className="flex-1 min-w-0">
                         <p className="text-[16px] font-black">{t("cancelTitle")}</p>
                         <p className="text-[12px] mt-0.5" style={{ color: BN.text3 }}>
-                            #{order.code} · {fmtPrice(order.total)}
+                            #{order.code} · {fmt.price(order.total)}
                         </p>
                     </div>
                     <button onClick={onClose} className="p-1" style={{ color: BN.text3 }}>
@@ -1110,6 +1115,7 @@ function ProductsTab({
     const router = useRouter();
     const t = useTranslations("bn.cabinet");
     const [items, setItems] = useState(initial);
+    const fmt = useBnFormat();
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
     const [bulkOpen, setBulkOpen] = useState(false);
     const [aiImportOpen, setAiImportOpen] = useState(false);
@@ -1268,7 +1274,7 @@ function ProductsTab({
                                     >
                                         {p.title}
                                     </BnLink>
-                                    <p className="text-[14px] font-black tabular-nums mt-1">{fmtPrice(p.price)}</p>
+                                    <p className="text-[14px] font-black tabular-nums mt-1">{fmt.price(p.price)}</p>
                                     <p className="text-[11.5px]" style={{ color: BN.text3 }}>
                                         {t("stockLine", { n: p.stock, s: p.sold })}
                                     </p>
@@ -2210,6 +2216,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 function MoneyTab({ balance, orderCount }: { balance: number; orderCount: number }) {
     const t = useTranslations("bn.cabinet");
+    const fmt = useBnFormat();
     const locale = useLocale();
     return (
         <div>
@@ -2220,7 +2227,7 @@ function MoneyTab({ balance, orderCount }: { balance: number; orderCount: number
                 <p className="text-[11.5px] font-bold uppercase tracking-wider mb-1" style={{ color: BN.text3 }}>
                     {t("payBalance")}
                 </p>
-                <p className="text-[32px] font-black tabular-nums leading-none">{fmtPrice(balance)}</p>
+                <p className="text-[32px] font-black tabular-nums leading-none">{fmt.price(balance)}</p>
                 <p className="text-[12.5px] mt-2" style={{ color: BN.text3 }}>
                     {t("payFromOrders", { n: orderCount, pct: 5 })}
                 </p>
@@ -2274,6 +2281,7 @@ interface ReferralData {
 
 function BnReferralCard() {
     const t = useTranslations("bn.referral");
+    const fmt = useBnFormat();
     const [data, setData] = useState<ReferralData | null>(null);
     const [loading, setLoading] = useState(true);
     const [copied, setCopied] = useState(false);
@@ -2336,7 +2344,7 @@ function BnReferralCard() {
                         {t("youGet")}
                     </p>
                     <p className="text-[18px] font-black tabular-nums leading-tight mt-1" style={{ color: BN.gold }}>
-                        {fmtPrice(data.inviterBonus)}
+                        {fmt.price(data.inviterBonus)}
                     </p>
                     <p className="text-[10.5px] mt-0.5" style={{ color: BN.text3 }}>{t("perFriend")}</p>
                 </div>
@@ -2345,7 +2353,7 @@ function BnReferralCard() {
                         {t("friendGets")}
                     </p>
                     <p className="text-[18px] font-black tabular-nums leading-tight mt-1" style={{ color: BN.info }}>
-                        {fmtPrice(data.inviteeBonus)}
+                        {fmt.price(data.inviteeBonus)}
                     </p>
                     <p className="text-[10.5px] mt-0.5" style={{ color: BN.text3 }}>{t("firstOrder")}</p>
                 </div>
@@ -2389,7 +2397,7 @@ function BnReferralCard() {
                     <div className="grid grid-cols-3 gap-2 mb-4">
                         <StatBox label={t("statPending")} value={String(data.pending)} />
                         <StatBox label={t("statRewarded")} value={String(data.rewarded)} />
-                        <StatBox label={t("statTotalEarned")} value={fmtPrice(data.totalEarned)} accent />
+                        <StatBox label={t("statTotalEarned")} value={fmt.price(data.totalEarned)} accent />
                     </div>
                 </>
             ) : (
@@ -2677,6 +2685,8 @@ function Todo({ done, title, text }: { done?: boolean; title: string; text: stri
 
 function RecentOrderRow({ o }: { o: CabinetOrder }) {
     const meta = ORDER_STATUS_META[o.status];
+    const tStatus = useTranslations("bn.orderStatus");
+    const fmt = useBnFormat();
     return (
         <BnLink
             href={`/buyurtmalarim/${o.code}`}
@@ -2691,13 +2701,13 @@ function RecentOrderRow({ o }: { o: CabinetOrder }) {
             <span className="flex-1 min-w-0">
                 <span className="flex items-center gap-2">
                     <span className="text-[10px] font-black px-1.5 py-0.5 rounded" style={{ background: `${meta.color}1F`, color: meta.color }}>
-                        {meta.label}
+                        {tStatus(o.status)}
                     </span>
                     <span className="text-[11px] tabular-nums" style={{ color: BN.text3 }}>#{o.code}</span>
                 </span>
                 <span className="block text-[12.5px] font-bold truncate mt-0.5">{o.firstTitle}</span>
             </span>
-            <span className="text-[13px] font-black tabular-nums flex-shrink-0">{fmtPrice(o.total)}</span>
+            <span className="text-[13px] font-black tabular-nums flex-shrink-0">{fmt.price(o.total)}</span>
             <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: BN.text3 }} />
         </BnLink>
     );

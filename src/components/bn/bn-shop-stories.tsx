@@ -4,6 +4,7 @@
 // 24 soat davomida faol — do'kon "tirik" ekanini ko'rsatadi.
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Store } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 
@@ -19,6 +20,7 @@ interface StoryItem {
 }
 
 export function BnShopStories() {
+    const t = useTranslations("bn.stories");
     const [items, setItems] = useState<StoryItem[]>([]);
     const [loaded, setLoaded] = useState(false);
 
@@ -38,9 +40,9 @@ export function BnShopStories() {
     return (
         <section className="mb-6">
             <div className="flex items-center gap-2 mb-3">
-                <span className="text-[15px] font-black">Do&apos;konlar hozir</span>
+                <span className="text-[15px] font-black">{t("title")}</span>
                 <span className="text-[11.5px]" style={{ color: BN.text3 }}>
-                    Nexus&apos;dagi 24 soatlik hikoyalar
+                    {t("subtitle")}
                 </span>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 bn-noscroll">
@@ -51,7 +53,7 @@ export function BnShopStories() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[76px] group"
-                        aria-label={`${s.shopName} hikoyasi`}
+                        aria-label={t("aria", { name: s.shopName })}
                     >
                         <span
                             className="relative w-[68px] h-[68px] rounded-full p-[3px]"

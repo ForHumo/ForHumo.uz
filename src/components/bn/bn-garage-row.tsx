@@ -5,6 +5,7 @@
 // yashirin (boshqa home qatorlari kabi).
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Car, ChevronRight } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
@@ -13,6 +14,8 @@ import { useGarage } from "./bn-garage";
 import type { BnProductDTO } from "@/lib/bn-data";
 
 export function BnGarageRow() {
+    const t = useTranslations("bn.garage");
+    const tHome = useTranslations("bn.home");
     const { car, ready } = useGarage();
     const [items, setItems] = useState<BnProductDTO[] | null>(null);
     const [loading, setLoading] = useState(false);
@@ -46,12 +49,12 @@ export function BnGarageRow() {
                         <Car className="w-[18px] h-[18px]" strokeWidth={2.2} />
                     </div>
                     <div className="min-w-0">
-                        <h2 className="text-[17px] sm:text-[19px] font-black leading-tight truncate">Mashinamga mos</h2>
+                        <h2 className="text-[17px] sm:text-[19px] font-black leading-tight truncate">{t("title")}</h2>
                         <p className="text-[12px] truncate" style={{ color: BN.gold }}>{car.makeName} {car.modelName}</p>
                     </div>
                 </div>
                 <BnLink href="/k/avto" className="flex items-center gap-1 text-[13px] font-bold flex-shrink-0 hover:opacity-70 transition-opacity" style={{ color: BN.text3 }}>
-                    Barchasi
+                    {tHome("allBtn")}
                     <ChevronRight className="w-4 h-4" />
                 </BnLink>
             </div>

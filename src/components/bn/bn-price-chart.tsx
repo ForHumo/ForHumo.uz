@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocale } from "next-intl";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
-import { formatMoney } from "@/lib/money";
+import { useBnFormat } from "./bn-format-hook";
 
 interface Point { t: string; price: number; marketAvg: number | null; }
 interface Stats { min: number; max: number; first: number; last: number; changePct: number; marketAvg: number | null; }
@@ -17,6 +17,7 @@ interface Data { days: number; points: Point[]; stats: Stats; }
 const DAYS_OPTIONS = [30, 90, 365] as const;
 
 export function BnPriceChart({ slug }: { slug: string }) {
+    const fmt = useBnFormat();
     const locale = useLocale();
     const [days, setDays] = useState<30 | 90 | 365>(30);
     const [data, setData] = useState<Data | null>(null);
@@ -102,7 +103,9 @@ export function BnPriceChart({ slug }: { slug: string }) {
     }
 
     const trend = data.stats.changePct;
-    const trendColor = trend > 0 ? "#EF4444" : trend < 0 ? "#10B981" : BN.text3;
+    const trendColor = trend > 0 ? BN.err : trend < 0 ? BN.ok : BN.text3;
+    // Min = Maks (narx o'zgarmagan) — bir xil qiymatni yashil/qizil qilib ko'rsatish chalg'itardi
+    const flat = data.stats.min === data.stats.max;
     const TrendIcon = trend > 0 ? TrendingUp : trend < 0 ? TrendingDown : Minus;
     const hovered = hoverIdx !== null ? data.points[hoverIdx] : null;
 
@@ -179,7 +182,7 @@ export function BnPriceChart({ slug }: { slug: string }) {
                     {/* Tooltip */}
                     {hovered && (
                         <div className="absolute top-1 right-1 rounded-lg px-2.5 py-1.5 text-[12px] pointer-events-none" style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}>
-                            <div className="font-semibold" style={{ color: BN.gold }}>{formatMoney(hovered.price, "UZS")}</div>
+                            <div className="font-semibold" style={{ color: BN.gold }}>{fmt.price(hovered.price)}</div>
                             <div className="text-[11px]" style={{ color: BN.text3 }}>
                                 {new Date(hovered.t).toLocaleDateString(locale === "en" ? "en-US" : locale === "ru" ? "ru-RU" : "uz-UZ", { day: "numeric", month: "short" })}
                             </div>
@@ -192,17 +195,17 @@ export function BnPriceChart({ slug }: { slug: string }) {
             <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
                 <StatItem
                     label={locale === "ru" ? "Мин" : locale === "en" ? "Min" : "Min"}
-                    value={formatMoney(data.stats.min, "UZS")}
-                    color="#10B981"
+                    value={fmt.price(data.stats.min)}
+                    color={flat ? BN.text : BN.ok}
                 />
                 <StatItem
                     label={locale === "ru" ? "Макс" : locale === "en" ? "Max" : "Maks"}
-                    value={formatMoney(data.stats.max, "UZS")}
-                    color="#EF4444"
+                    value={fmt.price(data.stats.max)}
+                    color={flat ? BN.text : BN.err}
                 />
                 <StatItem
                     label={locale === "ru" ? "Рынок ср." : locale === "en" ? "Market avg" : "Bozor o'rt."}
-                    value={data.stats.marketAvg ? formatMoney(data.stats.marketAvg, "UZS") : "—"}
+                    value={data.stats.marketAvg ? fmt.price(data.stats.marketAvg) : "—"}
                     color={BN.text2}
                 />
             </div>

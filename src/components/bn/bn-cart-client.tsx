@@ -11,7 +11,8 @@ import {
     ShoppingCart, Trash2, Plus, Minus, LogIn, ArrowRight, Loader2,
     Store, Truck, Eye, Package,
 } from "lucide-react";
-import { BN, fmtPrice, groupThousands, priceRankOf, PRICE_RANK_META } from "@/lib/bn-theme";
+import { BN, groupThousands, priceRankOf, PRICE_RANK_META } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
 import { BnLink } from "./bn-nav";
 import { BnEmpty } from "./bn-cards";
 import { bnConfirm } from "./bn-dialog";
@@ -54,6 +55,7 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
     const t = useTranslations("bn.cart");
     const tProd = useTranslations("bn.product");
     const tAuth = useTranslations("bn");
+    const fmt = useBnFormat();
     const [items, setItems] = useState<CartItem[]>(initial);
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
     const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -254,7 +256,7 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
                                                     </BnLink>
                                                     <div className="flex items-baseline gap-2 mb-2 flex-wrap">
                                                         <span className="text-[15px] font-black tabular-nums">
-                                                            {fmtPrice(unitPriceOf(it))}
+                                                            {fmt.price(unitPriceOf(it))}
                                                         </span>
                                                         {p.isWholesale && unitPriceOf(it) < p.price && (
                                                             <span className="text-[10.5px] line-through tabular-nums" style={{ color: BN.text3 }}>
@@ -343,8 +345,8 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
                         <h2 className="text-[15px] font-black mb-4">{t("summary")}</h2>
 
                         <div className="space-y-2.5 text-[13.5px]">
-                            <SumRow label={t("productsN", { n: items.length })} value={fmtPrice(subtotal)} />
-                            <SumRow label={t("deliveryTashkent")} value={delivery > 0 ? fmtPrice(delivery) : t("free")} />
+                            <SumRow label={t("productsN", { n: items.length })} value={fmt.price(subtotal)} />
+                            <SumRow label={t("deliveryTashkent")} value={delivery > 0 ? fmt.price(delivery) : t("free")} />
                         </div>
 
                         <div
@@ -352,7 +354,7 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
                             style={{ borderTop: `1px solid ${BN.border}` }}
                         >
                             <span className="text-[14px] font-bold">{t("total")}</span>
-                            <span className="text-[22px] font-black tabular-nums">{fmtPrice(total)}</span>
+                            <span className="text-[22px] font-black tabular-nums">{fmt.price(total)}</span>
                         </div>
 
                         <button

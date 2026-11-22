@@ -13,7 +13,8 @@ import {
     Package, LogIn, ChevronRight, Clock, Check, X, Truck, Eye,
     Wallet, Banknote, Store, MapPin, Phone, Loader2, RotateCw,
 } from "lucide-react";
-import { BN, fmtPrice, fmtBnDateTime, ORDER_STATUS_META } from "@/lib/bn-theme";
+import { BN, fmtBnDateTime, ORDER_STATUS_META } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
 import { BnLink } from "./bn-nav";
 import { BnEmpty } from "./bn-cards";
 import { BnBackButton } from "./bn-back-button";
@@ -45,6 +46,7 @@ export function BnOrdersListClient({
     const t = useTranslations("bn.orders");
     const tStatus = useTranslations("bn.orderStatus");
     const locale = useLocale();
+    const fmt = useBnFormat();
     const notAuth = unauthenticated || status === "unauthenticated";
 
     if (notAuth) return <AuthGate />;
@@ -73,7 +75,7 @@ export function BnOrdersListClient({
     return (
         <Wrap>
             <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-6">
-                {t("title")} <span className="text-[15px] font-bold" style={{ color: BN.text3 }}>{initial.length} {t("countUnit")}</span>
+                {t("title")} <span className="text-[15px] font-bold" style={{ color: BN.text3 }}>{initial.length} {t("countUnit", { n: initial.length })}</span>
             </h1>
             <BnPushCard />
             <div className="space-y-2.5">
@@ -118,7 +120,7 @@ export function BnOrdersListClient({
                             </span>
 
                             <span className="flex flex-col items-end gap-1 flex-shrink-0">
-                                <span className="text-[14px] font-black tabular-nums">{fmtPrice(o.total)}</span>
+                                <span className="text-[14px] font-black tabular-nums">{fmt.price(o.total)}</span>
                                 <ChevronRight className="w-4 h-4" style={{ color: BN.text3 }} />
                             </span>
                         </BnLink>
@@ -170,6 +172,7 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
     const tStatus = useTranslations("bn.orderStatus");
     const tCrumb = useTranslations("bn.breadcrumb");
     const locale = useLocale();
+    const fmt = useBnFormat();
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState<string | null>(null);
     const meta = ORDER_STATUS_META[order.status];
@@ -379,11 +382,11 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                                             <p className="text-[13px] font-bold line-clamp-2">{it.title}</p>
                                         )}
                                         <p className="text-[12px] mt-1" style={{ color: BN.text3 }}>
-                                            {it.qty} × {fmtPrice(it.price)}
+                                            {it.qty} × {fmt.price(it.price)}
                                         </p>
                                     </div>
                                     <span className="text-[13px] font-black tabular-nums flex-shrink-0">
-                                        {fmtPrice(it.price * it.qty)}
+                                        {fmt.price(it.price * it.qty)}
                                     </span>
                                 </li>
                             ))}
@@ -427,14 +430,14 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                     <Panel>
                         <h2 className="text-[14px] font-black mb-4">{t("summaryHead")}</h2>
                         <div className="space-y-2 text-[13px]">
-                            <SumRow label={t("productsRow")} value={fmtPrice(order.subtotal)} />
-                            {order.deliveryFee > 0 && <SumRow label={t("deliveryRow")} value={fmtPrice(order.deliveryFee)} />}
+                            <SumRow label={t("productsRow")} value={fmt.price(order.subtotal)} />
+                            {order.deliveryFee > 0 && <SumRow label={t("deliveryRow")} value={fmt.price(order.deliveryFee)} />}
                             <div
                                 className="flex items-baseline justify-between pt-3 mt-1"
                                 style={{ borderTop: `1px solid ${BN.border}` }}
                             >
                                 <span className="text-[14px] font-bold">{t("total")}</span>
-                                <span className="text-[20px] font-black tabular-nums">{fmtPrice(order.total)}</span>
+                                <span className="text-[20px] font-black tabular-nums">{fmt.price(order.total)}</span>
                             </div>
                         </div>
 

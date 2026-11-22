@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import { BnLink, useBnBase } from "./bn-nav";
 import { Store, Shield, Truck, Sparkles } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
@@ -9,10 +10,17 @@ import { BnLogo } from "./bn-header";
 
 export function BnFooter() {
     const { hasShop } = useBnBase();
+    const { status } = useSession();
     const t = useTranslations("bn");
     const locale = useLocale();
     return (
-        <footer style={{ borderTop: `1px solid ${BN.border}`, background: BN.surface }}>
+        // Mobil/planshetda pastki suzuvchi navbar (~80px + safe-area) oxirgi qatorni
+        // (© / Powered by) doim yopib turardi — footer foni ostida joy qoldiramiz.
+        // lg+ da navbar yo'q (bn-navbar.tsx) — padding ham kerak emas.
+        <footer
+            className="pb-[calc(88px+env(safe-area-inset-bottom))] lg:pb-0"
+            style={{ borderTop: `1px solid ${BN.border}`, background: BN.surface }}
+        >
             {/* Ishonch qatori */}
             <div className="mx-auto max-w-[1280px] px-4 py-8 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Trust icon={<Shield className="w-5 h-5" />} title={t("trust.payment")}
@@ -49,7 +57,10 @@ export function BnFooter() {
                         {hasShop ? (
                             <FooterLink href="/kabinet">{t("seller.cabinet")}</FooterLink>
                         ) : (
-                            <FooterLink href="/sotuvchi">{t("seller.become")}</FooterLink>
+                            // Kirmagan → kirishsiz waitlist (MChJ kutilmoqda), /sotuvchi login devori
+                            <FooterLink href={status === "authenticated" ? "/sotuvchi" : "/sotuvchi/waitlist"}>
+                                {t("seller.become")}
+                            </FooterLink>
                         )}
                         <FooterLink href="/kabinet">{t("footer.cabinet")}</FooterLink>
                     </FooterCol>

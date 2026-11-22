@@ -1,13 +1,17 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { BnLink } from "./bn-nav";
+import { getBnScrollRoot } from "./bn-scroll";
+import { bnCity } from "@/lib/bn-seo";
 import { SlidersHorizontal, X, Search, ChevronRight, Store, Package, Loader2 } from "lucide-react";
-import { BN, fmtPrice, groupThousands } from "@/lib/bn-theme";
+import { BN } from "@/lib/bn-theme";
+import { useBnFormat } from "./bn-format-hook";
 import { BnProductCard } from "./bn-product-card";
-import { BnEmpty } from "./bn-cards";
+import { BnEmpty, BnMarketCover } from "./bn-cards";
 import { useGarage, BnGarageBar } from "./bn-garage";
 import type { BnMarketDTO, BnProductDTO } from "@/lib/bn-data";
 
@@ -48,6 +52,7 @@ export function BnCatalog({
     const t = useTranslations("bn.catalog");
     const tCrumb = useTranslations("bn.breadcrumb");
     const tNav = useTranslations("bn.nav");
+    const fmt = useBnFormat();
     // URL sync — filter'lar refresh/share'da saqlanadi.
     // ?market=chorsu&cheap=1&inspect=1&delivery=1&maxPrice=50000&sort=cheap
     const sp = useSearchParams();
@@ -59,6 +64,13 @@ export function BnCatalog({
             ? sp.get("sort") : initialSort) as SortKey
     );
     const [filterOpen, setFilterOpen] = useState(false);
+    // Filtr paneli Escape bilan yopiladi
+    useEffect(() => {
+        if (!filterOpen) return;
+        const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setFilterOpen(false); };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [filterOpen]);
     const [marketSlug, setMarketSlug] = useState<string | null>(sp.get("market") ?? null);
     const [onlyCheap, setOnlyCheap] = useState(sp.get("cheap") === "1" || initialSort === "cheap");
     const [onlyInspect, setOnlyInspect] = useState(sp.get("inspect") === "1");
@@ -187,7 +199,7 @@ export function BnCatalog({
                 </nav>
                 <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight leading-tight">{title}</h1>
                 <p className="text-[13px] mt-1.5" style={{ color: BN.text3 }}>
-                    {t("productsFound", { n: groupThousands(items.length) })}
+                    {t("productsFound", { n: items.length })}
                 </p>
             </div>
 
@@ -302,8 +314,10 @@ export function BnCatalog({
                 </>
             )}
 
-            {/* Filtr paneli */}
-            {filterOpen && (
+            {/* Filtr paneli — scroll ildiziga portal: sahifa `relative z-10` o'ram ichida,
+                pastki navbar (z-50) esa uning qo'shnisi — portalsiz z-[120] ham navbar ostida
+                qolib, "N ta mahsulotni ko'rish" tugmasini yopardi (bn-header drawer naqshi). */}
+            {filterOpen && createPortal(
                 <div className="fixed inset-0 z-[120]">
                     <div
                         className="absolute inset-0"
@@ -374,7 +388,7 @@ export function BnCatalog({
                                         key={v}
                                         checked={maxPrice === v}
                                         onChange={() => setMaxPrice(maxPrice === v ? null : v)}
-                                        label={t("maxPriceUpTo", { price: fmtPrice(v) })}
+                                        label={t("maxPriceUpTo", { price: fmt.price(v) })}
                                     />
                                 ))}
                             </FilterGroup>
@@ -382,7 +396,11 @@ export function BnCatalog({
 
                         <div
                             className="sticky bottom-0 p-4"
-                            style={{ background: BN.surface, borderTop: `1px solid ${BN.border}` }}
+                            style={{
+                                background: BN.surface,
+                                borderTop: `1px solid ${BN.border}`,
+                                paddingBottom: "max(16px, env(safe-area-inset-bottom))",
+                            }}
                         >
                             <button
                                 onClick={() => setFilterOpen(false)}
@@ -393,7 +411,8 @@ export function BnCatalog({
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                getBnScrollRoot() ?? document.body,
             )}
         </div>
     );
@@ -450,14 +469,19 @@ function Radio({ checked, onChange, label }: { checked: boolean; onChange: () =>
 }
 
 /** Bozorlar ro'yxati sahifasi */
-export function BnMarketsList({ markets }: { markets: BnMarketDTO[] }) {
+export function BnMarketsList({ markets, filter }: { markets: BnMarketDTO[]; filter?: React.ReactNode }) {
     const t = useTranslations("bn.markets");
+    const locale = useLocale();
+    // ru'da nameRu (bo'lsa), aks holda asl nom
+    const nameOf = (m: BnMarketDTO) => (locale === "ru" && m.nameRu ? m.nameRu : m.name);
     return (
         <div className="mx-auto max-w-[1280px] px-4 py-6 pb-16">
             <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-2">{t("title")}</h1>
             <p className="text-[13.5px] mb-6 max-w-[600px] leading-relaxed" style={{ color: BN.text2 }}>
                 {t("desc")}
             </p>
+            {/* Filtr (tuman chiplari) sarlavha+tavsifdan KEYIN — sahifa nomidan oldin turmasin */}
+            {filter}
             {markets.length === 0 ? (
                 <BnEmpty
                     icon={<Store className="w-6 h-6" />}
@@ -475,22 +499,22 @@ export function BnMarketsList({ markets }: { markets: BnMarketDTO[] }) {
                             style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                         >
                             <div className="aspect-[16/9] overflow-hidden" style={{ background: BN.surfaceUp }}>
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
+                                {/* Muqova bo'sh/buzuq bo'lsa <img src=""> o'rniga BN fallback (bn-cards.tsx) */}
+                                <BnMarketCover
                                     src={m.coverUrl}
-                                    alt={m.name}
-                                    loading="lazy"
-                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    alt={nameOf(m)}
+                                    imgClassName="transition-transform duration-500 group-hover:scale-105"
                                 />
                             </div>
                             <div className="p-4">
                                 <p className="text-[15px] font-black mb-1.5 transition-colors group-hover:text-[color:var(--bn-gold)]">
-                                    {m.name}
+                                    {nameOf(m)}
                                 </p>
-                                <p className="text-[12.5px] mb-2" style={{ color: BN.text3 }}>{m.district}</p>
+                                {/* Tuman bo'lmasa shahar ("Toshkent") — shahar nomi tilga moslanadi */}
+                                <p className="text-[12.5px] mb-2" style={{ color: BN.text3 }}>{bnCity(m.district, locale)}</p>
                                 <div className="flex items-center gap-3 text-[12px]" style={{ color: BN.text2 }}>
                                     <span className="flex items-center gap-1">
-                                        <Store className="w-3.5 h-3.5" />{t("shopN", { n: m.shopCount })}
+                                        <Store className="w-3.5 h-3.5" />{m.shopCount > 0 ? t("shopN", { n: m.shopCount }) : t("shopsSoon")}
                                     </span>
                                     {m.workHours && (
                                         <span className="flex items-center gap-1">

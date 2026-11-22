@@ -2,7 +2,7 @@
 // schema.org ShoppingCenter LocalBusiness'ning subclass'i — "market/mall"
 // tipini semantik ochib beradi (bozor = tenant shopping center).
 
-const SITE = "https://bozornarxida.uz";
+const SITE = "https://www.bozornarxida.uz";
 
 interface Props {
     slug: string;

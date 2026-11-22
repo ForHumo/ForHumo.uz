@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { BnSettingsPage } from "@/components/bn/bn-sections";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Sozlamalar", robots: { index: false, follow: false } };
+// Shaxsiy sahifa — indekslanmaydi; sarlavha tilga mos
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+    const { locale } = await params;
+    const t = await getTranslations({ locale, namespace: "bn" });
+    return { title: t("pages.settingsTitle"), robots: { index: false, follow: false } };
+}
 
 export default function Page() {
     return <BnSettingsPage />;

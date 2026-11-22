@@ -95,7 +95,7 @@ const MODES = [
     { key: "system", icon: Monitor },
 ] as const;
 
-export function BnThemeToggle({ compact = false }: { compact?: boolean }) {
+export function BnThemeToggle() {
     const { theme, setTheme, resolvedTheme } = useTheme();
     const t = useTranslations("bn.theme");
     const [mounted, setMounted] = useState(false);
@@ -115,7 +115,7 @@ export function BnThemeToggle({ compact = false }: { compact?: boolean }) {
                 onClick={() => setOpen(v => !v)}
                 aria-label={t("label")}
                 title={t("label")}
-                className={`grid place-items-center rounded-xl transition-colors ${compact ? "w-9 h-9" : "w-10 h-10"}`}
+                className="grid place-items-center w-10 h-10 rounded-xl transition-colors"
                 style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text2 }}
             >
                 <ActiveIcon className="w-[17px] h-[17px]" />
@@ -170,7 +170,7 @@ function localizedPath(pathname: string, newLocale: string): string {
     return `/${newLocale}${rest === "/" ? "" : rest}` || "/";
 }
 
-export function BnLangSwitch({ compact = false }: { compact?: boolean }) {
+export function BnLangSwitch() {
     const { locale } = useBnBase();
     const t = useTranslations("bn.lang");
     const router = useRouter();
@@ -190,7 +190,7 @@ export function BnLangSwitch({ compact = false }: { compact?: boolean }) {
                 onClick={() => setOpen(v => !v)}
                 aria-label={t("label")}
                 title={t("label")}
-                className={`grid place-items-center rounded-xl text-[12px] font-black transition-colors ${compact ? "w-9 h-9" : "w-10 h-10"}`}
+                className="grid place-items-center w-10 h-10 rounded-xl text-[12px] font-black transition-colors"
                 style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text2 }}
             >
                 {active.short}

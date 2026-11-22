@@ -514,7 +514,7 @@ function BanModal({ shopId, shopName, onClose, onDone }: {
                         <label className="text-[11px] uppercase tracking-wider font-bold" style={{ color: BN.text3 }}>Necha kun</label>
                         <input type="number" value={days} onChange={e => setDays(Math.max(1, Number(e.target.value) || 1))}
                             className="w-full rounded-xl px-3 py-2.5 mt-1 mb-3 text-[14px]" min={1}
-                            style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: "#fff" }} />
+                            style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }} />
                     </>
                 )}
 
@@ -522,13 +522,13 @@ function BanModal({ shopId, shopName, onClose, onDone }: {
                 <textarea value={reason} onChange={e => setReason(e.target.value)} rows={3}
                     placeholder="Aniq nima uchun ban qo'yildi..."
                     className="w-full rounded-xl px-3 py-2.5 mt-1 mb-3 text-[13.5px] resize-none"
-                    style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: "#fff" }} />
+                    style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }} />
 
                 <label className="text-[11px] uppercase tracking-wider font-bold" style={{ color: BN.text3 }}>Sotuvchiga xabar (ixtiyoriy)</label>
                 <input value={publicReason} onChange={e => setPublicReason(e.target.value)}
                     placeholder="Qisqa tushuntirish sotuvchi ko'radi"
                     className="w-full rounded-xl px-3 py-2.5 mt-1 mb-4 text-[13.5px]"
-                    style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: "#fff" }} />
+                    style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }} />
 
                 <button onClick={submit} disabled={busy || reason.trim().length < 3}
                     className="w-full rounded-xl h-11 font-bold text-[14px] flex items-center justify-center gap-2 disabled:opacity-40"

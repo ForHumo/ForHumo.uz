@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { BN_SITE, bnPageMeta } from "@/lib/bn-seo";
 import { notFound } from "next/navigation";
 import { BnCatalog, type BnCatalogCategoryDTO } from "@/components/bn/bn-catalog";
 import { getCategoryBySlug, getMarkets } from "@/lib/bn-data";
 import { getBnAuth } from "@/lib/bn-auth";
+import { getBnFormat } from "@/lib/bn-format-server";
+import { bnNotFoundMeta } from "@/lib/bn-seo-server";
+import { bnCategoryName } from "@/lib/bn-category-names";
 
 export const dynamic = "force-dynamic";
 
@@ -19,24 +23,19 @@ function priceRange(products: { price: number }[]): { min: number; max: number }
     return { min, max };
 }
 
-function formatUZS(n: number, locale: Locale): string {
-    const bcp = locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : "uz-Latn-UZ";
-    const num = n.toLocaleString(bcp, { maximumFractionDigits: 0 });
-    return locale === "ru" ? `${num} сум` : locale === "en" ? `${num} UZS` : `${num} so'm`;
-}
-
-function buildDescription(locale: Locale, name: string, count: number, priceLine: string | null): string {
+// productsText — tayyor "N ta mahsulot" (ICU plural, getBnFormat)
+function buildDescription(locale: Locale, name: string, productsText: string, priceLine: string | null): string {
     if (locale === "ru") {
-        return `${name} — цены на Ташкентских базарах и в магазинах. ${count} товаров. `
+        return `${name} — цены на Ташкентских базарах и в магазинах. ${productsText}. `
             + (priceLine ? `Диапазон цен: ${priceLine}. ` : "")
             + `Сравнивайте цены, читайте отзывы и заказывайте с защитой эскроу на Bozor Narxida.`;
     }
     if (locale === "en") {
-        return `${name} — real prices from Tashkent bazaars and shops. ${count} items. `
+        return `${name} — real prices from Tashkent bazaars and shops. ${productsText}. `
             + (priceLine ? `Price range: ${priceLine}. ` : "")
             + `Compare prices, read reviews and order with escrow protection on Bozor Narxida.`;
     }
-    return `${name} — Toshkent bozorlari va do'konlaridagi haqiqiy narxlar. ${count} ta mahsulot. `
+    return `${name} — Toshkent bozorlari va do'konlaridagi haqiqiy narxlar. ${productsText}. `
         + (priceLine ? `Narx: ${priceLine}. ` : "")
         + `Bozor Narxida'da narxlarni solishtiring, sharhlarni o'qing va eskrow himoyasi bilan buyurtma bering.`;
 }
@@ -44,48 +43,30 @@ function buildDescription(locale: Locale, name: string, count: number, priceLine
 export async function generateMetadata({ params }: { params: Promise<{ locale: Locale; slug: string }> }): Promise<Metadata> {
     const { locale, slug } = await params;
     const data = await getCategoryBySlug(slug);
-    if (!data) return { title: slug.replace(/-/g, " ") };
+    if (!data) return bnNotFoundMeta(locale);
 
-    const name = data.category.name;
+    const name = bnCategoryName(data.category, locale);
     const count = data.category.productCount;
     const range = priceRange(data.products);
+    const fmt = await getBnFormat(locale);
     const priceLine = range
-        ? (range.min === range.max ? formatUZS(range.min, locale) : `${formatUZS(range.min, locale)} — ${formatUZS(range.max, locale)}`)
+        ? (range.min === range.max ? fmt.price(range.min) : `${fmt.price(range.min)} — ${fmt.price(range.max)}`)
         : null;
 
     const titleBase = locale === "ru" ? `${name} — цены на базарах Ташкента`
         : locale === "en" ? `${name} — Tashkent bazaar prices`
         : `${name} — Toshkent bozor narxlari`;
 
-    const description = buildDescription(locale, name, count, priceLine);
-    const ogUrl = `https://bozornarxida.uz/api/og/bn/category/${slug}`;
-    const pageUrl = `https://bozornarxida.uz/k/${slug}`;
+    const description = buildDescription(locale, name, fmt.products(count), priceLine);
+    const ogUrl = `${BN_SITE}/api/og/bn/category/${encodeURIComponent(slug)}${locale === "uz" ? "" : `?l=${locale}`}`;
 
     return {
         title: titleBase,
         description,
-        alternates: {
-            canonical: pageUrl,
-            languages: {
-                "uz": `https://bozornarxida.uz/uz/k/${slug}`,
-                "ru": `https://bozornarxida.uz/ru/k/${slug}`,
-                "en": `https://bozornarxida.uz/en/k/${slug}`,
-            },
-        },
-        openGraph: {
-            type: "website",
-            title: titleBase,
-            description,
-            url: pageUrl,
-            siteName: "Bozor Narxida",
+        ...bnPageMeta({
+            locale, path: `/k/${slug}`, title: titleBase, description,
             images: [{ url: ogUrl, width: 1200, height: 630, alt: name }],
-        },
-        twitter: {
-            card: "summary_large_image",
-            title: titleBase,
-            description,
-            images: [ogUrl],
-        },
+        }),
     };
 }
 
@@ -102,10 +83,10 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
 
     const catDTO: BnCatalogCategoryDTO = {
         slug: rootCat.slug,
-        name: rootCat.name,
+        name: bnCategoryName(rootCat, locale),
         productCount: rootCat.productCount,
         children: (parent ? parent.category.children : c.children).map(ch => ({
-            slug: ch.slug, name: ch.name, productCount: ch.productCount,
+            slug: ch.slug, name: bnCategoryName(ch, locale), productCount: ch.productCount,
         })),
     };
 
@@ -115,13 +96,13 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
-        name: c.name,
-        url: `https://bozornarxida.uz/k/${c.slug}`,
+        name: bnCategoryName(c, locale),
+        url: `https://www.bozornarxida.uz/k/${c.slug}`,
         inLanguage: locale,
         isPartOf: {
             "@type": "WebSite",
             name: "Bozor Narxida",
-            url: "https://bozornarxida.uz",
+            url: "https://www.bozornarxida.uz",
         },
         mainEntity: {
             "@type": "ItemList",
@@ -129,7 +110,7 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
             itemListElement: data.products.slice(0, 20).map((p, i) => ({
                 "@type": "ListItem",
                 position: i + 1,
-                url: `https://bozornarxida.uz/p/${p.slug}`,
+                url: `https://www.bozornarxida.uz/p/${p.slug}`,
                 name: p.title,
             })),
         },

@@ -2,6 +2,8 @@
 // Do'koni yo'q bo'lsa "Do'kon ochish" chaqiruvi.
 
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { bnPageMeta } from "@/lib/bn-seo";
 import { BnCatalog } from "@/components/bn/bn-catalog";
 import { getMarkets, searchProducts, viewerCanSeeWholesale } from "@/lib/bn-data";
 import { getBnAuth } from "@/lib/bn-auth";
@@ -11,10 +13,13 @@ import { Package, Store, ShieldCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-    title: "Ulgurji",
-    description: "Ulgurji (optom) mahsulotlar — faqat BN do'kon egalari uchun. Katta miqdorda arzon narxlar.",
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+    const { locale } = await params;
+    const t = await getTranslations({ locale, namespace: "bn" });
+    const title = t("seo.wholesaleTitle");
+    const description = t("seo.wholesaleDesc");
+    return { title, description, ...bnPageMeta({ locale, path: "/ulgurji", title, description }) };
+}
 
 export default async function Page() {
     const auth = await getBnAuth();

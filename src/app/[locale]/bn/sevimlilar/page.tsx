@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { BnFavoritesClient } from "@/components/bn/bn-favorites-client";
 import { getBnAuth } from "@/lib/bn-auth";
 import { prisma } from "@/lib/prisma";
@@ -6,7 +7,12 @@ import type { BnProductDTO } from "@/lib/bn-data";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Sevimlilar", robots: { index: false, follow: false } };
+// Shaxsiy sahifa — indekslanmaydi; sarlavha tilga mos
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+    const { locale } = await params;
+    const t = await getTranslations({ locale, namespace: "bn" });
+    return { title: t("favorites.title"), robots: { index: false, follow: false } };
+}
 
 export default async function Page() {
     const auth = await getBnAuth();

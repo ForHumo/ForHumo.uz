@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { bnPageMeta } from "@/lib/bn-seo";
 import { BnLegalPage } from "@/components/bn/bn-legal";
 import { FileText } from "lucide-react";
 
-export const metadata: Metadata = {
-    title: "Foydalanish shartlari",
-    description: "Bozor Narxida platformasidan foydalanish qoidalari va shartlari.",
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+    const { locale } = await params;
+    const t = await getTranslations({ locale, namespace: "bn" });
+    const title = t("footer.terms");
+    const description = t("seo.termsDesc");
+    return { title, description, ...bnPageMeta({ locale, path: "/huquqiy/foydalanish", title, description }) };
+}
 
 export default function Page() {
     return (
@@ -89,7 +94,7 @@ export default function Page() {
             </p>
 
             <hr />
-            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>
+            <p className="bn-legal-note">
                 Savollar bo'lsa: <a href="https://t.me/forhumo">t.me/forhumo</a> yoki BNda yordam sahifasi.
             </p>
         </BnLegalPage>

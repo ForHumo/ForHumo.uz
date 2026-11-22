@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useLocale } from "next-intl";
 import { Crown, Star, ShieldCheck, BadgeCheck, Store } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
-import { formatMoney } from "@/lib/money";
+import { useBnFormat } from "./bn-format-hook";
 import { BnLink } from "./bn-nav";
 
 interface Alt {
@@ -23,6 +23,7 @@ interface Alt {
 interface Data { winner: Alt | null; alternatives: Alt[]; isAnchorWinner: boolean; }
 
 export function BnBuyBox({ slug }: { slug: string }) {
+    const fmt = useBnFormat();
     const locale = useLocale();
     const [data, setData] = useState<Data | null>(null);
     const [loading, setLoading] = useState(true);
@@ -78,11 +79,11 @@ export function BnBuyBox({ slug }: { slug: string }) {
                     <div className="text-[13px] font-semibold line-clamp-1" style={{ color: BN.text }}>{data.winner.title}</div>
                     <div className="mt-1 flex items-center gap-2 flex-wrap">
                         <span className="text-[16px] font-bold" style={{ color: BN.gold }}>
-                            {formatMoney(data.winner.price, "UZS")}
+                            {fmt.price(data.winner.price)}
                         </span>
                         {data.winner.marketAvgPrice && data.winner.marketAvgPrice > data.winner.price && (
                             <span className="text-[11px] line-through" style={{ color: BN.text3 }}>
-                                {formatMoney(data.winner.marketAvgPrice, "UZS")}
+                                {fmt.price(data.winner.marketAvgPrice)}
                             </span>
                         )}
                     </div>
@@ -113,7 +114,7 @@ export function BnBuyBox({ slug }: { slug: string }) {
                         {data.alternatives.map(a => (
                             <BnLink key={a.id} href={`/d/${a.shop.slug}/${a.slug}`} className="flex items-center justify-between rounded-lg px-3 py-2 text-[12.5px]" style={{ background: BN.surfaceUp }}>
                                 <span className="truncate" style={{ color: BN.text }}>{a.shop.name}</span>
-                                <span className="font-semibold" style={{ color: BN.gold }}>{formatMoney(a.price, "UZS")}</span>
+                                <span className="font-semibold" style={{ color: BN.gold }}>{fmt.price(a.price)}</span>
                             </BnLink>
                         ))}
                     </div>

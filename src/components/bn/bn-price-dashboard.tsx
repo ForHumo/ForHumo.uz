@@ -5,15 +5,16 @@
 // 7 kunlik trend (up/down/flat). AI prognoz card ham ochish mumkin.
 
 import { useEffect, useState } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { TrendingUp, TrendingDown, Minus, BarChart3, ChevronRight } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
-import { formatMoney } from "@/lib/money";
 import { BnLink } from "./bn-nav";
+import { useBnFormat } from "./bn-format-hook";
 import { BnForecastCard } from "./bn-forecast-card";
+import { bnCategoryName } from "@/lib/bn-category-names";
 
 interface CatAgg {
-    slug: string; name: string; icon: string | null;
+    slug: string; name: string; nameRu?: string | null; icon: string | null;
     productCount: number;
     avg: number; min: number; max: number;
     changePct: number;
@@ -28,6 +29,8 @@ const TREND_META: Record<CatAgg["trend"], { icon: typeof TrendingUp; color: stri
 
 export function BnPriceDashboard() {
     const locale = useLocale();
+    const t = useTranslations("bn.priceDash");
+    const fmt = useBnFormat();
     const [cats, setCats] = useState<CatAgg[] | null>(null);
     const [loading, setLoading] = useState(true);
     const [selected, setSelected] = useState<string | null>(null);
@@ -46,8 +49,6 @@ export function BnPriceDashboard() {
 
     if (loading || !cats || cats.length === 0) return null;
 
-    const t = (u: string, r: string, e: string) => locale === "ru" ? r : locale === "en" ? e : u;
-
     return (
         <section className="mb-10">
             <div className="flex items-center justify-between mb-4">
@@ -57,10 +58,10 @@ export function BnPriceDashboard() {
                     </div>
                     <div>
                         <h2 className="text-[18px] font-bold" style={{ color: BN.text }}>
-                            {t("Bugungi bozor narxlari", "Сегодняшние рыночные цены", "Today's Market Prices")}
+                            {t("title")}
                         </h2>
                         <div className="text-[13px]" style={{ color: BN.text2 }}>
-                            {t("Har kategoriya uchun o'rtacha narx, hafta trendi", "Средняя цена по каждой категории, недельный тренд", "Average price per category, weekly trend")}
+                            {t("subtitle")}
                         </div>
                     </div>
                 </div>
@@ -79,7 +80,8 @@ export function BnPriceDashboard() {
                         >
                             <div className="flex items-start justify-between">
                                 <div className="text-[13px] font-semibold" style={{ color: BN.text }}>
-                                    {c.name}
+                                    {/* Kategoriya nomi joriy tilda (ru — nameRu/ro'yxat, en — ro'yxat) */}
+                                    {bnCategoryName(c, locale)}
                                 </div>
                                 <div className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold" style={{ background: meta.bg, color: meta.color }}>
                                     <Icon className="w-3 h-3" />
@@ -87,13 +89,13 @@ export function BnPriceDashboard() {
                                 </div>
                             </div>
                             <div className="mt-2 text-[16px] font-bold tabular-nums" style={{ color: BN.gold }}>
-                                {formatMoney(c.avg, "UZS")}
+                                {fmt.price(c.avg)}
                             </div>
                             <div className="text-[11px] mt-0.5" style={{ color: BN.text3 }}>
-                                {formatMoney(c.min, "UZS")} — {formatMoney(c.max, "UZS")}
+                                {fmt.price(c.min)} — {fmt.price(c.max)}
                             </div>
                             <div className="mt-2 flex items-center justify-between text-[11px]" style={{ color: BN.text3 }}>
-                                <span>{c.productCount} {t("mahsulot", "товаров", "items")}</span>
+                                <span>{fmt.products(c.productCount)}</span>
                                 <ChevronRight className="w-3.5 h-3.5" />
                             </div>
                         </button>
@@ -106,7 +108,7 @@ export function BnPriceDashboard() {
                     <BnForecastCard categorySlug={selected} onClose={() => setSelected(null)} />
                     <div className="mt-3 text-center">
                         <BnLink href={`/k/${selected}`} className="text-[13px] font-semibold" style={{ color: BN.gold }}>
-                            {t("Bu kategoriya mahsulotlari", "Товары этой категории", "Browse category")} →
+                            {t("browse")} →
                         </BnLink>
                     </div>
                 </div>
