@@ -20,7 +20,7 @@ import { LanguageSwitcher } from "@/components/ui/language-switcher";
 // Kirish faqat QATNASHISH uchun kerak (jamoa yaratish, ro'yxatdan o'tish, transfer) —
 // har action API'si o'zi 401/403 qaytaradi va UI kirishni so'raydi.
 // Qidiruv tizimlari ham shu tufayli sahifalarni indeksiy oladi.
-const PUBLIC_PREFIXES = ["/bn", "/yukgo", "/esport"];
+const PUBLIC_PREFIXES = ["/bn", "/yukgo", "/esport", "/esport-test"];
 // Ommaviy prefiks ichidagi ISTISNOLAR — bular baribir kirish talab qiladi.
 // eSport admin paneli faqat ega/adminlarga; anonim ko'ra olmaydi.
 const PUBLIC_EXCLUDE = ["/esport/admin"];
