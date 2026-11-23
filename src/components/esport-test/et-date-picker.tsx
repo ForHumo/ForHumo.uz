@@ -2,13 +2,25 @@
 
 // For Humo eSport — maxsus sana tanlagich (brauzerning native kalendari o'rnida).
 // value/onChange: "YYYY-MM-DD". Premium, animatsion, es-* brend ranglarida.
+//
+// MUHIM: kalendar oynasi PORTAL orqali `.es-bg` shell'ga chiqariladi va
+// `position:fixed` bilan joylashtiriladi. Sababi: `.et-glass` kartalar
+// `overflow:hidden` + `backdrop-filter` ga ega — backdrop-filter kartani
+// `fixed` elementlar uchun ham containing-block qiladi, shuning uchun karta
+// ichida qolgan popup pastdan kesiladi (faqat oy sarlavhasi ko'rinadi).
+// `.es-bg` ichida (lekin karta tashqarisida) turgani uchun --es-*/--et-*
+// o'zgaruvchilar baribir yechiladi, lekin hech bir karta uni kesmaydi.
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Calendar, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 const MON = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"];
 const MON_SHORT = ["yan", "fev", "mar", "apr", "may", "iyn", "iyl", "avg", "sen", "okt", "noy", "dek"];
 const DOW = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"];
+
+const CAL_W = 300;   // popup kengligi (px)
+const CAL_H = 380;   // taxminiy balandlik (flip qarori uchun)
 
 function parseYMD(s: string): Date | null {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
@@ -23,11 +35,71 @@ export function EtDatePicker({ value, onChange, placeholder = "Sanani tanlang" }
     const sel = parseYMD(value);
     const [open, setOpen] = useState(false);
     const [view, setView] = useState<Date>(() => (sel ? new Date(sel.getFullYear(), sel.getMonth(), 1) : new Date()));
-    const ref = useRef<HTMLDivElement>(null);
+    const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
+    const [portalEl, setPortalEl] = useState<HTMLElement | null>(null);
+    const ref = useRef<HTMLDivElement>(null);   // trigger konteyneri
+    const popRef = useRef<HTMLDivElement>(null); // portal popup
 
+    // Trigger rect'iga qarab fixed pozitsiyani hisoblaydi (viewport ichida ushlab turadi).
+    const place = useCallback(() => {
+        const el = ref.current;
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        const vw = window.innerWidth, vh = window.innerHeight;
+        const width = Math.min(CAL_W, vw - 16);
+        let left = r.left;
+        if (left + width > vw - 8) left = vw - 8 - width;
+        if (left < 8) left = 8;
+        const h = popRef.current?.offsetHeight || CAL_H;
+        let top = r.bottom + 10;                       // odatda trigger ostida
+        if (top + h > vh - 8 && r.top - 10 - h > 8) top = r.top - 10 - h; // joy yo'q bo'lsa ustига
+        setPos({ top, left, width });
+    }, []);
+
+    const toggle = useCallback(() => {
+        setOpen(o => {
+            if (!o) {
+                // ochishdan oldin: portal manzili (.es-bg shell) + boshlang'ich pozitsiya
+                setPortalEl((ref.current?.closest(".es-bg") as HTMLElement) ?? document.body);
+                const el = ref.current;
+                if (el) {
+                    const r = el.getBoundingClientRect();
+                    const vw = window.innerWidth, vh = window.innerHeight;
+                    const width = Math.min(CAL_W, vw - 16);
+                    let left = r.left;
+                    if (left + width > vw - 8) left = vw - 8 - width;
+                    if (left < 8) left = 8;
+                    let top = r.bottom + 10;
+                    if (top + CAL_H > vh - 8 && r.top - 10 - CAL_H > 8) top = r.top - 10 - CAL_H;
+                    setPos({ top, left, width });
+                }
+            }
+            return !o;
+        });
+    }, []);
+
+    // Ochiq bo'lганда: o'lchangan balandlik bilan qayta joylash + scroll/resize kuzatuvi.
     useEffect(() => {
         if (!open) return;
-        const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+        place();
+        const on = () => place();
+        window.addEventListener("scroll", on, true);
+        window.addEventListener("resize", on);
+        return () => {
+            window.removeEventListener("scroll", on, true);
+            window.removeEventListener("resize", on);
+        };
+    }, [open, view, place]);
+
+    // Tashqariga bosilsa yopiladi (trigger ham, portal popup ham hisobga olinadi).
+    useEffect(() => {
+        if (!open) return;
+        const h = (e: MouseEvent) => {
+            const t = e.target as Node;
+            if (ref.current?.contains(t)) return;
+            if (popRef.current?.contains(t)) return;
+            setOpen(false);
+        };
         document.addEventListener("mousedown", h);
         return () => document.removeEventListener("mousedown", h);
     }, [open]);
@@ -45,39 +117,41 @@ export function EtDatePicker({ value, onChange, placeholder = "Sanani tanlang" }
     const trail = (startDow + days) % 7;
     if (trail) for (let t = 1; t <= 7 - trail; t++) cells.push({ d: t, mute: true, date: null });
 
+    const popup = (
+        <div ref={popRef} className="et-cal" role="dialog"
+            style={{ position: "fixed", top: pos?.top ?? -9999, left: pos?.left ?? -9999, width: pos?.width ?? CAL_W, zIndex: 200, opacity: 1, transform: "none", pointerEvents: "auto" }}>
+            <div className="et-cal-head">
+                <div className="et-cal-title">{MON[m]} <span>{y}</span></div>
+                <div className="et-cal-nav">
+                    <button type="button" onClick={() => setView(new Date(y, m - 1, 1))} aria-label="Oldingi oy"><ChevronLeft size={16} /></button>
+                    <button type="button" onClick={() => setView(new Date(y, m + 1, 1))} aria-label="Keyingi oy"><ChevronRight size={16} /></button>
+                </div>
+            </div>
+            <div className="et-cal-dow">{DOW.map(d => <span key={d}>{d}</span>)}</div>
+            <div className="et-cal-grid">
+                {cells.map((c, i) => {
+                    if (c.mute || !c.date) return <button key={i} type="button" className="et-cal-d mute" tabIndex={-1} disabled>{c.d}</button>;
+                    const isToday = today.getFullYear() === y && today.getMonth() === m && today.getDate() === c.d;
+                    const isSel = !!sel && sel.getFullYear() === y && sel.getMonth() === m && sel.getDate() === c.d;
+                    return <button key={i} type="button" className={`et-cal-d${isToday ? " today" : ""}${isSel ? " sel" : ""}`} onClick={() => pick(c.date!)}>{c.d}</button>;
+                })}
+            </div>
+            <div className="et-cal-foot">
+                <button type="button" onClick={() => { const n = new Date(); setView(new Date(n.getFullYear(), n.getMonth(), 1)); pick(n); }}>Bugun</button>
+                <button type="button" onClick={() => { onChange(""); setOpen(false); }}>Tozalash</button>
+            </div>
+        </div>
+    );
+
     return (
-        <div className="et-dt" ref={ref} style={{ position: "relative" }}>
-            <button type="button" className="et-dt-trigger" onClick={() => setOpen(o => !o)} aria-haspopup="dialog" aria-expanded={open}
-                style={open ? { borderColor: "var(--es-c2)", boxShadow: "0 0 0 3px color-mix(in oklab,var(--es-c2) 22%,transparent)" } : undefined}>
+        <div className={`et-dt${open ? " open" : ""}`} ref={ref} style={{ position: "relative" }}>
+            <button type="button" className="et-dt-trigger" onClick={toggle} aria-haspopup="dialog" aria-expanded={open}>
                 <span className="ic"><Calendar size={16} /></span>
                 <span className="val">{sel ? `${sel.getDate()} ${MON_SHORT[sel.getMonth()]} ${sel.getFullYear()}` : <span className="ph">{placeholder}</span>}</span>
-                <ChevronDown size={16} className="chev" style={open ? { transform: "rotate(180deg)" } : undefined} />
+                <ChevronDown size={16} className="chev" />
             </button>
 
-            {open && (
-                <div className="et-cal" style={{ opacity: 1, transform: "none", pointerEvents: "auto" }} role="dialog">
-                    <div className="et-cal-head">
-                        <div className="et-cal-title">{MON[m]} <span>{y}</span></div>
-                        <div className="et-cal-nav">
-                            <button type="button" onClick={() => setView(new Date(y, m - 1, 1))} aria-label="Oldingi oy"><ChevronLeft size={16} /></button>
-                            <button type="button" onClick={() => setView(new Date(y, m + 1, 1))} aria-label="Keyingi oy"><ChevronRight size={16} /></button>
-                        </div>
-                    </div>
-                    <div className="et-cal-dow">{DOW.map(d => <span key={d}>{d}</span>)}</div>
-                    <div className="et-cal-grid">
-                        {cells.map((c, i) => {
-                            if (c.mute || !c.date) return <button key={i} type="button" className="et-cal-d mute" tabIndex={-1} disabled>{c.d}</button>;
-                            const isToday = today.getFullYear() === y && today.getMonth() === m && today.getDate() === c.d;
-                            const isSel = !!sel && sel.getFullYear() === y && sel.getMonth() === m && sel.getDate() === c.d;
-                            return <button key={i} type="button" className={`et-cal-d${isToday ? " today" : ""}${isSel ? " sel" : ""}`} onClick={() => pick(c.date!)}>{c.d}</button>;
-                        })}
-                    </div>
-                    <div className="et-cal-foot">
-                        <button type="button" onClick={() => { const n = new Date(); setView(new Date(n.getFullYear(), n.getMonth(), 1)); pick(n); }}>Bugun</button>
-                        <button type="button" onClick={() => { onChange(""); setOpen(false); }}>Tozalash</button>
-                    </div>
-                </div>
-            )}
+            {open && portalEl && createPortal(popup, portalEl)}
         </div>
     );
 }
