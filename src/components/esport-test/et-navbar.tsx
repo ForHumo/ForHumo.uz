@@ -1,14 +1,15 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { Home, Users, Trophy, BarChart3, Gamepad2 } from "lucide-react";
+import { Home, Users, Trophy, BarChart3, Gamepad2, ShieldCheck, type LucideIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
-const LINKS = [
+const LINKS: { href: string; label: string; icon: LucideIcon }[] = [
     { href: "/esport-test", label: "Asosiy", icon: Home },
     { href: "/esport-test/teams", label: "Jamoalar", icon: Users },
     { href: "/esport-test/tournaments", label: "Turnirlar", icon: Trophy },
@@ -18,9 +19,16 @@ const LINKS = [
 export default function EtNavbar() {
     const pathname = usePathname();
     const { data: session } = useSession();
+    const [isAdmin, setIsAdmin] = useState(false);
     const current = (pathname || "").replace(/^\/[a-z]{2}(?=\/|$)/, "") || "/esport-test";
     const isActive = (href: string) =>
         href === "/esport-test" ? current === "/esport-test" : current.startsWith(href);
+
+    useEffect(() => {
+        fetch("/api/esport/admin/check").then(r => r.json()).then(d => setIsAdmin(!!d.isAdmin)).catch(() => { });
+    }, []);
+
+    const links = isAdmin ? [...LINKS, { href: "/esport-test/admin", label: "Admin", icon: ShieldCheck }] : LINKS;
 
     return (
         <header className="et-nav">
@@ -46,7 +54,7 @@ export default function EtNavbar() {
                 </div>
             </div>
             <nav className="et-pills">
-                {LINKS.map(l => {
+                {links.map(l => {
                     const Icon = l.icon;
                     return (
                         <Link key={l.href} href={l.href} className={`et-pill${isActive(l.href) ? " on" : ""}`}>

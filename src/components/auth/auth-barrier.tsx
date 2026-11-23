@@ -23,7 +23,7 @@ import { LanguageSwitcher } from "@/components/ui/language-switcher";
 const PUBLIC_PREFIXES = ["/bn", "/yukgo", "/esport", "/esport-test"];
 // Ommaviy prefiks ichidagi ISTISNOLAR — bular baribir kirish talab qiladi.
 // eSport admin paneli faqat ega/adminlarga; anonim ko'ra olmaydi.
-const PUBLIC_EXCLUDE = ["/esport/admin"];
+const PUBLIC_EXCLUDE = ["/esport/admin", "/esport-test/admin"];
 
 function isPublicPath(pathname: string | null): boolean {
     if (!pathname) return false;
