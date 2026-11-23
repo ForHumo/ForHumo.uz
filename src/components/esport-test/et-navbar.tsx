@@ -5,12 +5,13 @@ import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { Home, Users, Trophy, BarChart3, ArrowLeftRight, ShieldCheck, type LucideIcon } from "lucide-react";
+import { Home, User, Users, Trophy, BarChart3, ArrowLeftRight, ShieldCheck, type LucideIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 const LINKS: { href: string; label: string; icon: LucideIcon }[] = [
     { href: "/esport-test", label: "Asosiy", icon: Home },
+    { href: "/esport-test/athlete", label: "Sportchi", icon: User },
     { href: "/esport-test/teams", label: "Jamoalar", icon: Users },
     { href: "/esport-test/tournaments", label: "Turnirlar", icon: Trophy },
     { href: "/esport-test/standings", label: "Reyting", icon: BarChart3 },
