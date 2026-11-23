@@ -430,7 +430,7 @@ function TourAdminRow({ t, api, reload, busy }: { t: TournamentLite; api: ApiFn;
                     <div style={{ fontSize: ".74rem", color: "var(--es-faint)" }}>{t.status} · {t.teams}{t.maxTeams > 0 ? `/${t.maxTeams}` : ""} jamoa · {t.prizePool ? `${t.prizePool.toLocaleString()} so'm` : "fondsiz"}</div>
                 </div>
                 <button className="et-mini ghost" onClick={() => setOpen(o => !o)}>Fond</button>
-                <Link href={`/esport/tournaments/${t.id}`} className="et-mini ghost" style={{ textDecoration: "none", padding: "9px 10px" }} title="Setka / boshqaruv"><ChevronRight size={15} /></Link>
+                <Link href={`/esport-test/tournaments/${t.id}`} className="et-mini ghost" style={{ textDecoration: "none", padding: "9px 10px" }} title="Setka / boshqaruv"><ChevronRight size={15} /></Link>
             </div>
             {open && (
                 <div style={{ display: "flex", gap: 8, marginTop: 10 }}>

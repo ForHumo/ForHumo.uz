@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Link } from "@/i18n/routing";
 import { Users, Shield, Check } from "lucide-react";
 
 interface TeamCard { id: string; name: string; tag: string; logo: string | null; rating: number; members: number; games: string[]; isMine: boolean }
@@ -24,7 +25,7 @@ export default function EtTeams() {
             ) : (
                 <div className="et-grid et-g3">
                     {teams.map((t, i) => (
-                        <div key={t.id} className={`et-tile et-rise et-d${(i % 6) + 1}`}>
+                        <Link key={t.id} href={`/esport-test/teams/${t.id}`} className={`et-tile et-rise et-d${(i % 6) + 1}`} style={{ textDecoration: "none", color: "inherit" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 12, position: "relative" }}>
                                 <span className="et-logo" style={{ width: 48, height: 48, fontSize: "1rem" }}>{t.logo ? <img src={t.logo} alt="" /> : t.tag.slice(0, 3)}</span>
                                 <div style={{ minWidth: 0, flex: 1 }}>
@@ -38,7 +39,7 @@ export default function EtTeams() {
                                 <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Shield size={13} /> {t.games.length ? t.games.join(", ") : "—"}</span>
                                 <span className="et-val et-grad" style={{ marginLeft: "auto", fontSize: ".95rem" }}>{t.rating} <small style={{ color: "var(--es-faint)", fontWeight: 400 }}>Elo</small></span>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             )}

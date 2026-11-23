@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Link } from "@/i18n/routing";
 import { Trophy, Crown, Medal, Award, History, Users, CalendarDays } from "lucide-react";
 
 interface T { id: string; name: string; game: { name: string; slug: string } | null; status: string; division: { name: string; tier: number } | null; isOpen: boolean; prizePool: number | null; currency: string; maxTeams: number; teams: number }
@@ -45,7 +46,7 @@ export default function EtTournaments() {
                 ) : (
                     <div className="et-grid et-g2">
                         {tours.map((t, i) => (
-                            <div key={t.id} className={`et-glass et-rise et-d${(i % 6) + 1}`} style={{ padding: 18 }}>
+                            <Link key={t.id} href={`/esport-test/tournaments/${t.id}`} className={`et-glass et-rise et-d${(i % 6) + 1}`} style={{ padding: 18, textDecoration: "none", color: "inherit", display: "block" }}>
                                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
                                     <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
                                         <span className="et-logo" style={{ width: 42, height: 42 }}><Trophy size={19} color="#fff" /></span>
@@ -60,7 +61,7 @@ export default function EtTournaments() {
                                     <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Users size={14} /> {t.teams}{t.maxTeams > 0 ? `/${t.maxTeams}` : ""} jamoa</span>
                                     {t.prizePool ? <span className="et-fh et-grad" style={{ fontWeight: 700, marginLeft: "auto" }}>{money(t.prizePool, t.currency)}</span> : null}
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 )
