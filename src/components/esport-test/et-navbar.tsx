@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { Home, Users, Trophy, BarChart3, Gamepad2, ShieldCheck, type LucideIcon } from "lucide-react";
+import { Home, Users, Trophy, BarChart3, ShieldCheck, type LucideIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
@@ -37,7 +37,7 @@ export default function EtNavbar() {
                 <Link href="/" className="et-crumb"><Home size={13} /> For Humo</Link>
                 <span style={{ color: "var(--es-faint)" }}>›</span>
                 <Link href="/esport-test" className="et-brand">
-                    <span className="bl"><Gamepad2 size={17} color="#fff" /></span>
+                    <span className="bl"><Image src="/esport-logo.png" alt="Humo eSport" width={30} height={30} /></span>
                     <span className="bn et-grad">Humo eSport</span>
                 </Link>
                 <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>

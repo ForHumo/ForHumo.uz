@@ -5,6 +5,7 @@
 // native date o'rnida EtDatePicker. Barcha API'lar o'zgarmagan.
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
+import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import {
     ShieldAlert, Plus, Trash2, Check, CalendarDays, X, Flag, ImagePlus,
@@ -104,8 +105,10 @@ export default function EtAdmin() {
     return (
         <div style={{ marginTop: 14 }}>
             <div className="et-sh et-rise">
-                <span className="et-logo" style={{ width: 36, height: 36 }}><Trophy size={16} color="#fff" /></span>
-                <div><h2>eSport Admin</h2><p>Mavsum, divizion, turnir va boshqaruv — premium.</p></div>
+                <span style={{ width: 40, height: 40, flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Image src="/esport-logo.png" alt="Humo eSport" width={40} height={40} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                </span>
+                <div><h2>Humo eSport Admin</h2><p>Mavsum, divizion, turnir va boshqaruv — premium.</p></div>
             </div>
 
             {/* Season selector */}

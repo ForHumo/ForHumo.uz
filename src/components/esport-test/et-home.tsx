@@ -62,6 +62,10 @@ export default function EtHome() {
         <div>
             {/* HERO */}
             <section className="et-glass et-rise" style={{ padding: "30px 24px", marginTop: 14, textAlign: "center" }}>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
+                    <img src="/esport-logo.png" alt="Humo eSport" width={76} height={76}
+                        style={{ width: 76, height: 76, objectFit: "contain", filter: "drop-shadow(0 0 22px color-mix(in oklab,var(--es-glow) 60%,transparent))" }} />
+                </div>
                 <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: "Chakra Petch", fontWeight: 600, fontSize: ".72rem", letterSpacing: ".14em", textTransform: "uppercase", color: "var(--es-c2)", border: "1px solid var(--es-card-bd)", borderRadius: 999, padding: "6px 14px", background: "var(--es-soft)" }}>
                     <Gamepad2 size={13} /> Kibersport arenasi
                 </div>
