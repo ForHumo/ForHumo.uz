@@ -73,3 +73,81 @@ export async function fetchSteamProfile(steamId64: string): Promise<{ persona: s
         return { persona: null, avatar: null };
     }
 }
+
+// --- Integritet signallari (STEAM_API_KEY kerak) ---
+// HALOL: bular "cheater emas"ni isbotlamaydi — faqat ban / akkaunt yoshi / o'yin egaligi
+// signalini beradi. Kalit yo'q bo'lsa barcha funksiya null qaytaradi (stub rejim).
+
+export function steamApiAvailable(): boolean {
+    return !!process.env.STEAM_API_KEY;
+}
+
+// GetPlayerBans — VAC / game / economy ban holati (ochiq, ishonchli).
+export async function fetchSteamBans(steamId64: string): Promise<{
+    vacBanned: boolean; numberOfVacBans: number; numberOfGameBans: number;
+    daysSinceLastBan: number; economyBan: string; communityBanned: boolean;
+} | null> {
+    const key = process.env.STEAM_API_KEY;
+    if (!key) return null;
+    try {
+        const url = `https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=${key}&steamids=${steamId64}`;
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) return null;
+        const data = await res.json() as { players?: Array<{ VACBanned?: boolean; NumberOfVACBans?: number; NumberOfGameBans?: number; DaysSinceLastBan?: number; EconomyBan?: string; CommunityBanned?: boolean }> };
+        const p = data.players?.[0];
+        if (!p) return null;
+        return {
+            vacBanned: !!p.VACBanned,
+            numberOfVacBans: p.NumberOfVACBans ?? 0,
+            numberOfGameBans: p.NumberOfGameBans ?? 0,
+            daysSinceLastBan: p.DaysSinceLastBan ?? 0,
+            economyBan: p.EconomyBan ?? "none",
+            communityBanned: !!p.CommunityBanned,
+        };
+    } catch { return null; }
+}
+
+// GetPlayerSummaries (to'liq) — akkaunt yoshi (timecreated faqat ochiq profilda) + ko'rinish.
+export async function fetchSteamSummaryFull(steamId64: string): Promise<{
+    persona: string | null; avatar: string | null; timeCreated: number | null; isPublic: boolean;
+} | null> {
+    const key = process.env.STEAM_API_KEY;
+    if (!key) return null;
+    try {
+        const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${key}&steamids=${steamId64}`;
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) return null;
+        const data = await res.json() as { response?: { players?: Array<{ personaname?: string; avatarfull?: string; timecreated?: number; communityvisibilitystate?: number }> } };
+        const p = data.response?.players?.[0];
+        if (!p) return null;
+        return {
+            persona: p.personaname ?? null,
+            avatar: p.avatarfull ?? null,
+            timeCreated: p.timecreated ?? null,
+            isPublic: p.communityvisibilitystate === 3,
+        };
+    } catch { return null; }
+}
+
+// GetOwnedGames — berilgan appId egaligini + o'ynalgan soatni tekshiradi.
+// Profil "game details" yopiq bo'lsa `games` qaytmaydi → visible:false.
+export async function fetchSteamOwnership(steamId64: string, appId: number): Promise<{
+    owns: boolean; playtimeHours: number | null; visible: boolean;
+} | null> {
+    const key = process.env.STEAM_API_KEY;
+    if (!key) return null;
+    try {
+        const url = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${key}&steamid=${steamId64}&include_played_free_games=1&format=json`;
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) return null;
+        const data = await res.json() as { response?: { games?: Array<{ appid: number; playtime_forever?: number }> } };
+        const games = data.response?.games;
+        if (!games) return { owns: false, playtimeHours: null, visible: false }; // profil yopiq
+        const g = games.find(x => x.appid === appId);
+        return {
+            owns: !!g,
+            playtimeHours: g ? Math.round((g.playtime_forever ?? 0) / 60) : 0,
+            visible: true,
+        };
+    } catch { return null; }
+}

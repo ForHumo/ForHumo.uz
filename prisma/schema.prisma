@@ -452,8 +452,29 @@ model EsAthlete {         // Humo ID + bitta o'yin (qattiq qulf)
   transfers     EsTransfer[]
   joinRequests  EsJoinRequest[]
   contracts     EsContract[]
+  gameAccounts  EsGameAccount[]
   @@unique([gameId, gameUserId])        // o'yin ID raqami takrorlanmaydi
   @@index([gameId])
+}
+
+model EsGameAccount {   // tashqi o'yin akkaunti (Steam/Faceit/Moonton) + integritet verdikti
+  id            String    @id @default(cuid())
+  athleteId     String
+  platform      String                        // STEAM | FACEIT | MOONTON
+  externalId    String                        // SteamID64 | Faceit player id | MLBB gameUserId
+  handle        String?                       // ko'rsatiladigan nick/persona
+  verified      Boolean   @default(false)     // egalik isbotlanganmi (OpenID / MLBB kod-isbot)
+  proofCode     String?                       // MLBB: IGN/nickka vaqtincha qo'yiladigan kod
+  proofExpires  DateTime?                     // kod amal muddati
+  verdict       String    @default("TEKSHIRISH")  // TOZA | TEKSHIRISH | BLOK
+  snapshot      Json?                         // ban/yosh/egalik/elo xomashyo (audit)
+  lastCheckedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  athlete       EsAthlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  @@unique([athleteId, platform])             // har platformadan bitta akkaunt
+  @@index([externalId])
+  @@index([platform, verdict])
 }
 
 model EsRosterMember {    // sportchini tarkibга bog'laydi (transfer shu yerda)
