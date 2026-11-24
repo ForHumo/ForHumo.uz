@@ -10,6 +10,7 @@ import { Link } from "@/i18n/routing";
 import {
     ShieldAlert, Plus, Trash2, Check, CalendarDays, X, Flag, ImagePlus,
     Layers, Users, Swords, BarChart3, Trophy, ChevronRight, ArrowUp, Loader2, ArrowLeft,
+    ShieldCheck, Gamepad2,
 } from "lucide-react";
 import { EtDatePicker } from "./et-date-picker";
 
@@ -20,7 +21,7 @@ interface Match { id: string; divisionId: string; teamAId: string; teamBId: stri
 interface StandRow { teamId: string; team: { name: string; tag: string } | null; points: number; wins: number; losses: number; played: number; rank: number }
 interface StandDiv { id: string; name: string; tier: number; teams: StandRow[] }
 interface DisputeRow { id: string; matchType: string; matchId: string; team: { id: string; name: string; tag: string } | null; reason: string; screenshotUrl: string | null; status: string; adminNote: string | null; createdAt: string }
-type Tab = "season" | "division" | "enroll" | "match" | "table" | "turnir" | "nizo" | "adminlar";
+type Tab = "season" | "division" | "enroll" | "match" | "table" | "turnir" | "nizo" | "tekshiruv" | "adminlar";
 type ApiFn = (url: string, method: string, body?: object) => Promise<{ error?: string;[k: string]: unknown }>;
 
 export default function EtAdmin() {
@@ -99,6 +100,7 @@ export default function EtAdmin() {
         { id: "table", label: "Jadval", icon: BarChart3 },
         { id: "turnir", label: "Turnir", icon: Trophy },
         { id: "nizo", label: "Nizo", icon: Flag },
+        { id: "tekshiruv", label: "Tekshiruv", icon: ShieldCheck },
         ...(isOwner ? [{ id: "adminlar" as Tab, label: "Adminlar", icon: ShieldAlert }] : []),
     ];
 
@@ -142,6 +144,7 @@ export default function EtAdmin() {
                 {tab === "table" && <TableTab standings={standings} divisions={myDivs} seasonId={seasonId} api={api} reload={reloadSeason} busy={busy} />}
                 {tab === "turnir" && <TournamentTab gameId={gameId} divisions={myDivs} seasonId={seasonId} api={api} busy={busy} />}
                 {tab === "nizo" && <DisputeTab />}
+                {tab === "tekshiruv" && <VerifyTab api={api} busy={busy} />}
                 {tab === "adminlar" && <AdminsTab api={api} busy={busy} />}
             </div>
         </div>
@@ -482,6 +485,75 @@ function DisputeTab() {
                     )}
                 </div>
             ))}
+        </div>
+    );
+}
+
+/* ---- Tekshiruv (akkaunt verdikt) ---- */
+interface PendingProof { id: string; externalId: string; proofCode: string | null; athlete: { ign: string; gameUserId: string; gameServer: string | null; game: { name: string } } | null }
+interface FlaggedAcct { id: string; platform: string; externalId: string; handle: string | null; verdict: string; snapshot: { reasons?: string[] } | null; athlete: { ign: string; game: { name: string } } | null }
+
+function VerifyTab({ api, busy }: { api: ApiFn; busy: boolean }) {
+    const [loading, setLoading] = useState(true);
+    const [pending, setPending] = useState<PendingProof[]>([]);
+    const [flagged, setFlagged] = useState<FlaggedAcct[]>([]);
+    const load = useCallback(async () => {
+        const d = await fetch("/api/esport/admin/verify").then(r => r.json()).catch(() => null);
+        if (d && !d.error) { setPending(d.pending || []); setFlagged(d.flagged || []); }
+        setLoading(false);
+    }, []);
+    useEffect(() => { load(); }, [load]);
+    async function decide(accountId: string, action: "approve" | "reject") {
+        await api("/api/esport/admin/verify", "POST", { accountId, action });
+        load();
+    }
+    if (loading) return <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}><Loader2 className="animate-spin" size={22} style={{ color: "var(--es-faint)" }} /></div>;
+    return (
+        <div>
+            <Card title={`MLBB kod-isbot tasdiqlash (${pending.length})`} sub="O'yinchi kodni o'yin ichidagi nikiga qo'yib skrinshot yuboradi — shuni ko'rib tasdiqlang.">
+                {pending.length === 0 ? (
+                    <div className="et-empty"><span className="ic"><Gamepad2 size={22} /></span><b>Kutayotgan yo'q</b></div>
+                ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+                        {pending.map(p => (
+                            <div key={p.id} className="et-row" style={{ cursor: "default", flexWrap: "wrap", gap: 8 }}>
+                                <div style={{ minWidth: 0, flex: 1 }}>
+                                    <div style={{ fontSize: ".9rem", fontWeight: 700 }}>{p.athlete?.ign ?? "—"}</div>
+                                    <div style={{ fontSize: ".72rem", color: "var(--es-faint)" }}>{p.athlete?.game.name} · ID {p.athlete?.gameUserId}{p.athlete?.gameServer ? ` (${p.athlete.gameServer})` : ""}</div>
+                                </div>
+                                <code style={{ fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.08em", padding: "4px 10px", borderRadius: 8, background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)", color: "var(--es-c2)" }}>{p.proofCode}</code>
+                                <div style={{ display: "flex", gap: 6 }}>
+                                    <button className="et-mini" disabled={busy} onClick={() => decide(p.id, "approve")}><Check size={14} /> Tasdiq</button>
+                                    <button className="et-mini ghost" disabled={busy} onClick={() => decide(p.id, "reject")}><X size={14} /> Rad</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </Card>
+
+            <Card title={`Bloklangan akkauntlar (${flagged.length})`} sub="Tekshiruv BLOK bergan akkauntlar — bu o'yinchilar bilan turnirga ro'yxatdan o'tib bo'lmaydi.">
+                {flagged.length === 0 ? (
+                    <div className="et-empty"><span className="ic"><ShieldCheck size={22} /></span><b>Bloklangan yo'q</b></div>
+                ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+                        {flagged.map(f => (
+                            <div key={f.id} className="et-glass" style={{ padding: 12 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                                    <span style={{ fontSize: ".9rem", fontWeight: 700 }}>{f.athlete?.ign ?? "—"}</span>
+                                    <span style={{ fontSize: ".72rem", color: "var(--es-faint)" }}>{f.platform} · {f.athlete?.game.name}</span>
+                                    <span className="et-chip" style={{ marginLeft: "auto", color: "#ff6b6b", background: "rgba(255,60,60,0.08)", border: "1px solid rgba(255,60,60,0.28)" }}>BLOK</span>
+                                </div>
+                                {f.snapshot?.reasons && f.snapshot.reasons.length > 0 && (
+                                    <ul style={{ margin: "4px 0 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 2 }}>
+                                        {f.snapshot.reasons.slice(0, 4).map((r, i) => <li key={i} style={{ fontSize: ".72rem", color: "var(--es-faint)" }}>· {r}</li>)}
+                                    </ul>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </Card>
         </div>
     );
 }

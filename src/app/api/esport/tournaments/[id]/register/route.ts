@@ -51,6 +51,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         return NextResponse.json({ error: `Tarkibда kamida ${game.teamSize} sportchi kerak (hozir ${roster._count.members})` }, { status: 400 });
     }
 
+    // Integritet gate: BLOK verdiktli o'yinchi (masalan yaqinda VAC/Faceit ban) ro'yxatga kira olmaydi.
+    // TEKSHIRISH/tekshirilmagan BLOKLAMAYDI (admin ko'radi) — aks holda stub rejimda hammani to'sardi.
+    const rosterMembers = await prisma.esRosterMember.findMany({
+        where: { rosterId: roster.id },
+        select: { athlete: { select: { ign: true, gameAccounts: { select: { verdict: true } } } } },
+    });
+    const blocked = rosterMembers
+        .filter(m => m.athlete.gameAccounts.some(ga => ga.verdict === "BLOK"))
+        .map(m => m.athlete.ign);
+    if (blocked.length) {
+        return NextResponse.json({ error: `Tekshiruv: bloklangan o'yinchi(lar) — ${blocked.join(", ")}. Ular bilan ro'yxatdan o'tib bo'lmaydi.`, blocked }, { status: 403 });
+    }
+
     // Divizion turniri bo'lsa — jamoa shu divizionда bo'lishi kerak
     if (t.divisionId && t.seasonId) {
         const inDiv = await prisma.esStanding.findFirst({ where: { seasonId: t.seasonId, divisionId: t.divisionId, teamId }, select: { id: true } });
