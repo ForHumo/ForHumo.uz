@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { verifySteamCallback, fetchSteamProfile } from "@/lib/steam";
+import { steamAppIdForSlug, syncSteamAccount } from "@/lib/esport-verify";
 
 // GET /api/user/steam-link/callback — Steam OpenID javobi.
 // Muvaffaqiyat: SteamID64'ni tekshirib UserProfile'ga saqlaymiz, keyin ?from sahifasiga qaytamiz.
@@ -39,6 +40,17 @@ export async function GET(req: Request) {
             steamLinkedAt: new Date(),
         },
     });
+
+    // CS2/Dota sportchisi bo'lsa — STEAM integritet akkauntini darhol tekshirib yozamiz (fail-safe)
+    try {
+        const ath = await prisma.esAthlete.findUnique({
+            where: { humoProfileId: me.id },
+            select: { id: true, game: { select: { slug: true } } },
+        });
+        if (ath && steamAppIdForSlug(ath.game.slug) !== null) {
+            await syncSteamAccount(ath.id, steamId64, ath.game.slug);
+        }
+    } catch { /* link baribir muvaffaqiyatli — tekshiruvni keyin qayta urinish mumkin */ }
 
     return NextResponse.redirect(new URL(`${safeFrom}?steam=ok`, url));
 }

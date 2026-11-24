@@ -13,6 +13,13 @@ import {
 import {
     faceitAvailable, faceitGameForSlug, fetchFaceitByNickname, fetchFaceitBans,
 } from "@/lib/faceit";
+import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
+
+// JSON xavfsiz (undefined'siz) — Prisma Json ustuni uchun.
+function toJson(v: unknown): Prisma.InputJsonValue {
+    return JSON.parse(JSON.stringify(v)) as Prisma.InputJsonValue;
+}
 
 export type VerifyVerdict = "TOZA" | "TEKSHIRISH" | "BLOK";
 export type VerifyPlatform = "STEAM" | "FACEIT" | "MOONTON";
@@ -196,4 +203,19 @@ export function proofExpiry(): Date {
 }
 export function isProofExpired(expires: Date | null | undefined): boolean {
     return !expires || expires.getTime() < Date.now();
+}
+
+// --- EsGameAccount sync (DB) ---
+
+// CS2/Dota: OpenID bilan tasdiqlangan SteamID64 uchun STEAM akkauntini yaratadi/yangilaydi.
+// Callback (yangi bog'lanish) + verify route (qayta tekshir) ikkisi ham chaqiradi.
+export async function syncSteamAccount(athleteId: string, steamId64: string, gameSlug: string): Promise<{ verdict: VerifyVerdict; handle: string | null }> {
+    const appId = steamAppIdForSlug(gameSlug);
+    const { verdict, snapshot, handle } = await verifySteam(steamId64, appId);
+    await prisma.esGameAccount.upsert({
+        where: { athleteId_platform: { athleteId, platform: "STEAM" } },
+        create: { athleteId, platform: "STEAM", externalId: steamId64, handle, verified: true, verdict, snapshot: toJson(snapshot), lastCheckedAt: new Date() },
+        update: { externalId: steamId64, handle, verified: true, verdict, snapshot: toJson(snapshot), lastCheckedAt: new Date() },
+    });
+    return { verdict, handle };
 }

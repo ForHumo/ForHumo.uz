@@ -8,6 +8,7 @@ import { Link, useRouter } from "@/i18n/routing";
 import {
     Gamepad2, Trophy, Lock, ChevronDown, Check, ShieldCheck,
     Loader2, AlertTriangle, IdCard, Pencil, Camera, X, Trash2, Link2,
+    RefreshCw, Copy,
 } from "lucide-react";
 import { useEsT } from "@/lib/esport-i18n";
 
@@ -327,6 +328,9 @@ function AthleteCard({ athlete, roles, onUpdated, onDeleted, onContinue }: {
                         <Row label={t("ap.ingameId")} value={athlete.gameServer ? `${athlete.gameUserId} (${athlete.gameServer})` : athlete.gameUserId} />
                         {athlete.role && <Row label={t("ob.position")} value={athlete.role} />}
                     </div>
+
+                    <VerifyPanel gameSlug={athlete.game.slug} />
+
                     <div style={{ marginTop: 24, display: "flex", gap: 8 }}>
                         <Link href={`/esport-test/a/${athlete.id}`} className="et-btn ghost" style={{ flex: 1, textDecoration: "none" }}>{t("ob.publicCard")}</Link>
                         <button onClick={onContinue} className="et-btn" style={{ flex: 1 }}>{t("ob.continue")}</button>
@@ -371,6 +375,156 @@ function AthleteCard({ athlete, roles, onUpdated, onDeleted, onContinue }: {
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+// ── Akkaunt tasdiqlash paneli (Steam / Faceit / MLBB) ──
+interface Acct {
+    platform: string; externalId: string; handle: string | null; verified: boolean;
+    verdict: string; proofCode: string | null; proofExpires: string | null;
+    snapshot: { stub?: boolean; reasons?: string[]; elo?: number | null; skillLevel?: number | null } | null;
+    lastCheckedAt: string | null;
+}
+
+const PLAT_ICON: Record<string, React.ReactNode> = {
+    STEAM: <ShieldCheck size={16} />, FACEIT: <Trophy size={16} />, MOONTON: <Gamepad2 size={16} />,
+};
+function platLabel(p: string, t: (k: string) => string) {
+    return p === "MOONTON" ? t("vf.platMLBB") : p === "FACEIT" ? "Faceit" : "Steam";
+}
+function VerdictChip({ verdict, t }: { verdict: string; t: (k: string) => string }) {
+    const map: Record<string, { c: string; bg: string; bd: string }> = {
+        TOZA: { c: "#19e68c", bg: "rgba(16,185,129,0.10)", bd: "rgba(16,185,129,0.35)" },
+        TEKSHIRISH: { c: "#FFB020", bg: "rgba(255,176,32,0.08)", bd: "rgba(255,176,32,0.30)" },
+        BLOK: { c: "#ff6b6b", bg: "rgba(255,60,60,0.08)", bd: "rgba(255,60,60,0.28)" },
+    };
+    const s = map[verdict] || map.TEKSHIRISH;
+    return <span className="et-chip" style={{ color: s.c, background: s.bg, border: `1px solid ${s.bd}` }}>{t(`vf.${verdict}`)}</span>;
+}
+function ReasonList({ reasons }: { reasons?: string[] }) {
+    if (!reasons || reasons.length === 0) return null;
+    return (
+        <ul style={{ margin: "8px 0 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 3 }}>
+            {reasons.slice(0, 4).map((r, i) => (
+                <li key={i} style={{ fontSize: ".7rem", color: "var(--es-faint)", display: "flex", gap: 6 }}><span style={{ color: "var(--es-c2)" }}>·</span>{r}</li>
+            ))}
+        </ul>
+    );
+}
+
+function VerifyPanel({ gameSlug }: { gameSlug: string }) {
+    const t = useEsT();
+    const [loading, setLoading] = useState(true);
+    const [platforms, setPlatforms] = useState<string[]>([]);
+    const [steamLinked, setSteamLinked] = useState(false);
+    const [accounts, setAccounts] = useState<Acct[]>([]);
+    const [busy, setBusy] = useState("");
+    const [faceitNick, setFaceitNick] = useState("");
+    const [copied, setCopied] = useState(false);
+    const [err, setErr] = useState("");
+
+    useEffect(() => {
+        fetch("/api/esport/athlete/verify").then(r => r.json()).then(d => {
+            if (d && !d.error) { setPlatforms(d.platforms || []); setSteamLinked(!!d.steamLinked); setAccounts(d.accounts || []); }
+            setLoading(false);
+        }).catch(() => setLoading(false));
+    }, []);
+
+    async function act(platform: string, extra?: Record<string, unknown>) {
+        setBusy(platform); setErr("");
+        const d = await fetch("/api/esport/athlete/verify", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ platform, ...extra }),
+        }).then(r => r.json()).catch(() => ({ error: t("vf.netErr") }));
+        setBusy("");
+        if (d.error) { setErr(d.error); return; }
+        setAccounts(d.accounts || []);
+    }
+    const acctFor = (p: string) => accounts.find(a => a.platform === p);
+
+    if (loading) return <div style={{ marginTop: 20, display: "flex", justifyContent: "center", padding: "20px 0" }}><Loader2 size={18} className="animate-spin" style={{ color: "var(--es-faint)" }} /></div>;
+
+    return (
+        <div style={{ marginTop: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <ShieldCheck size={15} style={{ color: "var(--es-c2)" }} />
+                <span className="et-fh" style={{ fontWeight: 700, fontSize: ".95rem" }}>{t("vf.title")}</span>
+            </div>
+            <p style={{ fontSize: ".72rem", color: "var(--es-faint)", marginBottom: 12 }}>{t("vf.sub")}</p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {platforms.map(p => {
+                    const a = acctFor(p);
+                    return (
+                        <div key={p} style={{ borderRadius: 14, padding: 14, ...soft }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <span style={{ color: "var(--es-faint)" }}>{PLAT_ICON[p]}</span>
+                                <span style={{ fontWeight: 700, fontSize: ".9rem" }}>{platLabel(p, t)}</span>
+                                <span style={{ marginLeft: "auto" }}>
+                                    {a ? <VerdictChip verdict={a.verdict} t={t} /> : <span className="et-chip" style={{ color: "var(--es-faint)" }}>{t("vf.notChecked")}</span>}
+                                </span>
+                            </div>
+
+                            {p === "STEAM" && (
+                                <div style={{ marginTop: 10 }}>
+                                    {a ? (
+                                        <>
+                                            <div style={{ fontSize: ".76rem", color: "var(--es-mut)" }}>{a.handle || "Steam"} · <span style={{ color: "var(--es-faint)" }}>{a.externalId}</span></div>
+                                            {a.snapshot?.stub && <div style={{ fontSize: ".7rem", color: "#FFB020", marginTop: 4 }}>{t("vf.stub")}</div>}
+                                            <ReasonList reasons={a.snapshot?.reasons} />
+                                            <button className="et-mini" style={{ marginTop: 10 }} disabled={busy === "STEAM"} onClick={() => act("STEAM")}>{busy === "STEAM" ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />} {t("vf.recheck")}</button>
+                                        </>
+                                    ) : steamLinked ? (
+                                        <button className="et-mini" style={{ marginTop: 4 }} disabled={busy === "STEAM"} onClick={() => act("STEAM")}>{busy === "STEAM" ? <Loader2 size={13} className="animate-spin" /> : <ShieldCheck size={13} />} {t("vf.check")}</button>
+                                    ) : (
+                                        <a href="/api/user/steam-link/start?from=/esport-test/athlete" className="et-mini" style={{ marginTop: 4, textDecoration: "none", display: "inline-flex" }}><Link2 size={13} /> {t("vf.steamLink")}</a>
+                                    )}
+                                </div>
+                            )}
+
+                            {p === "FACEIT" && (
+                                <div style={{ marginTop: 10 }}>
+                                    {a && (
+                                        <>
+                                            <div style={{ fontSize: ".76rem", color: "var(--es-mut)" }}>{a.handle}{a.snapshot?.elo != null ? ` · ${t("vf.elo")} ${a.snapshot.elo}` : ""}</div>
+                                            {a.snapshot?.stub && <div style={{ fontSize: ".7rem", color: "#FFB020", marginTop: 4 }}>{t("vf.stub")}</div>}
+                                            <ReasonList reasons={a.snapshot?.reasons} />
+                                        </>
+                                    )}
+                                    <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                                        <input className="et-inp" style={{ flex: 1 }} value={faceitNick} onChange={e => setFaceitNick(e.target.value)} placeholder={a?.handle || t("vf.faceitNick")} />
+                                        <button className="et-mini" disabled={busy === "FACEIT"} onClick={() => act("FACEIT", { nickname: faceitNick || a?.handle })}>{busy === "FACEIT" ? <Loader2 size={13} className="animate-spin" /> : a ? <RefreshCw size={13} /> : <Check size={13} />} {a ? t("vf.recheck") : t("vf.check")}</button>
+                                    </div>
+                                    {!a && <p style={{ fontSize: ".7rem", color: "var(--es-faint)", marginTop: 6 }}>{t("vf.faceitHint")}</p>}
+                                </div>
+                            )}
+
+                            {p === "MOONTON" && (
+                                <div style={{ marginTop: 10 }}>
+                                    {a?.verified ? (
+                                        <div style={{ fontSize: ".78rem", color: "#19e68c" }}><Check size={13} style={{ verticalAlign: -2 }} /> {t("vf.verified")}</div>
+                                    ) : a?.proofCode ? (
+                                        <>
+                                            <span className="et-lbl" style={{ marginBottom: 6 }}>{t("vf.moontonCode")}</span>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                                                <code style={{ fontFamily: "monospace", fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.08em", padding: "6px 12px", borderRadius: 10, background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)", color: "var(--es-c2)" }}>{a.proofCode}</code>
+                                                <button className="et-mini ghost" onClick={() => { navigator.clipboard?.writeText(a.proofCode!); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>{copied ? <Check size={13} /> : <Copy size={13} />} {copied ? t("vf.copied") : t("vf.copy")}</button>
+                                            </div>
+                                            <p style={{ fontSize: ".72rem", color: "var(--es-mut)", marginTop: 8, lineHeight: 1.4 }}>{t("vf.moontonHow")}</p>
+                                            <div style={{ fontSize: ".72rem", color: "#FFB020", marginTop: 6 }}>{t("vf.moontonPending")}</div>
+                                            <button className="et-mini" style={{ marginTop: 10 }} disabled={busy === "MOONTON"} onClick={() => act("MOONTON")}>{busy === "MOONTON" ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />} {t("vf.moontonNew")}</button>
+                                        </>
+                                    ) : (
+                                        <button className="et-mini" style={{ marginTop: 4 }} disabled={busy === "MOONTON"} onClick={() => act("MOONTON")}>{busy === "MOONTON" ? <Loader2 size={13} className="animate-spin" /> : <IdCard size={13} />} {t("vf.moontonGet")}</button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+            {err && <div className="et-errmsg" style={{ marginTop: 12 }}><AlertTriangle size={14} /> {err}</div>}
         </div>
     );
 }
