@@ -20,7 +20,7 @@ interface Team { id: string; name: string; tag: string; logo: string | null; enr
 interface Match { id: string; divisionId: string; teamAId: string; teamBId: string; scoreA: number | null; scoreB: number | null; status: string }
 interface StandRow { teamId: string; team: { name: string; tag: string } | null; points: number; wins: number; losses: number; played: number; rank: number }
 interface StandDiv { id: string; name: string; tier: number; teams: StandRow[] }
-interface DisputeRow { id: string; matchType: string; matchId: string; team: { id: string; name: string; tag: string } | null; reason: string; screenshotUrl: string | null; status: string; adminNote: string | null; createdAt: string }
+interface DisputeRow { id: string; matchType: string; matchId: string; team: { id: string; name: string; tag: string } | null; reason: string; screenshotUrl: string | null; demoUrl: string | null; status: string; adminNote: string | null; createdAt: string }
 type Tab = "season" | "division" | "enroll" | "match" | "table" | "turnir" | "nizo" | "tekshiruv" | "adminlar";
 type ApiFn = (url: string, method: string, body?: object) => Promise<{ error?: string;[k: string]: unknown }>;
 
@@ -472,7 +472,10 @@ function DisputeTab() {
                         <span className={`et-chip ${stChip(d.status)}`}>{stLabel(d.status)}</span>
                     </div>
                     <p style={{ fontSize: ".84rem", color: "var(--es-mut)" }}>{d.reason}</p>
-                    {d.screenshotUrl && <a href={d.screenshotUrl} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: ".78rem", fontWeight: 600, color: "var(--es-c2)", marginTop: 5 }}><ImagePlus size={13} /> Dalil</a>}
+                    <div style={{ display: "flex", gap: 12, marginTop: 5, flexWrap: "wrap" }}>
+                        {d.screenshotUrl && <a href={d.screenshotUrl} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: ".78rem", fontWeight: 600, color: "var(--es-c2)" }}><ImagePlus size={13} /> Dalil</a>}
+                        {d.demoUrl && <a href={d.demoUrl} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: ".78rem", fontWeight: 600, color: "var(--es-c2)" }}><Swords size={13} /> Demo/replay</a>}
+                    </div>
                     {d.adminNote && <p style={{ fontSize: ".78rem", color: "var(--es-faint)", marginTop: 5 }}>{d.adminNote}</p>}
                     {d.status === "OPEN" && (
                         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>

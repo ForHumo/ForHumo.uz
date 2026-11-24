@@ -219,3 +219,59 @@ export async function syncSteamAccount(athleteId: string, steamId64: string, gam
     });
     return { verdict, handle };
 }
+
+export interface RecheckResult {
+    checked: number;
+    newlyBlocked: { athleteId: string; humoProfileId: string; ign: string; platform: string }[];
+}
+
+// Retroaktiv qayta tekshiruv (kunlik cron): barcha STEAM+FACEIT akkauntlar banini qayta tortadi.
+// Oldin BLOK bo'lmagan, endi BLOK bo'lgan = yangi ban → qaytariladi (admin xabar qiladi).
+// MUHIM: kalit yo'q bo'lsa (stub) o'sha platforma O'TKAZIB YUBORILADI — mavjud verdiktlarni buzmaslik uchun.
+export async function recheckAllAccounts(): Promise<RecheckResult> {
+    const steamOn = steamApiAvailable();
+    const faceitOn = faceitAvailable();
+    const platforms: string[] = [];
+    if (steamOn) platforms.push("STEAM");
+    if (faceitOn) platforms.push("FACEIT");
+    if (platforms.length === 0) return { checked: 0, newlyBlocked: [] };
+
+    const accounts = await prisma.esGameAccount.findMany({
+        where: { platform: { in: platforms } },
+        select: {
+            id: true, platform: true, externalId: true, handle: true, verdict: true,
+            athlete: { select: { id: true, ign: true, humoProfileId: true, game: { select: { slug: true } } } },
+        },
+    });
+
+    let checked = 0;
+    const newlyBlocked: RecheckResult["newlyBlocked"] = [];
+
+    for (const a of accounts) {
+        let verdict: VerifyVerdict | null = null;
+        let snapshot: unknown = null;
+        let handle: string | null = a.handle;
+        try {
+            if (a.platform === "STEAM") {
+                const r = await verifySteam(a.externalId, steamAppIdForSlug(a.athlete.game.slug));
+                if (r.snapshot.stub) continue;
+                verdict = r.verdict; snapshot = r.snapshot; handle = r.handle ?? a.handle;
+            } else if (a.platform === "FACEIT") {
+                if (!a.handle) continue;
+                const r = await verifyFaceit(a.handle, a.athlete.game.slug);
+                if (r.snapshot.stub) continue;
+                verdict = r.verdict; snapshot = r.snapshot; handle = r.handle ?? a.handle;
+            }
+        } catch { continue; }
+        if (!verdict) continue;
+        checked++;
+        await prisma.esGameAccount.update({
+            where: { id: a.id },
+            data: { verdict, snapshot: toJson(snapshot), handle, lastCheckedAt: new Date() },
+        });
+        if (verdict === "BLOK" && a.verdict !== "BLOK") {
+            newlyBlocked.push({ athleteId: a.athlete.id, humoProfileId: a.athlete.humoProfileId, ign: a.athlete.ign, platform: a.platform });
+        }
+    }
+    return { checked, newlyBlocked };
+}

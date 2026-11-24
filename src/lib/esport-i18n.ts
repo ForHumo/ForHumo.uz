@@ -318,6 +318,8 @@ const DICT: Record<string, [string, string, string]> = {
     "dp.rejected": ["Rad etildi", "Отклонён", "Rejected"],
     "dp.proofUpload": ["Natija isboti (skrinshot)", "Доказательство результата (скриншот)", "Result proof (screenshot)"],
     "dp.viewProof": ["Isbotni ko'rish", "Посмотреть доказательство", "View proof"],
+    "dp.demo": ["Demo/replay havolasi (ixtiyoriy)", "Ссылка на демо/реплей (необязательно)", "Demo/replay link (optional)"],
+    "dp.viewDemo": ["Demo/replay", "Демо/реплей", "Demo/replay"],
     "td.notFound": ["Jamoa topilmadi", "Команда не найдена", "Team not found"],
     "td.back": ["Orqaga", "Назад", "Back"],
     "td.applied": ["Ariza yuborildi", "Заявка отправлена", "Application sent"],

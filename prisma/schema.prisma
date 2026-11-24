@@ -725,6 +725,7 @@ model EsDispute {         // natija e'tirozi (jamoa egasi bildiradi, admin hakam
   filedBy       String                          // UserProfile id (ega)
   reason        String
   screenshotUrl String?                         // dalil skrinshoti
+  demoUrl       String?                         // demo/replay havolasi (CS2 .dem / MLBB replay)
   status        String   @default("OPEN")       // OPEN | RESOLVED | REJECTED
   adminNote     String?                         // hakam izohi
   createdAt     DateTime @default(now())

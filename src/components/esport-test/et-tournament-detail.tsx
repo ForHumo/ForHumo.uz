@@ -44,7 +44,7 @@ export default function EtTournamentDetail({ tournamentId }: { tournamentId: str
     const [sa, setSa] = useState(""); const [sb, setSb] = useState("");
     const [proof, setProof] = useState(""); const [upBusy, setUpBusy] = useState(false);
     const [dispMatch, setDispMatch] = useState<Match | null>(null);
-    const [dispReason, setDispReason] = useState(""); const [dispShot, setDispShot] = useState(""); const [dispBusy, setDispBusy] = useState(false); const [dispDone, setDispDone] = useState(false);
+    const [dispReason, setDispReason] = useState(""); const [dispShot, setDispShot] = useState(""); const [dispDemo, setDispDemo] = useState(""); const [dispBusy, setDispBusy] = useState(false); const [dispDone, setDispDone] = useState(false);
 
     async function uploadImg(file: File): Promise<string | null> {
         const fd = new FormData(); fd.append("file", file); fd.append("kind", "brand");
@@ -56,11 +56,11 @@ export default function EtTournamentDetail({ tournamentId }: { tournamentId: str
         setDispBusy(true);
         const r = await fetch("/api/esport/disputes", {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ matchType: "TOURNAMENT", matchId: dispMatch.id, reason: dispReason, screenshotUrl: dispShot || null }),
+            body: JSON.stringify({ matchType: "TOURNAMENT", matchId: dispMatch.id, reason: dispReason, screenshotUrl: dispShot || null, demoUrl: dispDemo || null }),
         }).then(x => x.json()).catch(() => ({ error: "Xato" }));
         setDispBusy(false);
         if (r.error) { setErr(r.error); return; }
-        setDispDone(true); setDispReason(""); setDispShot("");
+        setDispDone(true); setDispReason(""); setDispShot(""); setDispDemo("");
         setTimeout(() => { setDispDone(false); setDispMatch(null); }, 1400);
     }
 
@@ -222,6 +222,7 @@ export default function EtTournamentDetail({ tournamentId }: { tournamentId: str
                                     {upBusy ? <Loader2 size={16} className="animate-spin" /> : dispShot ? <Check size={16} style={{ color: "var(--es-c2)" }} /> : <ImagePlus size={16} />} {tr("dp.proof")}
                                     <input type="file" accept="image/*" hidden onChange={async e => { const f = e.target.files?.[0]; if (f) { setUpBusy(true); const u = await uploadImg(f); setUpBusy(false); if (u) setDispShot(u); } }} />
                                 </label>
+                                <input className="et-inp" value={dispDemo} onChange={e => setDispDemo(e.target.value)} placeholder={tr("dp.demo")} inputMode="url" />
                                 <button className="et-btn" style={{ width: "100%" }} onClick={fileDispute} disabled={dispBusy || !dispReason.trim()}>{dispBusy ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {tr("dp.send")}</button>
                             </div>
                         )}

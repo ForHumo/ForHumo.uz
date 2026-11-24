@@ -41,7 +41,8 @@ export async function POST(req: Request) {
     if (dup) return NextResponse.json({ error: "Bu o'yinga ochiq e'tirozingiz bor" }, { status: 409 });
 
     const screenshotUrl = typeof b.screenshotUrl === "string" && b.screenshotUrl ? b.screenshotUrl : null;
-    const d = await prisma.esDispute.create({ data: { matchType, matchId, teamId: myTeam.id, filedBy: me.id, reason, screenshotUrl } });
+    const demoUrl = typeof b.demoUrl === "string" && b.demoUrl.trim() ? b.demoUrl.trim().slice(0, 500) : null;
+    const d = await prisma.esDispute.create({ data: { matchType, matchId, teamId: myTeam.id, filedBy: me.id, reason, screenshotUrl, demoUrl } });
 
     // Egaga (hakam) bildirishnoma
     const owner = await prisma.userProfile.findUnique({ where: { humoId: ESPORT_OWNER_HUMO_ID }, select: { id: true } });
@@ -60,7 +61,7 @@ export async function GET() {
     return NextResponse.json({
         disputes: rows.map(r => ({
             id: r.id, matchType: r.matchType, matchId: r.matchId, team: tMap[r.teamId] ?? null,
-            reason: r.reason, screenshotUrl: r.screenshotUrl, status: r.status, adminNote: r.adminNote, createdAt: r.createdAt,
+            reason: r.reason, screenshotUrl: r.screenshotUrl, demoUrl: r.demoUrl, status: r.status, adminNote: r.adminNote, createdAt: r.createdAt,
         })),
     });
 }
