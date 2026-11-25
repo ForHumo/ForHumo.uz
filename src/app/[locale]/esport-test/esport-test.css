@@ -191,3 +191,140 @@
 .et-score-inp:focus{ border-color:var(--es-c2); }
 .et-check{ display:inline-flex; align-items:center; gap:8px; font-size:.84rem; color:var(--es-mut); cursor:pointer; }
 .et-check input{ width:16px; height:16px; accent-color:var(--es-c2); }
+
+/* ============================================================
+   KIBERSPORT KARTALARI (/esport-test/cards)
+   3 tizim: material=daraja · rang=o'yin · ramka=terma (T.J.)
+   Kartalar o'z "collectible" ko'rinishida (tema'dan mustaqil).
+   ============================================================ */
+@property --etc-nta{ syntax:'<angle>'; inherits:false; initial-value:0deg; }
+
+.etc-gallery{ display:grid; grid-template-columns:repeat(auto-fill,214px); gap:30px 22px; justify-content:center; }
+.etc-cw{ display:flex; flex-direction:column; gap:11px; width:214px; }
+.etc-cap{ font-family:"Inter",sans-serif; font-size:12.5px; color:var(--es-mut); letter-spacing:.01em; }
+.etc-cap b{ color:var(--es-fg); font-family:"Chakra Petch",sans-serif; font-weight:600; }
+
+.etc{ position:relative; width:214px; aspect-ratio:3/4.05; background:var(--etc-bg); color:var(--etc-ink);
+  clip-path:polygon(9% 0,100% 0,100% 91%,91% 100%,0 100%,0 9%);
+  box-shadow:inset 0 0 0 1.5px var(--etc-edge), 0 14px 30px -8px rgba(0,0,0,.6);
+  display:flex; flex-direction:column; padding:15px 15px 14px; overflow:hidden;
+  font-family:"Chakra Petch",sans-serif; transition:transform .18s ease, box-shadow .18s ease; transform-style:preserve-3d; }
+.etc:hover{ box-shadow:inset 0 0 0 1.5px var(--etc-edge), 0 22px 42px -10px rgba(0,0,0,.7); }
+.etc::after{ content:""; position:absolute; top:-12%; right:-22%; width:52%; height:150%;
+  background:linear-gradient(180deg,transparent,var(--etc-acc),transparent); opacity:.14; transform:rotate(18deg); z-index:0; pointer-events:none; }
+.etc__sheen{ position:absolute; inset:0; z-index:4; pointer-events:none;
+  background:radial-gradient(60% 44% at var(--mx,50%) var(--my,26%), rgba(255,255,255,.34), transparent 60%);
+  mix-blend-mode:soft-light; opacity:var(--sheen-o,.5); transition:opacity .2s ease; }
+.etc__shine{ position:absolute; top:-30%; left:0; width:58%; height:160%; z-index:3; pointer-events:none;
+  background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.5) 50%,transparent 80%);
+  transform:translateX(-200%) rotate(8deg); mix-blend-mode:soft-light; opacity:0; }
+.etc__nt{ position:absolute; inset:0; z-index:5; padding:2px; pointer-events:none;
+  background:linear-gradient(135deg,#6b4a28,#3a2714);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; }
+.etc--bronza .etc__nt{ background:linear-gradient(135deg,#2b2b31,#060608); }
+.etc.nt .etc__nt{ padding:3px; --etc-nta:0deg;
+  background:conic-gradient(from var(--etc-nta),#b24dff,#ff5bd0,#8a4dff,#ff79d8,#c24dff,#b24dff); animation:etc-spin 6s linear infinite; }
+
+.etc__top{ position:relative; z-index:2; display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.etc__ovr{ display:flex; flex-direction:column; align-items:flex-start; }
+.etc__num{ font-size:45px; font-weight:700; line-height:.78; letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
+.etc__role{ display:inline-block; margin-top:5px; background:var(--etc-acc); color:var(--etc-aink);
+  font-size:9.5px; font-weight:700; letter-spacing:.1em; padding:2px 7px; border-radius:2px; }
+.etc__meta{ display:flex; flex-direction:column; align-items:flex-end; gap:5px; text-align:right; }
+.etc__tj{ display:inline-flex; align-items:center; background:linear-gradient(90deg,#b24dff,#ff5bd0); color:#fff;
+  font-size:8px; font-weight:700; letter-spacing:.12em; padding:2px 7px; border-radius:3px; box-shadow:0 2px 7px rgba(180,70,220,.4); }
+.etc__game{ display:flex; align-items:center; gap:5px; font-size:12px; font-weight:700; letter-spacing:.02em; }
+.etc__game svg{ width:15px; height:15px; color:var(--etc-acc); }
+.etc__rank{ font-family:"Inter",sans-serif; font-size:8.5px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--etc-sub); }
+
+.etc__art{ position:relative; flex:1; z-index:1; margin:2px 0; }
+.etc__art::before{ content:""; position:absolute; left:50%; bottom:4px; transform:translateX(-50%); width:124px; height:124px; border-radius:50%;
+  background:radial-gradient(circle,var(--etc-acc) 0%,transparent 68%); opacity:.3; }
+.etc__bust{ position:absolute; left:50%; bottom:-2px; transform:translateX(-50%); width:140px; height:auto; color:var(--etc-ink); opacity:.82; filter:drop-shadow(0 8px 12px rgba(0,0,0,.35)); }
+.etc__photo{ position:absolute; left:50%; bottom:-2px; width:100%; height:85%; transform:translateX(-50%); z-index:1;
+  background-repeat:no-repeat; background-position:bottom center; background-size:contain; filter:drop-shadow(0 10px 15px rgba(0,0,0,.5)); }
+.etc__photo img{ position:absolute; left:50%; bottom:0; transform:translateX(-50%); height:100%; width:auto; filter:drop-shadow(0 10px 15px rgba(0,0,0,.5)); }
+.etc__hint{ position:absolute; left:50%; top:6px; transform:translateX(-50%); z-index:2; font-family:"Inter",sans-serif; font-size:7.5px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--etc-sub); opacity:.55; white-space:nowrap; }
+
+.etc--olmos .etc__bust,.etc--olmos .etc__photo{ animation:etc-float 4.2s ease-in-out infinite; transform-origin:bottom center; }
+.etc--afsona .etc__bust,.etc--afsona .etc__photo,
+.etc--chempion .etc__bust,.etc--chempion .etc__photo,
+.etc--mvp .etc__bust,.etc--mvp .etc__photo,
+.etc--ikona .etc__bust,.etc--ikona .etc__photo{ animation:etc-sway 3.8s ease-in-out infinite; transform-origin:bottom center; }
+
+.etc__foot{ position:relative; z-index:2; }
+.etc__name{ font-size:16px; font-weight:700; line-height:1; letter-spacing:.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.etc__sub{ display:flex; align-items:center; gap:5px; margin-top:4px; font-family:"Inter",sans-serif; font-size:9.5px; font-weight:600; letter-spacing:.02em; color:var(--etc-sub); white-space:nowrap; overflow:hidden; }
+.etc__sub .tm{ display:flex; align-items:center; gap:4px; min-width:0; }
+.etc__sub .tm::before{ content:"·"; margin-right:3px; opacity:.55; }
+.etc__sub .tm span{ overflow:hidden; text-overflow:ellipsis; }
+.etc-flag{ width:16px; height:11px; border-radius:2px; flex:0 0 auto; display:block; object-fit:cover; box-shadow:0 0 0 1px rgba(0,0,0,.32); }
+.etc__tlogo{ width:13px; height:13px; border-radius:3px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; overflow:hidden;
+  background:var(--tc,#555); color:#fff; font-family:"Chakra Petch",sans-serif; font-weight:700; font-size:8px; box-shadow:0 0 0 1px rgba(0,0,0,.28); }
+.etc__tlogo img{ width:100%; height:100%; object-fit:cover; }
+.etc__era{ font-family:"Inter",sans-serif; font-size:9px; font-weight:600; letter-spacing:.02em; color:var(--etc-sub); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.etc__rule{ height:1.6px; border:0; margin:7px 0; background:linear-gradient(90deg,var(--etc-acc),transparent); }
+.etc__stats{ display:grid; grid-template-rows:repeat(3,auto); grid-auto-flow:column; gap:4px 18px; }
+.etc__st{ display:flex; align-items:baseline; gap:6px; }
+.etc__st b{ font-size:14.5px; font-weight:700; font-variant-numeric:tabular-nums; min-width:20px; }
+.etc__st span{ font-family:"Inter",sans-serif; font-size:8.5px; font-weight:600; letter-spacing:.07em; color:var(--etc-sub); }
+.etc__tag{ position:absolute; top:0; left:50%; transform:translateX(-50%); z-index:6; background:var(--etc-acc); color:var(--etc-aink);
+  font-size:8.5px; font-weight:700; letter-spacing:.18em; padding:3px 11px; border-radius:0 0 3px 3px; }
+.etc__fame{ position:absolute; top:50%; left:50%; width:150px; transform:translate(-50%,-52%); color:#ffdf9a; opacity:.14; z-index:0; pointer-events:none; }
+
+/* game accents */
+.etc--cs2{ --etc-acc:#ff7a1a; --etc-aink:#1a0d00; }
+.etc--dota{ --etc-acc:#e8463f; --etc-aink:#ffffff; }
+.etc--pubgm{ --etc-acc:#f4b400; --etc-aink:#241900; }
+.etc--mlbb{ --etc-acc:#2e90ff; --etc-aink:#ffffff; }
+
+/* tier materials */
+.etc--bronza{ --etc-bg:linear-gradient(152deg,#7d5833,#5a3d22 46%,#2e1f0f); --etc-ink:#f7e8d3; --etc-sub:rgba(247,232,211,.62); --etc-edge:rgba(216,165,110,.5); }
+.etc--kumush{ --etc-bg:linear-gradient(152deg,#dde3e9,#aeb7c0 46%,#737c87); --etc-ink:#1b2027; --etc-sub:rgba(27,32,39,.6); --etc-edge:rgba(255,255,255,.62); }
+.etc--oltin{ --etc-bg:linear-gradient(152deg,#f8df84,#e8c04a 44%,#a87f1e); --etc-ink:#2a1d02; --etc-sub:rgba(42,29,2,.6); --etc-edge:rgba(255,246,201,.72); }
+.etc--platina{ --etc-bg:linear-gradient(152deg,#dbf6f2,#a2dde2 44%,#4f949c); --etc-ink:#042024; --etc-sub:rgba(4,32,36,.6); --etc-edge:rgba(255,255,255,.72); }
+.etc--olmos{ --etc-bg:linear-gradient(152deg,#ecf7ff,#bbdeff 42%,#6aa5e6); --etc-ink:#06233f; --etc-sub:rgba(6,35,63,.58); --etc-edge:rgba(255,255,255,.82); }
+.etc--afsona{ --etc-bg:radial-gradient(130% 120% at 50% 0%,#231537,#140d20 50%,#06050b); --etc-ink:#f4effc; --etc-sub:rgba(244,239,252,.62); --etc-edge:rgba(190,150,255,.4); }
+.etc--chempion{ --etc-bg:radial-gradient(130% 120% at 50% 0%,#3a2a08,#1c1405 52%,#070502); --etc-ink:#ffe9b0; --etc-sub:rgba(255,233,176,.6); --etc-edge:rgba(255,220,130,.4); }
+.etc--mvp{ --etc-bg:radial-gradient(130% 120% at 50% 0%,#0e2b31,#0a1a1f 52%,#05090b); --etc-ink:#dff6f3; --etc-sub:rgba(223,246,243,.6); --etc-edge:rgba(170,240,235,.4); }
+.etc--ikona{ --etc-bg:radial-gradient(135% 125% at 50% 0%,#2b2309,#171108 52%,#070502); --etc-ink:#f8e7b4; --etc-sub:rgba(248,231,180,.6); --etc-edge:rgba(255,214,120,.42); }
+
+/* shine ladder (bronza=none) */
+.etc--kumush .etc__shine{ animation:etc-sweep 8s ease-in-out infinite; opacity:.32; width:44%; }
+.etc--oltin .etc__shine{ animation:etc-sweep 6.5s ease-in-out infinite; opacity:.52; width:54%; }
+.etc--platina .etc__shine{ animation:etc-sweep 6s ease-in-out infinite; opacity:.6; width:60%; }
+.etc--olmos .etc__shine{ animation:etc-sweep 5.4s ease-in-out infinite; opacity:.7; width:66%;
+  background:linear-gradient(100deg,transparent 16%,rgba(190,225,255,.5) 42%,rgba(255,255,255,.65) 50%,rgba(170,255,220,.45) 60%,transparent 84%); }
+.etc--afsona .etc__shine{ animation:etc-sweep 4.7s ease-in-out infinite; opacity:.82; width:74%;
+  background:linear-gradient(100deg,transparent 14%,rgba(255,120,190,.4) 36%,rgba(185,220,255,.75) 50%,rgba(150,255,205,.45) 64%,transparent 86%); }
+.etc--chempion .etc__shine{ animation:etc-sweep 5s ease-in-out infinite; opacity:.72; width:62%;
+  background:linear-gradient(100deg,transparent 20%,rgba(255,224,150,.6) 50%,transparent 80%); }
+.etc--mvp .etc__shine{ animation:etc-sweep 5.2s ease-in-out infinite; opacity:.66; width:60%;
+  background:linear-gradient(100deg,transparent 20%,rgba(170,240,235,.55) 50%,transparent 80%); }
+.etc--ikona .etc__shine{ animation:etc-sweep 5.2s ease-in-out infinite; opacity:.82; width:66%;
+  background:linear-gradient(100deg,transparent 18%,rgba(255,236,170,.72) 50%,transparent 82%); }
+
+/* Ikona frame gold by default; .nt = purple-pink */
+.etc--ikona .etc__nt{ padding:2.5px; background:conic-gradient(from 0deg,#fff4cf,#e9c25c,#9c7420,#ffe9a6,#c99a34,#fff4cf); animation:etc-spark 5s ease-in-out infinite; }
+.etc--ikona.nt .etc__nt{ padding:3px; --etc-nta:0deg; background:conic-gradient(from var(--etc-nta),#b24dff,#ff5bd0,#8a4dff,#ff79d8,#c24dff,#b24dff); animation:etc-spin 6s linear infinite; }
+
+@keyframes etc-spin{ to{ --etc-nta:360deg; } }
+@keyframes etc-spark{ 0%,100%{opacity:.6} 50%{opacity:1} }
+@keyframes etc-sweep{ 0%{transform:translateX(-200%) rotate(8deg)} 18%{transform:translateX(260%) rotate(8deg)} 100%{transform:translateX(260%) rotate(8deg)} }
+@keyframes etc-float{ 0%,100%{transform:translate(-50%,0)} 50%{transform:translate(-50%,-4px) scale(1.015)} }
+@keyframes etc-sway{ 0%,100%{transform:translate(-50%,0) rotate(0deg)} 30%{transform:translate(-50%,-3px) rotate(-1.4deg)} 70%{transform:translate(-50%,-2px) rotate(1.4deg)} }
+@media (prefers-reduced-motion:reduce){ .etc *,.etc{ animation:none!important; } }
+
+/* key legend */
+.etc-keys{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:8px; }
+.etc-keys .lbl{ font-size:12px; color:var(--es-faint); letter-spacing:.04em; }
+.etc-fk{ display:flex; align-items:center; gap:8px; background:var(--es-soft); border:1px solid var(--es-soft-bd); border-radius:999px; padding:6px 13px 6px 8px; font-size:12.5px; color:var(--es-fg); }
+.etc-fk i{ width:26px; height:13px; border-radius:3px; display:block; flex:0 0 auto; }
+.etc-fk .ppink{ background:conic-gradient(#b24dff,#ff5bd0,#8a4dff,#ff79d8,#b24dff); }
+.etc-fk .bronze{ background:linear-gradient(135deg,#6b4a28,#3a2714); }
+.etc-fk .black{ background:linear-gradient(135deg,#2b2b31,#060608); }
+.etc-tierkey{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+.etc-tk{ display:flex; align-items:center; gap:8px; background:var(--es-soft); border:1px solid var(--es-soft-bd); border-radius:999px; padding:6px 12px 6px 7px; font-size:13px; color:var(--es-fg); }
+.etc-tk i{ width:16px; height:16px; border-radius:50%; display:block; flex:0 0 auto; }
+.etc-tk b{ font-family:"Chakra Petch",sans-serif; font-weight:600; }
+.etc-tk s{ color:var(--es-faint); text-decoration:none; font-variant-numeric:tabular-nums; }
