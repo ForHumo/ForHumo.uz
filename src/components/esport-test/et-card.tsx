@@ -98,6 +98,50 @@ function Card({ d }: { d: CardData }) {
   );
 }
 
+/* ---- Jamoa (klub gerbi) kartasi ---- */
+interface RosterAv { in: string; color: string }
+interface TeamData {
+  tier: Tier; game: Game; rating: number; gameLabel: string; rank: string;
+  name: string; crest: string; crest1: string; crest2: string;
+  country: string; cc?: string; city?: string; founded: number;
+  champ?: boolean;
+  roster: RosterAv[]; stats: Stat[]; lead: string; cap: string;
+}
+
+function TeamCard({ d }: { d: TeamData }) {
+  const cls = `etc etc--${d.tier} etc--${d.game}${d.champ ? " champ" : ""}`;
+  return (
+    <div className="etc-cw">
+      <div className={cls}>
+        <div className="etc__nt" /><div className="etc__shine" /><div className="etc__sheen" />
+        {d.champ && <div className="etc__tag">CHEMPION</div>}
+        <div className="etc__top">
+          <div className="etc__ovr"><span className="etc__num">{d.rating}</span><span className="etc__jchip">JAMOA</span></div>
+          <div className="etc__meta">
+            <span className="etc__game"><GameGlyph game={d.game} />{d.gameLabel}</span>
+            <span className="etc__rank">{d.rank}</span>
+          </div>
+        </div>
+        <div className="etc__art">
+          <div className="etc__crest" style={{ "--crest-1": d.crest1, "--crest-2": d.crest2 } as React.CSSProperties}>{d.crest}</div>
+        </div>
+        <div className="etc__foot">
+          <div className="etc__name">{d.name}</div>
+          <div className="etc__sub"><Flag cc={d.cc} />{d.country}{d.city ? ` · ${d.city}` : ""} · {d.founded}</div>
+          <div className="etc__roster">
+            {d.roster.map((r, i) => (<span className="etc__rav" key={i} style={{ "--rc": r.color } as React.CSSProperties}>{r.in}</span>))}
+          </div>
+          <hr className="etc__rule" />
+          <div className="etc__tstats">
+            {d.stats.map((s, i) => (<div className="etc__st" key={i}><b>{s.v}</b><span>{s.k}</span></div>))}
+          </div>
+        </div>
+      </div>
+      <div className="etc-cap"><b>{d.lead}</b> · {d.cap}</div>
+    </div>
+  );
+}
+
 const TIERS: CardData[] = [
   { tier: "bronza", game: "pubgm", ovr: 58, role: "SCOUT", gameLabel: "PUBGM", rank: "Bronza", name: "YANGIBOY", country: "O'zbekiston", cc: "uz", stats: [{ k: "AIM", v: 61 }, { k: "SUR", v: 64 }, { k: "ROT", v: 55 }, { k: "GUN", v: 59 }, { k: "UTL", v: 48 }, { k: "IQ", v: 57 }], lead: "YANGIBOY", cap: "OVR 58 · Bronza · jamoasiz · qora ramka" },
   { tier: "kumush", game: "mlbb", ovr: 71, role: "JUNGLE", gameLabel: "MLBB", rank: "Kumush", name: "SHER_UZ", country: "Qozog'iston", cc: "kz", team: "ALTAI", teamInitial: "A", teamColor: "#16a34a", stats: [{ k: "LAN", v: 70 }, { k: "TF", v: 74 }, { k: "MAP", v: 68 }, { k: "MEX", v: 73 }, { k: "OBJ", v: 72 }, { k: "VER", v: 66 }], lead: "SHER_UZ", cap: "OVR 71 · Kumush · termada emas" },
@@ -128,6 +172,15 @@ const IKONA: CardData[] = [
   { tier: "ikona", game: "mlbb", ovr: 95, role: "ROAM", gameLabel: "MLBB", rank: "Abadiy", name: "ALPOMISH", country: "O'zbekiston", cc: "uz", team: "OQSAROY", teamInitial: "O", teamColor: "#7c5cff", tag: "IKONA", era: "2016 — 2023 · 3× Chempion", stats: [{ k: "LAN", v: 92 }, { k: "TF", v: 96 }, { k: "MAP", v: 97 }, { k: "MEX", v: 90 }, { k: "OBJ", v: 95 }, { k: "VER", v: 93 }], lead: "ALPOMISH", cap: "Ikona · MLBB · 2016–2023" },
   { tier: "ikona", game: "cs2", ovr: 94, role: "IGL", gameLabel: "CS2", rank: "Abadiy", name: "SOHIBQIRON", country: "O'zbekiston · milliy terma", cc: "uz", nt: true, tag: "IKONA", era: "2014 — 2022 · Milliy terma kapitani", stats: [{ k: "AIM", v: 90 }, { k: "REF", v: 88 }, { k: "CLT", v: 93 }, { k: "UTL", v: 86 }, { k: "POS", v: 95 }, { k: "IMP", v: 94 }], lead: "SOHIBQIRON", cap: "Ikona · CS2 · milliy termada" },
   { tier: "ikona", game: "dota", ovr: 96, role: "MID", gameLabel: "DOTA2", rank: "Abadiy", name: "YASSAVIY", country: "Tojikiston", cc: "tj", team: "POMIR", teamInitial: "P", teamColor: "#e0485c", tag: "IKONA", era: "2015 — 2024 · 2× For Humo Cup", stats: [{ k: "FRM", v: 94 }, { k: "FGT", v: 95 }, { k: "MAP", v: 92 }, { k: "MEX", v: 97 }, { k: "DEC", v: 96 }, { k: "VER", v: 90 }], lead: "YASSAVIY", cap: "Ikona · Dota 2 · 2015–2024" },
+];
+
+const TEAMS: TeamData[] = [
+  { tier: "afsona", game: "cs2", rating: 96, gameLabel: "CS2", rank: "Afsona", name: "TURON FIVE", crest: "T", crest1: "#4aa3ff", crest2: "#0b3f86", country: "O'zbekiston", cc: "uz", city: "Toshkent", founded: 2021, champ: true, roster: [{ in: "Q", color: "#3aa0ff" }, { in: "B", color: "#2b6fc2" }, { in: "X", color: "#4aa3ff" }, { in: "S", color: "#2b6fc2" }, { in: "A", color: "#3aa0ff" }], stats: [{ k: "O'RT", v: 94 }, { k: "ELO", v: 2210 }, { k: "G'AL", v: 78 }, { k: "KUB", v: 6 }], lead: "TURON FIVE", cap: "Afsona · CS2 · amaldagi chempion" },
+  { tier: "olmos", game: "mlbb", rating: 92, gameLabel: "MLBB", rank: "Olmos", name: "OQSAROY", crest: "O", crest1: "#9b7bff", crest2: "#4a2fa6", country: "O'zbekiston", cc: "uz", city: "Samarqand", founded: 2020, roster: [{ in: "A", color: "#7c5cff" }, { in: "M", color: "#5a3fc0" }, { in: "T", color: "#7c5cff" }, { in: "R", color: "#5a3fc0" }, { in: "D", color: "#7c5cff" }], stats: [{ k: "O'RT", v: 90 }, { k: "ELO", v: 2060 }, { k: "G'AL", v: 71 }, { k: "KUB", v: 4 }], lead: "OQSAROY", cap: "Olmos · MLBB · 4× kubok" },
+  { tier: "platina", game: "dota", rating: 87, gameLabel: "DOTA2", rank: "Platina", name: "REGISTON", crest: "R", crest1: "#e0b44a", crest2: "#8a5a16", country: "O'zbekiston", cc: "uz", city: "Buxoro", founded: 2022, roster: [{ in: "B", color: "#c9922b" }, { in: "K", color: "#9a6c1f" }, { in: "N", color: "#c9922b" }, { in: "S", color: "#9a6c1f" }, { in: "Y", color: "#c9922b" }], stats: [{ k: "O'RT", v: 86 }, { k: "ELO", v: 1950 }, { k: "G'AL", v: 66 }, { k: "KUB", v: 2 }], lead: "REGISTON", cap: "Platina · Dota 2 · 2× kubok" },
+  { tier: "oltin", game: "dota", rating: 82, gameLabel: "DOTA2", rank: "Oltin", name: "POMIR", crest: "P", crest1: "#ef6a76", crest2: "#9c2b36", country: "Tojikiston", cc: "tj", city: "Dushanbe", founded: 2021, roster: [{ in: "D", color: "#e0485c" }, { in: "F", color: "#b23140" }, { in: "S", color: "#e0485c" }, { in: "K", color: "#b23140" }, { in: "M", color: "#e0485c" }], stats: [{ k: "O'RT", v: 81 }, { k: "ELO", v: 1780 }, { k: "G'AL", v: 58 }, { k: "KUB", v: 1 }], lead: "POMIR", cap: "Oltin · Dota 2 · 1× kubok" },
+  { tier: "oltin", game: "mlbb", rating: 80, gameLabel: "MLBB", rank: "Oltin", name: "ALTAI", crest: "A", crest1: "#3fd08a", crest2: "#14713f", country: "Qozog'iston", cc: "kz", city: "Almati", founded: 2019, roster: [{ in: "S", color: "#16a34a" }, { in: "A", color: "#0f7a37" }, { in: "J", color: "#16a34a" }, { in: "T", color: "#0f7a37" }, { in: "B", color: "#16a34a" }], stats: [{ k: "O'RT", v: 79 }, { k: "ELO", v: 1740 }, { k: "G'AL", v: 55 }, { k: "KUB", v: 1 }], lead: "ALTAI", cap: "Oltin · MLBB · 1× kubok" },
+  { tier: "kumush", game: "pubgm", rating: 71, gameLabel: "PUBGM", rank: "Kumush", name: "NOMAD", crest: "N", crest1: "#ef8a4a", crest2: "#9c4a16", country: "Qirg'iziston", cc: "kg", city: "Bishkek", founded: 2023, roster: [{ in: "L", color: "#d9682a" }, { in: "T", color: "#a84f1f" }, { in: "K", color: "#d9682a" }, { in: "S", color: "#a84f1f" }, { in: "M", color: "#d9682a" }], stats: [{ k: "O'RT", v: 70 }, { k: "ELO", v: 1520 }, { k: "G'AL", v: 47 }, { k: "KUB", v: 0 }], lead: "NOMAD", cap: "Kumush · PUBGM · yangi jamoa" },
 ];
 
 function SecHead({ n, title, sub }: { n: string; title: string; sub: string }) {
@@ -219,8 +272,13 @@ export default function EtCards() {
         <Gallery data={IKONA} />
       </section>
 
+      <section style={{ marginTop: 44 }}>
+        <SecHead n="06" title="Jamoa kartalari" sub="Klub gerbi kartasi (o'yinchi karta oilasidan): material=jamoa kuchi (tarkib o'rtachasi/Elo), markazda gerb, pastda tarkib. Terma ramka o'rniga amaldagi chempionga oltin aylanuvchi ramka." />
+        <div className="etc-gallery">{TEAMS.map((d, i) => <TeamCard key={i} d={d} />)}</div>
+      </section>
+
       <section style={{ marginTop: 48 }}>
-        <SecHead n="06" title="Reyting & qoidalar" sub="OVR tekshiriladigan ma'lumotdan hisoblanadi — tasodifiy emas." />
+        <SecHead n="07" title="Reyting & qoidalar" sub="OVR tekshiriladigan ma'lumotdan hisoblanadi — tasodifiy emas." />
         <div style={{ background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)", borderRadius: 14, padding: "14px 16px", fontFamily: "Chakra Petch, sans-serif", fontSize: ".86rem", color: "var(--es-fg)", overflowX: "auto", marginBottom: 16 }}>
           <code style={{ whiteSpace: "pre", lineHeight: 1.8 }}>{`baza = round( Σ statᵢ × rol_vazniᵢ )
 OVR  = clamp( baza + turnir_bonus[0..+6] + faollik_bonus[0..+2], 1, 99 ) × integritet
