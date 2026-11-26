@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import EsportNavbar from "@/components/esport/esport-navbar";
+import EtNavbar from "@/components/esport-test/et-navbar";
 import { EsServiceWorker } from "@/components/esport/es-service-worker";
 import { EsAuthModal } from "@/components/esport/es-auth-modal";
+import "../esport-test/esport-test.css";
 
 export function generateMetadata(): Metadata {
     return {
@@ -28,13 +29,15 @@ export const viewport: Viewport = {
     viewportFit: "cover",
 };
 
-// Humo eSport — global header/footer ustini yopadi, o'z navbari (tema + til + bo'limlar) bor.
+// Humo eSport — PREMIUM dizayn (et-*). Global header/footer ustini yopadi, o'z arena navbari.
 export default function EsportLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="fixed inset-0 z-[100] flex flex-col es-bg">
-            <EsportNavbar />
-            <div className="flex-1 overflow-y-auto overflow-x-hidden nx-scrollbar">
-                {children}
+        <div className="et es-bg" style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", flexDirection: "column" }}>
+            <EtNavbar />
+            <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
+                <div style={{ maxWidth: 1100, margin: "0 auto", padding: "6px 18px 70px" }}>
+                    {children}
+                </div>
             </div>
             <EsAuthModal />
             <EsServiceWorker />

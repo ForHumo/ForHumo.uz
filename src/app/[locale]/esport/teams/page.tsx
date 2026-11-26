@@ -1,8 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
-import TeamsView from "@/components/esport/teams-view";
+import EtTeams from "@/components/esport-test/et-teams";
 
-export default async function TeamsPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     setRequestLocale(locale);
-    return <TeamsView />;
+    return <EtTeams />;
 }

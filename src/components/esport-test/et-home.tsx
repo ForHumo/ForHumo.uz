@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
-import { Trophy, Users, Crown, TrendingUp, Radio, Newspaper, CalendarClock, Gamepad2, Play, Swords, Star } from "lucide-react";
+import { Trophy, Users, Crown, TrendingUp, Newspaper, CalendarClock, Gamepad2, Swords, Star } from "lucide-react";
 import { useEsT, ES_BASE } from "@/lib/esport-i18n";
+import EsportBroadcast, { type Broadcast } from "@/components/esport/esport-broadcast";
 
 interface TeamLite { id: string; name: string; tag: string; logo: string | null }
 interface T { id: string; name: string; game: string; status: string; teams: number; prizePool: number | null; currency: string }
@@ -13,7 +14,6 @@ interface ExpPlayer { id: string; ign: string; image: string | null; value: numb
 interface ExpTeam { team: TeamLite; value: number }
 interface Result { a: TeamLite | null; b: TeamLite | null; scoreA: number | null; scoreB: number | null; winnerId: string | null }
 interface Upcoming { a: TeamLite | null; b: TeamLite | null; at: string | null }
-interface Cast { id: string; title: string; status: string; posterUrl: string | null }
 interface News { id: string; title: string; body: string | null; image: string | null; createdAt: string }
 
 function money(n: number, c: string) { return c === "USD" ? `$${n.toLocaleString()}` : `${n.toLocaleString()} so'm`; }
@@ -39,13 +39,18 @@ export default function EtHome() {
     const tr = useEsT();
     const [d, setD] = useState<{
         tournaments: T[]; topTeams: TopTeam[]; topPlayers: TopPlayer[]; expensivePlayers: ExpPlayer[];
-        expensiveTeams: ExpTeam[]; results: Result[]; upcoming: Upcoming[]; broadcasts: Cast[]; news: News[];
+        expensiveTeams: ExpTeam[]; results: Result[]; upcoming: Upcoming[]; broadcasts: Broadcast[]; news: News[];
     } | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isAdmin, setIsAdmin] = useState(false);
 
-    useEffect(() => {
+    const load = useCallback(() => {
         fetch("/api/esport/home").then(r => r.json()).then(j => { setD(j); setLoading(false); }).catch(() => setLoading(false));
     }, []);
+    useEffect(() => {
+        load();
+        fetch("/api/esport/admin/check").then(r => r.json()).then(j => setIsAdmin(!!j.isAdmin)).catch(() => { });
+    }, [load]);
 
     if (loading) {
         return (
@@ -57,8 +62,6 @@ export default function EtHome() {
             </div>
         );
     }
-
-    const liveCast = d?.broadcasts?.find(b => b.status === "LIVE") || d?.broadcasts?.[0] || null;
 
     return (
         <div>
@@ -80,28 +83,14 @@ export default function EtHome() {
             </section>
 
             {/* JONLI EFIR + BO'LAJAK */}
-            {(liveCast || (d?.upcoming?.length ?? 0) > 0) && (
-                <section style={{ marginTop: 34 }}>
-                    <div className="et-sh et-rise"><span className="num">01</span><div><h2>{tr("home.liveUpcoming")}</h2><p>{tr("home.liveUpcomingSub")}</p></div></div>
-                    <div className="et-grid et-g2">
-                        {liveCast && (
-                            <div className="et-glass et-match et-rise et-d1">
-                                <div className="et-scan" />
-                                <div className="et-match-top">
-                                    <span className={`et-chip ${liveCast.status === "LIVE" ? "live" : "up"}`}>{liveCast.status === "LIVE" ? <><span style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: "#fff", marginRight: 6, verticalAlign: "middle" }} />{tr("st.live")}</> : tr("bc.scheduled")}</span>
-                                    <span style={{ fontFamily: "Chakra Petch", fontSize: ".78rem", color: "var(--es-mut)" }}>{tr("home.efir")}</span>
-                                </div>
-                                <div style={{ padding: "22px 18px", display: "flex", alignItems: "center", gap: 14 }}>
-                                    <span className="et-logo" style={{ width: 48, height: 48, background: "linear-gradient(135deg,var(--es-c1),var(--es-c3))" }}><Radio size={22} color="#fff" /></span>
-                                    <div style={{ minWidth: 0 }}>
-                                        <div className="et-fh" style={{ fontWeight: 600, fontSize: "1rem", overflow: "hidden", textOverflow: "ellipsis" }}>{liveCast.title}</div>
-                                        <div style={{ fontSize: ".78rem", color: "var(--es-faint)" }}>{tr("home.broadcastBy")}</div>
-                                    </div>
-                                </div>
-                                <div style={{ padding: "0 18px 18px" }}><Link href={`${ES_BASE}/tournaments`} className="et-btn" style={{ width: "100%" }}><Play size={16} /> {tr("home.watchStream")}</Link></div>
-                            </div>
-                        )}
-                        {(d?.upcoming ?? []).slice(0, liveCast ? 1 : 2).map((u, i) => (
+            <section style={{ marginTop: 34 }}>
+                <div className="et-sh et-rise"><span className="num">01</span><div><h2>{tr("home.liveUpcoming")}</h2><p>{tr("home.liveUpcomingSub")}</p></div></div>
+                <div className="et-rise et-d1" style={{ maxWidth: 680, margin: "0 auto" }}>
+                    <EsportBroadcast broadcasts={d?.broadcasts ?? []} isAdmin={isAdmin} onChanged={load} />
+                </div>
+                {(d?.upcoming?.length ?? 0) > 0 && (
+                    <div className="et-grid et-g2" style={{ marginTop: 14 }}>
+                        {(d?.upcoming ?? []).slice(0, 2).map((u, i) => (
                             <div key={i} className="et-glass et-match et-rise et-d2">
                                 <div className="et-match-top"><span className="et-chip up">{tr("home.upcomingBadge")}</span><span style={{ fontFamily: "Chakra Petch", fontSize: ".78rem", color: "var(--es-mut)" }}><CalendarClock size={13} style={{ verticalAlign: -2 }} /> {timeShort(u.at)}</span></div>
                                 <div className="et-vs">
@@ -112,8 +101,8 @@ export default function EtHome() {
                             </div>
                         ))}
                     </div>
-                </section>
-            )}
+                )}
+            </section>
 
             {/* TURNIRLAR */}
             <section style={{ marginTop: 34 }}>

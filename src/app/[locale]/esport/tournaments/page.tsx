@@ -1,8 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
-import TournamentsList from "@/components/esport/tournaments-list";
+import EtTournaments from "@/components/esport-test/et-tournaments";
 
-export default async function TournamentsPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     setRequestLocale(locale);
-    return <TournamentsList />;
+    return <EtTournaments />;
 }

@@ -1,8 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
-import TransfersView from "@/components/esport/transfers-view";
+import EtTransfers from "@/components/esport-test/et-transfers";
 
-export default async function TransfersPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     setRequestLocale(locale);
-    return <TransfersView />;
+    return <EtTransfers />;
 }

@@ -1,8 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
-import StandingsView from "@/components/esport/standings-view";
+import EtStandings from "@/components/esport-test/et-standings";
 
-export default async function StandingsPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     setRequestLocale(locale);
-    return <StandingsView />;
+    return <EtStandings />;
 }

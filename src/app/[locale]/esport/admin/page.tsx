@@ -1,8 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
-import EsportAdmin from "@/components/esport/esport-admin";
+import EtAdmin from "@/components/esport-test/et-admin";
 
-export default async function EsportAdminPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     setRequestLocale(locale);
-    return <EsportAdmin />;
+    return <EtAdmin />;
 }

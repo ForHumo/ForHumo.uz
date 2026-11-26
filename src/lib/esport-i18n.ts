@@ -3,7 +3,7 @@ import { useLocale } from "next-intl";
 
 // Humo eSport marshrut bazasi. /esport-test asosiy saytga ko'chirilganda shu BIR joyda
 // "/esport" ga o'zgartiriladi — barcha et-* komponentlar havolasi avtomatik ko'chadi.
-export const ES_BASE = "/esport-test";
+export const ES_BASE = "/esport";
 
 // Humo eSport i18n — yagona lug'at (uz / ru / en). Komponentlar useEsT() bilan t("kalit") ishlatadi.
 // Tartib: [uz, ru, en]

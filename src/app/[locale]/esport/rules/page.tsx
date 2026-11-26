@@ -1,10 +1,10 @@
 import { setRequestLocale } from "next-intl/server";
-import EsportRules from "@/components/esport/esport-rules";
+import EtRules from "@/components/esport-test/et-rules";
 
 export const metadata = { title: "Turnir nizomi | Humo eSport" };
 
-export default async function RulesPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     setRequestLocale(locale);
-    return <EsportRules />;
+    return <EtRules />;
 }

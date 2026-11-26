@@ -1,8 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
-import AthleteProfile from "@/components/esport/athlete-profile";
+import EtAthleteProfile from "@/components/esport-test/et-athlete-profile";
 
-export default async function AthleteProfilePage({ params }: { params: Promise<{ locale: string; id: string }> }) {
+export default async function Page({ params }: { params: Promise<{ locale: string; id: string }> }) {
     const { locale, id } = await params;
     setRequestLocale(locale);
-    return <AthleteProfile athleteId={id} />;
+    return <EtAthleteProfile athleteId={id} />;
 }
