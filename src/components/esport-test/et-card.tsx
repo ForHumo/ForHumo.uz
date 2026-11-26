@@ -8,7 +8,7 @@ import { useEffect } from "react";
    Namuna ma'lumot; real o'yinchi reytingi/ fotosи keyin ulanadi.
    ============================================================ */
 
-type Game = "cs2" | "dota" | "pubgm" | "mlbb";
+type Game = "cs2" | "dota" | "pubgm" | "mlbb" | "other";
 type Tier = "bronza" | "kumush" | "oltin" | "platina" | "olmos" | "afsona" | "chempion" | "mvp" | "ikona";
 
 interface Stat { k: string; v: number }
@@ -38,6 +38,7 @@ function GameGlyph({ game }: { game: Game }) {
     case "dota": return (<svg viewBox="0 0 24 24"><path d="M12 2l3.2 5.2L12 10.5 8.8 7.2 12 2z" fill="currentColor" /><path d="M12 10v12M8 18h8" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" /></svg>);
     case "pubgm": return (<svg viewBox="0 0 24 24"><path d="M3 11a9 9 0 0 1 18 0" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M3 11l9 7.5L21 11M9 11l3 7.5 3-7.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><rect x="10.4" y="18.2" width="3.2" height="3.2" fill="currentColor" /></svg>);
     case "mlbb": return (<svg viewBox="0 0 24 24"><path d="M12 2.2l8 3.8v6.1c0 5.2-4.1 8.2-8 10.1-3.9-1.9-8-4.9-8-10.1V6L12 2.2z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /><circle cx="12" cy="11" r="2.3" fill="currentColor" /></svg>);
+    default: return (<svg viewBox="0 0 24 24"><path d="M12 3l7.5 4.3v9.4L12 21l-7.5-4.3V7.3L12 3z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /></svg>);
   }
 }
 
@@ -99,44 +100,61 @@ function Card({ d }: { d: CardData }) {
 }
 
 /* ---- Jamoa (klub gerbi) kartasi ---- */
-interface RosterAv { in: string; color: string }
-interface TeamData {
+interface RosterAv { in: string; color: string; img?: string }
+export interface TeamData {
   tier: Tier; game: Game; rating: number; gameLabel: string; rank: string;
-  name: string; crest: string; crest1: string; crest2: string;
+  name: string; crest: string; crestImg?: string; crest1: string; crest2: string;
   country: string; cc?: string; city?: string; founded: number;
   champ?: boolean;
   roster: RosterAv[]; stats: Stat[]; lead: string; cap: string;
 }
 
-function TeamCard({ d }: { d: TeamData }) {
+// Faqat karta (o'rab turuvchisiz) — Jamoalar sahifasida Link ichida ishlatiladi
+export function TeamCardBody({ d }: { d: TeamData }) {
   const cls = `etc etc--${d.tier} etc--${d.game}${d.champ ? " champ" : ""}`;
+  const big = d.rating >= 1000; // 4 xonali Elo bo'lsa raqamni kichraytiramiz
+  const subText = [d.country, d.city, d.founded ? String(d.founded) : ""].filter(Boolean).join(" · ");
   return (
-    <div className="etc-cw">
-      <div className={cls}>
-        <div className="etc__nt" /><div className="etc__shine" /><div className="etc__sheen" />
-        {d.champ && <div className="etc__tag">CHEMPION</div>}
-        <div className="etc__top">
-          <div className="etc__ovr"><span className="etc__num">{d.rating}</span><span className="etc__jchip">JAMOA</span></div>
-          <div className="etc__meta">
-            <span className="etc__game"><GameGlyph game={d.game} />{d.gameLabel}</span>
-            <span className="etc__rank">{d.rank}</span>
-          </div>
-        </div>
-        <div className="etc__art">
-          <div className="etc__crest" style={{ "--crest-1": d.crest1, "--crest-2": d.crest2 } as React.CSSProperties}>{d.crest}</div>
-        </div>
-        <div className="etc__foot">
-          <div className="etc__name">{d.name}</div>
-          <div className="etc__sub"><Flag cc={d.cc} />{d.country}{d.city ? ` · ${d.city}` : ""} · {d.founded}</div>
-          <div className="etc__roster">
-            {d.roster.map((r, i) => (<span className="etc__rav" key={i} style={{ "--rc": r.color } as React.CSSProperties}>{r.in}</span>))}
-          </div>
-          <hr className="etc__rule" />
-          <div className="etc__tstats">
-            {d.stats.map((s, i) => (<div className="etc__st" key={i}><b>{s.v}</b><span>{s.k}</span></div>))}
-          </div>
+    <div className={cls}>
+      <div className="etc__nt" /><div className="etc__shine" /><div className="etc__sheen" />
+      {d.champ && <div className="etc__tag">CHEMPION</div>}
+      <div className="etc__top">
+        <div className="etc__ovr"><span className="etc__num" style={big ? { fontSize: 32, letterSpacing: "-.02em" } : undefined}>{d.rating}</span><span className="etc__jchip">JAMOA</span></div>
+        <div className="etc__meta">
+          <span className="etc__game"><GameGlyph game={d.game} />{d.gameLabel}</span>
+          <span className="etc__rank">{d.rank}</span>
         </div>
       </div>
+      <div className="etc__art">
+        <div className="etc__crest" style={{ "--crest-1": d.crest1, "--crest-2": d.crest2 } as React.CSSProperties}>
+          {d.crestImg ? <img src={d.crestImg} alt="" /> : d.crest}
+        </div>
+      </div>
+      <div className="etc__foot">
+        <div className="etc__name">{d.name}</div>
+        <div className="etc__sub"><Flag cc={d.cc} />{subText}</div>
+        {d.roster.length > 0 && (
+          <div className="etc__roster">
+            {d.roster.map((r, i) => (
+              <span className="etc__rav" key={i} style={{ "--rc": r.color } as React.CSSProperties}>
+                {r.img ? <img src={r.img} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : r.in}
+              </span>
+            ))}
+          </div>
+        )}
+        <hr className="etc__rule" />
+        <div className="etc__tstats">
+          {d.stats.map((s, i) => (<div className="etc__st" key={i}><b>{s.v}</b><span>{s.k}</span></div>))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TeamCard({ d }: { d: TeamData }) {
+  return (
+    <div className="etc-cw">
+      <TeamCardBody d={d} />
       <div className="etc-cap"><b>{d.lead}</b> · {d.cap}</div>
     </div>
   );
@@ -195,7 +213,7 @@ function Gallery({ data }: { data: CardData[] }) {
   return <div className="etc-gallery">{data.map((d, i) => <Card key={i} d={d} />)}</div>;
 }
 
-export default function EtCards() {
+export function useCardTilt(dep?: unknown) {
   // kursor-reaktiv egilish + nur (faqat pointer:fine + motion-ok)
   useEffect(() => {
     const mq = window.matchMedia;
@@ -219,7 +237,11 @@ export default function EtCards() {
       cleanups.push(() => { c.removeEventListener("pointermove", move); c.removeEventListener("pointerleave", leave); });
     }
     return () => cleanups.forEach(fn => fn());
-  }, []);
+  }, [dep]);
+}
+
+export default function EtCards() {
+  useCardTilt();
 
   return (
     <div style={{ padding: "8px 0 24px" }}>

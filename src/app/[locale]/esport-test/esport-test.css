@@ -277,6 +277,7 @@
 .etc--dota{ --etc-acc:#e8463f; --etc-aink:#ffffff; }
 .etc--pubgm{ --etc-acc:#f4b400; --etc-aink:#241900; }
 .etc--mlbb{ --etc-acc:#2e90ff; --etc-aink:#ffffff; }
+.etc--other{ --etc-acc:#8aa0c0; --etc-aink:#0a1220; }
 
 /* tier materials */
 .etc--bronza{ --etc-bg:linear-gradient(152deg,#7d5833,#5a3d22 46%,#2e1f0f); --etc-ink:#f7e8d3; --etc-sub:rgba(247,232,211,.62); --etc-edge:rgba(216,165,110,.5); }
