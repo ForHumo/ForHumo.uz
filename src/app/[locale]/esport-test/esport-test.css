@@ -289,6 +289,9 @@
 .etc--chempion{ --etc-bg:radial-gradient(130% 120% at 50% 0%,#3a2a08,#1c1405 52%,#070502); --etc-ink:#ffe9b0; --etc-sub:rgba(255,233,176,.6); --etc-edge:rgba(255,220,130,.4); }
 .etc--mvp{ --etc-bg:radial-gradient(130% 120% at 50% 0%,#0e2b31,#0a1a1f 52%,#05090b); --etc-ink:#dff6f3; --etc-sub:rgba(223,246,243,.6); --etc-edge:rgba(170,240,235,.4); }
 .etc--ikona{ --etc-bg:radial-gradient(135% 125% at 50% 0%,#2b2309,#171108 52%,#070502); --etc-ink:#f8e7b4; --etc-sub:rgba(248,231,180,.6); --etc-edge:rgba(255,214,120,.42); }
+/* reyting hali yo'q (Steam/Faceit ulanmagan) — neytral material */
+.etc--pending{ --etc-bg:linear-gradient(152deg,#39434f,#28303a 46%,#161b22); --etc-ink:#eef3f8; --etc-sub:rgba(238,243,248,.6); --etc-edge:rgba(150,170,195,.42); }
+.etc__pending{ text-align:center; font-family:"Inter",sans-serif; font-size:8.5px; font-weight:600; letter-spacing:.03em; color:var(--etc-sub); padding:7px 2px 2px; line-height:1.3; }
 
 /* shine ladder (bronza=none) */
 .etc--kumush .etc__shine{ animation:etc-sweep 8s ease-in-out infinite; opacity:.32; width:44%; }

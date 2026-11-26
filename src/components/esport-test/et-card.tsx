@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
+import {
+  tierFromElo, TIER_LABEL, TIER_MAT, gameSlug, GAME_CREST,
+  type EsTier, type EsGame, type TeamData, type Stat,
+} from "@/lib/esport-card";
 
 /* ============================================================
    Kibersport o'yinchi kartalari — dizayn ko'rgazmasi (/esport-test/cards)
@@ -8,17 +12,19 @@ import { useEffect } from "react";
    Namuna ma'lumot; real o'yinchi reytingi/ fotosи keyin ulanadi.
    ============================================================ */
 
-type Game = "cs2" | "dota" | "pubgm" | "mlbb" | "other";
-type Tier = "bronza" | "kumush" | "oltin" | "platina" | "olmos" | "afsona" | "chempion" | "mvp" | "ikona";
+type Game = EsGame;
+type Tier = EsTier;
+export { tierFromElo, TIER_LABEL };
+export type { TeamData };
 
-interface Stat { k: string; v: number }
-interface CardData {
+export interface CardData {
   tier: Tier; game: Game; ovr: number; role: string; gameLabel: string; rank: string;
   name: string; country: string; cc?: string;
   team?: string; teamInitial?: string; teamColor?: string;
-  nt?: boolean; tag?: string; era?: string; photo?: string;
+  nt?: boolean; tag?: string; era?: string; photo?: string; pending?: boolean;
   stats: Stat[]; lead: string; cap: string;
 }
+export type PlayerData = CardData;
 
 /* Bayroqlar — haqiqiy to'rtburchak bayroq rasmlari (flagcdn). Windows'da ham
    to'g'ri ko'rinadi (emoji bayroq Windows'da harf bo'lib qoladi).
@@ -42,42 +48,24 @@ function GameGlyph({ game }: { game: Game }) {
   }
 }
 
-/* ---- Umumiy tier yordamchilari + mini-gerb (Reyting / turnir setkasida) ---- */
-export const TIER_LABEL: Record<Tier, string> = {
-  bronza: "Bronza", kumush: "Kumush", oltin: "Oltin", platina: "Platina",
-  olmos: "Olmos", afsona: "Afsona", chempion: "Chempion", mvp: "MVP", ikona: "Ikona",
-};
-
-// Elo -> daraja (teams/all route bilan bir xil chegaralar). Yagona manba shu bo'lsin.
-export function tierFromElo(elo: number): Tier {
-  if (elo >= 1600) return "afsona";
-  if (elo >= 1450) return "olmos";
-  if (elo >= 1300) return "platina";
-  if (elo >= 1150) return "oltin";
-  if (elo >= 1050) return "kumush";
-  return "bronza";
-}
-
-// mini-gerb materiali: [och, to'q, siyoh rangi]
-const TIER_MAT: Record<Tier, [string, string, string]> = {
-  bronza: ["#9a6c3f", "#4a3119", "#fff"],
-  kumush: ["#dde3e9", "#8a929c", "#1a1d22"],
-  oltin: ["#f8df84", "#b48a24", "#3a2a06"],
-  platina: ["#d6f4f0", "#4f949c", "#0c2b2e"],
-  olmos: ["#ecf7ff", "#6aa5e6", "#0a2742"],
-  afsona: ["#4a2f74", "#160f28", "#fff"],
-  chempion: ["#fff4cf", "#b8860b", "#3a2a06"],
-  mvp: ["#ffd9a0", "#b8600b", "#3a1e06"],
-  ikona: ["#f8df84", "#8a5a16", "#3a2406"],
-};
-
-// Kichik olti-burchak gerb — daraja materialini olib yuradi (Reyting/setka/ishtirokchilar).
+/* ---- Mini olti-burchak gerblar (Reyting / turnir / retro) ---- */
+// Daraja materialini olib yuradi (Elo'dan) — Reyting, setka, ishtirokchilar.
 export function TeamCrest({ tier, img, letter, size = 30, title }: { tier: Tier; img?: string | null; letter?: string; size?: number; title?: string }) {
   const [c1, c2, ink] = TIER_MAT[tier] || TIER_MAT.bronza;
   return (
     <span className="etc-mini" title={title} style={{ width: size, height: Math.round(size * 1.12), "--m1": c1, "--m2": c2, color: ink, fontSize: Math.round(size * 0.42) } as React.CSSProperties}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       {img ? <img src={img} alt="" /> : (letter || "?").slice(0, 1).toUpperCase()}
+    </span>
+  );
+}
+
+// O'yin rangini olib yuradi — retro (tarixiy jamoada Elo/logo yo'q, faqat o'yin ma'lum).
+export function GameCrest({ game, letter, size = 28, c1, c2, title }: { game?: string | null; letter?: string; size?: number; c1?: string; c2?: string; title?: string }) {
+  const [g1, g2] = GAME_CREST[gameSlug(game)];
+  return (
+    <span className="etc-mini" title={title} style={{ width: size, height: Math.round(size * 1.12), "--m1": c1 || g1, "--m2": c2 || g2, color: "#fff", fontSize: Math.round(size * 0.42) } as React.CSSProperties}>
+      {(letter || "?").slice(0, 1).toUpperCase()}
     </span>
   );
 }
@@ -95,60 +83,60 @@ function Fame() {
   </svg>);
 }
 
-function Card({ d }: { d: CardData }) {
-  const cls = `etc etc--${d.tier} etc--${d.game}${d.nt ? " nt" : ""}`;
+// Faqat o'yinchi kartasi (o'rab turuvchisiz) — sportchi profilida ham ishlatiladi.
+// `pending` = OVR/ko'rsatkichlar hali yo'q (Steam/Faceit ulanmagan): raqam "—", neytral material.
+export function PlayerCardBody({ d }: { d: CardData }) {
+  const pending = !!d.pending || d.ovr <= 0;
+  const cls = `etc ${pending ? "etc--pending" : `etc--${d.tier}`} etc--${d.game}${d.nt ? " nt" : ""}`;
   return (
-    <div className="etc-cw">
-      <div className={cls}>
-        <div className="etc__nt" /><div className="etc__shine" /><div className="etc__sheen" />
-        {d.tier === "ikona" && <Fame />}
-        {d.tag && <div className="etc__tag">{d.tag}</div>}
-        <div className="etc__top">
-          <div className="etc__ovr"><span className="etc__num">{d.ovr}</span><span className="etc__role">{d.role}</span></div>
-          <div className="etc__meta">
-            {d.nt && <span className="etc__tj">T.J.</span>}
-            <span className="etc__game"><GameGlyph game={d.game} />{d.gameLabel}</span>
-            <span className="etc__rank">{d.rank}</span>
-          </div>
-        </div>
-        <div className="etc__art">
-          {d.photo
-            ? <div className="etc__photo" style={{ backgroundImage: `url(${d.photo})` }} />
-            : <><span className="etc__hint">O&apos;yinchi rasmi</span><Bust /></>}
-        </div>
-        <div className="etc__foot">
-          <div className="etc__name">{d.name}</div>
-          <div className="etc__sub">
-            <Flag cc={d.cc} />{d.country}
-            {d.team && (
-              <span className="tm">
-                <span className="etc__tlogo" style={{ "--tc": d.teamColor } as React.CSSProperties}>{d.teamInitial}</span>
-                <span>{d.team}</span>
-              </span>
-            )}
-          </div>
-          {d.era && <div className="etc__era">{d.era}</div>}
-          <hr className="etc__rule" />
-          <div className="etc__stats">
-            {d.stats.map((s, i) => (<div className="etc__st" key={i}><b>{s.v}</b><span>{s.k}</span></div>))}
-          </div>
+    <div className={cls}>
+      <div className="etc__nt" /><div className="etc__shine" /><div className="etc__sheen" />
+      {d.tier === "ikona" && !pending && <Fame />}
+      {d.tag && <div className="etc__tag">{d.tag}</div>}
+      <div className="etc__top">
+        <div className="etc__ovr"><span className="etc__num">{pending ? "—" : d.ovr}</span><span className="etc__role">{d.role}</span></div>
+        <div className="etc__meta">
+          {d.nt && <span className="etc__tj">T.J.</span>}
+          <span className="etc__game"><GameGlyph game={d.game} />{d.gameLabel}</span>
+          <span className="etc__rank">{pending ? "Yangi" : d.rank}</span>
         </div>
       </div>
+      <div className="etc__art">
+        {d.photo
+          ? <div className="etc__photo" style={{ backgroundImage: `url(${d.photo})` }} />
+          : <><span className="etc__hint">{pending ? "O'yinchi" : "O'yinchi rasmi"}</span><Bust /></>}
+      </div>
+      <div className="etc__foot">
+        <div className="etc__name">{d.name}</div>
+        <div className="etc__sub">
+          <Flag cc={d.cc} />{d.country}
+          {d.team && (
+            <span className="tm">
+              <span className="etc__tlogo" style={{ "--tc": d.teamColor } as React.CSSProperties}>{d.teamInitial}</span>
+              <span>{d.team}</span>
+            </span>
+          )}
+        </div>
+        {d.era && <div className="etc__era">{d.era}</div>}
+        <hr className="etc__rule" />
+        {pending || d.stats.length === 0
+          ? <div className="etc__pending">Reyting Steam/Faceit ulangach hisoblanadi</div>
+          : <div className="etc__stats">{d.stats.map((s, i) => (<div className="etc__st" key={i}><b>{s.v}</b><span>{s.k}</span></div>))}</div>}
+      </div>
+    </div>
+  );
+}
+
+function Card({ d }: { d: CardData }) {
+  return (
+    <div className="etc-cw">
+      <PlayerCardBody d={d} />
       <div className="etc-cap"><b>{d.lead}</b> · {d.cap}</div>
     </div>
   );
 }
 
-/* ---- Jamoa (klub gerbi) kartasi ---- */
-interface RosterAv { in: string; color: string; img?: string }
-export interface TeamData {
-  tier: Tier; game: Game; rating: number; gameLabel: string; rank: string;
-  name: string; crest: string; crestImg?: string; crest1: string; crest2: string;
-  country: string; cc?: string; city?: string; founded: number;
-  champ?: boolean;
-  roster: RosterAv[]; stats: Stat[]; lead: string; cap: string;
-}
-
+/* ---- Jamoa (klub gerbi) kartasi (TeamData tipi @/lib/esport-card dan) ---- */
 // Faqat karta (o'rab turuvchisiz) — Jamoalar sahifasida Link ichida ishlatiladi
 export function TeamCardBody({ d }: { d: TeamData }) {
   const cls = `etc etc--${d.tier} etc--${d.game}${d.champ ? " champ" : ""}`;

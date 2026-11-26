@@ -11,10 +11,12 @@ import {
 } from "lucide-react";
 import { useEsT } from "@/lib/esport-i18n";
 import { EtDatePicker } from "./et-date-picker";
+import { PlayerCardBody, useCardTilt, type PlayerData } from "./et-card";
+import { gameSlug, GAME_LABEL, ccFromCountry, countryName } from "@/lib/esport-card";
 
 interface Athlete {
     id: string; ign: string; gameUserId: string; gameServer: string | null; position: string | null;
-    game: { name: string } | null; createdAt: string; name: string; username: string | null;
+    game: { name: string } | null; createdAt: string; name: string; username: string | null; country: string | null;
     image: string | null; coverImage: string | null; humoId: string | null; verified: boolean; marketValue: number | null;
     blocked: boolean; blockedUntil: string | null;
     team: { id: string; name: string; tag: string; logo: string | null; role: string; joinedAt: string; rating: number; peakRating: number; lowRating: number } | null;
@@ -106,12 +108,29 @@ export default function EtAthleteProfile({ athleteId }: { athleteId: string }) {
         if (!r.error) { setA(prev => prev ? { ...prev, marketValue: r.marketValue } : prev); setEditPrice(false); }
     }
 
+    useCardTilt(a?.id);
+
     if (loading) return <div style={{ display: "flex", justifyContent: "center", padding: "96px 0" }}><Loader2 className="animate-spin" size={28} style={{ color: "var(--es-faint)" }} /></div>;
     if (!a) return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "96px 0" }}><p style={{ color: "var(--es-mut)" }}>{t("ap.notFound")}</p><Link href="/esport-test/transfers" className="et-grad" style={{ fontWeight: 700 }}>{t("tr.title")}</Link></div>;
+
+    // O'yinchi kartasi — identity REAL (ism/rasm/o'yin/rol/jamoa/davlat); OVR+6 ko'rsatkich
+    // Steam/Faceit ulanib, match-stat yig'ilgach hisoblanadi → hozir "pending" (raqam "—").
+    const pcGame = gameSlug(a.game?.name);
+    const playerCard: PlayerData = {
+        tier: "bronza", game: pcGame, ovr: 0, pending: true,
+        role: (a.position || "").trim().toUpperCase().slice(0, 7) || "—",
+        gameLabel: GAME_LABEL[pcGame], rank: "Yangi",
+        name: a.ign, country: countryName(a.country), cc: ccFromCountry(a.country),
+        team: a.team?.name, teamInitial: a.team ? a.team.tag.slice(0, 1).toUpperCase() : undefined, teamColor: "#3aa0ff",
+        photo: a.image || undefined, stats: [], lead: a.ign, cap: "",
+    };
 
     return (
         <div style={{ maxWidth: 760, margin: "14px auto 0" }}>
             <div className="et-sh et-rise"><span className="num"><Gamepad2 size={15} /></span><div><h2>{a.ign}</h2><p>{t("ap.card")}</p></div></div>
+
+            {/* O'yinchi kartasi (premium — identity real, reyting kutilmoqda) */}
+            <div className="etc-cw et-rise" style={{ margin: "0 auto 16px" }}><PlayerCardBody d={playerCard} /></div>
 
             {/* Bosh karta */}
             <div className="et-glass et-rise" style={{ overflow: "hidden", marginBottom: 14 }}>

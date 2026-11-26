@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { Trophy, Crown, Medal, Award, History, Users, CalendarDays } from "lucide-react";
+import { GameCrest } from "./et-card";
 
 interface T { id: string; name: string; game: { name: string; slug: string } | null; status: string; division: { name: string; tier: number } | null; isOpen: boolean; prizePool: number | null; currency: string; maxTeams: number; teams: number }
 interface RMatch { order: number; stage: string; teamA: string; teamB: string; scoreA: number | null; scoreB: number | null; winner: string | null }
@@ -73,22 +74,25 @@ export default function EtTournaments() {
                         {retros.map((r, ri) => (
                             <div key={r.id} className={`et-glass et-rise et-d${(ri % 4) + 1}`} style={{ padding: 20 }}>
                                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                                    <div>
-                                        <div className="et-fh et-grad" style={{ fontWeight: 700, fontSize: "1.3rem" }}>{r.name}</div>
-                                        <div style={{ fontSize: ".82rem", color: "var(--es-mut)", marginTop: 3 }}>{r.game} · {r.season}</div>
-                                        <div style={{ fontSize: ".76rem", color: "var(--es-faint)", marginTop: 2 }}><CalendarDays size={12} style={{ verticalAlign: -2 }} /> {ymd(r.startDate)} — {ymd(r.endDate)} · {r.organizer}</div>
+                                    <div style={{ display: "flex", alignItems: "flex-start", gap: 12, minWidth: 0 }}>
+                                        <GameCrest game={r.game} letter={r.champion || r.name} size={38} title={r.game} />
+                                        <div style={{ minWidth: 0 }}>
+                                            <div className="et-fh et-grad" style={{ fontWeight: 700, fontSize: "1.3rem" }}>{r.name}</div>
+                                            <div style={{ fontSize: ".82rem", color: "var(--es-mut)", marginTop: 3 }}>{r.game} · {r.season}</div>
+                                            <div style={{ fontSize: ".76rem", color: "var(--es-faint)", marginTop: 2 }}><CalendarDays size={12} style={{ verticalAlign: -2 }} /> {ymd(r.startDate)} — {ymd(r.endDate)} · {r.organizer}</div>
+                                        </div>
                                     </div>
                                     {r.prizePool ? <div style={{ textAlign: "right" }}><div className="et-fh et-grad" style={{ fontWeight: 700, fontSize: "1.1rem" }}>{money(r.prizePool, r.currency)}</div><div style={{ fontSize: ".72rem", color: "var(--es-faint)" }}>Mukofot fondi</div></div> : null}
                                 </div>
 
                                 {/* Podium */}
                                 <div className="et-grid et-g3" style={{ marginTop: 16, gap: 10 }}>
-                                    {[{ nm: r.champion, ic: <Crown size={16} />, lbl: "Chempion", cls: "g1", bg: "linear-gradient(135deg,#ffd84d,#ff9a3d)" },
-                                      { nm: r.runnerUp, ic: <Medal size={16} />, lbl: "2-o'rin", cls: "g2", bg: "linear-gradient(135deg,#cfd8e6,#9fb0c6)" },
-                                      { nm: r.third, ic: <Award size={16} />, lbl: "3-o'rin", cls: "g3", bg: "linear-gradient(135deg,#e59b57,#b9742f)" }]
+                                    {[{ nm: r.champion, ic: <Crown size={16} />, lbl: "Chempion", m1: "#ffe27a", m2: "#f08a2c" },
+                                      { nm: r.runnerUp, ic: <Medal size={16} />, lbl: "2-o'rin", m1: "#e2eaf4", m2: "#93a4ba" },
+                                      { nm: r.third, ic: <Award size={16} />, lbl: "3-o'rin", m1: "#edab6a", m2: "#a9681f" }]
                                         .filter(x => x.nm).map((x, i) => (
                                             <div key={i} className="et-row" style={{ background: "var(--es-soft)" }}>
-                                                <span className="et-logo" style={{ width: 36, height: 36, background: x.bg, color: "#1a1206" }}>{x.ic}</span>
+                                                <span className="etc-mini" style={{ width: 34, height: 38, color: "#1a1206", "--m1": x.m1, "--m2": x.m2 } as React.CSSProperties}>{x.ic}</span>
                                                 <span className="et-nm" style={{ flex: 1 }}>{x.nm}<small>{x.lbl}</small></span>
                                             </div>
                                         ))}

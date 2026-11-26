@@ -34,7 +34,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     const profile = await prisma.userProfile.findUnique({
         where: { id: a.humoProfileId },
-        select: { firstName: true, lastName: true, name: true, username: true, image: true, humoId: true, verified: true },
+        select: { firstName: true, lastName: true, name: true, username: true, image: true, humoId: true, verified: true, country: true },
     });
 
     // Hozirgi jamoa + tarkibdagi roli + Elo (joriy/maksimal/minimal) + jamoaga qachon qo'shilgani
@@ -65,7 +65,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         contract, canExtend,
         athlete: {
             id: a.id, ign: a.ign, gameUserId: a.gameUserId, gameServer: a.gameServer, position: a.role,
-            game: a.game, createdAt: a.createdAt, coverImage: a.coverImage ?? null,
+            game: a.game, createdAt: a.createdAt, coverImage: a.coverImage ?? null, country: profile?.country ?? null,
             blocked: isBlocked(a), blockedUntil: a.blockedUntil,
             marketValue: a.marketValue ? Number(a.marketValue) : null,
             name: profile ? fullName(profile) : "", username: profile?.username ?? null,

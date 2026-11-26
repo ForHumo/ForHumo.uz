@@ -10,10 +10,11 @@ import {
     LogOut, Trash2, BadgeCheck, X, AlertTriangle, Settings2, Pencil, ImagePlus,
 } from "lucide-react";
 import { useEsT } from "@/lib/esport-i18n";
+import { TeamCardBody, useCardTilt, type TeamData } from "./et-card";
 
 interface Member { athleteId: string; humoProfileId: string; role: string; ign: string; gameUserId: string; gameServer: string | null; position: string | null; name: string; username: string | null; image: string | null; humoId: string | null; verified: boolean }
 interface Roster { id: string; game: { slug: string; name: string; teamSize: number }; rating: number; members: Member[] }
-interface Team { id: string; name: string; tag: string; logo: string | null; coverImage: string | null; bio: string | null; isOwner: boolean; isRealOwner: boolean; amIMember: boolean; myAthleteId: string | null; pendingRequests: number; locked: boolean; rosters: Roster[] }
+interface Team { id: string; name: string; tag: string; logo: string | null; coverImage: string | null; bio: string | null; card: TeamData; isOwner: boolean; isRealOwner: boolean; amIMember: boolean; myAthleteId: string | null; pendingRequests: number; locked: boolean; rosters: Roster[] }
 interface JoinReq { id: string; athleteId: string; ign: string; position: string | null; game: string; name: string; username: string | null; image: string | null }
 interface ReqItem { id: string; type: string; athleteId: string | null; ign: string | null; approvals: string[]; createdAt: string }
 interface StaffItem { id: string; profileId: string; role: string; title: string | null; name: string; username: string | null; image: string | null; humoId: string | null }
@@ -157,12 +158,17 @@ export default function EtTeamDetail({ teamId }: { teamId: string }) {
         await loadRequests();
     }
 
+    useCardTilt(team?.id);
+
     if (loading) return <div style={{ display: "flex", justifyContent: "center", padding: "96px 0" }}><Loader2 className="animate-spin" size={28} style={{ color: "var(--es-faint)" }} /></div>;
     if (!team) return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "96px 0" }}><p style={{ color: "var(--es-mut)" }}>{err || t("td.notFound")}</p><Link href="/esport-test/teams" className="et-grad" style={{ fontWeight: 700 }}>{t("td.back")}</Link></div>;
 
     return (
         <div style={{ maxWidth: 760, margin: "14px auto 0" }}>
             <div className="et-sh et-rise"><span className="num"><Shield size={15} /></span><div><h2>{team.name}</h2><p>[{team.tag}] · {t("td.crumb")}</p></div></div>
+
+            {/* Jamoa kartasi (premium — real Elo/daraja/gerb/tarkib) */}
+            <div className="etc-cw et-rise" style={{ margin: "0 auto 16px" }}><TeamCardBody d={team.card} /></div>
 
             {/* Jamoa karta */}
             <div className="et-glass et-rise" style={{ overflow: "hidden", marginBottom: 14 }}>

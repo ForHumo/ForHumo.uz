@@ -6,6 +6,7 @@ import { isValidMediaUrl } from "@/lib/media-url";
 import { isTeamLockedAny } from "@/lib/esport-lock";
 import { canManageTeam } from "@/lib/esport-block";
 import { syncEsTeamChannel } from "@/lib/esport-nexus-sync";
+import { buildTeamCard } from "@/lib/esport-card";
 
 // GET /api/esport/teams/[id] — jamoa tafsiloti (tarkiblar + a'zolar)
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -49,9 +50,27 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     const locked = await isTeamLockedAny(id); // active turnirda — tarkib qulflangan
 
+    // Jamoa kartasi (ega davlati + standings yig'indisi) — lib buildTeamCard (teams/all bilan bir xil)
+    const [owner, standAgg] = await Promise.all([
+        prisma.userProfile.findUnique({ where: { id: team.ownerId }, select: { country: true } }),
+        prisma.esStanding.aggregate({ where: { teamId: id }, _sum: { wins: true, played: true } }),
+    ]);
+    const stPlayed = standAgg._sum.played ?? 0;
+    const card = buildTeamCard({
+        name: team.name, tag: team.tag, logo: team.logo,
+        rosters: team.rosters.map(r => ({
+            rating: r.rating, peakRating: r.peakRating, gameName: r.game?.name,
+            memberCount: r.members.length,
+            members: r.members.map(m => ({ ign: m.athlete.ign, image: pMap[m.athlete.humoProfileId]?.image ?? null })),
+        })),
+        ownerCountryRaw: owner?.country, createdAt: team.createdAt,
+        winPct: stPlayed > 0 ? Math.round(((standAgg._sum.wins ?? 0) / stPlayed) * 100) : 0, played: stPlayed,
+    });
+
     return NextResponse.json({
         team: {
             id: team.id, name: team.name, tag: team.tag, logo: team.logo, coverImage: team.coverImage, bio: team.bio,
+            card,
             isOwner, isRealOwner, amIMember, myAthleteId: myAthlete?.id ?? null, pendingRequests, locked,
             rosters: team.rosters.map(r => ({
                 id: r.id, game: r.game, rating: r.rating,
