@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "@/i18n/routing";
-import { useEsT } from "@/lib/esport-i18n";
+import { useEsT, ES_BASE, type EsT } from "@/lib/esport-i18n";
 import { seasonPoster } from "@/lib/esport-season";
 import { TeamCrest, tierFromElo } from "./et-card";
 import {
@@ -21,12 +21,12 @@ interface MyTeam { id: string; name: string; tag: string; logo?: string | null; 
 const ACCENT = "linear-gradient(120deg,var(--es-c1),var(--es-c2) 60%,var(--es-c3))";
 const soft: React.CSSProperties = { background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" };
 
-function roundName(round: number, total: number): string {
+function roundName(round: number, total: number, tr: EsT): string {
     const fromEnd = total - round;
-    if (fromEnd === 0) return "Final";
-    if (fromEnd === 1) return "Yarim final";
-    if (fromEnd === 2) return "Chorak final";
-    return `1/${Math.pow(2, fromEnd + 1)} final`;
+    if (fromEnd === 0) return tr("te.roundFinal");
+    if (fromEnd === 1) return tr("te.roundSemi");
+    if (fromEnd === 2) return tr("te.roundQuarter");
+    return `1/${Math.pow(2, fromEnd + 1)} ${tr("te.roundFinal")}`;
 }
 
 export default function EtTournamentDetail({ tournamentId }: { tournamentId: string }) {
@@ -82,7 +82,7 @@ export default function EtTournamentDetail({ tournamentId }: { tournamentId: str
     }
 
     if (loading) return <div style={{ display: "flex", justifyContent: "center", padding: "96px 0" }}><Loader2 className="animate-spin" size={28} style={{ color: "var(--es-faint)" }} /></div>;
-    if (!t) return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "96px 0" }}><p style={{ color: "var(--es-mut)" }}>{err || "Topilmadi"}</p><Link href="/esport-test/tournaments" className="et-grad" style={{ fontWeight: 700 }}>Orqaga</Link></div>;
+    if (!t) return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "96px 0" }}><p style={{ color: "var(--es-mut)" }}>{err || tr("te.notFound")}</p><Link href={`${ES_BASE}/tournaments`} className="et-grad" style={{ fontWeight: 700 }}>{tr("td.back")}</Link></div>;
 
     const mainRounds = [...new Set(matches.filter(m => m.bracket === "MAIN").map(m => m.round))].sort((a, b) => a - b);
     const totalRounds = mainRounds.length ? Math.max(...mainRounds) : 0;
@@ -109,7 +109,7 @@ export default function EtTournamentDetail({ tournamentId }: { tournamentId: str
                 </div>
                 <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 14, fontSize: ".8rem", fontWeight: 600, color: "var(--es-mut)" }}>
                     {t.prizeLabel && <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Coins size={14} style={{ color: "#f0b400" }} /> {t.prizeLabel}</span>}
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Users size={14} /> {participants.length}{t.maxTeams > 0 ? `/${t.maxTeams}` : ""} jamoa</span>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Users size={14} /> {participants.length}{t.maxTeams > 0 ? `/${t.maxTeams}` : ""} {tr("common.team")}</span>
                 </div>
             </div>
 
@@ -118,7 +118,7 @@ export default function EtTournamentDetail({ tournamentId }: { tournamentId: str
                 <div className="et-rise" style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 12, padding: 18, borderRadius: 18, background: "rgba(255,176,32,0.10)", border: "1px solid rgba(255,176,32,0.35)" }}>
                     <Crown size={28} style={{ color: "#FFB020" }} />
                     <TeamCrest tier={tierFromElo(champion?.rating ?? 1000)} img={champion?.logo} letter={champion?.tag} size={38} />
-                    <div><p style={{ fontSize: ".7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: "#FFB020" }}>Chempion</p><p className="et-fh" style={{ fontSize: "1.1rem", fontWeight: 700 }}>{champion?.name}</p></div>
+                    <div><p style={{ fontSize: ".7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: "#FFB020" }}>{tr("tour.champion")}</p><p className="et-fh" style={{ fontSize: "1.1rem", fontWeight: 700 }}>{champion?.name}</p></div>
                 </div>
             )}
 
@@ -127,29 +127,29 @@ export default function EtTournamentDetail({ tournamentId }: { tournamentId: str
             {/* Ro'yxatdan o'tish */}
             {t.status === "REGISTRATION" && eligible.length > 0 && (
                 <div className="et-glass" style={{ padding: 18, marginBottom: 14 }}>
-                    <span className="et-lbl">Ro'yxatdan o'tish</span>
+                    <span className="et-lbl">{tr("te.register")}</span>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         {eligible.map(tm => (
                             <button key={tm.id} className="et-row" style={{ cursor: "pointer", width: "100%", textAlign: "left" }} disabled={busy} onClick={() => call(`/api/esport/tournaments/${tournamentId}/register`, "POST", { teamId: tm.id })}>
                                 <TeamCrest tier={tierFromElo(tm.rating ?? 1000)} img={tm.logo} letter={tm.tag} size={34} />
                                 <span style={{ flex: 1, fontWeight: 700, fontSize: ".9rem" }}>{tm.name}</span>
-                                <span className="et-mini">Qo'shilish</span>
+                                <span className="et-mini">{tr("team.joinBtn")}</span>
                             </button>
                         ))}
                     </div>
                 </div>
             )}
             {t.status === "REGISTRATION" && myTeams.some(x => x.registered) && (
-                <div className="et-okmsg" style={{ marginBottom: 14 }}><Check size={16} /> Jamoangiz ro'yxatdan o'tgan</div>
+                <div className="et-okmsg" style={{ marginBottom: 14 }}><Check size={16} /> {tr("te.registered")}</div>
             )}
 
             {/* Admin boshqaruvlari */}
             {isAdmin && (
                 <div className="et-glass" style={{ padding: 16, marginBottom: 14, display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    <span className="et-lbl" style={{ width: "100%" }}>Admin</span>
-                    {t.status === "UPCOMING" && <AdminBtn onClick={() => call(`/api/esport/admin/tournaments/${tournamentId}`, "PATCH", { status: "REGISTRATION" })} busy={busy} icon={Users}>Ro'yxat ochish</AdminBtn>}
-                    {!t.bracketReady && participants.length >= 2 && <AdminBtn onClick={() => call(`/api/esport/admin/tournaments/${tournamentId}/generate`, "POST")} busy={busy} icon={Wand2}>Setka tuzish (Elo)</AdminBtn>}
-                    {t.status === "ENDED" && t.prizePool ? <AdminBtn onClick={() => call(`/api/esport/admin/tournaments/${tournamentId}/payout`, "POST")} busy={busy} icon={Banknote}>Yutuqni to'lash</AdminBtn> : null}
+                    <span className="et-lbl" style={{ width: "100%" }}>{tr("nav.admin")}</span>
+                    {t.status === "UPCOMING" && <AdminBtn onClick={() => call(`/api/esport/admin/tournaments/${tournamentId}`, "PATCH", { status: "REGISTRATION" })} busy={busy} icon={Users}>{tr("te.openReg")}</AdminBtn>}
+                    {!t.bracketReady && participants.length >= 2 && <AdminBtn onClick={() => call(`/api/esport/admin/tournaments/${tournamentId}/generate`, "POST")} busy={busy} icon={Wand2}>{tr("te.genBracket")}</AdminBtn>}
+                    {t.status === "ENDED" && t.prizePool ? <AdminBtn onClick={() => call(`/api/esport/admin/tournaments/${tournamentId}/payout`, "POST")} busy={busy} icon={Banknote}>{tr("te.payout")}</AdminBtn> : null}
                     {isOwner && t.prizePool ? (
                         <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 8, padding: 12, borderRadius: 12, ...soft }}>
                             <p style={{ fontSize: ".72rem", fontWeight: 600, color: "var(--es-mut)" }}>{tr("pe.fund")}: <span style={{ color: "var(--es-c2)" }}>{t.prizeFundedLabel}</span> / {t.prizeLabel}</p>
@@ -165,7 +165,7 @@ export default function EtTournamentDetail({ tournamentId }: { tournamentId: str
             {/* Ishtirokchilar (setka yo'q bo'lsa) */}
             {!t.bracketReady && participants.length > 0 && (
                 <div className="et-glass" style={{ padding: 18, marginBottom: 14 }}>
-                    <span className="et-lbl">Ishtirokchilar</span>
+                    <span className="et-lbl">{tr("te.participants")}</span>
                     <div className="et-grid et-g2">
                         {participants.map(p => (
                             <div key={p.id} className="et-row" style={{ cursor: "default" }}>
@@ -180,11 +180,11 @@ export default function EtTournamentDetail({ tournamentId }: { tournamentId: str
             {/* Setka */}
             {t.bracketReady && (
                 <div className="et-glass" style={{ padding: 16 }}>
-                    <p className="et-fh" style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, marginBottom: 12 }}><Swords size={16} style={{ color: "var(--es-c2)" }} /> Setka</p>
+                    <p className="et-fh" style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, marginBottom: 12 }}><Swords size={16} style={{ color: "var(--es-c2)" }} /> {tr("te.bracket")}</p>
                     <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
                         {mainRounds.map(round => (
                             <div key={round} style={{ display: "flex", minWidth: 150, flexDirection: "column", justifyContent: "space-around", gap: 12 }}>
-                                <p style={{ textAlign: "center", fontSize: ".62rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: "var(--es-faint)" }}>{roundName(round, totalRounds)}</p>
+                                <p style={{ textAlign: "center", fontSize: ".62rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: "var(--es-faint)" }}>{roundName(round, totalRounds, tr)}</p>
                                 {matches.filter(m => m.bracket === "MAIN" && m.round === round).sort((a, b) => a.slot - b.slot).map(m => (
                                     <MatchBox key={m.id} m={m} isAdmin={isAdmin} sel={sel} setSel={setSel} sa={sa} sb={sb} setSa={setSa} setSb={setSb}
                                         myTeamIds={myTeamIds} onDispute={() => setDispMatch(m)} proof={proof} onPickProof={pickProof} upBusy={upBusy}
@@ -195,7 +195,7 @@ export default function EtTournamentDetail({ tournamentId }: { tournamentId: str
                     </div>
                     {thirdMatch && (
                         <div style={{ marginTop: 16, borderTop: "1px solid var(--es-soft-bd)", paddingTop: 16 }}>
-                            <p style={{ marginBottom: 8, textAlign: "center", fontSize: ".62rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: "#FFB020" }}>3-o'rin uchun</p>
+                            <p style={{ marginBottom: 8, textAlign: "center", fontSize: ".62rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: "#FFB020" }}>{tr("te.thirdPlace")}</p>
                             <div style={{ maxWidth: 200, margin: "0 auto" }}>
                                 <MatchBox m={thirdMatch} isAdmin={isAdmin} sel={sel} setSel={setSel} sa={sa} sb={sb} setSa={setSa} setSb={setSb}
                                     myTeamIds={myTeamIds} onDispute={() => setDispMatch(thirdMatch)} proof={proof} onPickProof={pickProof} upBusy={upBusy}

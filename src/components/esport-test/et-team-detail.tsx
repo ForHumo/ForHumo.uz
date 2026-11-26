@@ -9,7 +9,7 @@ import {
     Loader2, Shield, Crown, Copy, Check, UserPlus, Inbox,
     LogOut, Trash2, BadgeCheck, X, AlertTriangle, Settings2, Pencil, ImagePlus,
 } from "lucide-react";
-import { useEsT } from "@/lib/esport-i18n";
+import { useEsT, ES_BASE } from "@/lib/esport-i18n";
 import { TeamCardBody, useCardTilt, type TeamData } from "./et-card";
 
 interface Member { athleteId: string; humoProfileId: string; role: string; ign: string; gameUserId: string; gameServer: string | null; position: string | null; name: string; username: string | null; image: string | null; humoId: string | null; verified: boolean }
@@ -92,7 +92,7 @@ export default function EtTeamDetail({ teamId }: { teamId: string }) {
     async function forceDelete() {
         if (!confirm(t("bl.teamRemoveConfirm"))) return;
         const r = await fetch(`/api/esport/admin/teams/${teamId}`, { method: "DELETE" }).then(x => x.json()).catch(() => ({ error: "Xato" }));
-        if (r.ok) { router.push("/esport-test/teams"); return; }
+        if (r.ok) { router.push(`${ES_BASE}/teams`); return; }
         setErr(r.error || "");
     }
     async function addStaff() {
@@ -145,12 +145,12 @@ export default function EtTeamDetail({ teamId }: { teamId: string }) {
     }
     async function del() {
         const r = await fetch(`/api/esport/teams/${teamId}/requests`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "TEAM_DELETE" }) }).then(x => x.json()).catch(() => ({ error: "Xato" }));
-        if (r.deleted) { router.push("/esport-test/teams"); return; }
+        if (r.deleted) { router.push(`${ES_BASE}/teams`); return; }
         setErr(r.message || r.error || ""); await loadRequests();
     }
     async function respondReq(reqId: string, action: "approve" | "reject") {
         const r = await fetch(`/api/esport/requests/${reqId}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) }).then(x => x.json()).catch(() => ({ error: "Xato" }));
-        if (r.deleted) { router.push("/esport-test/teams"); return; }
+        if (r.deleted) { router.push(`${ES_BASE}/teams`); return; }
         setErr(r.message || r.error || ""); await loadRequests(); await load();
     }
     async function cancelReq(reqId: string) {
@@ -161,7 +161,7 @@ export default function EtTeamDetail({ teamId }: { teamId: string }) {
     useCardTilt(team?.id);
 
     if (loading) return <div style={{ display: "flex", justifyContent: "center", padding: "96px 0" }}><Loader2 className="animate-spin" size={28} style={{ color: "var(--es-faint)" }} /></div>;
-    if (!team) return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "96px 0" }}><p style={{ color: "var(--es-mut)" }}>{err || t("td.notFound")}</p><Link href="/esport-test/teams" className="et-grad" style={{ fontWeight: 700 }}>{t("td.back")}</Link></div>;
+    if (!team) return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "96px 0" }}><p style={{ color: "var(--es-mut)" }}>{err || t("td.notFound")}</p><Link href={`${ES_BASE}/teams`} className="et-grad" style={{ fontWeight: 700 }}>{t("td.back")}</Link></div>;
 
     return (
         <div style={{ maxWidth: 760, margin: "14px auto 0" }}>
@@ -329,7 +329,7 @@ export default function EtTeamDetail({ teamId }: { teamId: string }) {
                         {r.members.map(m => (
                             <div key={m.athleteId}>
                                 <div className="et-row" style={{ cursor: "default" }}>
-                                    <Link href={`/esport-test/a/${m.athleteId}`} style={{ display: "flex", minWidth: 0, flex: 1, alignItems: "center", gap: 12, textDecoration: "none", color: "inherit" }}>
+                                    <Link href={`${ES_BASE}/a/${m.athleteId}`} style={{ display: "flex", minWidth: 0, flex: 1, alignItems: "center", gap: 12, textDecoration: "none", color: "inherit" }}>
                                         <Avatar image={m.image} fallback={m.ign} />
                                         <div style={{ minWidth: 0, flex: 1 }}>
                                             <p style={{ display: "flex", alignItems: "center", gap: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: ".86rem", fontWeight: 700 }}>{m.ign}{m.verified && <BadgeCheck size={14} style={{ color: "var(--es-c2)" }} />}</p>

@@ -5,6 +5,7 @@ import {
   tierFromElo, TIER_LABEL, TIER_MAT, gameSlug, GAME_CREST,
   type EsTier, type EsGame, type TeamData, type Stat,
 } from "@/lib/esport-card";
+import { useEsT } from "@/lib/esport-i18n";
 
 /* ============================================================
    Kibersport o'yinchi kartalari — dizayn ko'rgazmasi (/esport-test/cards)
@@ -86,6 +87,7 @@ function Fame() {
 // Faqat o'yinchi kartasi (o'rab turuvchisiz) — sportchi profilida ham ishlatiladi.
 // `pending` = OVR/ko'rsatkichlar hali yo'q (Steam/Faceit ulanmagan): raqam "—", neytral material.
 export function PlayerCardBody({ d }: { d: CardData }) {
+  const t = useEsT();
   const pending = !!d.pending || d.ovr <= 0;
   const cls = `etc ${pending ? "etc--pending" : `etc--${d.tier}`} etc--${d.game}${d.nt ? " nt" : ""}`;
   return (
@@ -98,13 +100,13 @@ export function PlayerCardBody({ d }: { d: CardData }) {
         <div className="etc__meta">
           {d.nt && <span className="etc__tj">T.J.</span>}
           <span className="etc__game"><GameGlyph game={d.game} />{d.gameLabel}</span>
-          <span className="etc__rank">{pending ? "Yangi" : d.rank}</span>
+          <span className="etc__rank">{pending ? t("card.new") : d.rank}</span>
         </div>
       </div>
       <div className="etc__art">
         {d.photo
           ? <div className="etc__photo" style={{ backgroundImage: `url(${d.photo})` }} />
-          : <><span className="etc__hint">{pending ? "O'yinchi" : "O'yinchi rasmi"}</span><Bust /></>}
+          : <><span className="etc__hint">{pending ? t("card.player") : t("card.playerPhoto")}</span><Bust /></>}
       </div>
       <div className="etc__foot">
         <div className="etc__name">{d.name}</div>
@@ -120,7 +122,7 @@ export function PlayerCardBody({ d }: { d: CardData }) {
         {d.era && <div className="etc__era">{d.era}</div>}
         <hr className="etc__rule" />
         {pending || d.stats.length === 0
-          ? <div className="etc__pending">Reyting Steam/Faceit ulangach hisoblanadi</div>
+          ? <div className="etc__pending">{t("card.ratingPending")}</div>
           : <div className="etc__stats">{d.stats.map((s, i) => (<div className="etc__st" key={i}><b>{s.v}</b><span>{s.k}</span></div>))}</div>}
       </div>
     </div>
@@ -139,15 +141,16 @@ function Card({ d }: { d: CardData }) {
 /* ---- Jamoa (klub gerbi) kartasi (TeamData tipi @/lib/esport-card dan) ---- */
 // Faqat karta (o'rab turuvchisiz) — Jamoalar sahifasida Link ichida ishlatiladi
 export function TeamCardBody({ d }: { d: TeamData }) {
+  const t = useEsT();
   const cls = `etc etc--${d.tier} etc--${d.game}${d.champ ? " champ" : ""}`;
   const big = d.rating >= 1000; // 4 xonali Elo bo'lsa raqamni kichraytiramiz
   const subText = [d.country, d.city, d.founded ? String(d.founded) : ""].filter(Boolean).join(" · ");
   return (
     <div className={cls}>
       <div className="etc__nt" /><div className="etc__shine" /><div className="etc__sheen" />
-      {d.champ && <div className="etc__tag">CHEMPION</div>}
+      {d.champ && <div className="etc__tag">{t("card.champion")}</div>}
       <div className="etc__top">
-        <div className="etc__ovr"><span className="etc__num" style={big ? { fontSize: 32, letterSpacing: "-.02em" } : undefined}>{d.rating}</span><span className="etc__jchip">JAMOA</span></div>
+        <div className="etc__ovr"><span className="etc__num" style={big ? { fontSize: 32, letterSpacing: "-.02em" } : undefined}>{d.rating}</span><span className="etc__jchip">{t("card.team")}</span></div>
         <div className="etc__meta">
           <span className="etc__game"><GameGlyph game={d.game} />{d.gameLabel}</span>
           <span className="etc__rank">{d.rank}</span>

@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { Loader2, ArrowLeftRight, Search, Coins, Gamepad2, TrendingUp, ChevronRight, Send, Check, X, Clock } from "lucide-react";
+import { useEsT, ES_BASE } from "@/lib/esport-i18n";
 
 interface Card {
     id: string; ign: string; position: string | null; game: string | null;
@@ -20,7 +21,7 @@ interface Offer {
 }
 interface Offers { asPlayer: Offer[]; asBuyer: Offer[]; asClub: Offer[] }
 
-function money(n: number | null) { return n == null ? "Belgilanmagan" : `${n.toLocaleString()} so'm`; }
+function money(n: number | null, notset = "Belgilanmagan") { return n == null ? notset : `${n.toLocaleString()} so'm`; }
 
 function OfferRow({ text, busy, onApprove, onReject, onCancel, approveLabel, clock }: { text: string; busy: boolean; onApprove?: () => void; onReject?: () => void; onCancel?: () => void; approveLabel?: string; clock?: boolean }) {
     return (
@@ -53,6 +54,7 @@ function FeeRow({ o, busy, onSend, onCancel }: { o: Offer; busy: boolean; onSend
 }
 
 export default function EtTransfers() {
+    const tr = useEsT();
     const [loading, setLoading] = useState(true);
     const [list, setList] = useState<Card[]>([]);
     const [q, setQ] = useState("");
@@ -87,12 +89,12 @@ export default function EtTransfers() {
 
     return (
         <div style={{ marginTop: 14 }}>
-            <div className="et-sh et-rise"><span className="num"><ArrowLeftRight size={15} /></span><div><h2>Transferlar</h2><p>Sportchilar bozori — taklif yuboring, qabul qiling, jamoa toping.</p></div></div>
+            <div className="et-sh et-rise"><span className="num"><ArrowLeftRight size={15} /></span><div><h2>{tr("tr.title")}</h2><p>{tr("tr.sub")}</p></div></div>
 
             {/* Mening takliflarim */}
             {hasOffers && (
                 <div className="et-glass et-rise" style={{ padding: 16, marginBottom: 16 }}>
-                    <span className="et-lbl">Mening takliflarim</span>
+                    <span className="et-lbl">{tr("tr.myOffers")}</span>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         {offers.asPlayer.map(o => (
                             <OfferRow key={o.id} text={`${o.toTeam?.name} sizga taklif: oylik ${o.salaryLabel || "—"}${o.contractMonths ? ` · ${o.contractMonths} oy` : ""}${o.conditions ? ` · ${o.conditions}` : ""}`}
@@ -115,18 +117,18 @@ export default function EtTransfers() {
             {/* Qidiruv */}
             <div className="et-rise" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)", borderRadius: 14, padding: "4px 14px" }}>
                 <Search size={16} style={{ color: "var(--es-faint)", flex: "0 0 auto" }} />
-                <input value={q} onChange={e => setQ(e.target.value)} placeholder="Sportchi yoki jamoa qidiring…"
+                <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr("tr.search")}
                     style={{ width: "100%", background: "transparent", border: 0, outline: "none", color: "var(--es-fg)", fontFamily: "Inter", fontSize: ".9rem", padding: "9px 0" }} />
             </div>
 
             {loading ? (
                 <div className="et-grid et-g3">{[0, 1, 2, 3, 4, 5].map(i => <div key={i} className="et-skel" style={{ height: 210 }} />)}</div>
             ) : filtered.length === 0 ? (
-                <div className="et-glass et-rise"><div className="et-empty"><span className="ic"><ArrowLeftRight size={24} /></span><b>{q ? "Topilmadi" : "Hali sportchi yo'q"}</b>{q ? "Boshqa nom bilan qidiring." : "Sportchilar ro'yxatdan o'tgach shu yerда chiqadi."}</div></div>
+                <div className="et-glass et-rise"><div className="et-empty"><span className="ic"><ArrowLeftRight size={24} /></span><b>{q ? tr("tr.notFound") : tr("tr.empty")}</b>{q ? tr("tr.searchOther") : tr("tr.emptyHint")}</div></div>
             ) : (
                 <div className="et-grid et-g3">
                     {filtered.map((a, i) => (
-                        <Link key={a.id} href={`/esport-test/a/${a.id}`} className={`et-tile et-rise et-d${(i % 6) + 1}`} style={{ padding: 0, overflow: "hidden", textDecoration: "none", color: "inherit" }}>
+                        <Link key={a.id} href={`${ES_BASE}/a/${a.id}`} className={`et-tile et-rise et-d${(i % 6) + 1}`} style={{ padding: 0, overflow: "hidden", textDecoration: "none", color: "inherit" }}>
                             {/* yuqori banner + avatar */}
                             <div style={{ position: "relative", height: 92, background: "linear-gradient(120deg,var(--es-c1),var(--es-c2) 55%,var(--es-c3))" }}>
                                 <div style={{ position: "absolute", inset: 0, opacity: .3, background: "radial-gradient(circle at 72% 18%, rgba(255,255,255,.4), transparent 60%)" }} />
@@ -141,12 +143,12 @@ export default function EtTransfers() {
                             </div>
                             <div style={{ padding: "32px 16px 16px" }}>
                                 <div className="et-fh" style={{ fontWeight: 700, fontSize: "1rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.ign}</div>
-                                <div style={{ marginTop: 2, fontSize: ".76rem", color: "var(--es-mut)" }}>{a.team ? `[${a.team.tag}] ${a.team.name}` : "Erkin sportchi"}</div>
+                                <div style={{ marginTop: 2, fontSize: ".76rem", color: "var(--es-mut)" }}>{a.team ? `[${a.team.tag}] ${a.team.name}` : tr("tr.freeAgent")}</div>
                                 <div style={{ marginTop: 8, display: "inline-flex", alignItems: "center", gap: 6, fontSize: ".76rem", fontWeight: 600, color: "var(--es-mut)" }}>
                                     <Gamepad2 size={14} style={{ color: "var(--es-c2)" }} /> {a.game ?? "—"}{a.position ? ` · ${a.position}` : ""}
                                 </div>
                                 <div style={{ marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)", borderRadius: 12, padding: "9px 12px" }}>
-                                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: ".8rem", fontWeight: 600 }}><Coins size={14} style={{ color: "#f0b400" }} /> {money(a.marketValue)}</span>
+                                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: ".8rem", fontWeight: 600 }}><Coins size={14} style={{ color: "#f0b400" }} /> {money(a.marketValue, tr("common.notset"))}</span>
                                     <ChevronRight size={16} style={{ color: "var(--es-faint)" }} />
                                 </div>
                             </div>

@@ -1,6 +1,10 @@
 "use client";
 import { useLocale } from "next-intl";
 
+// Humo eSport marshrut bazasi. /esport-test asosiy saytga ko'chirilganda shu BIR joyda
+// "/esport" ga o'zgartiriladi — barcha et-* komponentlar havolasi avtomatik ko'chadi.
+export const ES_BASE = "/esport-test";
+
 // Humo eSport i18n — yagona lug'at (uz / ru / en). Komponentlar useEsT() bilan t("kalit") ishlatadi.
 // Tartib: [uz, ru, en]
 const DICT: Record<string, [string, string, string]> = {
@@ -11,6 +15,7 @@ const DICT: Record<string, [string, string, string]> = {
     "nav.tournaments": ["Turnirlar", "Турниры", "Tournaments"],
     "nav.divisions": ["Divizionlar", "Дивизионы", "Divisions"],
     "nav.transfer": ["Transfer", "Трансфер", "Transfer"],
+    "nav.cards": ["Kartalar", "Карты", "Cards"],
     "nav.admin": ["Admin", "Админ", "Admin"],
     "nav.notifications": ["Bildirishnomalar", "Уведомления", "Notifications"],
     "nav.noNotif": ["Bildirishnoma yo'q", "Нет уведомлений", "No notifications"],
@@ -39,6 +44,19 @@ const DICT: Record<string, [string, string, string]> = {
 
     // ── Asosiy (home) ──
     "home.subtitle": ["Kibersport arenasi — turnirlar, divizionlar, transferlar va jonli efir", "Киберспортивная арена — турниры, дивизионы, трансферы и прямой эфир", "Esports arena — tournaments, divisions, transfers and live broadcast"],
+    "home.heroBadge": ["Kibersport arenasi", "Киберспортивная арена", "Esports arena"],
+    "home.heroSub": ["Turnirlar, divizionlar, transferlar va jonli efir — bir arenada. CS2 · Dota 2 · PUBG Mobile · Mobile Legends.", "Турниры, дивизионы, трансферы и прямой эфир — на одной арене. CS2 · Dota 2 · PUBG Mobile · Mobile Legends.", "Tournaments, divisions, transfers and live broadcast — in one arena. CS2 · Dota 2 · PUBG Mobile · Mobile Legends."],
+    "home.liveUpcoming": ["Jonli efir & bo'lajak", "Прямой эфир и предстоящие", "Live & upcoming"],
+    "home.liveUpcomingSub": ["Hozir va keyingi o'yinlar.", "Текущие и следующие матчи.", "Now and next matches."],
+    "home.efir": ["Efir", "Эфир", "Stream"],
+    "home.broadcastBy": ["Humo eSport translyatsiya", "Трансляция Humo eSport", "Humo eSport broadcast"],
+    "home.watchStream": ["Efirni ko'rish", "Смотреть эфир", "Watch stream"],
+    "home.upcomingBadge": ["Bo'lajak", "Предстоящий", "Upcoming"],
+    "home.activeTournaments": ["Faol turnirlar", "Активные турниры", "Active tournaments"],
+    "home.activeSub": ["Ro'yxat ochiq va jonli.", "Регистрация открыта и в эфире.", "Registration open and live."],
+    "home.noTournamentsHint": ["Birinchi turnirni admin paneldan oching — shu yerda chiqadi.", "Создайте первый турнир в админ-панели — он появится здесь.", "Open the first tournament in the admin panel — it appears here."],
+    "home.expensive": ["Eng qimmat", "Самые дорогие", "Most valuable"],
+    "home.expensiveSub": ["Bozor qiymati bo'yicha.", "По рыночной стоимости.", "By market value."],
     "home.broadcast": ["Turnir efiri", "Эфир турнира", "Tournament broadcast"],
     "home.news": ["Yangiliklar", "Новости", "News"],
     "home.newsAdd": ["Yangilik qo'shish", "Добавить новость", "Add news"],
@@ -58,6 +76,14 @@ const DICT: Record<string, [string, string, string]> = {
     "home.newsBadge": ["Yangilik", "Новость", "News"],
     "home.autoBadge": ["Avto", "Авто", "Auto"],
 
+    // ── Karta (et-card) ──
+    "card.team": ["JAMOA", "КОМАНДА", "TEAM"],
+    "card.champion": ["CHEMPION", "ЧЕМПИОН", "CHAMPION"],
+    "card.new": ["Yangi", "Новый", "New"],
+    "card.player": ["O'yinchi", "Игрок", "Player"],
+    "card.playerPhoto": ["O'yinchi rasmi", "Фото игрока", "Player photo"],
+    "card.ratingPending": ["Reyting Steam/Faceit ulangach hisoblanadi", "Рейтинг появится после привязки Steam/Faceit", "Rating computed once Steam/Faceit is linked"],
+
     // ── Jamoalar ──
     "team.create": ["Jamoa yaratish", "Создать команду", "Create team"],
     "team.byCode": ["Kod bilan", "По коду", "With code"],
@@ -73,11 +99,38 @@ const DICT: Record<string, [string, string, string]> = {
     "team.mine": ["Mening jamoam", "Моя команда", "My team"],
     "team.members": ["a'zo", "участн.", "members"],
     "team.noRoster": ["Tarkib yo'q", "Нет состава", "No roster"],
+    "team.sub": ["Barcha jamoalar — klub gerbi kartasi. Material = jamoa Elo kuchi.", "Все команды — карта с гербом клуба. Материал = сила Elo.", "All teams — club crest card. Material = team Elo strength."],
+    "team.emptyHint": ["Birinchi jamoani yarating — shu yerda chiqadi.", "Создайте первую команду — она появится здесь.", "Create the first team — it appears here."],
+    "team.foot": ["Gerb, tarkib va Elo — asl eSport bazasidan; tarix saqlangan.", "Герб, состав и Elo — из основной базы eSport; история сохранена.", "Crest, roster and Elo — from the core eSport database."],
+    "team.mineShort": ["Meniki", "Моя", "Mine"],
     "team.nameMin": ["Jamoa nomi kamida 2 belgi", "Название минимум 2 символа", "Name min 2 characters"],
     "team.tagRule": ["Teg 2-5 ta lotin harf/raqam", "Тег 2-5 латинских букв/цифр", "Tag 2-5 latin chars/digits"],
     "team.codeReq": ["Kod kiriting", "Введите код", "Enter code"],
 
     // ── Turnirlar ──
+    "tour.sub": ["Faol turnirlar va Humo eSport tarixi.", "Активные турниры и история Humo eSport.", "Active tournaments and Humo eSport history."],
+    "tour.active": ["Faol", "Активные", "Active"],
+    "tour.history": ["Tarix", "История", "History"],
+    "tour.noneHint": ["Admin paneldan yangi turnir oching.", "Создайте новый турнир в админ-панели.", "Open a new tournament in the admin panel."],
+    "tour.histEmpty": ["Tarix bo'sh", "История пуста", "History is empty"],
+    "tour.champion": ["Chempion", "Чемпион", "Champion"],
+    "tour.second": ["2-o'rin", "2-е место", "2nd place"],
+    "tour.third": ["3-o'rin", "3-е место", "3rd place"],
+    "tour.prizeFund": ["Mukofot fondi", "Призовой фонд", "Prize fund"],
+    "tour.matches": ["O'yinlar", "Матчи", "Matches"],
+    // Turnir tafsiloti (tournament-detail)
+    "te.notFound": ["Topilmadi", "Не найдено", "Not found"],
+    "te.register": ["Ro'yxatdan o'tish", "Регистрация", "Register"],
+    "te.registered": ["Jamoangiz ro'yxatdan o'tgan", "Ваша команда зарегистрирована", "Your team is registered"],
+    "te.openReg": ["Ro'yxat ochish", "Открыть регистрацию", "Open registration"],
+    "te.genBracket": ["Setka tuzish (Elo)", "Создать сетку (Elo)", "Generate bracket (Elo)"],
+    "te.payout": ["Yutuqni to'lash", "Выплатить приз", "Pay out prize"],
+    "te.participants": ["Ishtirokchilar", "Участники", "Participants"],
+    "te.bracket": ["Setka", "Сетка", "Bracket"],
+    "te.thirdPlace": ["3-o'rin uchun", "За 3-е место", "Third place"],
+    "te.roundFinal": ["Final", "Финал", "Final"],
+    "te.roundSemi": ["Yarim final", "Полуфинал", "Semifinal"],
+    "te.roundQuarter": ["Chorak final", "Четвертьфинал", "Quarterfinal"],
     "tour.none": ["Hali turnir yo'q", "Турниров пока нет", "No tournaments yet"],
     "tour.soon": ["Tez orada birinchi turnir e'lon qilinadi.", "Скоро будет объявлен первый турнир.", "First tournament announced soon."],
     "tour.reg": ["Ro'yxat", "Регистрация", "Registration"],
@@ -86,6 +139,8 @@ const DICT: Record<string, [string, string, string]> = {
     "tour.watch": ["Tomosha", "Смотреть", "Watch"],
 
     // ── Divizionlar (jadval) ──
+    "stand.title": ["Reyting", "Рейтинг", "Rating"],
+    "stand.sub": ["divizion jadvallari", "таблицы дивизионов", "division tables"],
     "stand.active": ["faol", "активный", "active"],
     "stand.none": ["Hali jadval yo'q", "Таблицы пока нет", "No standings yet"],
     "stand.noneHint": ["Mavsum boshlanganda divizionlar bu yerda ko'rinadi.", "Дивизионы появятся с началом сезона.", "Divisions appear when the season starts."],
@@ -111,6 +166,10 @@ const DICT: Record<string, [string, string, string]> = {
     "tr.cancel": ["Bekor", "Отмена", "Cancel"],
     "tr.send": ["Yuborish", "Отправить", "Send"],
     "tr.sell": ["Sotish", "Продать", "Sell"],
+    "tr.myOffers": ["Mening takliflarim", "Мои предложения", "My offers"],
+    "tr.emptyHint": ["Sportchilar ro'yxatdan o'tgach shu yerda chiqadi.", "Игроки появятся здесь после регистрации.", "Athletes appear here once they register."],
+    "tr.searchOther": ["Boshqa nom bilan qidiring.", "Попробуйте другое имя.", "Try another name."],
+    "tr.freeAgent": ["Erkin sportchi", "Свободный игрок", "Free agent"],
 
     // ── O'yinchi kartasi (athlete-profile) ──
     "ap.card": ["Sportchi kartasi", "Карта игрока", "Player card"],
@@ -348,6 +407,12 @@ const DICT: Record<string, [string, string, string]> = {
     "adm.tabMatch": ["O'yin", "Матч", "Match"],
     "adm.tabTable": ["Jadval", "Таблица", "Table"],
     "adm.tabTournament": ["Turnir", "Турнир", "Tournament"],
+    "adm.tabDispute": ["Nizo", "Спор", "Dispute"],
+    "adm.tabVerify": ["Tekshiruv", "Проверка", "Verify"],
+    "adm.title": ["Humo eSport Admin", "Humo eSport Админ", "Humo eSport Admin"],
+    "adm.sub": ["Mavsum, divizion, turnir va boshqaruv.", "Сезон, дивизион, турнир и управление.", "Season, division, tournament and management."],
+    "adm.deniedSub": ["Bu bo'lim Humo eSport egasi va adminlari uchun.", "Этот раздел для владельца и админов Humo eSport.", "This section is for the Humo eSport owner and admins."],
+    "adm.back": ["Orqaga", "Назад", "Back"],
     "adm.tabAdmins": ["Adminlar", "Админы", "Admins"],
     "adm.newSeason": ["Yangi mavsum", "Новый сезон", "New season"],
     "adm.seasonPh": ["Masalan 2026 Season 1", "Например 2026 Season 1", "e.g. 2026 Season 1"],

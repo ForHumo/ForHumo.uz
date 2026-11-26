@@ -13,6 +13,7 @@ import {
     ShieldCheck, Gamepad2,
 } from "lucide-react";
 import { EtDatePicker } from "./et-date-picker";
+import { useEsT, ES_BASE } from "@/lib/esport-i18n";
 
 interface Season { id: string; name: string; active: boolean; gameId: string }
 interface Division { id: string; name: string; tier: number; gameId: string }
@@ -25,6 +26,7 @@ type Tab = "season" | "division" | "enroll" | "match" | "table" | "turnir" | "ni
 type ApiFn = (url: string, method: string, body?: object) => Promise<{ error?: string;[k: string]: unknown }>;
 
 export default function EtAdmin() {
+    const tt = useEsT();
     const [loading, setLoading] = useState(true);
     const [denied, setDenied] = useState(false);
     const [tab, setTab] = useState<Tab>("season");
@@ -82,9 +84,9 @@ export default function EtAdmin() {
     if (denied) return (
         <div className="et-glass et-rise" style={{ marginTop: 40, padding: "50px 20px", textAlign: "center" }}>
             <ShieldAlert style={{ width: 42, height: 42, color: "var(--es-faint)", margin: "0 auto 12px" }} />
-            <div className="et-fh" style={{ fontWeight: 700, fontSize: "1.05rem" }}>Faqat adminlar</div>
-            <p style={{ color: "var(--es-mut)", fontSize: ".88rem", margin: "6px 0 16px" }}>Bu bo'lim Humo eSport egasi va adminlari uchun.</p>
-            <Link href="/esport-test" className="et-btn ghost" style={{ textDecoration: "none" }}><ArrowLeft size={15} /> Orqaga</Link>
+            <div className="et-fh" style={{ fontWeight: 700, fontSize: "1.05rem" }}>{tt("adm.onlyAdmins")}</div>
+            <p style={{ color: "var(--es-mut)", fontSize: ".88rem", margin: "6px 0 16px" }}>{tt("adm.deniedSub")}</p>
+            <Link href={ES_BASE} className="et-btn ghost" style={{ textDecoration: "none" }}><ArrowLeft size={15} /> {tt("adm.back")}</Link>
         </div>
     );
 
@@ -93,15 +95,15 @@ export default function EtAdmin() {
     const reloadAll = () => { loadCore(); if (seasonId) loadSeasonData(seasonId); };
 
     const TABS: { id: Tab; label: string; icon: typeof Layers }[] = [
-        { id: "season", label: "Mavsum", icon: CalendarDays },
-        { id: "division", label: "Divizion", icon: Layers },
-        { id: "enroll", label: "Jamoa", icon: Users },
-        { id: "match", label: "Match", icon: Swords },
-        { id: "table", label: "Jadval", icon: BarChart3 },
-        { id: "turnir", label: "Turnir", icon: Trophy },
-        { id: "nizo", label: "Nizo", icon: Flag },
-        { id: "tekshiruv", label: "Tekshiruv", icon: ShieldCheck },
-        ...(isOwner ? [{ id: "adminlar" as Tab, label: "Adminlar", icon: ShieldAlert }] : []),
+        { id: "season", label: tt("adm.tabSeason"), icon: CalendarDays },
+        { id: "division", label: tt("adm.tabDivision"), icon: Layers },
+        { id: "enroll", label: tt("adm.tabTeam"), icon: Users },
+        { id: "match", label: tt("adm.tabMatch"), icon: Swords },
+        { id: "table", label: tt("adm.tabTable"), icon: BarChart3 },
+        { id: "turnir", label: tt("adm.tabTournament"), icon: Trophy },
+        { id: "nizo", label: tt("adm.tabDispute"), icon: Flag },
+        { id: "tekshiruv", label: tt("adm.tabVerify"), icon: ShieldCheck },
+        ...(isOwner ? [{ id: "adminlar" as Tab, label: tt("adm.tabAdmins"), icon: ShieldAlert }] : []),
     ];
 
     return (
@@ -110,7 +112,7 @@ export default function EtAdmin() {
                 <span style={{ width: 40, height: 40, flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <Image src="/esport-logo.png" alt="Humo eSport" width={40} height={40} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                 </span>
-                <div><h2>Humo eSport Admin</h2><p>Mavsum, divizion, turnir va boshqaruv — premium.</p></div>
+                <div><h2>{tt("adm.title")}</h2><p>{tt("adm.sub")}</p></div>
             </div>
 
             {/* Season selector */}
@@ -433,7 +435,7 @@ function TourAdminRow({ t, api, reload, busy }: { t: TournamentLite; api: ApiFn;
                     <div style={{ fontSize: ".74rem", color: "var(--es-faint)" }}>{t.status} · {t.teams}{t.maxTeams > 0 ? `/${t.maxTeams}` : ""} jamoa · {t.prizePool ? `${t.prizePool.toLocaleString()} so'm` : "fondsiz"}</div>
                 </div>
                 <button className="et-mini ghost" onClick={() => setOpen(o => !o)}>Fond</button>
-                <Link href={`/esport-test/tournaments/${t.id}`} className="et-mini ghost" style={{ textDecoration: "none", padding: "9px 10px" }} title="Setka / boshqaruv"><ChevronRight size={15} /></Link>
+                <Link href={`${ES_BASE}/tournaments/${t.id}`} className="et-mini ghost" style={{ textDecoration: "none", padding: "9px 10px" }} title="Setka / boshqaruv"><ChevronRight size={15} /></Link>
             </div>
             {open && (
                 <div style={{ display: "flex", gap: 8, marginTop: 10 }}>

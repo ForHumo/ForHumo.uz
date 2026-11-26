@@ -10,7 +10,7 @@ import {
     Loader2, AlertTriangle, IdCard, Pencil, Camera, X, Trash2, Link2,
     RefreshCw, Copy,
 } from "lucide-react";
-import { useEsT } from "@/lib/esport-i18n";
+import { useEsT, ES_BASE } from "@/lib/esport-i18n";
 
 interface Game { id: string; slug: string; name: string; teamSize: number; requiresSteam?: boolean }
 interface Athlete { id: string; game: { slug: string; name: string }; ign: string; gameUserId: string; gameServer: string | null; role: string | null; image?: string | null; coverImage?: string | null }
@@ -100,7 +100,7 @@ export default function EtAthlete() {
             {!hasHumoId ? (
                 <div className="et-glass et-rise"><div className="et-empty"><span className="ic"><IdCard size={24} /></span><b>{t("ob.needId")}</b>{t("ob.needIdSub")}<div style={{ marginTop: 14 }}><Link href="/id" className="et-btn" style={{ textDecoration: "none" }}>{t("ob.getId")}</Link></div></div></div>
             ) : athlete ? (
-                <AthleteCard athlete={athlete} roles={roles} onUpdated={setAthlete} onDeleted={() => setAthlete(null)} onContinue={() => router.push("/esport-test")} />
+                <AthleteCard athlete={athlete} roles={roles} onUpdated={setAthlete} onDeleted={() => setAthlete(null)} onContinue={() => router.push(ES_BASE)} />
             ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                     <div className="et-glass et-rise" style={{ padding: 18 }}>
@@ -166,7 +166,7 @@ export default function EtAthlete() {
                             ) : (
                                 <>
                                     <p style={{ fontSize: ".78rem", fontWeight: 600, lineHeight: 1.4, color: "var(--es-mut)" }}>{t("st.whyCs2")}</p>
-                                    <a href="/api/user/steam-link/start?from=/esport-test/athlete" className="et-btn" style={{ marginTop: 12, width: "100%", textDecoration: "none" }}><Link2 size={16} /> {t("st.linkBtn")}</a>
+                                    <a href={`/api/user/steam-link/start?from=${ES_BASE}/athlete`} className="et-btn" style={{ marginTop: 12, width: "100%", textDecoration: "none" }}><Link2 size={16} /> {t("st.linkBtn")}</a>
                                 </>
                             )}
                             {steamMsg && steamMsg !== "ok" && (
@@ -332,7 +332,7 @@ function AthleteCard({ athlete, roles, onUpdated, onDeleted, onContinue }: {
                     <VerifyPanel gameSlug={athlete.game.slug} />
 
                     <div style={{ marginTop: 24, display: "flex", gap: 8 }}>
-                        <Link href={`/esport-test/a/${athlete.id}`} className="et-btn ghost" style={{ flex: 1, textDecoration: "none" }}>{t("ob.publicCard")}</Link>
+                        <Link href={`${ES_BASE}/a/${athlete.id}`} className="et-btn ghost" style={{ flex: 1, textDecoration: "none" }}>{t("ob.publicCard")}</Link>
                         <button onClick={onContinue} className="et-btn" style={{ flex: 1 }}>{t("ob.continue")}</button>
                     </div>
                     {!confirmDel ? (
@@ -478,7 +478,7 @@ function VerifyPanel({ gameSlug }: { gameSlug: string }) {
                                     ) : steamLinked ? (
                                         <button className="et-mini" style={{ marginTop: 4 }} disabled={busy === "STEAM"} onClick={() => act("STEAM")}>{busy === "STEAM" ? <Loader2 size={13} className="animate-spin" /> : <ShieldCheck size={13} />} {t("vf.check")}</button>
                                     ) : (
-                                        <a href="/api/user/steam-link/start?from=/esport-test/athlete" className="et-mini" style={{ marginTop: 4, textDecoration: "none", display: "inline-flex" }}><Link2 size={13} /> {t("vf.steamLink")}</a>
+                                        <a href={`/api/user/steam-link/start?from=${ES_BASE}/athlete`} className="et-mini" style={{ marginTop: 4, textDecoration: "none", display: "inline-flex" }}><Link2 size={13} /> {t("vf.steamLink")}</a>
                                     )}
                                 </div>
                             )}

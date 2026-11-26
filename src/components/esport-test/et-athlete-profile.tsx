@@ -9,7 +9,7 @@ import {
     ArrowLeft, Loader2, BadgeCheck, Shield, Gamepad2, TrendingUp, Hash, ChevronRight,
     Coins, Calendar, Trophy, ArrowUp, ArrowDown, Clock, Pencil, Check, X, Send, UserPlus, FileText, Ban,
 } from "lucide-react";
-import { useEsT } from "@/lib/esport-i18n";
+import { useEsT, ES_BASE } from "@/lib/esport-i18n";
 import { EtDatePicker } from "./et-date-picker";
 import { PlayerCardBody, useCardTilt, type PlayerData } from "./et-card";
 import { gameSlug, GAME_LABEL, ccFromCountry, countryName } from "@/lib/esport-card";
@@ -111,7 +111,7 @@ export default function EtAthleteProfile({ athleteId }: { athleteId: string }) {
     useCardTilt(a?.id);
 
     if (loading) return <div style={{ display: "flex", justifyContent: "center", padding: "96px 0" }}><Loader2 className="animate-spin" size={28} style={{ color: "var(--es-faint)" }} /></div>;
-    if (!a) return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "96px 0" }}><p style={{ color: "var(--es-mut)" }}>{t("ap.notFound")}</p><Link href="/esport-test/transfers" className="et-grad" style={{ fontWeight: 700 }}>{t("tr.title")}</Link></div>;
+    if (!a) return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "96px 0" }}><p style={{ color: "var(--es-mut)" }}>{t("ap.notFound")}</p><Link href={`${ES_BASE}/transfers`} className="et-grad" style={{ fontWeight: 700 }}>{t("tr.title")}</Link></div>;
 
     // O'yinchi kartasi — identity REAL (ism/rasm/o'yin/rol/jamoa/davlat); OVR+6 ko'rsatkich
     // Steam/Faceit ulanib, match-stat yig'ilgach hisoblanadi → hozir "pending" (raqam "—").
@@ -189,7 +189,7 @@ export default function EtAthleteProfile({ athleteId }: { athleteId: string }) {
 
             {/* Jamoa */}
             {a.team ? (
-                <Link href={`/esport-test/teams/${a.team.id}`} className="et-row et-rise" style={{ marginBottom: 14, textDecoration: "none", color: "inherit" }}>
+                <Link href={`${ES_BASE}/teams/${a.team.id}`} className="et-row et-rise" style={{ marginBottom: 14, textDecoration: "none", color: "inherit" }}>
                     <span className="et-logo" style={{ width: 44, height: 44 }}>{a.team.logo ? <img src={a.team.logo} alt="" /> : a.team.tag.slice(0, 3)}</span>
                     <div style={{ flex: 1, minWidth: 0 }}><p className="et-fh" style={{ fontWeight: 700, fontSize: ".9rem" }}>{a.team.name}</p><p style={{ fontSize: ".72rem", color: "var(--es-mut)" }}>[{a.team.tag}] · {roleLabel[a.team.role] || a.team.role} · jamoada {since(a.team.joinedAt)}dan beri</p></div>
                     <ChevronRight size={16} style={{ color: "var(--es-faint)" }} />
