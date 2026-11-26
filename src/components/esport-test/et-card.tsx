@@ -42,6 +42,46 @@ function GameGlyph({ game }: { game: Game }) {
   }
 }
 
+/* ---- Umumiy tier yordamchilari + mini-gerb (Reyting / turnir setkasida) ---- */
+export const TIER_LABEL: Record<Tier, string> = {
+  bronza: "Bronza", kumush: "Kumush", oltin: "Oltin", platina: "Platina",
+  olmos: "Olmos", afsona: "Afsona", chempion: "Chempion", mvp: "MVP", ikona: "Ikona",
+};
+
+// Elo -> daraja (teams/all route bilan bir xil chegaralar). Yagona manba shu bo'lsin.
+export function tierFromElo(elo: number): Tier {
+  if (elo >= 1600) return "afsona";
+  if (elo >= 1450) return "olmos";
+  if (elo >= 1300) return "platina";
+  if (elo >= 1150) return "oltin";
+  if (elo >= 1050) return "kumush";
+  return "bronza";
+}
+
+// mini-gerb materiali: [och, to'q, siyoh rangi]
+const TIER_MAT: Record<Tier, [string, string, string]> = {
+  bronza: ["#9a6c3f", "#4a3119", "#fff"],
+  kumush: ["#dde3e9", "#8a929c", "#1a1d22"],
+  oltin: ["#f8df84", "#b48a24", "#3a2a06"],
+  platina: ["#d6f4f0", "#4f949c", "#0c2b2e"],
+  olmos: ["#ecf7ff", "#6aa5e6", "#0a2742"],
+  afsona: ["#4a2f74", "#160f28", "#fff"],
+  chempion: ["#fff4cf", "#b8860b", "#3a2a06"],
+  mvp: ["#ffd9a0", "#b8600b", "#3a1e06"],
+  ikona: ["#f8df84", "#8a5a16", "#3a2406"],
+};
+
+// Kichik olti-burchak gerb — daraja materialini olib yuradi (Reyting/setka/ishtirokchilar).
+export function TeamCrest({ tier, img, letter, size = 30, title }: { tier: Tier; img?: string | null; letter?: string; size?: number; title?: string }) {
+  const [c1, c2, ink] = TIER_MAT[tier] || TIER_MAT.bronza;
+  return (
+    <span className="etc-mini" title={title} style={{ width: size, height: Math.round(size * 1.12), "--m1": c1, "--m2": c2, color: ink, fontSize: Math.round(size * 0.42) } as React.CSSProperties}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {img ? <img src={img} alt="" /> : (letter || "?").slice(0, 1).toUpperCase()}
+    </span>
+  );
+}
+
 function Bust() {
   return (<svg className="etc__bust" viewBox="0 0 100 112"><path d="M50 8c11.3 0 19.5 9.2 19.5 21.3 0 10-5.1 18.2-11.3 22.2 15.6 4 27.6 15.4 30.6 31.8 1.1 6.2-3.1 10.7-9.4 10.7H20.6c-6.3 0-10.5-4.5-9.4-10.7 3-16.4 15-27.8 30.6-31.8C35.6 47.5 30.5 39.3 30.5 29.3 30.5 17.2 38.7 8 50 8z" fill="currentColor" /></svg>);
 }

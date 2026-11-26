@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { BarChart3, Trophy } from "lucide-react";
+import { TeamCrest, tierFromElo, TIER_LABEL } from "./et-card";
 
 interface Row { rank: number; teamId: string; team: { id: string; name: string; tag: string; logo: string | null } | null; points: number; wins: number; losses: number; played: number; rating: number | null }
 interface Div { id: string; name: string; tier: number; teams: Row[] }
@@ -41,17 +42,23 @@ export default function EtStandings() {
                                 <span style={{ width: 28, textAlign: "center" }}>M</span>
                                 <span style={{ width: 40, textAlign: "center" }}>Ochko</span>
                             </div>
-                            {d.teams.map(row => (
+                            {d.teams.map(row => {
+                                const tier = tierFromElo(row.rating ?? 1000);
+                                return (
                                 <div key={row.teamId} className="et-row" style={{ padding: "10px 12px" }}>
                                     <span className={`et-rank g${row.rank}`} style={{ width: 22 }}>{row.rank}</span>
-                                    <span className="et-logo" style={{ width: 30, height: 30, fontSize: ".72rem", marginLeft: 12 }}>{row.team?.logo ? <img src={row.team.logo} alt="" /> : (row.team?.tag.slice(0, 3) ?? "?")}</span>
-                                    <span className="et-nm" style={{ flex: 1, marginLeft: 10, fontSize: ".86rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.team?.name ?? "—"}</span>
+                                    <span style={{ marginLeft: 12, display: "inline-flex" }}><TeamCrest tier={tier} img={row.team?.logo} letter={row.team?.tag ?? "?"} size={30} title={TIER_LABEL[tier]} /></span>
+                                    <span style={{ flex: 1, marginLeft: 10, minWidth: 0 }}>
+                                        <span className="et-nm" style={{ display: "block", fontSize: ".86rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.team?.name ?? "—"}</span>
+                                        <span style={{ display: "block", fontFamily: "Chakra Petch", fontSize: ".58rem", letterSpacing: ".05em", textTransform: "uppercase", color: "var(--es-faint)", marginTop: 1 }}>{TIER_LABEL[tier]}{row.rating ? ` · ${row.rating}` : ""}</span>
+                                    </span>
                                     <span className="et-mono" style={{ width: 34, textAlign: "center", fontSize: ".82rem", color: "var(--es-mut)" }}>{row.played}</span>
                                     <span className="et-mono" style={{ width: 28, textAlign: "center", fontSize: ".82rem", color: "var(--es-c2)" }}>{row.wins}</span>
                                     <span className="et-mono" style={{ width: 28, textAlign: "center", fontSize: ".82rem", color: "var(--es-faint)" }}>{row.losses}</span>
                                     <span className="et-fh et-mono" style={{ width: 40, textAlign: "center", fontWeight: 700, fontSize: ".9rem" }}>{row.points}</span>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     ))}
                 </div>

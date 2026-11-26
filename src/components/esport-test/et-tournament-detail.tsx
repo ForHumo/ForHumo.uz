@@ -7,15 +7,16 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "@/i18n/routing";
 import { useEsT } from "@/lib/esport-i18n";
 import { seasonPoster } from "@/lib/esport-season";
+import { TeamCrest, tierFromElo } from "./et-card";
 import {
     Loader2, Trophy, Crown, Coins, Users, ShieldCheck,
     Swords, Wand2, Banknote, Check, AlertTriangle, Tv, Flag, ImagePlus, X, Send,
 } from "lucide-react";
 
-interface TeamLite { id: string; name: string; tag: string; logo: string | null }
+interface TeamLite { id: string; name: string; tag: string; logo: string | null; rating?: number }
 interface Match { id: string; bracket: string; round: number; slot: number; seedA: number | null; seedB: number | null; scoreA: number | null; scoreB: number | null; status: string; streamUrl: string | null; proofUrl: string | null; winnerId: string | null; teamA: TeamLite | null; teamB: TeamLite | null }
 interface Tournament { id: string; name: string; game: { name: string } | null; status: string; prizePool: number | null; prizeLabel: string | null; prizeFunded: number; prizeFundedLabel: string | null; currency: string; maxTeams: number; bracketReady: boolean; thirdPlace: boolean; registrationEndsAt: string | null }
-interface MyTeam { id: string; name: string; tag: string; registered: boolean }
+interface MyTeam { id: string; name: string; tag: string; logo?: string | null; rating?: number; registered: boolean }
 
 const ACCENT = "linear-gradient(120deg,var(--es-c1),var(--es-c2) 60%,var(--es-c3))";
 const soft: React.CSSProperties = { background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" };
@@ -116,6 +117,7 @@ export default function EtTournamentDetail({ tournamentId }: { tournamentId: str
             {champion && (
                 <div className="et-rise" style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 12, padding: 18, borderRadius: 18, background: "rgba(255,176,32,0.10)", border: "1px solid rgba(255,176,32,0.35)" }}>
                     <Crown size={28} style={{ color: "#FFB020" }} />
+                    <TeamCrest tier={tierFromElo(champion?.rating ?? 1000)} img={champion?.logo} letter={champion?.tag} size={38} />
                     <div><p style={{ fontSize: ".7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", color: "#FFB020" }}>Chempion</p><p className="et-fh" style={{ fontSize: "1.1rem", fontWeight: 700 }}>{champion?.name}</p></div>
                 </div>
             )}
@@ -129,7 +131,7 @@ export default function EtTournamentDetail({ tournamentId }: { tournamentId: str
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         {eligible.map(tm => (
                             <button key={tm.id} className="et-row" style={{ cursor: "pointer", width: "100%", textAlign: "left" }} disabled={busy} onClick={() => call(`/api/esport/tournaments/${tournamentId}/register`, "POST", { teamId: tm.id })}>
-                                <span className="et-logo" style={{ width: 34, height: 34, fontSize: ".7rem" }}>{tm.tag.slice(0, 3)}</span>
+                                <TeamCrest tier={tierFromElo(tm.rating ?? 1000)} img={tm.logo} letter={tm.tag} size={34} />
                                 <span style={{ flex: 1, fontWeight: 700, fontSize: ".9rem" }}>{tm.name}</span>
                                 <span className="et-mini">Qo'shilish</span>
                             </button>
@@ -167,7 +169,7 @@ export default function EtTournamentDetail({ tournamentId }: { tournamentId: str
                     <div className="et-grid et-g2">
                         {participants.map(p => (
                             <div key={p.id} className="et-row" style={{ cursor: "default" }}>
-                                <span className="et-logo" style={{ width: 30, height: 30, fontSize: ".65rem" }}>{p.tag.slice(0, 3)}</span>
+                                <TeamCrest tier={tierFromElo(p.rating ?? 1000)} img={p.logo} letter={p.tag} size={30} />
                                 <span style={{ flex: 1, minWidth: 0, fontWeight: 700, fontSize: ".86rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
                             </div>
                         ))}
@@ -246,8 +248,9 @@ function MatchBox({ m, isAdmin, sel, setSel, sa, sb, setSa, setSb, submit, busy,
     const open = sel === m.id;
     const canDispute = m.status === "DONE" && (myTeamIds.includes(m.teamA?.id ?? "") || myTeamIds.includes(m.teamB?.id ?? ""));
     const row = (team: TeamLite | null, seed: number | null, score: number | null, isWinner: boolean) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: isWinner ? "rgba(0,206,200,0.10)" : undefined }}>
-            {seed != null && <span style={{ width: 16, textAlign: "center", fontSize: ".58rem", fontWeight: 700, color: "var(--es-faint)" }}>{seed}</span>}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: isWinner ? "rgba(0,206,200,0.10)" : undefined }}>
+            {seed != null && <span style={{ width: 12, textAlign: "center", fontSize: ".58rem", fontWeight: 700, color: "var(--es-faint)" }}>{seed}</span>}
+            {team ? <TeamCrest tier={tierFromElo(team.rating ?? 1000)} img={team.logo} letter={team.tag} size={15} /> : <span style={{ width: 15, flex: "0 0 auto" }} />}
             <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: ".76rem", fontWeight: 700, color: team ? (isWinner ? "var(--es-fg)" : "var(--es-mut)") : "var(--es-faint)" }}>{team ? team.tag : "—"}</span>
             {score != null && <span style={{ fontSize: ".76rem", fontWeight: 700, color: isWinner ? "var(--es-c2)" : "var(--es-faint)" }}>{score}</span>}
         </div>
