@@ -632,6 +632,16 @@ model EsNotification {   // eSport bildirishnomalari (transfer/ariza/kelishuv)
   @@index([profileId, createdAt])
 }
 
+model EsPushToken {       // Native ilova (Expo) push token — EsNotification push uchun
+  id        String   @id @default(cuid())
+  profileId String                          // egasi UserProfile.id
+  token     String   @unique                // Expo push token
+  platform  String   @default("android")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([profileId])
+}
+
 model EsNews {            // Asosiy sahifadagi yangiliklar (admin yozadi)
   id        String   @id @default(cuid())
   title     String
