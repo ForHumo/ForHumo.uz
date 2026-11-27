@@ -1,7 +1,6 @@
 // Humo eSport — umumiy server yordamchilari.
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { resolveProfileId } from "@/lib/auth-request";
 
 // eSport EGASI — FAQAT bitta hisob (CEO). Boshqa founderlar ham ega EMAS.
 export const ESPORT_OWNER_HUMO_ID = "UZ6889574";
@@ -10,12 +9,13 @@ export const ESPORT_OWNER_USERNAME = "abduvoris";
 // MLBB pozitsiyalari (sportchi roli — ixtiyoriy)
 export const MLBB_ROLES = ["Gold Laner", "Mid Laner", "Roamer", "EXP Laner", "Jungler"] as const;
 
-// Joriy foydalanuvchi Humo ID profili (sessiyadan)
+// Joriy foydalanuvchi Humo ID profili — web cookie sessiya YOKI mobil Bearer token
+// (resolveProfileId ikkalasini qabul qiladi). profileId bo'yicha qidiradi.
 export async function getMyProfile() {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) return null;
+    const profileId = await resolveProfileId();
+    if (!profileId) return null;
     return prisma.userProfile.findUnique({
-        where: { email: session.user.email },
+        where: { id: profileId },
         select: { id: true, humoId: true, username: true, firstName: true, lastName: true, name: true, image: true },
     });
 }
