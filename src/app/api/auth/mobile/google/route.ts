@@ -46,6 +46,8 @@ export async function POST(req: Request) {
         const ticket = await client.verifyIdToken({ idToken, audience: ids });
         const p = ticket.getPayload();
         if (!p?.email) return NextResponse.json({ error: "no_email" }, { status: 401 });
+        // Tasdiqlanmagan email bilan mavjud (email-keyli) profilга ulanish/hijack oldini olish
+        if (p.email_verified !== true) return NextResponse.json({ error: "email_not_verified" }, { status: 401 });
         email = p.email;
         name = p.name ?? null;
         picture = p.picture ?? null;
@@ -86,14 +88,18 @@ export async function POST(req: Request) {
         await prisma.loginEvent.create({ data: { profileId: profile.id, ip, userAgent: h.get("user-agent") ?? null } });
     } catch { /* jim */ }
 
-    // AuthSession (revocation parity) + token
+    // AuthSession (revocation parity) + token — FAIL-CLOSED: yozuv yaratilmasa token
+    // BERILMAYDI. Aks holda isJtiRevoked fail-open bo'lgani uchun revoke qilib
+    // bo'lmaydigan 1-yillik token chiqadi (logout updateMany 0 qator topadi).
     const sid = crypto.randomBytes(16).toString("hex");
     try {
         const h = await headers();
         await prisma.authSession.create({
             data: { jti: sid, profileId: profile.id, origin: "mobile", deviceHint: h.get("user-agent")?.slice(0, 200) ?? null },
         });
-    } catch { /* jim — token baribir ishlaydi, lekin revocation yo'q */ }
+    } catch {
+        return NextResponse.json({ error: "session_create_failed" }, { status: 500 });
+    }
 
     const token = await mintMobileToken({
         profileId: profile.id, humoId: profile.humoId, email, jti: sid,
