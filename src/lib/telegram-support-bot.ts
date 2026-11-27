@@ -122,9 +122,22 @@ export async function handleSupportUpdate(update: TgUpdate): Promise<void> {
     const msg = update.message;
     if (!msg || msg.from?.is_bot) return;
 
+    const chatId = msg.chat.id;
+    const text = (msg.text ?? msg.caption ?? "").trim();
     const admin = adminChatId();
 
-    // 0) Admin javobi (reply) — foydalanuvchiga qaytar
+    // 0) /chatid — sozlash qulayligi: shu chat ID'sini qaytaradi (DM yoki guruhda).
+    //    Buni SUPPORT_ADMIN_CHAT_ID env'iga qo'ying.
+    if (text === "/chatid" || text.startsWith("/chatid@")) {
+        await sendMessage(BOT, {
+            chatId,
+            text: `Chat ID: <code>${msg.chat.id}</code>\n\nBuni <b>SUPPORT_ADMIN_CHAT_ID</b> env'iga qo'ying — murojaatlar shu chatga keladi.`,
+            parseMode: "HTML",
+        });
+        return;
+    }
+
+    // 1) Admin javobi (reply) — foydalanuvchiga qaytar
     if (admin && String(msg.chat.id) === admin) {
         await tryRelayAdminReply(update, admin);
         return;   // admin chat'dagi boshqa xabarlarga tegmaymiz (shovqin yo'q)
@@ -132,8 +145,6 @@ export async function handleSupportUpdate(update: TgUpdate): Promise<void> {
 
     const tgId = String(msg.from?.id ?? "");
     if (!tgId) return;
-    const chatId = msg.chat.id;
-    const text = (msg.text ?? msg.caption ?? "").trim();
     const lang = pickLang(msg.from?.language_code);
 
     // 1) /link KOD — Humo ID bog'lash
