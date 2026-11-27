@@ -214,6 +214,9 @@ export const authOptions: NextAuthOptions = {
         // Multi-device: `jti` yaratiladi va AuthSession jadvaliga yoziladi. Har
         // request'da bu jti revoked emasligi tekshiriladi (60s cache).
         async jwt({ token, trigger, user }) {
+            // Mobil token (mob:true) web sessiya cookie sifatida ishlatilmasin — uning
+            // revocation'i mobil `sid`'ga bog'langan, web jti'ga emas. Bo'sh token = chiqarish.
+            if ((token as { mob?: unknown }).mob === true) return {};
             // SELF-HEAL: eski buggy holatda cookie'da email yo'q bo'lib qolgan bo'lishi mumkin.
             // Google sign-in'da user obyektida email keladi — token'ga qayta yozib qo'yamiz.
             if (!token.email && user?.email) token.email = user.email;

@@ -86,6 +86,11 @@ export async function POST(req: Request) {
         const xff = h.get("x-forwarded-for");
         const ip = xff ? xff.split(",")[0].trim() : (h.get("x-real-ip") ?? null);
         await prisma.loginEvent.create({ data: { profileId: profile.id, ip, userAgent: h.get("user-agent") ?? null } });
+        // Oxirgi 10 tadan ortig'ini tozalash (web signIn callback bilan bir xil)
+        const old = await prisma.loginEvent.findMany({
+            where: { profileId: profile.id }, orderBy: { createdAt: "desc" }, skip: 10, select: { id: true },
+        });
+        if (old.length > 0) await prisma.loginEvent.deleteMany({ where: { id: { in: old.map(e => e.id) } } });
     } catch { /* jim */ }
 
     // AuthSession (revocation parity) + token — FAIL-CLOSED: yozuv yaratilmasa token

@@ -2,14 +2,16 @@
 // Bearer (mobil) yoki cookie (web) — resolveProfileId. Body: { token, platform? }.
 
 import { NextResponse } from "next/server";
+import { Expo } from "expo-server-sdk";
 import { prisma } from "@/lib/prisma";
-import { resolveProfileId } from "@/lib/auth-request";
+import { resolveMobileProfileId } from "@/lib/auth-request";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-    const profileId = await resolveProfileId();
+    // Faqat native ilova (Bearer) — cookie qabul qilinmaydi (CSRF yuzasini yopadi).
+    const profileId = await resolveMobileProfileId();
     if (!profileId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
     let token: string | undefined;
@@ -21,7 +23,9 @@ export async function POST(req: Request) {
     } catch {
         return NextResponse.json({ error: "invalid_body" }, { status: 400 });
     }
-    if (!token) return NextResponse.json({ error: "missing_token" }, { status: 400 });
+    if (!token || !Expo.isExpoPushToken(token)) {
+        return NextResponse.json({ error: "invalid_token" }, { status: 400 });
+    }
 
     // token @unique — bir token bir profilга (qurilma almashsa profileId yangilanadi)
     await prisma.esPushToken.upsert({

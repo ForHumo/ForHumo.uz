@@ -8,16 +8,9 @@ import { authOptions } from "@/lib/auth";
 import { verifyMobileToken } from "@/lib/mobile-token";
 import { isJtiRevoked } from "@/lib/auth-session-cache";
 
-/** Joriy so'rov egasining UserProfile.id'si yoki null. */
-export async function resolveProfileId(): Promise<string | null> {
-    // 1) Web — NextAuth cookie sessiyasi (session callback profileId beradi)
-    try {
-        const session = await getServerSession(authOptions);
-        const pid = (session?.user as { profileId?: string | null } | undefined)?.profileId;
-        if (pid) return pid;
-    } catch { /* sessiya yo'q — bearer'ga o'tamiz */ }
-
-    // 2) Mobil — Authorization: Bearer <jwt>
+/** FAQAT mobil Bearer token orqali profileId (cookie QABUL QILINMAYDI).
+ *  CSRF-himoyalangan mutatsiyalar uchun (masalan push token ro'yxati — faqat native ilova). */
+export async function resolveMobileProfileId(): Promise<string | null> {
     try {
         const h = await headers();
         const auth = h.get("authorization") ?? "";
@@ -30,4 +23,17 @@ export async function resolveProfileId(): Promise<string | null> {
     } catch {
         return null;
     }
+}
+
+/** Joriy so'rov egasining UserProfile.id'si — web (cookie) YOKI mobil (Bearer). */
+export async function resolveProfileId(): Promise<string | null> {
+    // 1) Web — NextAuth cookie sessiyasi (session callback profileId beradi)
+    try {
+        const session = await getServerSession(authOptions);
+        const pid = (session?.user as { profileId?: string | null } | undefined)?.profileId;
+        if (pid) return pid;
+    } catch { /* sessiya yo'q — bearer'ga o'tamiz */ }
+
+    // 2) Mobil — Authorization: Bearer <jwt>
+    return resolveMobileProfileId();
 }
