@@ -17,6 +17,7 @@ const DICT: Record<string, [string, string, string]> = {
     "nav.transfer": ["Transfer", "Трансфер", "Transfer"],
     "nav.cards": ["Kartalar", "Карты", "Cards"],
     "nav.admin": ["Admin", "Админ", "Admin"],
+    "nav.support": ["Yordam", "Поддержка", "Support"],
     "nav.notifications": ["Bildirishnomalar", "Уведомления", "Notifications"],
     "nav.noNotif": ["Bildirishnoma yo'q", "Нет уведомлений", "No notifications"],
     "nav.markAll": ["Hammasi o'qildi", "Прочитать всё", "Mark all read"],

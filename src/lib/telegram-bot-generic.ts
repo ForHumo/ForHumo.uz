@@ -15,6 +15,7 @@ import {
     FOR_HUMO_URL,
 } from "@/lib/telegram-bot-common";
 import { findLinkedProfile } from "@/lib/telegram-link";
+import { handleSupportUpdate } from "@/lib/telegram-support-bot";
 
 type Lang = "uz" | "ru" | "en";
 
@@ -60,6 +61,9 @@ function defaultText(bot: BotKey, lang: Lang): string {
 
 /** Generic bot direct-chat update'ini qayta ishlaydi. */
 export async function handleGenericUpdate(bot: BotKey, update: TgUpdate): Promise<void> {
+    // Support bot — o'zining support oqumi (tasdiq + admin'ga relay), "ilovani och" emas.
+    if (bot === "support") return handleSupportUpdate(update);
+
     const msg = update.message;
     if (!msg || msg.from?.is_bot) return;
 

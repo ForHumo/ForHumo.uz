@@ -5,12 +5,15 @@ import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { Home, User, Users, Trophy, BarChart3, ArrowLeftRight, ShieldCheck, CreditCard, type LucideIcon } from "lucide-react";
+import { Home, User, Users, Trophy, BarChart3, ArrowLeftRight, ShieldCheck, CreditCard, Headset, type LucideIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { useEsT, ES_BASE } from "@/lib/esport-i18n";
 import EsportNotifications from "@/components/esport/esport-notifications";
-import { NavbarSupportButton } from "@/components/layout/navbar-support-button";
+
+// Humo eSport — mustaqil platforma: support in-app "Humo Support" (hali tayyor emas)
+// o'rniga Telegram support bot orqali. Vaqtinchalik, lekin hammaga qulay va mustaqil.
+const SUPPORT_BOT_URL = "https://t.me/ForHumo_SupportBot";
 
 const LINKS: { href: string; tkey: string; icon: LucideIcon }[] = [
     { href: ES_BASE, tkey: "nav.home", icon: Home },
@@ -50,7 +53,16 @@ export default function EtNavbar() {
                 <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
                     <LanguageSwitcher />
                     <ThemeToggle />
-                    <NavbarSupportButton variant="cyan" />
+                    <a href={SUPPORT_BOT_URL} target="_blank" rel="noopener noreferrer"
+                        title={t("nav.support")} aria-label={t("nav.support")}
+                        style={{
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            width: 34, height: 34, borderRadius: 10, color: "var(--es-c2)",
+                            background: "color-mix(in srgb, var(--es-c2) 12%, transparent)",
+                            border: "1px solid color-mix(in srgb, var(--es-c2) 26%, transparent)",
+                        }}>
+                        <Headset size={16} />
+                    </a>
                     {session?.user && <EsportNotifications />}
                     {session?.user && (
                         <Link href="/id" title="Humo ID" aria-label="Humo ID"
