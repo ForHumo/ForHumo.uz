@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import { after } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getMyProfile, MLBB_ROLES } from "@/lib/esport";
 import { grantAchievement } from "@/lib/achievements";
@@ -26,14 +24,11 @@ export async function GET() {
     const me = await getMyProfile();
     if (!me) return NextResponse.json({ error: "Avval tizimga kiring" }, { status: 401 });
 
-    // Steam bog'lanish holati (CS2 uchun kerak)
-    const session = await getServerSession(authOptions);
-    const steam = session?.user?.email
-        ? await prisma.userProfile.findUnique({
-            where: { email: session.user.email },
-            select: { steamId64: true, steamPersona: true, steamAvatar: true },
-        })
-        : null;
+    // Steam bog'lanish holati (CS2 uchun kerak) — joriy user (web yoki mobil) bo'yicha
+    const steam = await prisma.userProfile.findUnique({
+        where: { id: me.id },
+        select: { steamId64: true, steamPersona: true, steamAvatar: true },
+    });
 
     const [athlete, games] = await Promise.all([
         prisma.esAthlete.findUnique({

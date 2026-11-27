@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getMyProfile } from "@/lib/esport";
 import {
@@ -36,10 +34,7 @@ export async function GET() {
     const athlete = await loadAthlete(me.id);
     if (!athlete) return NextResponse.json({ error: "Sportchi profili yo'q" }, { status: 404 });
 
-    const session = await getServerSession(authOptions);
-    const prof = session?.user?.email
-        ? await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { steamId64: true } })
-        : null;
+    const prof = await prisma.userProfile.findUnique({ where: { id: me.id }, select: { steamId64: true } });
 
     const accounts = await prisma.esGameAccount.findMany({
         where: { athleteId: athlete.id },
