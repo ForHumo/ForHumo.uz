@@ -86,8 +86,9 @@ paket hozir ortiqcha).
   upsert (+ LoginEvent) → **`jti` yaratib `AuthSession`ga yozadi** (web bilan parity —
   qurilmani masofadan chiqarish ishlaydi) → `NEXTAUTH_SECRET` bilan imzolangan JWT
   (`next-auth/jwt` `encode`, web token formati bilan bir xil) qaytaradi. Token:
-  `profileId, humoId, email, jti, exp` (1 yil, web kabi). **Salt:** mobil token alohida
-  salt bilan imzolanadi (masalan `"mobile"`) — web cookie decode bilan to'qnashmasin.
+  `profileId, humoId, email, jti, exp` (1 yil, web kabi). **Ajratish:** NextAuth v4'da salt
+  yo'q — mobil token ichiga `mob: true` belgisi qo'yiladi; bearer alohida (`decode`) tekshiriladi,
+  web cookie dekoderiga hech qachon berilmaydi.
 - `src/lib/auth-request.ts` — yangi **unified resolver** `resolveProfileId()`:
   1) `getServerSession(authOptions)` (cookie/web) → bo'lsa profileId;
   2) bo'lmasa `headers().get("authorization")` → `Bearer <jwt>` → `decode` + jti-revocation
