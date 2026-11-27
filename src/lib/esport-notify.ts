@@ -1,6 +1,7 @@
 // eSport bildirishnomalari — fail-safe (xato yuzaga kelsa asosiy amalni buzmaydi).
 import { prisma } from "@/lib/prisma";
 import { notifyTelegramRich } from "@/lib/telegram-notify";
+import { sendEsportPush } from "@/lib/esport-push";
 
 interface NotifInput { type: string; title: string; body?: string | null; href?: string | null }
 
@@ -11,6 +12,7 @@ export async function esNotify(profileId: string | null | undefined, n: NotifInp
         await prisma.esNotification.create({ data: { profileId, type: n.type, title: n.title, body: n.body ?? null, href: n.href ?? null } });
     } catch { /* jim */ }
     void notifyTelegramRich(profileId, { title: n.title, body: n.body, imageUrl: "https://www.forhumo.uz/notif/esport.png", url: n.href, preferBot: "esport" }).catch(() => { /* jim */ });
+    void sendEsportPush(profileId, { title: n.title, body: n.body, href: n.href }).catch(() => { /* jim */ });
 }
 
 // Bir nechta foydalanuvchiga
@@ -20,7 +22,10 @@ export async function esNotifyMany(profileIds: (string | null | undefined)[], n:
     try {
         await prisma.esNotification.createMany({ data: ids.map(profileId => ({ profileId, type: n.type, title: n.title, body: n.body ?? null, href: n.href ?? null })) });
     } catch { /* jim */ }
-    for (const id of ids) void notifyTelegramRich(id, { title: n.title, body: n.body, imageUrl: "https://www.forhumo.uz/notif/esport.png", url: n.href, preferBot: "esport" }).catch(() => { /* jim */ });
+    for (const id of ids) {
+        void notifyTelegramRich(id, { title: n.title, body: n.body, imageUrl: "https://www.forhumo.uz/notif/esport.png", url: n.href, preferBot: "esport" }).catch(() => { /* jim */ });
+        void sendEsportPush(id, { title: n.title, body: n.body, href: n.href }).catch(() => { /* jim */ });
+    }
 }
 
 // athleteId → uning Humo profil id'si (bildirishnoma uchun)
